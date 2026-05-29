@@ -1,6 +1,6 @@
 {
   "_comment": "성좌 헌터 시뮬레이터 변수 설정 파일. [외부 업데이트] 질의로 실시간 갱신됩니다.",
-  "_schema_version": 1,
+  "_schema_version": 2,
   "unpredictable_variables": {
     "randomness_intensity": {
       "value": 1.8,
@@ -54,7 +54,8 @@
   "simulation": {
     "seed": null,
     "max_turns": 10,
-    "delay_seconds": 0.0
+    "delay_seconds": 0.0,
+    "selected_hunter": null
   },
   "hunter": {
     "name": "무명",
@@ -75,5 +76,81 @@
     "name": "흑염룡을 삼킨 성좌",
     "favor": 30,
     "patronage": "은밀한 모략가"
-  }
+  },
+  "hunter_roster": [
+    {
+      "id": "kim_dokja",
+      "hunter": {
+        "name": "김독자", "title": "마지막 독자", "level": 1,
+        "hp": 110, "max_hp": 110, "stamina": 55, "max_stamina": 55,
+        "attack": 13, "defense": 9, "luck": 18, "sanity": 95, "max_sanity": 95
+      },
+      "constellation": {"name": "가장 오래된 꿈", "favor": 50, "patronage": "이야기의 증인"}
+    },
+    {
+      "id": "yoo_jonghyuk",
+      "hunter": {
+        "name": "유중혁", "title": "회귀자", "level": 3,
+        "hp": 160, "max_hp": 160, "stamina": 70, "max_stamina": 70,
+        "attack": 24, "defense": 16, "luck": 8, "sanity": 90, "max_sanity": 90
+      },
+      "constellation": {"name": "구원의 마왕", "favor": 10, "patronage": "냉혹한 심판자"}
+    },
+    {
+      "id": "han_sooyoung",
+      "hunter": {
+        "name": "한수영", "title": "악마 같은 작가", "level": 2,
+        "hp": 120, "max_hp": 120, "stamina": 60, "max_stamina": 60,
+        "attack": 17, "defense": 11, "luck": 14, "sanity": 80, "max_sanity": 80
+      },
+      "constellation": {"name": "흑염룡을 삼킨 성좌", "favor": 35, "patronage": "은밀한 모략가"}
+    },
+    {
+      "id": "jung_heewon",
+      "hunter": {
+        "name": "정희원", "title": "무력파 화신", "level": 2,
+        "hp": 140, "max_hp": 140, "stamina": 65, "max_stamina": 65,
+        "attack": 21, "defense": 17, "luck": 11, "sanity": 85, "max_sanity": 85
+      },
+      "constellation": {"name": "정의의 사도", "favor": 45, "patronage": "철벽의 수호자"}
+    }
+  ],
+  "gate_monsters": [
+    {
+      "id": "goblin_horde", "name": "고블린 무리", "grade": "F",
+      "hp": 45, "attack": 11, "defense": 4, "reward_coins": 35, "reward_exp": 28,
+      "trait": "수적 우위",
+      "exception_variables": {"chaos_resonance": 1.4}
+    },
+    {
+      "id": "stone_golem", "name": "석상 골렘", "grade": "D",
+      "hp": 95, "attack": 16, "defense": 15, "reward_coins": 75, "reward_exp": 55,
+      "trait": "철벽 외피",
+      "exception_variables": {"probability_distortion": 1.9, "luck_factor": 0.6}
+    },
+    {
+      "id": "shadow_assassin", "name": "그림자 암살자", "grade": "C",
+      "hp": 70, "attack": 27, "defense": 7, "reward_coins": 120, "reward_exp": 85,
+      "trait": "기습",
+      "exception_variables": {"fate_deviation": -0.9, "randomness_intensity": 2.7}
+    },
+    {
+      "id": "flame_drake", "name": "화염 비룡", "grade": "B",
+      "hp": 150, "attack": 35, "defense": 18, "reward_coins": 210, "reward_exp": 155,
+      "trait": "브레스",
+      "exception_variables": {"crisis_escalation": 1.7, "event_mutation_rate": 0.65}
+    },
+    {
+      "id": "abyss_lord", "name": "심연의 군주", "grade": "A",
+      "hp": 230, "attack": 49, "defense": 27, "reward_coins": 420, "reward_exp": 330,
+      "trait": "공포 군림",
+      "exception_variables": {"constellation_mood": -0.6, "probability_distortion": 2.3, "luck_factor": 0.4}
+    },
+    {
+      "id": "nameless_calamity", "name": "이름 없는 재앙", "grade": "S",
+      "hp": 380, "attack": 72, "defense": 36, "reward_coins": 950, "reward_exp": 720,
+      "trait": "개연성 붕괴",
+      "exception_variables": {"randomness_intensity": 4.6, "fate_deviation": -1.6, "chaos_resonance": 1.9, "event_mutation_rate": 0.9}
+    }
+  ]
 }

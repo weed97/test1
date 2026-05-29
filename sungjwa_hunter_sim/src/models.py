@@ -76,6 +76,44 @@ class Constellation:
 
 
 @dataclass
+class MonsterUnit:
+    """게이트 몬스터 유닛. exception_variables 는 전투 중에만 적용되는 예외 변수다."""
+
+    id: str
+    name: str
+    grade: str = "F"
+    hp: int = 40
+    attack: int = 10
+    defense: int = 5
+    reward_coins: int = 30
+    reward_exp: int = 25
+    trait: str = ""
+    exception_variables: Dict[str, float] = field(default_factory=dict)
+
+    def power(self) -> float:
+        return self.attack + self.defense * 0.5 + self.hp * 0.05
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class HunterPreset:
+    """성좌 헌터 로스터 항목 (헌터 + 후원 성좌 프리셋)."""
+
+    id: str
+    hunter: Hunter
+    constellation: Constellation
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "hunter": self.hunter.to_dict(),
+            "constellation": self.constellation.to_dict(),
+        }
+
+
+@dataclass
 class EventRecord:
     """단일 이벤트 로그 항목."""
 
@@ -101,6 +139,7 @@ class GameState:
     log: List[EventRecord] = field(default_factory=list)
     finished: bool = False
     outcome: str = ""
+    defeated_monsters: List[str] = field(default_factory=list)
 
     def record(self, event: EventRecord) -> None:
         self.log.append(event)
@@ -112,5 +151,6 @@ class GameState:
             "turn": self.turn,
             "finished": self.finished,
             "outcome": self.outcome,
+            "defeated_monsters": list(self.defeated_monsters),
             "log": [e.to_dict() for e in self.log],
         }

@@ -2,6 +2,8 @@
 
 [외부 업데이트] 질의를 통한 JSON 변수 실시간 업데이트를 턴 사이에 받을 수 있다
 (interactive=True). 비대화형 모드에서는 시작 시점 변수로 끝까지 진행한다.
+
+게이트 몬스터 유닛과 성좌 헌터 로스터를 로드해 전투/시작 상태에 반영한다.
 """
 
 from __future__ import annotations
@@ -12,12 +14,12 @@ from typing import Callable, List, Optional
 
 from .events import EventEngine
 from .external_update import ExternalUpdateHandler
-from .models import Constellation, EventRecord, GameState, Hunter
+from .models import GameState
 from .rng import ChaosRNG
 from . import ui
+from . import units
 from .variables import VariableManager
 
-# 외부에서 입력을 주입할 수 있도록 추상화 (테스트/자동화 용이)
 InputFn = Callable[[str], str]
 OutputFn = Callable[[str], None]
 
@@ -28,6 +30,7 @@ class Simulator:
         variables: VariableManager,
         *,
         seed: Optional[int] = None,
+        hunter_id: Optional[str] = None,
         output: Optional[OutputFn] = None,
     ):
         self.vars = variables
@@ -35,30 +38,29 @@ class Simulator:
         if seed is None:
             seed = sim_cfg.get("seed")
         self.rng = ChaosRNG(variables, seed=seed)
+        # 게이트 몬스터 유닛 로드 → 전투 이벤트에서 사용
+        self.rng.monsters = units.load_monsters(variables)
         self.events = EventEngine(self.rng)
         self.external = ExternalUpdateHandler(variables, persist=True)
         self.out: OutputFn = output or (lambda s: print(s))
+        self.hunter_id = hunter_id
         self.state = self._build_state()
 
     def _build_state(self) -> GameState:
-        hunter = Hunter(**{k: v for k, v in self.vars.hunter_config().items()
-                           if k in Hunter.__dataclass_fields__})
-        const = Constellation(**{k: v for k, v in self.vars.constellation_config().items()
-                                 if k in Constellation.__dataclass_fields__})
+        hunter, const, used_id = units.select_hunter(self.vars, self.hunter_id)
+        self.hunter_id = used_id
         return GameState(hunter=hunter, constellation=const)
 
     # ------------------------------------------------------------------ #
     def _emit(self, text: str) -> None:
         self.out(text)
 
-    def step(self) -> List[EventRecord]:
+    def step(self) -> List:
         """한 턴을 진행하고 발생한 이벤트 기록을 반환한다."""
         self.state.turn += 1
-        # 턴 시작: 상태창 + 현재 변수 스냅샷 자동 출력
         self._emit("")
         self._emit(ui.render_status(self.state))
         self._emit(ui.render_uvars(self.rng.snapshot()))
-        # 이벤트 발생 및 로그 출력
         events = self.events.generate(self.state)
         for e in events:
             self.state.record(e)
@@ -92,7 +94,7 @@ class Simulator:
         if delay is None:
             delay = float(sim_cfg.get("delay_seconds", 0.0))
 
-        self._emit(_banner(self.state, max_turns))
+        self._emit(_banner(self.state, max_turns, self.hunter_id, len(self.rng.monsters)))
 
         while not self.state.finished:
             if interactive:
@@ -108,11 +110,10 @@ class Simulator:
         return self.state
 
     def _interactive_prompt(self, input_fn: Optional[InputFn]) -> None:
-        """턴 시작 전, 외부 업데이트 질의를 받는다 (빈 입력이면 통과)."""
         reader = input_fn or _default_input
         try:
             line = reader(
-                f"\n[외부 업데이트] 질의를 입력하세요 (엔터=다음 턴, 'q'=종료)\n> "
+                "\n[외부 업데이트] 질의를 입력하세요 (엔터=다음 턴, 'q'=종료)\n> "
             )
         except (EOFError, KeyboardInterrupt):
             self.state.finished = True
@@ -126,7 +127,6 @@ class Simulator:
         if not line:
             return
         if self.external.is_query(line) or "=" in line:
-            # 접두사가 없으면 자동으로 붙여서 처리
             if not self.external.is_query(line):
                 line = f"[외부 업데이트] 질의: {line}"
             self._emit(self.external.handle(line))
@@ -138,19 +138,19 @@ class _StopSimulation(Exception):
     pass
 
 
-def _banner(state: GameState, max_turns: int) -> str:
+def _banner(state: GameState, max_turns: int, hunter_id: Optional[str], monster_count: int) -> str:
+    tag = f" (로스터: {hunter_id})" if hunter_id else ""
     return (
         "\n" + "═" * 60 + "\n"
         "  성좌 헌터 시뮬레이션 — 외부 시뮬레이터\n"
-        f"  헌터: {state.hunter.name} / 성좌: [{state.constellation.name}]\n"
-        f"  최대 {max_turns}턴 진행 · 8개 예측 불가 변수 풀 적용\n"
+        f"  헌터: {state.hunter.name}{tag} / 성좌: [{state.constellation.name}]\n"
+        f"  최대 {max_turns}턴 · 8개 예측 불가 변수 풀 적용 · 게이트 몬스터 {monster_count}종\n"
         + "═" * 60
     )
 
 
 def _default_input(prompt: str) -> str:
     if not sys.stdin or not sys.stdin.isatty():
-        # 비대화형 표준입력: 한 줄 읽되 없으면 빈 줄
         line = sys.stdin.readline()
         return line.rstrip("\n") if line else ""
     return input(prompt)

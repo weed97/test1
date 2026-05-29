@@ -2,6 +2,8 @@
 
 각 이벤트는 헌터/성좌 상태에 효과(effects)를 적용하고 EventRecord 를 만든다.
 event_mutation_rate 로 변형 이벤트가, chaos_resonance 로 연쇄 이벤트가 발생한다.
+전투(게이트) 이벤트는 게이트 몬스터 유닛을 소환하고, 그 몬스터의 예외 변수를
+전투 동안에만 8개 변수 위에 덧씌워 판정한다.
 """
 
 from __future__ import annotations
@@ -10,9 +12,6 @@ from typing import Callable, Dict, List, Tuple
 
 from .models import EventRecord, GameState
 from .rng import ChaosRNG
-
-# 이벤트 정의: (kind, title, base_chance_of_success, handler)
-# handler 는 (state, rng, multiplier) -> (description, effects, mutated_text|None)
 
 
 def _apply(state: GameState, effects: Dict[str, int]) -> None:
@@ -36,24 +35,66 @@ def _apply(state: GameState, effects: Dict[str, int]) -> None:
 # 개별 이벤트 핸들러
 # ---------------------------------------------------------------------- #
 def _ev_combat(state: GameState, rng: ChaosRNG, mult: float):
-    enemy = rng.choice(["굶주린 화신", "탈주한 화신", "심연의 사도", "광인 도깨비", "배교한 성좌의 첨병"])
-    win = rng.roll(0.62)
-    crit = rng.critical()
-    if win:
-        dmg = rng.scaled_int(int(8 * mult))
-        coins = rng.scaled_int(int(40 * mult))
-        exp = rng.scaled_int(int(35 * mult))
-        if crit:
-            coins *= 2
-            exp *= 2
-            desc = f"'{enemy}'을(를) 상대로 회심의 일격! 압도적으로 제압했다."
-        else:
+    monster = rng.pick_monster(state.turn)
+
+    if monster is None:
+        # 게이트 몬스터 미정의 시 폴백 (구버전 호환)
+        enemy = rng.choice(["굶주린 화신", "탈주한 화신", "심연의 사도", "광인 도깨비"])
+        win = rng.roll(0.62)
+        crit = rng.critical()
+        if win:
+            dmg = rng.scaled_int(int(8 * mult))
+            effects = {"hp": -dmg, "stamina": -rng.scaled_int(8),
+                       "coins": rng.scaled_int(40), "exp": rng.scaled_int(35), "favor": 5}
             desc = f"'{enemy}'와(과) 격돌하여 승리했다."
-        effects = {"hp": -dmg, "stamina": -rng.scaled_int(8), "coins": coins, "exp": exp, "favor": 5}
-    else:
-        dmg = rng.scaled_int(int(22 * mult))
-        desc = f"'{enemy}'의 반격에 큰 피해를 입고 후퇴했다."
-        effects = {"hp": -dmg, "stamina": -rng.scaled_int(12), "sanity": -rng.scaled_int(4), "favor": -2}
+        else:
+            dmg = rng.scaled_int(int(22 * mult))
+            effects = {"hp": -dmg, "stamina": -rng.scaled_int(12),
+                       "sanity": -rng.scaled_int(4), "favor": -2}
+            desc = f"'{enemy}'의 반격에 큰 피해를 입고 후퇴했다."
+        return desc, effects, crit
+
+    # ---- 게이트 몬스터 듀얼: 예외 변수를 전투 구간에만 적용 ----
+    h = state.hunter
+    with rng.exception_scope(monster.exception_variables):
+        hunter_power = h.attack + h.defense * 0.4 + h.luck * 0.5
+        monster_power = monster.power()
+        base_chance = hunter_power / max(1.0, hunter_power + monster_power)
+        win = rng.roll(base_chance)
+        crit = rng.critical()
+
+        ev_note = ", ".join(f"{k}={v:g}" for k, v in monster.exception_variables.items())
+        gate = f"[{monster.grade}급 게이트] '{monster.name}'(특성: {monster.trait}) 출현"
+        if ev_note:
+            gate += f" ◇예외변수 {ev_note}◇"
+
+        if win:
+            taken = rng.scaled_int(int((monster.attack * 0.6) * mult))
+            coins = rng.scaled_int(monster.reward_coins)
+            exp = rng.scaled_int(monster.reward_exp)
+            if crit:
+                coins *= 2
+                exp = int(exp * 1.8)
+                desc = f"{gate} — 회심의 일격으로 단숨에 토벌!"
+            else:
+                desc = f"{gate} — 격전 끝에 토벌 성공."
+            effects = {
+                "hp": -taken,
+                "stamina": -rng.scaled_int(int(8 + monster.attack * 0.2)),
+                "coins": coins,
+                "exp": exp,
+                "favor": rng.scaled_int(max(3, int(monster.reward_exp * 0.06))),
+            }
+            state.defeated_monsters.append(monster.id)
+        else:
+            taken = rng.scaled_int(int(monster.attack * mult))
+            desc = f"{gate} — 토벌 실패, 큰 피해를 입고 후퇴했다."
+            effects = {
+                "hp": -taken,
+                "stamina": -rng.scaled_int(int(10 + monster.attack * 0.3)),
+                "sanity": -rng.scaled_int(int(4 + monster.power() * 0.05)),
+                "favor": -rng.scaled_int(3),
+            }
     return desc, effects, crit
 
 
@@ -105,14 +146,13 @@ def _ev_anomaly(state: GameState, rng: ChaosRNG, mult: float):
 EventHandler = Callable[[GameState, ChaosRNG, float], Tuple[str, Dict[str, int], bool]]
 
 EVENT_TABLE: List[Tuple[str, str, float, EventHandler]] = [
-    ("전투", "화신과의 조우", 0.30, _ev_combat),
+    ("전투", "게이트 토벌", 0.32, _ev_combat),
     ("성좌개입", "성좌의 시선", 0.18, _ev_blessing),
-    ("시나리오", "메인 시나리오", 0.22, _ev_scenario),
+    ("시나리오", "메인 시나리오", 0.20, _ev_scenario),
     ("정비", "안전지대", 0.15, _ev_rest),
     ("이상현상", "예측 불가 균열", 0.15, _ev_anomaly),
 ]
 
-# 돌연변이 접두 묘사
 _MUTATION_FLAVOR = [
     "[변이] 이벤트가 예상치 못한 형태로 뒤틀렸다 — ",
     "[변이] 확률장이 붕괴하며 양상이 달라졌다 — ",
@@ -141,7 +181,6 @@ class EventEngine:
         if mutated:
             flavor = self.rng.choice(_MUTATION_FLAVOR)
             desc = flavor + desc
-            # 변형: 효과를 무작위로 증폭
             effects = {k: self.rng.scaled_int(int(v * 1.6)) if v else v for k, v in effects.items()}
             title = f"{title}(변이)"
 
@@ -158,7 +197,6 @@ class EventEngine:
             )
         )
 
-        # 연쇄 이벤트 (chaos_resonance). 무한 연쇄 방지 위해 chained 호출은 1단계만.
         if not chained and state.hunter.alive and self.rng.chains():
             records.extend(self.generate(state, chained=True))
         return records
