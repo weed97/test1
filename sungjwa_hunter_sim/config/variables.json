@@ -1,0 +1,79 @@
+{
+  "_comment": "성좌 헌터 시뮬레이터 변수 설정 파일. [외부 업데이트] 질의로 실시간 갱신됩니다.",
+  "_schema_version": 1,
+  "unpredictable_variables": {
+    "randomness_intensity": {
+      "value": 1.8,
+      "min": 0.0,
+      "max": 5.0,
+      "desc": "무작위성 강도 - 모든 난수 결과의 진폭을 증폭/감쇠시킨다."
+    },
+    "fate_deviation": {
+      "value": 0.5,
+      "min": -2.0,
+      "max": 2.0,
+      "desc": "운명 편차 - 결과를 행운/불운 쪽으로 편향시키는 운명선 이탈도."
+    },
+    "constellation_mood": {
+      "value": 0.0,
+      "min": -1.0,
+      "max": 1.0,
+      "desc": "성좌 변덕 - 성좌의 개입 및 보상 변동 폭."
+    },
+    "probability_distortion": {
+      "value": 1.2,
+      "min": 0.1,
+      "max": 3.0,
+      "desc": "확률 왜곡 - 성공/실패 판정 확률을 비선형으로 비튼다."
+    },
+    "event_mutation_rate": {
+      "value": 0.3,
+      "min": 0.0,
+      "max": 1.0,
+      "desc": "이벤트 돌연변이율 - 정규 이벤트가 변형 이벤트로 변이할 확률."
+    },
+    "crisis_escalation": {
+      "value": 1.1,
+      "min": 0.5,
+      "max": 3.0,
+      "desc": "위기 가속도 - 턴이 진행될수록 위기 강도가 누적 증가하는 비율."
+    },
+    "luck_factor": {
+      "value": 1.0,
+      "min": 0.0,
+      "max": 3.0,
+      "desc": "행운 계수 - 치명타/대성공/희귀 보상 발생 가중치."
+    },
+    "chaos_resonance": {
+      "value": 0.7,
+      "min": 0.0,
+      "max": 2.0,
+      "desc": "혼돈 공명 - 한 이벤트가 연쇄 이벤트를 유발할 확률."
+    }
+  },
+  "simulation": {
+    "seed": null,
+    "max_turns": 10,
+    "delay_seconds": 0.0
+  },
+  "hunter": {
+    "name": "무명",
+    "title": "각성하지 못한 자",
+    "level": 1,
+    "hp": 100,
+    "max_hp": 100,
+    "stamina": 50,
+    "max_stamina": 50,
+    "attack": 12,
+    "defense": 8,
+    "luck": 10,
+    "sanity": 80,
+    "max_sanity": 80,
+    "coins": 0
+  },
+  "constellation": {
+    "name": "흑염룡을 삼킨 성좌",
+    "favor": 30,
+    "patronage": "은밀한 모략가"
+  }
+}
