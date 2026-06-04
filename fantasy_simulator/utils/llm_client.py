@@ -1,19 +1,21 @@
-"""Claude / Codex / GPT API call helpers."""
+"""Claude / Codex / GPT API call helpers with retry and mock fallback."""
 
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Any
 
 from utils.io_helpers import load_text
-from utils.llm.base import LLMMessage, LLMRequest
+from utils.llm.base import LLMMessage, LLMRequest, LLMResponse
 from utils.llm.router import LLMRouter
+from utils.llm_errors import LLMCallError
 from utils.structured_output import StructuredOutputClient, StructuredOutputError
 
 
 class LLMClient:
-    """Thin wrapper around providers + structured output validation."""
+    """Provider wrapper: live API when keys exist, mock offline, retry + degrade on failure."""
 
     def __init__(self, base_dir: Path | str) -> None:
         self.base_dir = Path(base_dir)
@@ -23,6 +25,12 @@ class LLMClient:
             schemas_dir=self.base_dir / "schemas",
             max_retries=so_cfg.get("max_retries", 3),
             repair_on_failure=so_cfg.get("repair_on_failure", True),
+        )
+
+    def network_config(self) -> dict[str, Any]:
+        return self.llm_router.routing.get(
+            "network",
+            {"max_retries": 2, "backoff_seconds": 1.0, "fallback_to_mock_on_error": True},
         )
 
     def load_prompt(self, prompt_file: str) -> str:
@@ -39,8 +47,9 @@ class LLMClient:
         *,
         role: str = "narrator",
         metadata: dict[str, Any] | None = None,
+        route: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        return self._call("claude", prompt_file, state, action, role=role, metadata=metadata)
+        return self._call("claude", prompt_file, state, action, role=role, metadata=metadata, route=route)
 
     def call_codex(
         self,
@@ -51,11 +60,12 @@ class LLMClient:
         role: str = "mechanics",
         metadata: dict[str, Any] | None = None,
         rules: dict[str, str] | None = None,
+        route: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        extra = metadata or {}
+        extra = dict(metadata or {})
         if rules:
-            extra = {**extra, "rules": rules}
-        return self._call("codex", prompt_file, state, action, role=role, metadata=extra)
+            extra["rules"] = rules
+        return self._call("codex", prompt_file, state, action, role=role, metadata=extra, route=route)
 
     def call_gpt(
         self,
@@ -65,8 +75,9 @@ class LLMClient:
         *,
         role: str = "quick_event",
         metadata: dict[str, Any] | None = None,
+        route: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        return self._call("gpt", prompt_file, state, action, role=role, metadata=metadata)
+        return self._call("gpt", prompt_file, state, action, role=role, metadata=metadata, route=route)
 
     def call_model(
         self,
@@ -81,18 +92,39 @@ class LLMClient:
         rules: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         if model == "rule":
-            raise ValueError("Use run_rule_based for model=rule")
+            raise ValueError("Use rule engine for model=rule")
         if not prompt_file:
             raise ValueError(f"prompt_file required for model={model}")
 
         meta = metadata or {}
         if model == "claude":
-            return self.call_claude(prompt_file, state, action, role=role, metadata=meta)
+            return self.call_claude(prompt_file, state, action, role=role, metadata=meta, route=route)
         if model == "codex":
-            return self.call_codex(prompt_file, state, action, role=role, metadata=meta, rules=rules)
+            return self.call_codex(prompt_file, state, action, role=role, metadata=meta, rules=rules, route=route)
         if model in ("gpt", "mock"):
             return self._call(model, prompt_file, state, action, role=role, metadata=meta, route=route)
         raise ValueError(f"Unknown model family: {model}")
+
+    def _complete_with_retries(self, provider: Any, request: LLMRequest) -> LLMResponse:
+        net = self.network_config()
+        max_retries = int(net.get("max_retries", 2))
+        backoff = float(net.get("backoff_seconds", 1.0))
+        last_exc: Exception | None = None
+
+        for attempt in range(max_retries + 1):
+            try:
+                return provider.complete(request)
+            except (RuntimeError, OSError, TimeoutError) as exc:
+                last_exc = exc
+                if attempt >= max_retries:
+                    break
+                time.sleep(backoff * (2**attempt))
+
+        raise LLMCallError(
+            f"Provider {provider.name} failed after {max_retries + 1} attempts",
+            provider=provider.name,
+            cause=last_exc,
+        )
 
     def _call(
         self,
@@ -107,7 +139,8 @@ class LLMClient:
     ) -> dict[str, Any]:
         route = route or {"role": role, "schema": None, "structured": False, "temperature": 0.7}
         resolved = self.llm_router.resolve_with_fallback(role)
-        is_mock = resolved["model_key"] == self.llm_router.fallback_model()
+        degraded = False
+        fallback_reason: str | None = None
 
         system_prompt = self.load_prompt(prompt_file)
         user_payload: dict[str, Any] = {
@@ -143,45 +176,103 @@ class LLMClient:
         )
 
         provider = resolved["provider"]
+        try:
+            response = self._complete_with_retries(provider, request)
+        except LLMCallError as exc:
+            net = self.network_config()
+            mock_key = self.llm_router.fallback_model()
+            if (
+                net.get("fallback_to_mock_on_error", True)
+                and mock_key == "mock"
+                and provider.name != "mock"
+            ):
+                mock_provider = self.llm_router.provider_for_model("mock")
+                request.model = "mock"
+                response = mock_provider.complete(request)
+                resolved = self.llm_router.resolve_role(role, force_model_key="mock")
+                provider = mock_provider
+                degraded = True
+                fallback_reason = str(exc)
+            else:
+                raise
+
+        is_mock = provider.name == "mock"
         retries = 0
-        last_raw = ""
+        last_raw = response.content
+
         while retries <= self.structured.max_retries:
-            response = provider.complete(request)
-            last_raw = response.content
             if not structured:
-                return {
-                    "model": family,
-                    "role": role,
-                    "text": response.content,
-                    "parsed": None,
-                    "provider": provider.name,
-                    "model_key": resolved["model_key"],
-                    "is_mock": is_mock,
-                    "retries": retries,
-                }
+                return self._result_dict(
+                    family=family,
+                    role=role,
+                    text=response.content,
+                    parsed=None,
+                    provider=provider.name,
+                    model_key=resolved["model_key"],
+                    is_mock=is_mock,
+                    retries=retries,
+                    degraded=degraded,
+                    fallback_reason=fallback_reason,
+                )
             try:
                 parsed = self.structured.parse_and_validate(response.content, schema_name)
-                return {
-                    "model": family,
-                    "role": role,
-                    "text": response.content,
-                    "parsed": parsed,
-                    "provider": provider.name,
-                    "model_key": resolved["model_key"],
-                    "is_mock": is_mock,
-                    "retries": retries,
-                }
+                return self._result_dict(
+                    family=family,
+                    role=role,
+                    text=response.content,
+                    parsed=parsed,
+                    provider=provider.name,
+                    model_key=resolved["model_key"],
+                    is_mock=is_mock,
+                    retries=retries,
+                    degraded=degraded,
+                    fallback_reason=fallback_reason,
+                )
             except StructuredOutputError as exc:
                 retries += 1
                 if not self.structured.repair_on_failure or retries > self.structured.max_retries:
-                    raise
+                    raise LLMCallError(
+                        f"Structured output failed for role={role}",
+                        role=role,
+                        provider=provider.name,
+                        cause=exc,
+                    ) from exc
                 repair = self.structured.build_repair_prompt(
                     schema_name, last_raw, exc.errors or [str(exc)]
                 )
                 request.messages.append(LLMMessage(role="assistant", content=last_raw))
                 request.messages.append(LLMMessage(role="user", content=repair))
+                response = self._complete_with_retries(provider, request)
+                last_raw = response.content
 
-        raise StructuredOutputError("Structured output retries exhausted", raw=last_raw)
+        raise LLMCallError("Structured output retries exhausted", role=role, provider=provider.name)
+
+    @staticmethod
+    def _result_dict(
+        *,
+        family: str,
+        role: str,
+        text: str,
+        parsed: dict[str, Any] | None,
+        provider: str,
+        model_key: str,
+        is_mock: bool,
+        retries: int,
+        degraded: bool = False,
+        fallback_reason: str | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "model": family,
+            "role": role,
+            "text": text,
+            "parsed": parsed,
+            "provider": provider,
+            "model_key": model_key,
+            "is_mock": is_mock,
+            "degraded": degraded,
+            "fallback_reason": fallback_reason,
+            "retries": retries,
+        }
 
     def provider_status(self) -> dict[str, Any]:
         """Report which configured models can reach live APIs vs mock fallback."""
@@ -220,10 +311,12 @@ class LLMClient:
 
     def format_provider_status(self) -> str:
         status = self.provider_status()
+        net = self.network_config()
         lines = [
             "=== LLM Provider Status ===",
             f"  {status['note']}",
             f"  fallback: {status['active_fallback']}",
+            f"  network retries: {net.get('max_retries', 2)} | degrade to mock: {net.get('fallback_to_mock_on_error', True)}",
             "",
         ]
         for key, info in status["models"].items():

@@ -1,4 +1,10 @@
-"""World state load/save, LLM snapshot, and result application."""
+"""World state load/save, LLM snapshot, and result application.
+
+Storage model (keep this mental model simple):
+  - **Canonical:** `state/*.json` shards — engine always reads/writes here
+  - **Mirror:**   `world_state.json` — auto-exported hub for Cursor @ references
+  - **Single store:** StateLoader and StateManager share one StateStore instance
+"""
 
 from __future__ import annotations
 

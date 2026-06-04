@@ -27,16 +27,17 @@ fantasy_simulator/
     └── state_manager.py
 ```
 
-## 멀티 모델 분기 (`simulation_engine.py`)
+## 멀티 모델 분기
 
-| 필요 | 모델 | 프롬프트 |
-|------|------|----------|
-| 서사·캐릭터 | Claude Opus 4.8 High | `narrator_claude.md` |
-| 규칙·메카닉스 | Codex 5.3 High | `mechanics_codex.md` (JSON only) |
-| 빠른 아이디어 | GPT-5.5 High | `quick_event_gpt.md` |
-| 오케스트레이션 | Cursor Composer + 엔진 | `simulation_engine.py` |
+상세 아키텍처: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-**기본 순서 (explore):** GPT → **Codex(규칙)** → **Opus(서사)**
+| 필요 | 모델 | 진입점 |
+|------|------|--------|
+| 서사 | Claude Opus 4.8 | `turn_processor` → `llm_client.call_claude` |
+| 규칙 | Codex 5.3 | `turn_processor` → `llm_client.call_codex` |
+| 오케스트레이션 | Composer + 엔진 | `simulation_engine.run_turn` |
+
+**단일 진입점:** `utils/turn_processor.process_player_action()`
 
 ## Cursor 사용법
 

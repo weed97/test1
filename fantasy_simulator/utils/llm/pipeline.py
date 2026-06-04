@@ -1,4 +1,8 @@
-"""Turn pipeline — invokes LLM roles in configured order."""
+"""DEPRECATED: legacy multi-step pipeline.
+
+Use utils.turn_processor.process_player_action() instead.
+Kept for reference only — not imported by simulation_engine.
+"""
 
 from __future__ import annotations
 

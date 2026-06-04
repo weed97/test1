@@ -6,6 +6,11 @@
     "max_retries": 3,
     "repair_on_failure": true
   },
+  "network": {
+    "max_retries": 2,
+    "backoff_seconds": 1.0,
+    "fallback_to_mock_on_error": true
+  },
   "models": {
     "codex_53": {
       "label": "Codex 5.3 High",

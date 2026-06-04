@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from utils.llm_client import LLMClient
+from utils.llm_errors import LLMCallError
 from utils.llm_router import decide_model_and_prompt, route_consistency_check
 from utils.rule_engine import RuleEngine
 from utils.state_manager import StateManager
@@ -34,14 +35,17 @@ def run_rule_engine(
     return {"summary": f"Unknown action: {action}", "event_log_append": []}
 
 
-def _rule_result(mechanical: dict[str, Any]) -> dict[str, Any]:
-    return {
+def _rule_result(mechanical: dict[str, Any], *, reason: str | None = None) -> dict[str, Any]:
+    out: dict[str, Any] = {
         "model": "rule",
         "role": "rule_engine",
         "mechanical": mechanical,
         "parsed": None,
         "text": "",
     }
+    if reason:
+        out["fallback_reason"] = reason
+    return out
 
 
 def _append_rule_outcome(mechanical: dict[str, Any], lines: list[str]) -> None:
@@ -56,29 +60,62 @@ def _normalize_prompt_file(prompt_file: str | None, default: str) -> str:
     return prompt_file.replace("prompts/", "")
 
 
+def _apply_rule_turn(
+    *,
+    rules: RuleEngine,
+    loader: Any,
+    state: dict[str, Any],
+    action: str,
+    turn: int,
+    manager: StateManager,
+    results: list[dict[str, Any]],
+    outcome_lines: list[str],
+    reason: str | None = None,
+) -> None:
+    mechanical = run_rule_engine(rules, loader, state, action, turn)
+    result = _rule_result(mechanical, reason=reason)
+    manager.apply_result(state, result, turn=turn)
+    results.append(result)
+    _append_rule_outcome(mechanical, outcome_lines)
+    if reason:
+        outcome_lines.append(f"[fallback] {reason}")
+
+
 def _invoke_llm(
     client: LLMClient,
     *,
     model: str,
-    role: str,
     prompt_file: str | None,
     snapshot: dict[str, Any],
     action: str,
     metadata: dict[str, Any],
     rules_text: dict[str, str] | None,
+    route: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     pf = _normalize_prompt_file(prompt_file, PROMPT_NARRATOR)
     if model == "claude":
-        return client.call_claude(pf, snapshot, action, role="narrator", metadata=metadata)
+        return client.call_claude(pf, snapshot, action, role="narrator", metadata=metadata, route=route)
     if model == "codex":
         if rules_text is None:
             raise ValueError("rules_text required for codex")
         pf = _normalize_prompt_file(prompt_file, PROMPT_MECHANICS)
-        return client.call_codex(pf, snapshot, action, role="mechanics", rules=rules_text, metadata=metadata)
+        return client.call_codex(pf, snapshot, action, role="mechanics", rules=rules_text, metadata=metadata, route=route)
     if model == "gpt":
         pf = _normalize_prompt_file(prompt_file, PROMPT_QUICK_EVENT)
-        return client.call_gpt(pf, snapshot, action, role="quick_event", metadata=metadata)
+        return client.call_gpt(pf, snapshot, action, role="quick_event", metadata=metadata, route=route)
     raise ValueError(f"Unsupported LLM model family: {model}")
+
+
+def _format_llm_line(step: dict[str, Any], result: dict[str, Any]) -> str:
+    model = step.get("model") or result.get("model", "?")
+    provider = result.get("provider", "?")
+    tags: list[str] = []
+    if result.get("is_mock"):
+        tags.append("mock")
+    if result.get("degraded"):
+        tags.append("degraded")
+    tag_str = f" [{','.join(tags)}]" if tags else ""
+    return f"{step.get('role', model)} [{model}/{provider}{tag_str}]"
 
 
 def process_player_action(
@@ -91,7 +128,10 @@ def process_player_action(
     rules: RuleEngine,
     client: LLMClient | None,
 ) -> dict[str, Any]:
-    """Route action → rule engine and/or LLM → persist via StateManager."""
+    """Route action → rule engine and/or LLM → persist via StateManager.
+
+    This is the only turn-resolution entry point. simulation_engine.run_turn() calls here.
+    """
     decision = decide_model_and_prompt(action, state, mode=mode, base_dir=manager.base_dir)
     snapshot = manager.snapshot()
     outcome_lines: list[str] = [
@@ -102,19 +142,29 @@ def process_player_action(
     rules_text: dict[str, str] | None = None
 
     if mode == "hybrid":
-        mechanical = run_rule_engine(rules, manager.loader, state, action, turn)
-        result = _rule_result(mechanical)
-        manager.apply_result(state, result, turn=turn)
-        results.append(result)
-        _append_rule_outcome(mechanical, outcome_lines)
+        _apply_rule_turn(
+            rules=rules,
+            loader=manager.loader,
+            state=state,
+            action=action,
+            turn=turn,
+            manager=manager,
+            results=results,
+            outcome_lines=outcome_lines,
+        )
 
     if not decision["use_llm"] or client is None:
         if mode != "hybrid":
-            mechanical = run_rule_engine(rules, manager.loader, state, action, turn)
-            result = _rule_result(mechanical)
-            manager.apply_result(state, result, turn=turn)
-            results.append(result)
-            _append_rule_outcome(mechanical, outcome_lines)
+            _apply_rule_turn(
+                rules=rules,
+                loader=manager.loader,
+                state=state,
+                action=action,
+                turn=turn,
+                manager=manager,
+                results=results,
+                outcome_lines=outcome_lines,
+            )
         manager.save(state)
         manager.refresh_state(state)
         return {"decision": decision, "results": results, "lines": outcome_lines}
@@ -145,16 +195,29 @@ def process_player_action(
             result = _invoke_llm(
                 client,
                 model=model,
-                role=step.get("role") or decision.get("role") or "narrator",
                 prompt_file=step.get("prompt_file") or decision.get("prompt_file"),
                 snapshot=snapshot,
                 action=action,
                 metadata=metadata,
                 rules_text=rules_text,
+                route=step,
             )
-        except ValueError:
-            mechanical = run_rule_engine(rules, manager.loader, state, action, turn)
-            result = _rule_result(mechanical)
+        except (LLMCallError, ValueError) as exc:
+            _apply_rule_turn(
+                rules=rules,
+                loader=manager.loader,
+                state=state,
+                action=action,
+                turn=turn,
+                manager=manager,
+                results=results,
+                outcome_lines=outcome_lines,
+                reason=f"LLM failed ({model}): {exc}",
+            )
+            continue
+
+        if result.get("degraded") and result.get("fallback_reason"):
+            outcome_lines.append(f"[llm_degraded] {result['fallback_reason']}")
 
         manager.apply_result(state, result, turn=turn)
         results.append(result)
@@ -169,28 +232,33 @@ def process_player_action(
         if result.get("text") and step.get("role") == "narrator":
             outcome_lines.append(result["text"])
 
-        provider = result.get("provider", "?")
-        mock_tag = " [mock]" if result.get("is_mock") else ""
-        outcome_lines.append(f"{step.get('role', model)} [{model}/{provider}{mock_tag}]")
+        outcome_lines.append(_format_llm_line(step, result))
 
     if mode in ("llm", "hybrid") and client is not None:
         for step in route_consistency_check(turn, state, base_dir=manager.base_dir):
-            result = client.call_model(
-                step["model"],
-                PROMPT_WORLD_ARBITER,
-                snapshot,
-                "consistency_check",
-                role="world_arbiter",
-                route=step,
-            )
-            manager.apply_result(state, result, turn=turn)
-            if result.get("parsed"):
-                p = result["parsed"]
-                outcome_lines.append(
-                    f"[world_arbiter] score={p.get('consistency_score')} "
-                    f"issues={len(p.get('issues_found', []))}"
+            try:
+                result = client.call_model(
+                    step["model"],
+                    PROMPT_WORLD_ARBITER,
+                    snapshot,
+                    "consistency_check",
+                    role="world_arbiter",
+                    route=step,
                 )
+                manager.apply_result(state, result, turn=turn)
+                if result.get("parsed"):
+                    p = result["parsed"]
+                    outcome_lines.append(
+                        f"[world_arbiter] score={p.get('consistency_score')} "
+                        f"issues={len(p.get('issues_found', []))}"
+                    )
+            except LLMCallError as exc:
+                outcome_lines.append(f"[world_arbiter skipped] {exc}")
 
     manager.save(state)
     manager.refresh_state(state)
     return {"decision": decision, "results": results, "lines": outcome_lines}
+
+
+# Alias for backward compatibility (removed wrappers lived in simulation_engine)
+process_turn = process_player_action
