@@ -81,7 +81,7 @@ End of each turn (`execute_turn` → `tick_world_systems`):
 
 Event seeds may gate on `requires_faction_min/max`, `requires_tension_min/max`, and apply `faction_reputation` in outcomes. Legacy quest `reputation.ashpoint` etc. map to faction IDs via `legacy_reputation_keys`.
 
-Long-term arc: **잿빛 봉인의 균열** (`ashen_seal_cracking`) — 3 phases, branching choices, 5 endings, internal ending tracker. See `events/main_stories.json` and `events/seeds/main_story_ashen_seal.json`.
+Long-term arc: **잿빛 봉인의 균열** — Phase 1 **균열의 전조** (5-step flow, 5-way branch, exit conditions). See `events/seeds/main_story_phase1.json`.
 
 Player rep mirrors to `state.factions.player_reputation` for `world_state.json` readability.
 

@@ -15,10 +15,12 @@
       "phases": [
         {
           "phase": 1,
-          "name": "균열의 시작",
-          "goal": "사건 실체를 조사하고 각 세력과 접촉",
-          "progress_needed": 30,
-          "description": "북쪽 산에서 검은 연기. 고대 봉인이 약해지기 시작한다."
+          "name": "균열의 전조",
+          "name_en": "The First Crack",
+          "goal": "사건 실체를 인지하고, 세력과 접촉하며 첫 입장을 정한다",
+          "progress_needed": 35,
+          "description": "북쪽 산의 검은 연기. 소문 확산. 세력들의 움직임. 첫 분기와 균열의 첫 파열.",
+          "turn_target": "30-50"
         },
         {
           "phase": 2,
@@ -35,39 +37,103 @@
           "description": "봉인이 거의 풀리기 직전. 세계의 운명이 갈린다."
         }
       ],
+      "legacy_choice_ids": {
+        "ally_council_coverup": "ally_village",
+        "ally_warden_seal": "seek_truth",
+        "ally_covenant_power": "pursue_power"
+      },
+      "phase1_flow": {
+        "flags_to_step": {
+          "black_smoke_seen": 1,
+          "phase1_rumors_spread": 2,
+          "phase1_factions_active": 3,
+          "story_phase1_chosen": 4,
+          "phase1_climax_done": 5
+        },
+        "step_queue": {
+          "1": ["phase1_village_rumors"],
+          "3": [
+            "story_faction_approach_council",
+            "story_faction_approach_trade",
+            "story_faction_approach_blackfang",
+            "story_faction_approach_warden",
+            "story_faction_approach_covenant",
+            "story_faction_approach_knights"
+          ],
+          "4": [
+            "story_choice_council",
+            "story_choice_warden",
+            "story_choice_covenant",
+            "story_choice_opportunist",
+            "story_choice_stay_neutral"
+          ],
+          "5": ["phase1_climax_descent"]
+        },
+        "branch_queue_min_contacts": 1
+      },
+      "phase1_exit": {
+        "min_progress": 15,
+        "any_of": [
+          {"flag": "phase1_climax_done"},
+          {"faction_rep_min": 25},
+          {"tension_min": 60},
+          {"factions_contacted_min": 2, "requires_flag": "story_phase1_chosen"}
+        ]
+      },
       "phase1_choices": [
         {
-          "id": "ally_council_coverup",
-          "label": "자치회와 협력해 사건을 은폐",
-          "summary": "애쉬포인트 자치회가 사건을 마을 안에서 처리하려 한다.",
-          "flags_set": {"story_path_council": true, "story_phase1_chosen": true},
+          "id": "ally_village",
+          "label": "A. 마을 편에 선다",
+          "summary": "애쉬포인트 자치회와 협력해 사건을 해결하려 한다. 안정 루트.",
+          "flags_set": {"story_path_council": true, "story_path_village": true, "story_phase1_chosen": true},
           "rumor_tone": "reassurance",
-          "ending_bias": {"new_order": 8, "seal_maintained": 6, "age_of_chaos": -4},
-          "faction_reputation": {"ashpoint_council": 12, "ashen_wardens": -4},
+          "ending_bias": {"new_order": 12, "seal_maintained": 6},
+          "faction_reputation": {"ashpoint_council": 15, "silver_cross_order": 5},
           "tension_delta": -3,
-          "blocks_choices": ["ally_warden_seal", "ally_covenant_power"]
+          "blocks_choices": ["pursue_power", "seek_truth", "exploit_chaos", "stay_neutral"]
         },
         {
-          "id": "ally_warden_seal",
-          "label": "잿빛 감시자와 접촉해 봉인을 지키려 함",
-          "summary": "잿빛 감시자가 봉인 강화를 요구한다. 인간 사회와 거리를 두라는 경고도 따라온다.",
-          "flags_set": {"story_path_warden": true, "story_phase1_chosen": true},
-          "rumor_tone": "mystery",
-          "ending_bias": {"seal_maintained": 15, "age_of_chaos": -6},
-          "faction_reputation": {"ashen_wardens": 15, "black_covenant": -6},
-          "tension_delta": 2,
-          "blocks_choices": ["ally_council_coverup", "ally_covenant_power"]
-        },
-        {
-          "id": "ally_covenant_power",
-          "label": "칠흑의 서약과 접촉해 힘을 얻으려 함",
-          "summary": "칠흑의 서약이 봉인 너머의 힘을 속삭인다. 대가는 나중에 온다.",
-          "flags_set": {"story_path_covenant": true, "story_phase1_chosen": true},
+          "id": "pursue_power",
+          "label": "B. 힘을 추구한다",
+          "summary": "칠흑의 서약과 접촉하거나 금기의 힘을 찾는다. 위험하지만 강력.",
+          "flags_set": {"story_path_covenant": true, "story_path_power": true, "story_phase1_chosen": true},
           "rumor_tone": "fear",
-          "ending_bias": {"ancient_awakening": 12, "power_absorption": 10, "seal_maintained": -10},
-          "faction_reputation": {"black_covenant": 15, "ashpoint_council": -8, "ashen_wardens": -8},
-          "tension_delta": 8,
-          "blocks_choices": ["ally_council_coverup", "ally_warden_seal"]
+          "ending_bias": {"ancient_awakening": 15, "power_absorption": 12, "seal_maintained": -12},
+          "faction_reputation": {"black_covenant": 18, "ashpoint_council": -10, "ashen_wardens": -8},
+          "tension_delta": 10,
+          "blocks_choices": ["ally_village", "seek_truth", "exploit_chaos", "stay_neutral"]
+        },
+        {
+          "id": "seek_truth",
+          "label": "C. 진실을 파헤친다",
+          "summary": "잿빛 감시자와 접촉해 고대 봉인의 진실을 알려 한다.",
+          "flags_set": {"story_path_warden": true, "story_path_truth": true, "story_phase1_chosen": true},
+          "rumor_tone": "mystery",
+          "ending_bias": {"seal_maintained": 18, "age_of_chaos": -5},
+          "faction_reputation": {"ashen_wardens": 18, "black_covenant": -8},
+          "tension_delta": 3,
+          "blocks_choices": ["ally_village", "pursue_power", "exploit_chaos", "stay_neutral"]
+        },
+        {
+          "id": "exploit_chaos",
+          "label": "D. 혼란을 이용한다",
+          "summary": "상인 연합이나 산적단과 손잡고 이득을 취한다. 기회주의 루트.",
+          "flags_set": {"story_path_opportunist": true, "story_phase1_chosen": true},
+          "rumor_tone": "uncertain",
+          "ending_bias": {"age_of_chaos": 12, "power_absorption": 5},
+          "faction_reputation": {"silverwood_trade_union": 10, "blackfang_marauders": 10, "ashpoint_council": -6},
+          "tension_delta": 6,
+          "blocks_choices": ["ally_village", "pursue_power", "seek_truth", "stay_neutral"]
+        },
+        {
+          "id": "stay_neutral",
+          "label": "E. 중립을 지킨다",
+          "summary": "어느 세력에도 깊이 관여하지 않는다. 후반 선택지가 넓어진다.",
+          "flags_set": {"story_path_neutral_early": true, "story_phase1_chosen": true},
+          "rumor_tone": "uncertain",
+          "ending_bias": {"age_of_chaos": 8, "seal_maintained": 3, "new_order": 3},
+          "tension_delta": 1,
+          "blocks_choices": ["ally_village", "pursue_power", "seek_truth", "exploit_chaos"]
         }
       ],
       "phase2_choices": [
@@ -144,7 +210,9 @@
           "sentinel_stirring": 8,
           "broken_rune_pillar": 6,
           "seal_drip": 5,
-          "black_smoke": 4,
+          "black_smoke": 6,
+          "phase1_village_rumors": 5,
+          "phase1_climax_descent": 12,
           "story_faction_clash": 10,
           "story_seal_near_break": 12
         },
@@ -152,36 +220,38 @@
         "flags": {
           "grey_cloak_met": 5,
           "torren_side_quest_done": 3,
+          "phase1_rumors_spread": 4,
+          "phase1_climax_done": 10,
           "story_phase1_chosen": 8,
           "story_phase2_chosen": 10
         }
       },
       "phase_events": {
-        "1": {"at_progress": 12, "pending": ["story_choice_council", "story_choice_warden", "story_choice_covenant"]},
         "2": {"at_progress": 35, "pending": ["story_choice_alliance", "story_choice_neutral", "story_choice_betrayal"]}
       },
       "ending_weights": {
         "seal_maintained": {
           "faction": {"ashen_wardens": 2.0, "ashpoint_council": 1.2},
-          "choices": {"ally_warden_seal": 20, "path_alliance": 8},
-          "anti_choices": {"ally_covenant_power": -25, "path_betrayal": -10}
+          "choices": {"seek_truth": 20, "ally_village": 10, "path_alliance": 8},
+          "anti_choices": {"pursue_power": -25, "path_betrayal": -10}
         },
         "ancient_awakening": {
           "faction": {"black_covenant": 2.5},
-          "choices": {"ally_covenant_power": 25, "path_alliance": 5},
+          "choices": {"pursue_power": 25, "path_alliance": 5},
           "tension_min": 60
         },
         "power_absorption": {
           "faction": {"black_covenant": 1.5},
-          "choices": {"ally_covenant_power": 15, "path_betrayal": 25},
+          "choices": {"pursue_power": 15, "path_betrayal": 25, "exploit_chaos": 8},
           "requires_flags": ["story_path_betrayal"]
         },
         "new_order": {
           "faction": {"silver_cross_order": 2.0, "ashpoint_council": 1.5},
-          "choices": {"ally_council_coverup": 15, "path_alliance": 12}
+          "choices": {"ally_village": 18, "path_alliance": 12},
+          "anti_choices": {"exploit_chaos": -8}
         },
         "age_of_chaos": {
-          "choices": {"path_neutral": 25, "path_betrayal": 8},
+          "choices": {"stay_neutral": 20, "exploit_chaos": 15, "path_neutral": 25, "path_betrayal": 8},
           "faction_spread_min": 3
         }
       }

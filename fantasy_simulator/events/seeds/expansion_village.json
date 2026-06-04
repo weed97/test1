@@ -50,8 +50,9 @@
       "hook": "북쪽 산에서 검은 연기가 피어오르고 있다.",
       "outcome": {
         "summary": "하늘이 잠시 어두워진다. 연기 기둥이 산 너머로 솟구치고, 마을 종이 울린다.",
-        "tension_delta": 12,
-        "flags_set": {"black_smoke_seen": true},
+        "tension_delta": 8,
+        "flags_set": {"black_smoke_seen": true, "phase1_smoke_witnessed": true},
+        "main_story_phase1_flag": "black_smoke_seen",
         "rumor_add": "산에서 검은 연기가 피어오른 날이 또 있었다."
       }
     },

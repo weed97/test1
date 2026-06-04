@@ -1,0 +1,151 @@
+{
+  "seeds": [
+    {
+      "id": "phase1_village_rumors",
+      "title": "마을의 불안",
+      "summary": "검은 연기 이후 마을 곳곳에서 이상한 소문이 퍼진다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_flags": ["black_smoke_seen"],
+      "requires_not_flags": ["phase1_rumors_spread"],
+      "weight": 25,
+      "outcome": {
+        "summary": "우물가, 대장간, 여관 — 어디서든 속삭임이 들린다. '단순한 산불이 아니야.' '봉인이…'",
+        "tension_delta": 5,
+        "flags_set": {"phase1_rumors_spread": true},
+        "main_story_phase1_flag": "phase1_rumors_spread"
+      }
+    },
+    {
+      "id": "story_faction_approach_council",
+      "title": "자치회의 손길",
+      "summary": "마을 장로가 공식적으로 접촉을 시도한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore"],
+      "related_npc": "elder_maren",
+      "requires_flags": ["phase1_rumors_spread"],
+      "requires_not_flags": ["contact_ashpoint_council"],
+      "weight": 18,
+      "outcome": {
+        "summary": "장로 마렌: '북쪽 산을 조사해 주게. 마을의 안전이 걸린 일이야.'",
+        "main_story_faction_contact": "ashpoint_council",
+        "faction_reputation": {"ashpoint_council": 5},
+        "flags_set": {"contact_ashpoint_council": true, "phase1_elder_request": true}
+      }
+    },
+    {
+      "id": "story_faction_approach_trade",
+      "title": "상인 연합의 제안",
+      "summary": "릴리안이 정보와 물자를 거래하려 한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk"],
+      "related_npc": "lilian_innkeeper",
+      "requires_flags": ["phase1_rumors_spread"],
+      "requires_not_flags": ["contact_silverwood_trade_union"],
+      "weight": 16,
+      "outcome": {
+        "summary": "릴리안: '연기 소동이 무역로를 망칠 수 있어요. 정보는 비싸지만, 정확해요.'",
+        "main_story_faction_contact": "silverwood_trade_union",
+        "faction_reputation": {"silverwood_trade_union": 4},
+        "flags_set": {"contact_silverwood_trade_union": true}
+      }
+    },
+    {
+      "id": "story_faction_approach_blackfang",
+      "title": "검은송곳니의 시선",
+      "summary": "숲길에서 산적들이 당신을 지켜본다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore"],
+      "location_zones": ["forest", "ashpoint"],
+      "requires_flags": ["phase1_rumors_spread"],
+      "requires_not_flags": ["contact_blackfang_marauders"],
+      "weight": 14,
+      "outcome": {
+        "summary": "가면 산적: '혼란은 기회지. 우리 편이면 살 길이 보일 거야.'",
+        "main_story_faction_contact": "blackfang_marauders",
+        "faction_reputation": {"blackfang_marauders": 3},
+        "tension_delta": 4,
+        "flags_set": {"contact_blackfang_marauders": true}
+      }
+    },
+    {
+      "id": "story_faction_approach_warden",
+      "title": "감시자의 관측",
+      "summary": "산 외곽에서 정체불명의 인물이 당신을 관찰한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "requires_flags": ["phase1_rumors_spread"],
+      "requires_not_flags": ["contact_ashen_wardens"],
+      "weight": 15,
+      "outcome": {
+        "summary": "회색 망토: '봉인의 균열을 봤군. 진실을 원하면… 인간의 소음은 멀리하라.'",
+        "main_story_faction_contact": "ashen_wardens",
+        "faction_reputation": {"ashen_wardens": 4},
+        "flags_set": {"contact_ashen_wardens": true}
+      }
+    },
+    {
+      "id": "story_faction_approach_covenant",
+      "title": "칠흑의 유혹",
+      "summary": "수상한 인물이 어둠 속에서 접근한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "requires_time": ["night"],
+      "location_zones": ["ashpoint"],
+      "requires_flags": ["phase1_rumors_spread"],
+      "requires_not_flags": ["contact_black_covenant"],
+      "weight": 13,
+      "outcome": {
+        "summary": "그림자: '봉인 너머의 힘… 원한다면 손을 내밀어라. 대가는 나중에 치르면 된다.'",
+        "main_story_faction_contact": "black_covenant",
+        "faction_reputation": {"black_covenant": 3},
+        "tension_delta": 5,
+        "flags_set": {"contact_black_covenant": true}
+      }
+    },
+    {
+      "id": "story_faction_approach_knights",
+      "title": "은빛 십자의 조사",
+      "summary": "기사단 순찰대가 마을에 들어선다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_flags": ["phase1_rumors_spread"],
+      "requires_not_flags": ["contact_silver_cross_order"],
+      "weight": 16,
+      "outcome": {
+        "summary": "은빛 갑옷의 기사: '검은 연기는 질서를 위협합니다. 정의로운 자라면 협력하십시오.'",
+        "main_story_faction_contact": "silver_cross_order",
+        "faction_reputation": {"silver_cross_order": 5},
+        "flags_set": {"contact_silver_cross_order": true, "silver_cross_met": true}
+      }
+    },
+    {
+      "id": "phase1_climax_descent",
+      "title": "균열의 첫 파열",
+      "summary": "북쪽 산에서 봉인과 관련된 첫 대형 사건이 터진다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "requires_flags": ["story_phase1_chosen"],
+      "requires_not_flags": ["phase1_climax_done"],
+      "requires_tension_min": 40,
+      "weight": 30,
+      "tension_tags": ["crisis", "horror"],
+      "outcome": {
+        "summary": "산비탈에서 검은 연기가 휘몰아치며, 봉인석에 금이 간다. 무언가가… 아래에서 움직인다.",
+        "tension_delta": 10,
+        "flags_set": {"phase1_climax_done": true, "story_faction_clash_seen": true},
+        "main_story_phase1_flag": "phase1_climax_done"
+      }
+    }
+  ]
+}

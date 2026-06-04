@@ -100,7 +100,8 @@
         "summary": "장로 마렌: '연기는 단순한 산불이 아니네. 실버우드의 봉인이 약해지고 있어.'",
         "tension_delta": 3,
         "reputation": {"ashpoint": 8},
-        "flags_set": {"elder_briefed": true}
+        "flags_set": {"elder_briefed": true, "phase1_elder_request": true},
+        "main_story_faction_contact": "ashpoint_council"
       }
     },
     {

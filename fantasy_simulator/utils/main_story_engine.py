@@ -55,6 +55,8 @@ class MainStoryEngine:
                     "leading_ending": None,
                     "rumor_tone": "uncertain",
                     "resolved_ending": None,
+                    "phase1_step": 0,
+                    "factions_contacted": [],
                 }
             )
 
@@ -63,6 +65,8 @@ class MainStoryEngine:
         ms.setdefault("choices_made", [])
         ms.setdefault("ending_scores", {})
         ms.setdefault("rumor_tone", "uncertain")
+        ms.setdefault("phase1_step", 0)
+        ms.setdefault("factions_contacted", [])
         return ms
 
     def _migrate_story_state(self, ms: dict[str, Any]) -> None:
@@ -94,6 +98,7 @@ class MainStoryEngine:
         self._maybe_advance_phase(state, story, ms)
         self._maybe_queue_phase_events(state, story, ms, before)
         self._recalculate_ending_scores(state, story, ms)
+        lines.extend(self._check_phase1_exit(state, story, ms))
         if int(ms.get("progress", 0)) >= 100 and not ms.get("resolved_ending"):
             lines.extend(self._try_resolve_ending(state, story, ms))
         return lines
@@ -135,7 +140,11 @@ class MainStoryEngine:
                 if event_id not in pending:
                     pending.append(event_id)
 
+    def _resolve_choice_id(self, story: dict[str, Any], choice_id: str) -> str:
+        return story.get("legacy_choice_ids", {}).get(choice_id, choice_id)
+
     def _find_choice(self, story: dict[str, Any], choice_id: str) -> dict[str, Any] | None:
+        choice_id = self._resolve_choice_id(story, choice_id)
         for pool in ("phase1_choices", "phase2_choices"):
             for choice in story.get(pool, []):
                 if choice["id"] == choice_id:
@@ -147,6 +156,7 @@ class MainStoryEngine:
         story = self.story_def(ms["id"])
         if not story or ms.get("resolved_ending"):
             return []
+        choice_id = self._resolve_choice_id(story, choice_id)
         choice = self._find_choice(story, choice_id)
         if not choice:
             return []
@@ -182,29 +192,49 @@ class MainStoryEngine:
         }
         lines.extend(faction_engine.apply_reputation_outcome(state, outcome))
 
-        self._remove_blocked_choice_events(state, choice)
+        self._remove_blocked_choice_events(state, story, choice)
         self._recalculate_ending_scores(state, story, ms)
+        if int(ms.get("phase", 1)) == 1:
+            self._advance_phase1_from_flag(state, story, ms, "story_phase1_chosen")
+            lines.extend(self._queue_phase1_step_events(state, story, ms, 5))
+            amount = story.get("progress_sources", {}).get("flags", {}).get("story_phase1_chosen")
+            if amount and "story_phase1_chosen" in (choice.get("flags_set") or {}):
+                lines.extend(self.add_progress(state, int(amount), reason="1단계 분기"))
+            else:
+                lines.extend(self._check_phase1_exit(state, story, ms))
 
         summary = choice.get("summary")
         if summary:
             lines.append(summary)
         return lines
 
-    def _remove_blocked_choice_events(self, state: dict[str, Any], choice: dict[str, Any]) -> None:
-        blocked = choice.get("blocks_choices", [])
-        if not blocked:
-            return
-        pending = state.get("flags", {}).get("pending_events", [])
-        seed_map = {
-            "ally_council_coverup": "story_choice_council",
-            "ally_warden_seal": "story_choice_warden",
-            "ally_covenant_power": "story_choice_covenant",
+    def _choice_seed_map(self) -> dict[str, str]:
+        return {
+            "ally_village": "story_choice_council",
+            "seek_truth": "story_choice_warden",
+            "pursue_power": "story_choice_covenant",
+            "exploit_chaos": "story_choice_opportunist",
+            "stay_neutral": "story_choice_stay_neutral",
             "path_alliance": "story_choice_alliance",
             "path_neutral": "story_choice_neutral",
             "path_betrayal": "story_choice_betrayal",
         }
+
+    def _remove_blocked_choice_events(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        choice: dict[str, Any],
+    ) -> None:
+        blocked = choice.get("blocks_choices", [])
+        if not blocked:
+            return
+        pending = state.get("flags", {}).get("pending_events", [])
+        seed_map = self._choice_seed_map()
+        legacy = story.get("legacy_choice_ids", {})
         for cid in blocked:
-            sid = seed_map.get(cid)
+            resolved = legacy.get(cid, cid)
+            sid = seed_map.get(resolved)
             if sid and sid in pending:
                 pending.remove(sid)
 
@@ -216,6 +246,140 @@ class MainStoryEngine:
             "uncertain": "검은 연기의 정체를 아는 이는 없다.",
         }
         return rumors.get(tone, f"{story.get('title', '봉인')} 관련 소문이 바뀌고 있다.")
+
+    def _phase1_flow(self, story: dict[str, Any]) -> dict[str, Any]:
+        return story.get("phase1_flow", {})
+
+    def _advance_phase1_from_flag(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+        flag: str,
+    ) -> list[str]:
+        if int(ms.get("phase", 1)) != 1:
+            return []
+        flow = self._phase1_flow(story)
+        flags_to_step = flow.get("flags_to_step", {})
+        step = flags_to_step.get(flag)
+        if step is None:
+            return []
+        lines: list[str] = []
+        current = int(ms.get("phase1_step", 0))
+        if int(step) > current:
+            ms["phase1_step"] = int(step)
+            lines.extend(self._queue_phase1_step_events(state, story, ms, int(step)))
+        if flag == "phase1_rumors_spread" and not state.get("flags", {}).get("phase1_factions_active"):
+            state.setdefault("flags", {})["phase1_factions_active"] = True
+            if int(ms.get("phase1_step", 0)) < 3:
+                ms["phase1_step"] = 3
+                lines.extend(self._queue_phase1_step_events(state, story, ms, 3))
+        return lines
+
+    def _queue_phase1_step_events(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+        step: int,
+    ) -> list[str]:
+        if int(ms.get("phase", 1)) != 1:
+            return []
+        flow = self._phase1_flow(story)
+        step_queue = flow.get("step_queue", {})
+        events = step_queue.get(str(step), [])
+        if step == 4:
+            min_contacts = int(flow.get("branch_queue_min_contacts", 1))
+            if len(ms.get("factions_contacted", [])) < min_contacts:
+                return []
+        pending = state.setdefault("flags", {}).setdefault("pending_events", [])
+        added: list[str] = []
+        for event_id in events:
+            if event_id not in pending:
+                pending.append(event_id)
+                added.append(event_id)
+        if added and step == 4:
+            return ["[1단계] 세력 접촉 후 첫 분기점이 열렸다."]
+        return []
+
+    def record_faction_contact(self, state: dict[str, Any], faction_id: str) -> list[str]:
+        ms = self.ensure_initialized(state)
+        story = self.story_def(ms["id"])
+        if not story or int(ms.get("phase", 1)) != 1:
+            return []
+        contacted: list[str] = ms.setdefault("factions_contacted", [])
+        if faction_id in contacted:
+            return []
+        contacted.append(faction_id)
+        lines: list[str] = [f"[1단계] {faction_id} 세력과 접촉"]
+        flow = self._phase1_flow(story)
+        min_contacts = int(flow.get("branch_queue_min_contacts", 1))
+        if len(contacted) >= min_contacts and int(ms.get("phase1_step", 0)) >= 2:
+            if int(ms.get("phase1_step", 0)) < 4 and not state.get("flags", {}).get("story_phase1_chosen"):
+                ms["phase1_step"] = max(int(ms.get("phase1_step", 0)), 3)
+                lines.extend(self._queue_phase1_step_events(state, story, ms, 4))
+        return lines
+
+    def _check_phase1_exit(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+    ) -> list[str]:
+        if int(ms.get("phase", 1)) != 1 or ms.get("phase1_complete"):
+            return []
+        exit_cfg = story.get("phase1_exit")
+        if not exit_cfg:
+            return []
+        if int(ms.get("progress", 0)) < int(exit_cfg.get("min_progress", 0)):
+            return []
+        flags = state.get("flags", {})
+        faction_rep = flags.get("faction_reputation", {})
+        for rule in exit_cfg.get("any_of", []):
+            if rule.get("flag") and flags.get(rule["flag"]):
+                return self._complete_phase1(state, story, ms, rule["flag"])
+            if rule.get("faction_rep_min") is not None:
+                threshold = int(rule["faction_rep_min"])
+                if any(int(v) >= threshold for v in faction_rep.values()):
+                    return self._complete_phase1(state, story, ms, "faction_alliance")
+            if rule.get("tension_min") is not None and get_tension(state) >= int(rule["tension_min"]):
+                return self._complete_phase1(state, story, ms, "tension")
+            req_flag = rule.get("requires_flag")
+            if rule.get("factions_contacted_min") is not None:
+                minimum = int(rule["factions_contacted_min"])
+                if len(ms.get("factions_contacted", [])) >= minimum and (not req_flag or flags.get(req_flag)):
+                    return self._complete_phase1(state, story, ms, "multi_contact")
+        return []
+
+    def _complete_phase1(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+        reason: str,
+    ) -> list[str]:
+        ms["phase1_complete"] = True
+        phases = story.get("phases", [])
+        phase1_needed = int(phases[0].get("progress_needed", 35)) if phases else 35
+        if int(ms.get("progress", 0)) < phase1_needed:
+            ms["progress"] = phase1_needed
+        if int(ms.get("phase", 1)) == 1:
+            ms["phase"] = 2
+            next_name = phases[1]["name"] if len(phases) > 1 else "2단계"
+            state.setdefault("flags", {})["main_story_phase_bump"] = next_name
+        self._maybe_queue_phase_events(state, story, ms, phase1_needed - 1)
+        return [f"[1단계 완료] 균열의 전조 — {reason}"]
+
+    def _phase1_step_label(self, story: dict[str, Any], step: int) -> str:
+        labels = {
+            0: "대기",
+            1: "검은 연기 목격",
+            2: "소문 확산",
+            3: "세력 접촉",
+            4: "첫 분기",
+            5: "1단계 클라이맥스",
+        }
+        return labels.get(step, f"단계 {step}")
 
     def _recalculate_ending_scores(
         self,
@@ -324,16 +488,29 @@ class MainStoryEngine:
         story = self.story_def(ms["id"])
         if not story:
             return []
+        lines: list[str] = []
+        lines.extend(self._advance_phase1_from_flag(state, story, ms, flag))
         amount = story.get("progress_sources", {}).get("flags", {}).get(flag)
-        if not amount:
-            return []
-        return self.add_progress(state, int(amount), reason=flag)
+        if amount:
+            lines.extend(self.add_progress(state, int(amount), reason=flag))
+        else:
+            lines.extend(self._check_phase1_exit(state, story, ms))
+        return lines
 
     def on_outcome(self, state: dict[str, Any], outcome: dict[str, Any]) -> list[str]:
         lines: list[str] = []
         choice_id = outcome.get("main_story_choice")
         if choice_id:
             lines.extend(self.apply_choice(state, choice_id))
+        faction_id = outcome.get("main_story_faction_contact")
+        if faction_id:
+            lines.extend(self.record_faction_contact(state, faction_id))
+        p1_flag = outcome.get("main_story_phase1_flag")
+        if p1_flag:
+            ms = self.ensure_initialized(state)
+            story = self.story_def(ms["id"])
+            if story:
+                lines.extend(self._advance_phase1_from_flag(state, story, ms, p1_flag))
         return lines
 
     def tick(self, state: dict[str, Any], *, turn: int) -> list[str]:
@@ -352,6 +529,7 @@ class MainStoryEngine:
             lines.append(f"[메인 스토리] {story['title']} — {bump}")
 
         self._recalculate_ending_scores(state, story, ms)
+        lines.extend(self._check_phase1_exit(state, story, ms))
         leading = ms.get("leading_ending")
         if leading and turn % 10 == 0:
             ending = next((e for e in story.get("endings", []) if e["id"] == leading), None)
@@ -375,6 +553,12 @@ class MainStoryEngine:
             f"{story['title']} — {phase_name} ({phase}/{len(phases)})",
             f"진행 {ms.get('progress', 0)}/100 | {goal}",
         ]
+        if phase == 1:
+            step = int(ms.get("phase1_step", 0))
+            contacts = len(ms.get("factions_contacted", []))
+            parts.append(
+                f"1단계 흐름: {self._phase1_step_label(story, step)} | 세력 접촉 {contacts}"
+            )
         if ms.get("resolved_ending"):
             ending = next((e for e in story.get("endings", []) if e["id"] == ms["resolved_ending"]), None)
             if ending:
@@ -417,6 +601,8 @@ class MainStoryEngine:
             "leading_ending": None,
             "rumor_tone": "uncertain",
             "resolved_ending": None,
+            "phase1_step": 0,
+            "factions_contacted": [],
         }
         return True
 
@@ -424,6 +610,12 @@ class MainStoryEngine:
         ms = self.ensure_initialized(state)
         req_phase = seed.get("requires_main_story_phase")
         if req_phase is not None and int(ms.get("phase", 1)) != int(req_phase):
+            return False
+        step_min = seed.get("requires_main_story_step_min")
+        if step_min is not None and int(ms.get("phase1_step", 0)) < int(step_min):
+            return False
+        step_max = seed.get("requires_main_story_step_max")
+        if step_max is not None and int(ms.get("phase1_step", 0)) > int(step_max):
             return False
         min_progress = seed.get("requires_main_story_min_progress")
         if min_progress is not None and int(ms.get("progress", 0)) < int(min_progress):

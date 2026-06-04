@@ -9,44 +9,79 @@
       "requires_action": ["talk", "explore"],
       "related_npc": "elder_maren",
       "requires_main_story_phase": 1,
+      "requires_main_story_step_min": 3,
       "requires_not_flags": ["story_phase1_chosen"],
       "weight": 30,
       "outcome": {
-        "summary": "자치회는 사건 은폐와 마을 방어를 동시에 요구한다. 밖으로는 '산불'로 처리하자고 한다.",
-        "main_story_choice": "ally_council_coverup"
+        "summary": "장로 마렌: '마을의 안전이 걸렸네. 우리와 함께 이 사건을 마을 안에서 해결하세.'",
+        "main_story_choice": "ally_village"
       }
     },
     {
       "id": "story_choice_warden",
-      "title": "감시자의 접촉",
-      "summary": "회색 망토가 밤길에서 당신을 기다린다.",
+      "title": "감시자의 진실",
+      "summary": "회색 망토가 고대 봉인의 기록을 보여준다.",
       "seed_type": "main_story",
       "main_plot_link": "ashen_seal_cracking",
       "requires_action": ["talk", "explore", "investigate"],
       "related_npc": "grey_cloak",
       "requires_main_story_phase": 1,
+      "requires_main_story_step_min": 3,
       "requires_not_flags": ["story_phase1_chosen"],
-      "weight": 30,
+      "weight": 28,
       "outcome": {
-        "summary": "잿빛 감시자는 봉인을 강화할 시간이 없다고 말한다. 인간의 정치는 멀리하라는 경고가 붙는다.",
-        "main_story_choice": "ally_warden_seal"
+        "summary": "잿빛 감시자: '봉인의 진실을 원한다면, 인간의 편부터 버려라.'",
+        "main_story_choice": "seek_truth"
       }
     },
     {
       "id": "story_choice_covenant",
       "title": "칠흑의 속삭임",
-      "summary": "우물가 그림자에서 누군가 이름을 부른다.",
+      "summary": "우물가 그림자에서 힘을 약속한다.",
       "seed_type": "main_story",
       "main_plot_link": "ashen_seal_cracking",
       "requires_action": ["explore", "investigate"],
       "requires_time": ["night"],
       "location_zones": ["ashpoint"],
       "requires_main_story_phase": 1,
+      "requires_main_story_step_min": 3,
       "requires_not_flags": ["story_phase1_chosen"],
-      "weight": 28,
+      "weight": 26,
       "outcome": {
-        "summary": "칠흑의 서약은 봉인 너머의 힘을 약속한다. '약한 자는 봉인을 지킬 수 없다.'",
-        "main_story_choice": "ally_covenant_power"
+        "summary": "칠흑의 서약: '약한 자는 봉인을 지킬 수 없다. 힘을 원하느냐?'",
+        "main_story_choice": "pursue_power"
+      }
+    },
+    {
+      "id": "story_choice_opportunist",
+      "title": "기회주의자의 거래",
+      "summary": "상인과 산적이 동시에 손을 내민다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "talk"],
+      "requires_main_story_phase": 1,
+      "requires_main_story_step_min": 3,
+      "requires_not_flags": ["story_phase1_chosen"],
+      "weight": 22,
+      "outcome": {
+        "summary": "릴리안과 검은송곳니 사절: '혼란 속에서 이득을 나누자. 편은 필요 없어.'",
+        "main_story_choice": "exploit_chaos"
+      }
+    },
+    {
+      "id": "story_choice_stay_neutral",
+      "title": "어느 편에도 서지 않음",
+      "summary": "모든 세력의 제안을 거절할 기회.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "rest"],
+      "requires_main_story_phase": 1,
+      "requires_main_story_step_min": 3,
+      "requires_not_flags": ["story_phase1_chosen"],
+      "weight": 20,
+      "outcome": {
+        "summary": "당신은 깃발 없이 걸어 나간다. 세력들은 당신을 '아직 모르는 말'로 기록한다.",
+        "main_story_choice": "stay_neutral"
       }
     },
     {

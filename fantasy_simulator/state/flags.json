@@ -54,6 +54,8 @@
     "choices_made": [],
     "ending_scores": {},
     "leading_ending": null,
+    "phase1_step": 0,
+    "factions_contacted": [],
     "rumor_tone": "uncertain",
     "resolved_ending": null
   },
