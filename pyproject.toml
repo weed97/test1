@@ -1,0 +1,14 @@
+[project]
+name = "medieval-text-mmorpg-simulator"
+version = "0.1.0"
+description = "Large-scale medieval fantasy text MMORPG simulator with dynamic NPC dialogue."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+fantasy-mmorpg = "mmorpg_sim.cli:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
