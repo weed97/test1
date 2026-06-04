@@ -81,9 +81,7 @@ End of each turn (`execute_turn` → `tick_world_systems`):
 
 Event seeds may gate on `requires_faction_min/max`, `requires_tension_min/max`, and apply `faction_reputation` in outcomes. Legacy quest `reputation.ashpoint` etc. map to faction IDs via `legacy_reputation_keys`.
 
-Long-term arcs: `seal_breaking` (default, linked to `smoke_on_the_mountain`), `crown_war`, `otherworld_invasion`.
-
-**Six factions** (v2): 애쉬포인트 자치회, 실버우드 상인 연합, 검은송곳니 산적단, 잿빛 감시자, 칠흑의 서약, 은빛 십자 기사단 — see `config/factions.json` for relationship matrix (hostile / friendly / neutral / utilize) and reputation milestones (±40 triggers major events).
+Long-term arc: **잿빛 봉인의 균열** (`ashen_seal_cracking`) — 3 phases, branching choices, 5 endings, internal ending tracker. See `events/main_stories.json` and `events/seeds/main_story_ashen_seal.json`.
 
 Player rep mirrors to `state.factions.player_reputation` for `world_state.json` readability.
 

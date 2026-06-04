@@ -130,6 +130,7 @@ class EventEngine:
             inv["party_gold"] = inv.get("party_gold", 0) + int(outcome["gold_delta"])
             lines.append(f"골드 {outcome['gold_delta']:+d}")
         lines.extend(self.factions.apply_reputation_outcome(state, outcome))
+        lines.extend(self.main_story.on_outcome(state, outcome))
         for flag, val in (outcome.get("flags_set") or {}).items():
             state.setdefault("flags", {})[flag] = val
             lines.extend(self.main_story.on_flag_set(state, flag))
@@ -213,6 +214,8 @@ class EventEngine:
                 seed.get("requires_faction_min"),
                 seed.get("requires_faction_max"),
             ):
+                continue
+            if not self.main_story.meets_story_requirements(state, seed):
                 continue
             if any(not flags.get(f) for f in seed.get("requires_flags", [])):
                 continue

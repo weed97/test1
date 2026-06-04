@@ -1,0 +1,167 @@
+{
+  "seeds": [
+    {
+      "id": "story_choice_council",
+      "title": "자치회의 제안",
+      "summary": "장로가 당신을 붙잡는다. '마을 밖으로 소문이 새면 모두가 패닉에 빠집니다.'",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore"],
+      "related_npc": "elder_maren",
+      "requires_main_story_phase": 1,
+      "requires_not_flags": ["story_phase1_chosen"],
+      "weight": 30,
+      "outcome": {
+        "summary": "자치회는 사건 은폐와 마을 방어를 동시에 요구한다. 밖으로는 '산불'로 처리하자고 한다.",
+        "main_story_choice": "ally_council_coverup"
+      }
+    },
+    {
+      "id": "story_choice_warden",
+      "title": "감시자의 접촉",
+      "summary": "회색 망토가 밤길에서 당신을 기다린다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore", "investigate"],
+      "related_npc": "grey_cloak",
+      "requires_main_story_phase": 1,
+      "requires_not_flags": ["story_phase1_chosen"],
+      "weight": 30,
+      "outcome": {
+        "summary": "잿빛 감시자는 봉인을 강화할 시간이 없다고 말한다. 인간의 정치는 멀리하라는 경고가 붙는다.",
+        "main_story_choice": "ally_warden_seal"
+      }
+    },
+    {
+      "id": "story_choice_covenant",
+      "title": "칠흑의 속삭임",
+      "summary": "우물가 그림자에서 누군가 이름을 부른다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "requires_time": ["night"],
+      "location_zones": ["ashpoint"],
+      "requires_main_story_phase": 1,
+      "requires_not_flags": ["story_phase1_chosen"],
+      "weight": 28,
+      "outcome": {
+        "summary": "칠흑의 서약은 봉인 너머의 힘을 약속한다. '약한 자는 봉인을 지킬 수 없다.'",
+        "main_story_choice": "ally_covenant_power"
+      }
+    },
+    {
+      "id": "story_choice_alliance",
+      "title": "동맹의 맹세",
+      "summary": "세력들이 각각 깃발을 들이민다. 이제 한쪽을 골라야 한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore"],
+      "requires_main_story_phase": 2,
+      "requires_not_flags": ["story_phase2_chosen"],
+      "weight": 25,
+      "outcome": {
+        "summary": "당신은 한 세력의 이름으로 맹세한다. 변경의 지도가 서서히 기울기 시작한다.",
+        "main_story_choice": "path_alliance"
+      }
+    },
+    {
+      "id": "story_choice_neutral",
+      "title": "균형 잡기",
+      "summary": "어느 깃발 아래에도 서지 않겠다고 선언할 기회.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "talk"],
+      "requires_main_story_phase": 2,
+      "requires_not_flags": ["story_phase2_chosen"],
+      "weight": 22,
+      "outcome": {
+        "summary": "중립을 택했다. 상인 연합은 미소 지으며 거래를 제안하고, 산적단은 비웃는다.",
+        "main_story_choice": "path_neutral"
+      }
+    },
+    {
+      "id": "story_choice_betrayal",
+      "title": "배신의 순간",
+      "summary": "맺은 약속을 깨고 판을 뒤집을 수 있는 기회.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "requires_main_story_phase": 2,
+      "requires_tension_min": 45,
+      "requires_not_flags": ["story_phase2_chosen"],
+      "weight": 18,
+      "outcome": {
+        "summary": "약속은 찢어졌다. 모든 세력이 당신을 배신자로 기억할 것이다 — 하지만 판은 움직였다.",
+        "main_story_choice": "path_betrayal"
+      }
+    },
+    {
+      "id": "story_faction_clash",
+      "title": "세력의 대립",
+      "summary": "봉인 균열을 둘러싸고 세력들이 마주 선다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore"],
+      "requires_main_story_phase": 2,
+      "requires_tension_min": 50,
+      "tension_tags": ["crisis"],
+      "weight": 14,
+      "outcome": {
+        "summary": "자치회와 십자 기사단은 봉인 강화를, 칠흑의 서약은 해제를, 감시자는 인간 퇴거를 요구한다.",
+        "tension_delta": 6,
+        "flags_set": {"story_faction_clash_seen": true}
+      }
+    },
+    {
+      "id": "story_seal_near_break",
+      "title": "봉인 직전",
+      "summary": "관측탑 아래에서 봉인이 비명처럼 울린다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest", "tower"],
+      "requires_main_story_phase": 3,
+      "requires_tension_min": 55,
+      "weight": 20,
+      "tension_tags": ["crisis", "horror"],
+      "outcome": {
+        "summary": "균열이 손가락 두 마디만 남았다. 지금까지의 선택이 결말을 부른다.",
+        "tension_delta": 10,
+        "flags_set": {"story_seal_near_break": true}
+      }
+    },
+    {
+      "id": "story_trade_union_opportunist",
+      "title": "상인 연합의 계산",
+      "summary": "릴리안이 승자 쪽 편지를 미리 준비해 둔다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk"],
+      "related_npc": "lilian_innkeeper",
+      "requires_main_story_phase": 2,
+      "weight": 12,
+      "outcome": {
+        "summary": "상인 연합은 이득이 되는 쪽에 붙을 준비가 되어 있다. '승자에게는 할인, 패자에게는 세금.'",
+        "faction_reputation": {"silverwood_trade_union": 5},
+        "flags_set": {"story_trade_opportunist": true}
+      }
+    },
+    {
+      "id": "story_blackfang_chaos",
+      "title": "산적단의 기회",
+      "summary": "혼란 속에서 검은송곳니가 세력을 키운다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore"],
+      "location_zones": ["forest"],
+      "requires_main_story_phase": 2,
+      "requires_tension_min": 40,
+      "weight": 11,
+      "outcome": {
+        "summary": "산적단은 봉인 소동을 약탈의 황금기로 여긴다. 숲길이 더 위험해졌다.",
+        "faction_reputation": {"blackfang_marauders": 8, "ashpoint_council": -5},
+        "tension_delta": 7
+      }
+    }
+  ]
+}

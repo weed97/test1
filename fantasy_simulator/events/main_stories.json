@@ -1,76 +1,189 @@
 {
-  "version": 1,
-  "default_story": "seal_breaking",
+  "version": 2,
+  "default_story": "ashen_seal_cracking",
+  "legacy_story_ids": {
+    "seal_breaking": "ashen_seal_cracking"
+  },
   "stories": [
     {
-      "id": "seal_breaking",
-      "title": "고대 봉인 해제",
-      "theme": "금지된 존재가 깨어나는 이야기",
-      "summary": "관측탑 봉인이 약해지며 검은 연기와 실버 스토커가 깨어난다.",
+      "id": "ashen_seal_cracking",
+      "title": "잿빛 봉인의 균열",
+      "title_en": "The Cracking of the Ashen Seal",
+      "theme": "고대에 봉인된 존재가 깨어나려 한다. 다루는 방식에 따라 세계 운명이 갈린다.",
+      "summary": "북쪽 산의 검은 연기와 약해지는 봉인. 세력들이 움직이기 시작한다.",
       "linked_quest": "smoke_on_the_mountain",
-      "stages": [
-        {"stage": 1, "goal": "마을에서 징후를 수집", "progress_needed": 20},
-        {"stage": 2, "goal": "숲과 탑의 봉인 균열 조사", "progress_needed": 40},
-        {"stage": 3, "goal": "봉인을 강화하거나 의도적으로 해제", "progress_needed": 60},
-        {"stage": 4, "goal": "세계 상태가 영구적으로 바뀜", "progress_needed": 100}
+      "phases": [
+        {
+          "phase": 1,
+          "name": "균열의 시작",
+          "goal": "사건 실체를 조사하고 각 세력과 접촉",
+          "progress_needed": 30,
+          "description": "북쪽 산에서 검은 연기. 고대 봉인이 약해지기 시작한다."
+        },
+        {
+          "phase": 2,
+          "name": "세력의 대립",
+          "goal": "동맹·중립·배신 중 하나를 선택하고 판을 움직인다",
+          "progress_needed": 65,
+          "description": "봉인이 더 약해지며 각 세력이 본격적으로 움직인다."
+        },
+        {
+          "phase": 3,
+          "name": "최후의 선택",
+          "goal": "봉인 직전 — 쌓아온 관계와 선택이 결말을 만든다",
+          "progress_needed": 100,
+          "description": "봉인이 거의 풀리기 직전. 세계의 운명이 갈린다."
+        }
+      ],
+      "phase1_choices": [
+        {
+          "id": "ally_council_coverup",
+          "label": "자치회와 협력해 사건을 은폐",
+          "summary": "애쉬포인트 자치회가 사건을 마을 안에서 처리하려 한다.",
+          "flags_set": {"story_path_council": true, "story_phase1_chosen": true},
+          "rumor_tone": "reassurance",
+          "ending_bias": {"new_order": 8, "seal_maintained": 6, "age_of_chaos": -4},
+          "faction_reputation": {"ashpoint_council": 12, "ashen_wardens": -4},
+          "tension_delta": -3,
+          "blocks_choices": ["ally_warden_seal", "ally_covenant_power"]
+        },
+        {
+          "id": "ally_warden_seal",
+          "label": "잿빛 감시자와 접촉해 봉인을 지키려 함",
+          "summary": "잿빛 감시자가 봉인 강화를 요구한다. 인간 사회와 거리를 두라는 경고도 따라온다.",
+          "flags_set": {"story_path_warden": true, "story_phase1_chosen": true},
+          "rumor_tone": "mystery",
+          "ending_bias": {"seal_maintained": 15, "age_of_chaos": -6},
+          "faction_reputation": {"ashen_wardens": 15, "black_covenant": -6},
+          "tension_delta": 2,
+          "blocks_choices": ["ally_council_coverup", "ally_covenant_power"]
+        },
+        {
+          "id": "ally_covenant_power",
+          "label": "칠흑의 서약과 접촉해 힘을 얻으려 함",
+          "summary": "칠흑의 서약이 봉인 너머의 힘을 속삭인다. 대가는 나중에 온다.",
+          "flags_set": {"story_path_covenant": true, "story_phase1_chosen": true},
+          "rumor_tone": "fear",
+          "ending_bias": {"ancient_awakening": 12, "power_absorption": 10, "seal_maintained": -10},
+          "faction_reputation": {"black_covenant": 15, "ashpoint_council": -8, "ashen_wardens": -8},
+          "tension_delta": 8,
+          "blocks_choices": ["ally_council_coverup", "ally_warden_seal"]
+        }
+      ],
+      "phase2_choices": [
+        {
+          "id": "path_alliance",
+          "label": "특정 세력과 동맹을 맺는다",
+          "summary": "한 세력의 깃발 아래 서기로 했다. 적은 분명해진다.",
+          "flags_set": {"story_path_alliance": true, "story_phase2_chosen": true},
+          "ending_bias": {"new_order": 10, "seal_maintained": 8, "ancient_awakening": -5},
+          "tension_delta": 5
+        },
+        {
+          "id": "path_neutral",
+          "label": "중립을 지키며 여러 세력을 이용",
+          "summary": "어느 편에도 서지 않았다. 모두가 당신을 이용하려 한다.",
+          "flags_set": {"story_path_neutral": true, "story_phase2_chosen": true},
+          "ending_bias": {"age_of_chaos": 15, "power_absorption": 5},
+          "tension_delta": 3
+        },
+        {
+          "id": "path_betrayal",
+          "label": "배신으로 판을 흔든다",
+          "summary": "맺은 약속을 깨고 새로운 균형을 노린다. 신뢰는 바닥을 친다.",
+          "flags_set": {"story_path_betrayal": true, "story_phase2_chosen": true},
+          "ending_bias": {"power_absorption": 18, "age_of_chaos": 8, "new_order": -10, "seal_maintained": -8},
+          "faction_reputation": {"ashpoint_council": -10, "silver_cross_order": -10, "black_covenant": 5},
+          "tension_delta": 12
+        }
+      ],
+      "endings": [
+        {
+          "id": "seal_maintained",
+          "title": "봉인 유지 (안정)",
+          "summary": "봉인은 유지되었으나, 세계는 좁아졌다. 당신은 감시자와 마을 사이에 서 있다.",
+          "world_change": "세계는 유지되지만 플레이어는 고립될 수 있음",
+          "flags_set": {"world_ending": "seal_maintained", "world_seal_reinforced": true},
+          "tension_delta": -25
+        },
+        {
+          "id": "ancient_awakening",
+          "title": "고대 존재 각성 (파멸)",
+          "summary": "봉인이 풀렸다. 검은 연기가 하늘을 덮고, 에르도리아의 일부가 영원히 바뀌었다.",
+          "world_change": "세계가 크게 파괴되거나 변이됨",
+          "flags_set": {"world_ending": "ancient_awakening", "world_seal_broken": true},
+          "tension_delta": 30
+        },
+        {
+          "id": "power_absorption",
+          "title": "힘의 흡수 (플레이어 중심)",
+          "summary": "당신이 균열의 힘을 삼켰다. 강대하지만, 이제 모두의 적이다.",
+          "world_change": "플레이어가 강대한 힘을 얻지만 모두의 적이 됨",
+          "flags_set": {"world_ending": "power_absorption", "world_seal_broken": true},
+          "tension_delta": 15
+        },
+        {
+          "id": "new_order",
+          "title": "새로운 질서 수립",
+          "summary": "은빛 십자와 자치회가 손을 잡았다. 몰락한 왕국의 질서가 변경에 돌아온다.",
+          "world_change": "몰락한 왕국의 질서를 부활",
+          "flags_set": {"world_ending": "new_order", "world_seal_reinforced": true},
+          "tension_delta": -10
+        },
+        {
+          "id": "age_of_chaos",
+          "title": "혼돈의 시대",
+          "summary": "어느 세력도 승리하지 못했다. 변경은 분열되었고, 긴장은 끝나지 않는다.",
+          "world_change": "세계 분열, 장기적 불안정",
+          "flags_set": {"world_ending": "age_of_chaos"},
+          "tension_delta": 10
+        }
       ],
       "progress_sources": {
         "seed_ids": {
           "sentinel_stirring": 8,
           "broken_rune_pillar": 6,
           "seal_drip": 5,
-          "black_smoke": 4
+          "black_smoke": 4,
+          "story_faction_clash": 10,
+          "story_seal_near_break": 12
         },
-        "quest_stage": {"smoke_on_the_mountain": [10, 15, 25, 40]},
-        "flags": {"grey_cloak_met": 5, "torren_side_quest_done": 3}
+        "quest_stage": {"smoke_on_the_mountain": [12, 18, 30]},
+        "flags": {
+          "grey_cloak_met": 5,
+          "torren_side_quest_done": 3,
+          "story_phase1_chosen": 8,
+          "story_phase2_chosen": 10
+        }
       },
-      "branch_flags": {
-        "reinforce_seal": "world_seal_reinforced",
-        "break_seal": "world_seal_broken"
-      }
-    },
-    {
-      "id": "crown_war",
-      "title": "왕국 내전",
-      "theme": "왕위 계승 분쟁",
-      "summary": "실버우드 변경이 왕국 잔당과 산적단 사이에서 갈라진다.",
-      "linked_quest": null,
-      "stages": [
-        {"stage": 1, "goal": "내전 징후 포착", "progress_needed": 25},
-        {"stage": 2, "goal": "세력 편 선택", "progress_needed": 50},
-        {"stage": 3, "goal": "지역 점령과 협상", "progress_needed": 75},
-        {"stage": 4, "goal": "변경 지도 재편", "progress_needed": 100}
-      ],
-      "progress_sources": {
-        "seed_ids": {"traitor_in_council": 10, "black_council": 12},
-        "faction_min": {"silver_cross_order": 20, "blackfang_marauders": 15},
-        "tension_above": 55
+      "phase_events": {
+        "1": {"at_progress": 12, "pending": ["story_choice_council", "story_choice_warden", "story_choice_covenant"]},
+        "2": {"at_progress": 35, "pending": ["story_choice_alliance", "story_choice_neutral", "story_choice_betrayal"]}
       },
-      "branch_flags": {
-        "side_royal": "crown_war_royal_victory",
-        "side_bandit": "crown_war_bandit_hold"
-      }
-    },
-    {
-      "id": "otherworld_invasion",
-      "title": "이계 침공",
-      "theme": "다른 차원의 존재가 침공",
-      "summary": "공허 균열이 넓어지며 마을과 숲이 점령 위험에 빠진다.",
-      "linked_quest": null,
-      "stages": [
-        {"stage": 1, "goal": "균열 징후 관측", "progress_needed": 25},
-        {"stage": 2, "goal": "침공군과 첫 교전", "progress_needed": 50},
-        {"stage": 3, "goal": "저항군 결성 또는 항복", "progress_needed": 75},
-        {"stage": 4, "goal": "변경의 운명 확정", "progress_needed": 100}
-      ],
-      "progress_sources": {
-        "seed_ids": {"whispers_from_grave": 8, "false_prophet": 6},
-        "faction_min": {"black_covenant": 25},
-        "tension_above": 70
-      },
-      "branch_flags": {
-        "resist": "invasion_resistance",
-        "submit": "invasion_occupied"
+      "ending_weights": {
+        "seal_maintained": {
+          "faction": {"ashen_wardens": 2.0, "ashpoint_council": 1.2},
+          "choices": {"ally_warden_seal": 20, "path_alliance": 8},
+          "anti_choices": {"ally_covenant_power": -25, "path_betrayal": -10}
+        },
+        "ancient_awakening": {
+          "faction": {"black_covenant": 2.5},
+          "choices": {"ally_covenant_power": 25, "path_alliance": 5},
+          "tension_min": 60
+        },
+        "power_absorption": {
+          "faction": {"black_covenant": 1.5},
+          "choices": {"ally_covenant_power": 15, "path_betrayal": 25},
+          "requires_flags": ["story_path_betrayal"]
+        },
+        "new_order": {
+          "faction": {"silver_cross_order": 2.0, "ashpoint_council": 1.5},
+          "choices": {"ally_council_coverup": 15, "path_alliance": 12}
+        },
+        "age_of_chaos": {
+          "choices": {"path_neutral": 25, "path_betrayal": 8},
+          "faction_spread_min": 3
+        }
       }
     }
   ]

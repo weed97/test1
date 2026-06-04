@@ -42,7 +42,7 @@
       "requires_faction_min": {"ashen_wardens": 15},
       "requires_quest_stage_min": 2,
       "weight": 16,
-      "main_plot_link": "seal_breaking",
+      "main_plot_link": "ashen_seal_cracking",
       "outcome": {
         "summary": "회색 망토가 관측탑 뒤편 룬 통로를 가리킨다. 봉인의 숨결이 더 선명해진다.",
         "faction_reputation": {"ashen_wardens": 5, "black_covenant": -8},

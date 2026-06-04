@@ -74,7 +74,11 @@ def format_status_report(
 
         root = base_dir or getattr(loader, "base_dir", None)
         if root:
-            lines.extend(["", f"장기 스토리: {MainStoryEngine(root).format_summary(state)}"])
+            engine = MainStoryEngine(root)
+            lines.extend(["", f"장기 스토리: {engine.format_summary(state)}"])
+            tracker = engine.ending_tracker_summary(state)
+            if tracker:
+                lines.extend(["  결말 추적 (내부):"] + tracker)
     if event_engine:
         lines.extend(["", f"퀘스트: {event_engine.show_quest_status(state)}"])
     recent = event_entries(state)

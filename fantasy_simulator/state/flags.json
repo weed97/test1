@@ -47,11 +47,15 @@
     "silver_cross_order": 0
   },
   "main_story": {
-    "id": "seal_breaking",
-    "stage": 1,
+    "id": "ashen_seal_cracking",
+    "phase": 1,
     "progress": 0,
     "started_turn": 0,
-    "branch": null
+    "choices_made": [],
+    "ending_scores": {},
+    "leading_ending": null,
+    "rumor_tone": "uncertain",
+    "resolved_ending": null
   },
   "quests": {
     "active": "smoke_on_the_mountain",
