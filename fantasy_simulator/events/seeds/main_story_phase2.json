@@ -1,0 +1,194 @@
+{
+  "seeds": [
+    {
+      "id": "phase2_council_summons",
+      "title": "자치회 긴급 소집",
+      "summary": "1단계 이후, 장로가 회관에서 모든 세력 대표를 불러 모은다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore"],
+      "related_npc": "elder_maren",
+      "requires_main_story_phase": 2,
+      "requires_not_flags": ["phase2_opening_done"],
+      "weight": 30,
+      "outcome": {
+        "summary": "장로 마렌: \"봉인의 첫 균열 이후, 변경은 전쟁터가 되고 있네. 이제는 편을 가르거나, 스스로 판을 짜야 할 때다.\"",
+        "lines": [
+          "회관에는 자치회, 상인, 기사단 사절이 앉아 있다. 공기는 칼날처럼 차갑다.",
+          "마렌: \"2단계 — 세력의 대립이 시작됐네. 네 선택이 마을을 살리거나, 불태울 것이야.\""
+        ],
+        "tension_delta": 4,
+        "faction_reputation": {"ashpoint_council": 4},
+        "flags_set": {"phase2_council_summons": true, "phase2_opening_done": true},
+        "main_story_phase2_flag": "phase2_opening_done"
+      }
+    },
+    {
+      "id": "phase2_seal_tremor",
+      "title": "봉인석의 진동",
+      "summary": "북쪽 숲에서 봉인이 다시 울린다. 이번에는 소리가 더 가깝다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest", "tower"],
+      "requires_main_story_phase": 2,
+      "requires_not_flags": ["phase2_seal_tremor"],
+      "weight": 22,
+      "outcome": {
+        "summary": "봉인석이 저음으로 울리며, 균열이 손톱 한 마디만큼 더 벌어진다.",
+        "lines": [
+          "대지가 한 박자 늦게 떨린다. 새들이 일제히 하늘에서 사라진다.",
+          "균열 너머, 누군가의 숨결이 차갑게 스친다. 세력들이 동시에 고개를 든다."
+        ],
+        "tension_delta": 5,
+        "flags_set": {"phase2_seal_tremor": true}
+      }
+    },
+    {
+      "id": "phase2_faction_raid",
+      "title": "세력 교전의 전조",
+      "summary": "숲길에서 자치회 민병대와 산적단이 마주친다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore"],
+      "location_zones": ["forest", "ashpoint"],
+      "requires_main_story_phase": 2,
+      "requires_flags": ["phase2_opening_done"],
+      "requires_not_flags": ["phase2_faction_raid"],
+      "requires_tension_min": 30,
+      "weight": 20,
+      "outcome": {
+        "summary": "숲길에서 화살과 창이 부딪힌다. 봉인 균열을 둘러싼 첫 피보라.",
+        "lines": [
+          "검은송곳니 깃발과 자치회 깃발이 나뭇가지 사이에서 흔들린다.",
+          "민병대장: \"봉인이 깨지기 전에, 우리부터 죽이지 말자!\" — 비명이 숲에 울린다."
+        ],
+        "tension_delta": 6,
+        "faction_reputation": {"ashpoint_council": 2, "blackfang_marauders": 3},
+        "flags_set": {"phase2_faction_raid": true, "phase2_escalation_done": true},
+        "main_story_phase2_flag": "phase2_escalation_done"
+      }
+    },
+    {
+      "id": "phase2_merchant_blockade",
+      "title": "상인 연합의 봉쇄",
+      "summary": "릴리안이 긴급 소식을 전한다. 실버우드 길이 막혔다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk"],
+      "related_npc": "lilian_innkeeper",
+      "requires_main_story_phase": 2,
+      "requires_flags": ["phase2_opening_done"],
+      "requires_not_flags": ["phase2_merchant_blockade"],
+      "weight": 16,
+      "outcome": {
+        "summary": "릴리안: \"상인 연합이 보급로를 봉쇄했어요. 승자 편에만 열어준다고 합니다.\"",
+        "lines": [
+          "여관 지붕에 실버우드 깃발이 새로 달렸다. 누군가 이미 승자를 내기하고 있다.",
+          "\"중립을 지키면, 가격은 두 배예요.\" — 그녀의 미소는 차갑다."
+        ],
+        "faction_reputation": {"silverwood_trade_union": 4},
+        "tension_delta": 3,
+        "flags_set": {"phase2_merchant_blockade": true}
+      }
+    },
+    {
+      "id": "phase2_warden_line",
+      "title": "감시자의 경계선",
+      "summary": "회색 망토가 숲 입구에 선을 긋는다. '인간은 더 이상 가까이 오지 마라.'",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore"],
+      "related_npc": "grey_cloak",
+      "requires_main_story_phase": 2,
+      "requires_flags": ["phase2_opening_done"],
+      "requires_not_flags": ["phase2_warden_line"],
+      "weight": 17,
+      "outcome": {
+        "summary": "잿빛 감시자: \"2단계에서도 진실을 원한다면, 인간의 편부터 버려라. 경계선을 넘지 마라.\"",
+        "lines": [
+          "그의 망토 끝에서 룬이 빛나며, 숲길에 희미한 장벽이 생긴다.",
+          "멀리 봉인석이 다시 울린다. 세력들은 각자 다른 방향으로 달려간다."
+        ],
+        "faction_reputation": {"ashen_wardens": 5},
+        "tension_delta": 4,
+        "flags_set": {"phase2_warden_line": true}
+      }
+    },
+    {
+      "id": "phase2_climax_alliance",
+      "title": "판의 균열 — 동맹의 대가",
+      "summary": "맺은 동맹의 깃발 아래, 세력들이 봉인 균열 앞에서 맞선다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["forest", "ashpoint", "tower"],
+      "requires_flags": ["phase2_climax_ready"],
+      "requires_main_story_choice": "path_alliance",
+      "requires_not_flags": ["phase2_climax_done"],
+      "weight": 40,
+      "tension_tags": ["crisis"],
+      "outcome": {
+        "summary": "동맹의 대가 — 한 깃발 아래 세력이 봉인을 누르지만, 적도 분명해졌다.",
+        "lines": [
+          "동맹 세력이 산비탈에 진을 친다. 봉인석의 균열에서 검은 연기가 솟구친다.",
+          "기사단장: \"우리 편이 아니면 적이다.\" — 그 말이 숲을 가른다.",
+          "균열은 잠시 멈춘 듯하나, 봉인은 여전히 위태롭다. 2단계는 여기서 끝난다."
+        ],
+        "tension_delta": 8,
+        "flags_set": {"phase2_climax_done": true, "phase2_alliance_climax": true},
+        "main_story_phase2_flag": "phase2_climax_done"
+      }
+    },
+    {
+      "id": "phase2_climax_neutral",
+      "title": "판의 균열 — 균형 잡기",
+      "summary": "어느 깃발에도 서지 않은 채, 세력들 사이에서 봉인을 견제한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["forest", "ashpoint", "tower"],
+      "requires_flags": ["phase2_climax_ready"],
+      "requires_main_story_choice": "path_neutral",
+      "requires_not_flags": ["phase2_climax_done"],
+      "weight": 40,
+      "tension_tags": ["crisis"],
+      "outcome": {
+        "summary": "균형 잡기 — 세력들은 당신을 이용하려 하고, 봉인은 조용히 벌어진다.",
+        "lines": [
+          "자치회, 상인, 기사단이 각각 다른 조건을 내민다. 당신은 모두에게 '아직'이라고 답한다.",
+          "봉인 균열 너머에서 속삭임이 들린다. 어느 편도 완전히 이기지 못했다.",
+          "중립은 판을 넓혔다. 3단계에서, 모든 세력이 당신의 선택을 요구할 것이다."
+        ],
+        "tension_delta": 6,
+        "flags_set": {"phase2_climax_done": true, "phase2_neutral_climax": true},
+        "main_story_phase2_flag": "phase2_climax_done"
+      }
+    },
+    {
+      "id": "phase2_climax_betrayal",
+      "title": "판의 균열 — 배신의 파열",
+      "summary": "맺은 약속을 깨고 판을 뒤집는다. 모든 세력이 당신을 적으로 본다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest", "tower"],
+      "requires_flags": ["phase2_climax_ready"],
+      "requires_main_story_choice": "path_betrayal",
+      "requires_not_flags": ["phase2_climax_done"],
+      "weight": 40,
+      "tension_tags": ["crisis"],
+      "outcome": {
+        "summary": "배신의 파열 — 약속은 찢어졌고, 봉인은 그 틈으로 더 벌어진다.",
+        "lines": [
+          "당신이 넘겨준 정보가 적 세력의 손에 들어갔다. 회관에서 비명이 터진다.",
+          "장로: \"배신자!\" — 그 외침과 함께 화살이 날아든다.",
+          "봉인은 배신을 막지 못했다. 대신, 판은 확실히 움직였다. 2단계는 끝났다."
+        ],
+        "tension_delta": 12,
+        "flags_set": {"phase2_climax_done": true, "phase2_betrayal_climax": true},
+        "main_story_phase2_flag": "phase2_climax_done"
+      }
+    }
+  ]
+}

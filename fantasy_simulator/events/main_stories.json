@@ -157,6 +157,52 @@
           "blocks_choices": ["ally_village", "pursue_power", "seek_truth", "exploit_chaos"]
         }
       ],
+      "phase2_flow": {
+        "sections": {
+          "early": {"name": "세력 동원", "turn_range": "51-70"},
+          "mid": {"name": "견제와 협상", "turn_range": "71-90"},
+          "late": {"name": "2단계 분기", "turn_range": "91-105"},
+          "climax": {"name": "판의 균열", "turn_range": "100-115"}
+        },
+        "flags_to_step": {
+          "phase2_opening_done": 1,
+          "phase2_escalation_done": 2,
+          "story_phase2_chosen": 3,
+          "phase2_climax_done": 4
+        },
+        "step_queue": {
+          "1": ["phase2_council_summons", "phase2_seal_tremor"],
+          "2": [
+            "phase2_faction_raid",
+            "phase2_merchant_blockade",
+            "phase2_warden_line",
+            "story_faction_clash",
+            "story_trade_union_opportunist",
+            "story_blackfang_chaos"
+          ],
+          "3": ["story_choice_alliance", "story_choice_neutral", "story_choice_betrayal"],
+          "4": ["phase2_climax_alliance", "phase2_climax_neutral", "phase2_climax_betrayal"]
+        },
+        "climax_seeds": [
+          "phase2_climax_alliance",
+          "phase2_climax_neutral",
+          "phase2_climax_betrayal"
+        ],
+        "branch_queue_min_escalation": 1
+      },
+      "phase2_climax_gate": {
+        "required_count": 2,
+        "conditions": [
+          {"id": "tension", "tension_min": 35},
+          {"id": "clash", "flag": "story_faction_clash_seen"},
+          {"id": "rep", "faction_rep_min": 20},
+          {"id": "chosen", "flag": "story_phase2_chosen"}
+        ]
+      },
+      "phase2_exit": {
+        "min_progress": 55,
+        "any_of": [{"flag": "phase2_climax_done"}]
+      },
       "phase2_choices": [
         {
           "id": "path_alliance",
@@ -164,7 +210,8 @@
           "summary": "한 세력의 깃발 아래 서기로 했다. 적은 분명해진다.",
           "flags_set": {"story_path_alliance": true, "story_phase2_chosen": true},
           "ending_bias": {"new_order": 10, "seal_maintained": 8, "ancient_awakening": -5},
-          "tension_delta": 5
+          "tension_delta": 5,
+          "blocks_choices": ["path_neutral", "path_betrayal"]
         },
         {
           "id": "path_neutral",
@@ -172,7 +219,8 @@
           "summary": "어느 편에도 서지 않았다. 모두가 당신을 이용하려 한다.",
           "flags_set": {"story_path_neutral": true, "story_phase2_chosen": true},
           "ending_bias": {"age_of_chaos": 15, "power_absorption": 5},
-          "tension_delta": 3
+          "tension_delta": 3,
+          "blocks_choices": ["path_alliance", "path_betrayal"]
         },
         {
           "id": "path_betrayal",
@@ -181,7 +229,8 @@
           "flags_set": {"story_path_betrayal": true, "story_phase2_chosen": true},
           "ending_bias": {"power_absorption": 18, "age_of_chaos": 8, "new_order": -10, "seal_maintained": -8},
           "faction_reputation": {"ashpoint_council": -10, "silver_cross_order": -10, "black_covenant": 5},
-          "tension_delta": 12
+          "tension_delta": 12,
+          "blocks_choices": ["path_alliance", "path_neutral"]
         }
       ],
       "endings": [
@@ -234,6 +283,12 @@
           "black_smoke": 6,
           "phase1_village_rumors": 5,
           "phase1_climax_descent": 12,
+          "phase2_council_summons": 5,
+          "phase2_seal_tremor": 4,
+          "phase2_faction_raid": 6,
+          "phase2_climax_alliance": 10,
+          "phase2_climax_neutral": 10,
+          "phase2_climax_betrayal": 10,
           "story_faction_clash": 10,
           "story_seal_near_break": 12
         },
@@ -244,12 +299,13 @@
           "phase1_rumors_spread": 4,
           "phase1_climax_done": 10,
           "story_phase1_chosen": 8,
-          "story_phase2_chosen": 10
+          "phase2_opening_done": 4,
+          "phase2_escalation_done": 5,
+          "story_phase2_chosen": 10,
+          "phase2_climax_done": 12
         }
       },
-      "phase_events": {
-        "2": {"at_progress": 35, "pending": ["story_choice_alliance", "story_choice_neutral", "story_choice_betrayal"]}
-      },
+      "phase_events": {},
       "ending_weights": {
         "seal_maintained": {
           "faction": {"ashen_wardens": 2.0, "ashpoint_council": 1.2},

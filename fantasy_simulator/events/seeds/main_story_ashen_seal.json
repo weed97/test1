@@ -157,6 +157,7 @@
       "seed_type": "main_story",
       "main_plot_link": "ashen_seal_cracking",
       "requires_action": ["explore"],
+      "location_zones": ["ashpoint", "forest", "tower"],
       "requires_main_story_phase": 2,
       "requires_tension_min": 50,
       "tension_tags": ["crisis"],
