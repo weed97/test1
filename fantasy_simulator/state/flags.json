@@ -40,12 +40,11 @@
   },
   "faction_reputation": {
     "ashpoint_council": 5,
-    "merchant_guild": -42,
-    "bandit_crown": 0,
-    "ash_church": 0,
-    "seal_wardens": 0,
-    "royal_remnant": 0,
-    "void_circle": 0
+    "silverwood_trade_union": -42,
+    "blackfang_marauders": 0,
+    "ashen_wardens": 0,
+    "black_covenant": 0,
+    "silver_cross_order": 0
   },
   "main_story": {
     "id": "seal_breaking",

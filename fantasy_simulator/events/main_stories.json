@@ -43,7 +43,7 @@
       ],
       "progress_sources": {
         "seed_ids": {"traitor_in_council": 10, "black_council": 12},
-        "faction_min": {"royal_remnant": 20, "bandit_crown": 15},
+        "faction_min": {"silver_cross_order": 20, "blackfang_marauders": 15},
         "tension_above": 55
       },
       "branch_flags": {
@@ -65,7 +65,7 @@
       ],
       "progress_sources": {
         "seed_ids": {"whispers_from_grave": 8, "false_prophet": 6},
-        "faction_min": {"void_circle": 25},
+        "faction_min": {"black_covenant": 25},
         "tension_above": 70
       },
       "branch_flags": {

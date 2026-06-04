@@ -45,7 +45,8 @@ class EventEngineTests(unittest.TestCase):
         self.state["world"]["time_of_day"] = "night"
         result = self.engine.try_trigger_event(self.state, "explore", turn=1)
         self.assertIsNotNone(result)
-        self.assertLess(len(self.state["flags"]["pending_events"]), before)
+        self.assertIn(result["seed_id"], self.state["flags"].get("triggered_events", []))
+        self.assertNotIn(result["seed_id"], self.state["flags"]["pending_events"])
 
     def test_talk_advances_quest_counter(self) -> None:
         self.engine.talk(self.state, "talk torren", 1, self.loader)

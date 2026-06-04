@@ -1,6 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "reputation_range": [-100, 100],
+  "reputation_delta_typical": [5, 20],
   "tiers": [
     {"id": "hostile", "min": -100, "max": -40, "label_ko": "적대"},
     {"id": "unfriendly", "min": -39, "max": -10, "label_ko": "불신"},
@@ -10,27 +11,74 @@
   ],
   "legacy_reputation_keys": {
     "ashpoint": "ashpoint_council",
-    "lilian": "merchant_guild",
-    "grey_cloak": "seal_wardens"
+    "lilian": "silverwood_trade_union",
+    "grey_cloak": "ashen_wardens"
+  },
+  "legacy_faction_ids": {
+    "merchant_guild": "silverwood_trade_union",
+    "bandit_crown": "blackfang_marauders",
+    "seal_wardens": "ashen_wardens",
+    "void_circle": "black_covenant",
+    "royal_remnant": "silver_cross_order"
+  },
+  "relationship_stances": {
+    "hostile": {"on_other_gain": "penalty", "magnitude": 0.25},
+    "friendly": {"on_other_gain": "bonus", "magnitude": 0.12},
+    "neutral": {"on_other_gain": "none"},
+    "utilize": {"on_other_gain": "mutual", "magnitude": 0.15}
   },
   "factions": [
     {
       "id": "ashpoint_council",
       "name_ko": "애쉬포인트 자치회",
-      "summary": "마을 장로·민병·주민을 대표하는 자치 세력.",
-      "rivals": ["bandit_crown", "void_circle"],
+      "name_en": "Ashpoint Council",
+      "temperament": "마을 중심의 실용주의. 질서와 생존 최우선.",
+      "goals": ["마을 안정", "자급자족", "외부 간섭 최소화"],
+      "key_figures": ["마을 장로", "민병대장", "농부 대표"],
+      "relationships": {
+        "silverwood_trade_union": "neutral",
+        "blackfang_marauders": "hostile",
+        "ashen_wardens": "neutral",
+        "black_covenant": "hostile",
+        "silver_cross_order": "friendly"
+      },
+      "player_examples": {
+        "friendly": "마을 방어·식량 문제 해결 → 민병대 지원, 정보, 안전한 거래",
+        "hostile": "주민 해치거나 외부 세력과 협력 → 추방 또는 민병대 습격"
+      },
+      "reputation_milestones": {
+        "40": {"pending_event": "council_militia_support", "summary": "자치회가 민병대 지원을 약속한다."},
+        "-40": {"pending_event": "council_banishment", "summary": "자치회가 플레이어의 마을 출입을 금지한다."}
+      },
       "tier_effects": {
-        "hostile": {"zone_blocked": ["ashpoint_plaza"], "price_modifier": 0.15},
+        "hostile": {"zone_blocked": ["ashpoint_plaza"], "price_modifier": 0.15, "combat_on_trade": true},
         "unfriendly": {"price_modifier": 0.05},
         "friendly": {"quest_unlock": ["council_archive"], "price_modifier": -0.05},
         "allied": {"quest_unlock": ["council_archive", "militia_support"], "zone_bonus": ["ashpoint_plaza"]}
       }
     },
     {
-      "id": "merchant_guild",
-      "name_ko": "실버우드 상인 길드",
-      "summary": "릴리안·핀 등 변경 상인 연합. 물자와 정보를 통제한다.",
-      "rivals": ["bandit_crown"],
+      "id": "silverwood_trade_union",
+      "name_ko": "실버우드 상인 연합",
+      "name_en": "Silverwood Trade Union",
+      "temperament": "이익 최우선. 중립을 표방하지만 돈이 되면 어디든 붙음.",
+      "goals": ["무역로 확보", "이익 극대화", "정치적 영향력"],
+      "key_figures": ["길드장", "대상인", "정보상"],
+      "relationships": {
+        "ashpoint_council": "neutral",
+        "blackfang_marauders": "hostile",
+        "ashen_wardens": "neutral",
+        "black_covenant": "neutral",
+        "silver_cross_order": "neutral"
+      },
+      "player_examples": {
+        "friendly": "귀한 물건·경쟁 상인 제거 → 특별 거래, 할인, 정보",
+        "hostile": "길드 이익 방해 → 물가 상승, 상인 습격, 정보 차단"
+      },
+      "reputation_milestones": {
+        "40": {"pending_event": "trade_union_rare_goods", "summary": "상인 연합이 희귀품 거래를 개방한다."},
+        "-40": {"pending_event": "trade_union_embargo", "summary": "상인 연합이 플레이어에 대한 금수조치를 선언한다."}
+      },
       "tier_effects": {
         "hostile": {"price_modifier": 0.35, "combat_on_trade": true},
         "unfriendly": {"price_modifier": 0.15},
@@ -39,10 +87,27 @@
       }
     },
     {
-      "id": "bandit_crown",
-      "name_ko": "왕관 산적단",
-      "summary": "숲과 고개를 거점으로 약탈하는 무법 집단.",
-      "rivals": ["ashpoint_council", "merchant_guild", "royal_remnant"],
+      "id": "blackfang_marauders",
+      "name_ko": "검은송곳니 산적단",
+      "name_en": "Blackfang Marauders",
+      "temperament": "자유와 약육강식. 마을과 상인을 주로 노림.",
+      "goals": ["세력 확장", "약탈", "기존 질서 파괴"],
+      "key_figures": ["단장", "부단장", "척후병"],
+      "relationships": {
+        "ashpoint_council": "hostile",
+        "silverwood_trade_union": "hostile",
+        "ashen_wardens": "neutral",
+        "black_covenant": "utilize",
+        "silver_cross_order": "hostile"
+      },
+      "player_examples": {
+        "friendly": "약탈 동참·산적 적 제거 → 동료 인정, 은신처",
+        "hostile": "산적 공격·상인 편 듦 → 지속적 습격과 복수"
+      },
+      "reputation_milestones": {
+        "40": {"pending_event": "blackfang_hideout_access", "summary": "산적단이 숲속 은신처를 개방한다."},
+        "-40": {"pending_event": "blackfang_vendetta", "summary": "검은송곳니가 복수 각오를 다진다."}
+      },
       "tier_effects": {
         "hostile": {"zone_blocked": ["northern_forest_road"], "combat_on_trade": true},
         "friendly": {"quest_unlock": ["bandit_smuggling"], "zone_bonus": ["northern_forest_road"]},
@@ -50,21 +115,27 @@
       }
     },
     {
-      "id": "ash_church",
-      "name_ko": "잿불 교단",
-      "summary": "애쉬포인트 우물·성역을 수호하는 종교 세력.",
-      "rivals": ["void_circle"],
-      "tier_effects": {
-        "hostile": {"zone_blocked": ["ashpoint_shrine"]},
-        "friendly": {"quest_unlock": ["well_blessing"], "healing_discount": 0.1},
-        "allied": {"quest_unlock": ["well_blessing", "exorcism_rite"], "rival_penalty": {"void_circle": -8}}
-      }
-    },
-    {
-      "id": "seal_wardens",
-      "name_ko": "봉인 수호자",
-      "summary": "고대 관측탑과 룬 봉인을 지키는 은밀한 결사.",
-      "rivals": ["void_circle"],
+      "id": "ashen_wardens",
+      "name_ko": "잿빛 감시자",
+      "name_en": "Ashen Wardens",
+      "temperament": "고대 유적·봉인 수호. 인간 사회에 거의 관여하지 않음.",
+      "goals": ["고대 존재 봉인 유지", "외부 간섭 배제"],
+      "key_figures": ["수호자", "고고학자", "은둔 마법사"],
+      "relationships": {
+        "ashpoint_council": "neutral",
+        "silverwood_trade_union": "neutral",
+        "blackfang_marauders": "neutral",
+        "black_covenant": "hostile",
+        "silver_cross_order": "neutral"
+      },
+      "player_examples": {
+        "friendly": "유적 보호·봉인 지식 수호 → 희귀 유물과 고대 지식",
+        "hostile": "유적 파괴·봉인 건드림 → 적으로 간주, 제거 시도"
+      },
+      "reputation_milestones": {
+        "40": {"pending_event": "ashen_artifact_gift", "summary": "잿빛 감시자가 고대 유물 단서를 남긴다."},
+        "-40": {"pending_event": "ashen_hunter_marked", "summary": "감시자들이 플레이어를 봉인 위협으로 표시한다."}
+      },
       "tier_effects": {
         "hostile": {"zone_blocked": ["observation_tower"]},
         "friendly": {"quest_unlock": ["warden_briefing"], "zone_bonus": ["observation_tower"]},
@@ -72,25 +143,59 @@
       }
     },
     {
-      "id": "royal_remnant",
-      "name_ko": "왕국 잔당",
-      "summary": "실버우드 왕좌 분쟁의 잔존 세력. 회색 망토와 연결된다.",
-      "rivals": ["bandit_crown", "void_circle"],
+      "id": "black_covenant",
+      "name_ko": "칠흑의 서약",
+      "name_en": "Black Covenant",
+      "temperament": "금지된 지식과 힘 추구. 매우 위험하고 비밀스러움.",
+      "goals": ["고대 존재 깨우기", "강대한 힘 확보"],
+      "key_figures": ["교주", "사제", "실험체"],
+      "relationships": {
+        "ashpoint_council": "hostile",
+        "silverwood_trade_union": "neutral",
+        "blackfang_marauders": "utilize",
+        "ashen_wardens": "hostile",
+        "silver_cross_order": "hostile"
+      },
+      "player_examples": {
+        "friendly": "흑마법 퀘스트·실험 협력 → 강력한 힘과 아이템",
+        "hostile": "방해 시 암살·저주·마을 내 스파이 활동"
+      },
+      "reputation_milestones": {
+        "40": {"pending_event": "covenant_dark_gift", "summary": "칠흑의 서약이 금기의 선물을 제안한다."},
+        "-40": {"pending_event": "covenant_curse_marked", "summary": "서약이 플레이어에게 저주를 내린다."}
+      },
       "tier_effects": {
-        "hostile": {"combat_on_trade": true},
-        "friendly": {"quest_unlock": ["remnant_intel"]},
-        "allied": {"quest_unlock": ["remnant_intel", "claim_legitimacy"], "tension_on_contact": 4}
+        "hostile": {"zone_blocked": ["void_laboratory"]},
+        "friendly": {"quest_unlock": ["covenant_lore"], "tension_on_contact": 6},
+        "allied": {"quest_unlock": ["covenant_lore", "rift_experiment"], "tension_on_contact": 10}
       }
     },
     {
-      "id": "void_circle",
-      "name_ko": "공허의 연구회",
-      "summary": "흑마법과 이계 균열을 연구하는 금기 학파.",
-      "rivals": ["ash_church", "seal_wardens", "ashpoint_council"],
+      "id": "silver_cross_order",
+      "name_ko": "은빛 십자 기사단",
+      "name_en": "Silver Cross Order",
+      "temperament": "몰락 왕국의 명예·질서 수호. 이상주의적.",
+      "goals": ["옛 왕국 질서 회복", "혼란 바로잡기"],
+      "key_figures": ["기사단장", "성기사", "견습 기사"],
+      "relationships": {
+        "ashpoint_council": "friendly",
+        "silverwood_trade_union": "neutral",
+        "blackfang_marauders": "hostile",
+        "ashen_wardens": "neutral",
+        "black_covenant": "hostile"
+      },
+      "player_examples": {
+        "friendly": "정의로운 행동 → 기사단 지원, 명예 퀘스트, 강력 장비",
+        "hostile": "약자 괴롭힘·불명예 → 적으로 간주, 추적"
+      },
+      "reputation_milestones": {
+        "40": {"pending_event": "silver_cross_oath", "summary": "은빛 십자 기사단이 동맹 맹세를 제안한다."},
+        "-40": {"pending_event": "silver_cross_hunt", "summary": "기사단이 플레이어를 불명예자로 추적한다."}
+      },
       "tier_effects": {
-        "hostile": {"zone_blocked": ["void_laboratory"]},
-        "friendly": {"quest_unlock": ["void_lore"], "tension_on_contact": 6},
-        "allied": {"quest_unlock": ["void_lore", "rift_experiment"], "tension_on_contact": 10}
+        "hostile": {"combat_on_trade": true},
+        "friendly": {"quest_unlock": ["knight_intel"], "healing_discount": 0.1},
+        "allied": {"quest_unlock": ["knight_intel", "claim_legitimacy"], "tension_on_contact": 4}
       }
     }
   ]

@@ -83,6 +83,10 @@ Event seeds may gate on `requires_faction_min/max`, `requires_tension_min/max`, 
 
 Long-term arcs: `seal_breaking` (default, linked to `smoke_on_the_mountain`), `crown_war`, `otherworld_invasion`.
 
+**Six factions** (v2): 애쉬포인트 자치회, 실버우드 상인 연합, 검은송곳니 산적단, 잿빛 감시자, 칠흑의 서약, 은빛 십자 기사단 — see `config/factions.json` for relationship matrix (hostile / friendly / neutral / utilize) and reputation milestones (±40 triggers major events).
+
+Player rep mirrors to `state.factions.player_reputation` for `world_state.json` readability.
+
 ## Keyword routing (default)
 
 | Input keywords | Model |

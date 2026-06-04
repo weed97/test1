@@ -342,10 +342,10 @@ class EventEngine:
 
     def _npc_faction_attitude(self, state: dict[str, Any], npc_id: str) -> str | None:
         npc_factions = {
-            "lilian_innkeeper": "merchant_guild",
-            "merchant_finn": "merchant_guild",
+            "lilian_innkeeper": "silverwood_trade_union",
+            "merchant_finn": "silverwood_trade_union",
             "elder_maren": "ashpoint_council",
-            "grey_cloak": "seal_wardens",
+            "grey_cloak": "ashen_wardens",
             "torren_blacksmith": "ashpoint_council",
         }
         fid = npc_factions.get(npc_id)

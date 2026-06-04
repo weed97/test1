@@ -77,9 +77,9 @@ def passive_drift(state: dict[str, Any], *, rng: Any | None = None) -> tuple[int
         delta += 1
 
     faction_rep = flags.get("faction_reputation", {})
-    if int(faction_rep.get("void_circle", 0)) >= 30:
+    if int(faction_rep.get("black_covenant", 0)) >= 30:
         delta += 1
-    if int(faction_rep.get("seal_wardens", 0)) >= 30:
+    if int(faction_rep.get("ashen_wardens", 0)) >= 30:
         delta -= 1
 
     if rng is not None and delta == 0:
