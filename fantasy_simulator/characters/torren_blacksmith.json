@@ -1,0 +1,28 @@
+{
+  "id": "torren_blacksmith",
+  "name": "토렌",
+  "title": "대장장이",
+  "role": "npc",
+  "class": "craftsman",
+  "level": 4,
+  "stats": {
+    "hp": 85,
+    "max_hp": 85,
+    "mana": 10,
+    "max_mana": 10,
+    "strength": 16,
+    "agility": 10,
+    "intelligence": 12,
+    "vitality": 14
+  },
+  "modifiers": {
+    "attack": 4,
+    "defense": 2,
+    "spellcasting": 0,
+    "agility": 0
+  },
+  "elements": [],
+  "traits": ["장인정신", "과묵함"],
+  "flags": {"knockout_only": true},
+  "lore_ref": "lore/npcs.md#토렌-대장장이"
+}

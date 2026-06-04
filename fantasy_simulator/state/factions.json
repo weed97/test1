@@ -1,12 +1,12 @@
 {
-  "arcadia_kingdom": {
-    "name": "아르카디아 왕국",
-    "influence": 0.75,
-    "morale": 0.6
+  "silverwood_militia": {
+    "name": "실버우드 변경 민병대",
+    "influence": 0.4,
+    "morale": 0.55
   },
-  "shadow_legion": {
-    "name": "그림자 군단",
-    "influence": 0.35,
-    "morale": 0.8
+  "ashpoint_elder": {
+    "name": "애쉬포인트 장로회",
+    "influence": 0.5,
+    "morale": 0.45
   }
 }

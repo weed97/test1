@@ -13,6 +13,7 @@ from typing import Any
 
 from utils.state_loader import StateLoader, event_entries
 from utils.state_store import StateStore
+from utils.content_loader import ContentLoader
 
 
 class StateManager:
@@ -22,6 +23,7 @@ class StateManager:
         self.base_dir = Path(base_dir)
         self.store = store or StateStore.from_package_root(self.base_dir)
         self.loader = StateLoader(base_dir=self.base_dir, store=self.store)
+        self.content = ContentLoader(self.base_dir)
 
     def load(self, *, force: bool = False) -> dict[str, Any]:
         return self.store.load(force=force)
@@ -43,9 +45,21 @@ class StateManager:
         """Write monolithic world_state.json — Cursor-facing SSOT mirror."""
         self.store.export_legacy()
 
-    def snapshot(self, *, event_limit: int = 10) -> dict[str, Any]:
-        """Compact state for LLM user messages."""
-        return self.store.llm_context_snapshot(event_limit=event_limit)
+    def snapshot(self, *, event_limit: int = 5, lore_event_seeds: int = 3) -> dict[str, Any]:
+        """Compact state for LLM prompts + on-demand lore (not stored in world_state)."""
+        base = self.store.llm_context_snapshot(event_limit=event_limit)
+        state = self.load()
+        base["narrative_context"] = self.content.build_narrative_context(
+            state, max_event_seeds=lore_event_seeds
+        )
+        # Slim flags in LLM payload — only gameplay flags, not debug blobs
+        flags = state.get("flags", {})
+        base["flags"] = {
+            k: flags[k]
+            for k in ("intro_completed", "scene", "pending_events")
+            if k in flags
+        }
+        return base
 
     def summary(self, state: dict[str, Any] | None = None) -> str:
         """Human-readable one-page status summary."""
@@ -54,7 +68,7 @@ class StateManager:
         lines = [
             f"{world.get('name', 'Eldoria')} — Day {world.get('day', '?')} ({world.get('time_of_day', '?')})",
             f"Location: {world.get('location', '?')}",
-            f"Weather: {world.get('weather', '?')} | Tension: {world.get('tension', 0):.2f}",
+            f"Weather: {world.get('weather', '?')} | Tension: {world.get('tension', 0)}",
             f"Gold: {state.get('inventory', {}).get('party_gold', 0)}",
         ]
         party = state.get("party", [])

@@ -8,8 +8,11 @@
     "gareth_ironshield"
   ],
   "npc_locations": {
-    "elara_moonwhisper": "아르카디아 — 마법탑 서관",
-    "gareth_ironshield": "아르카디아 — 왕성 연무장",
-    "malachar_voidweaver": "어둠의 숲 — 파멸의 제단"
+    "elara_moonwhisper": "애쉬포인트 — 여관 '은빛 울림'",
+    "gareth_ironshield": "애쉬포인트 — 여관 '은빛 울림'",
+    "torren_blacksmith": "애쉬포인트 — 대장간",
+    "lilian_innkeeper": "애쉬포인트 — 여관 '은빛 욬림'",
+    "grey_cloak": "애쉬포인트 — 광장 근처 (목적 불명)",
+    "malachar_voidweaver": "북쪽 숲 — 깊은 곳 (미접촉)"
   }
 }

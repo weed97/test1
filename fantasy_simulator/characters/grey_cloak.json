@@ -1,0 +1,28 @@
+{
+  "id": "grey_cloak",
+  "name": "회색 망토",
+  "title": "수상한 여행자",
+  "role": "npc",
+  "class": "unknown",
+  "level": 5,
+  "stats": {
+    "hp": 70,
+    "max_hp": 70,
+    "mana": 60,
+    "max_mana": 60,
+    "strength": 10,
+    "agility": 14,
+    "intelligence": 15,
+    "vitality": 11
+  },
+  "modifiers": {
+    "attack": 2,
+    "defense": 3,
+    "spellcasting": 3,
+    "agility": 2
+  },
+  "elements": ["arcane"],
+  "traits": ["신비로움", "은신"],
+  "flags": {"knockout_only": true, "true_name_unknown": true},
+  "lore_ref": "lore/npcs.md#회색-망토"
+}

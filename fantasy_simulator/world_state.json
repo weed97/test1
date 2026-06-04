@@ -3,93 +3,57 @@
     "version": 2,
     "simulation_id": "eldoria-chronicle-001",
     "created_at": "2026-06-04T00:00:00Z",
-    "last_updated": "2026-06-04T14:40:54Z",
+    "last_updated": "2026-06-04T15:07:28Z",
     "storage": "sharded"
   },
   "world": {
-    "name": "엘도리아",
-    "day": 2,
-    "time_of_day": "morning",
-    "season": "spring",
+    "name": "에르도리아",
+    "day": 1,
+    "time_of_day": "저녁",
+    "season": "가을",
     "weather": "clear",
-    "location": "왕국 수도 — 아르카디아",
-    "tension": 0.2,
-    "active_threats": [
-      "북부 국경의 그림자 군단"
+    "location": "실버우드 변경 마을 '애쉬포인트'",
+    "tension": 42,
+    "rumors": [
+      "최근 산에서 검은 연기가 피어오른다.",
+      "상인들이 말하길, 북쪽 숲에서 이상한 짐승이 나타난다고 한다.",
+      "마을 장로가 최근 건강이 많이 안 좋아졌다는 소문이 있다."
     ]
   },
   "factions": {
-    "arcadia_kingdom": {
-      "name": "아르카디아 왕국",
-      "influence": 0.75,
-      "morale": 0.6
+    "silverwood_militia": {
+      "name": "실버우드 변경 민병대",
+      "influence": 0.4,
+      "morale": 0.55
     },
-    "shadow_legion": {
-      "name": "그림자 군단",
-      "influence": 0.35,
-      "morale": 0.8
+    "ashpoint_elder": {
+      "name": "애쉬포인트 장로회",
+      "influence": 0.5,
+      "morale": 0.45
     }
   },
   "inventory": {
-    "party_gold": 120,
+    "party_gold": 80,
     "shared_items": [
-      "치유 물약 x3",
-      "고대 지도 조각"
+      "치유 물약 x2",
+      "여행 지도 (실버우드 일대)"
     ]
   },
   "flags": {
     "intro_completed": false,
-    "shadow_legion_spotted": true,
-    "last_event_alternatives": {
-      "alternatives": [
-        {
-          "id": "a",
-          "summary": "주변을 정찰한다.",
-          "risk": "low",
-          "tone": "calm"
-        },
-        {
-          "id": "b",
-          "summary": "낯선 발소리가 폐허 저편에서 들린다.",
-          "risk": "medium",
-          "tone": "tense"
-        }
-      ],
-      "recommended_id": "a",
-      "narrative_hint": "주변을 정찰한다."
-    },
-    "last_quick_event": {
-      "event_title": "Whispers in the alley",
-      "description": "A quiet moment passes in Eldoria.",
-      "potential_consequences": [
-        "investigate",
-        "move on"
-      ],
-      "suggested_state_changes": {}
-    },
-    "last_consistency_check": {
-      "consistency_score": 8,
-      "issues_found": [],
-      "recommended_corrections": [],
-      "narrative_direction_suggestion": "Maintain rising tension toward the shadow legion threat."
-    },
-    "consistency_score": 8
+    "scene": "ashpoint_arrival",
+    "pending_events": [
+      "plaza_song",
+      "fleeing_merchant",
+      "well_sound",
+      "child_warning",
+      "drunk_curse"
+    ]
   },
   "combat": null,
   "event_log": {
     "next_turn": 1,
-    "entries": [
-      {
-        "turn": 1,
-        "type": "explore",
-        "summary": "별다른 사건 없이 주변을 정찰했다."
-      },
-      {
-        "turn": 2,
-        "type": "explore",
-        "summary": "별다른 사건 없이 주변을 정찰했다."
-      }
-    ]
+    "entries": []
   },
   "active_characters": [
     "elara_moonwhisper",
@@ -100,9 +64,12 @@
     "gareth_ironshield"
   ],
   "npc_locations": {
-    "elara_moonwhisper": "아르카디아 — 마법탑 서관",
-    "gareth_ironshield": "아르카디아 — 왕성 연무장",
-    "malachar_voidweaver": "어둠의 숲 — 파멸의 제단"
+    "elara_moonwhisper": "애쉬포인트 — 여관 '은빛 울림'",
+    "gareth_ironshield": "애쉬포인트 — 여관 '은빛 울림'",
+    "torren_blacksmith": "애쉬포인트 — 대장간",
+    "lilian_innkeeper": "애쉬포인트 — 여관 '은빛 욬림'",
+    "grey_cloak": "애쉬포인트 — 광장 근처 (목적 불명)",
+    "malachar_voidweaver": "북쪽 숲 — 깊은 곳 (미접촉)"
   },
   "_event_next_turn": 1
 }

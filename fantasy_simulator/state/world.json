@@ -1,12 +1,14 @@
 {
-  "name": "엘도리아",
-  "day": 2,
-  "time_of_day": "morning",
-  "season": "spring",
+  "name": "에르도리아",
+  "day": 1,
+  "time_of_day": "저녁",
+  "season": "가을",
   "weather": "clear",
-  "location": "왕국 수도 — 아르카디아",
-  "tension": 0.2,
-  "active_threats": [
-    "북부 국경의 그림자 군단"
+  "location": "실버우드 변경 마을 '애쉬포인트'",
+  "tension": 42,
+  "rumors": [
+    "최근 산에서 검은 연기가 피어오른다.",
+    "상인들이 말하길, 북쪽 숲에서 이상한 짐승이 나타난다고 한다.",
+    "마을 장로가 최근 건강이 많이 안 좋아졌다는 소문이 있다."
   ]
 }

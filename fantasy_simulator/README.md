@@ -1,27 +1,26 @@
 # Fantasy Simulator — Eldoria
 
 Cursor 멀티 모델 운영을 위한 판타지 시뮬레이터.  
-**`world_state.json`이 중앙 SSOT**이며, 매 턴마다 자동 동기화됩니다.
+**`world_state.json`은 최소 상태 hub**이며, 상세 서사는 `lore/`·`events/`에 분리됩니다.
 
-> 상세 운영 가이드: [docs/CURSOR_MULTI_MODEL.md](docs/CURSOR_MULTI_MODEL.md)
+> 운영: [docs/CURSOR_MULTI_MODEL.md](docs/CURSOR_MULTI_MODEL.md) · 콘텐츠: [docs/LORE_AND_EVENTS.md](docs/LORE_AND_EVENTS.md)
 
 ## 프로젝트 구조
 
 ```
 fantasy_simulator/
-├── world_state.json          # ★ 현재 세계 상태 (Cursor SSOT)
-├── state/                    # 엔진 내부 샤드 (자동 관리)
-├── rules/                    # 마법 체계, 전투 규칙
-├── characters/               # 캐릭터 데이터
-├── prompts/                  # 역할별 시스템 프롬프트
-│   ├── narrator_claude.md    → Opus 4.8 High
-│   ├── mechanics_codex.md    → Codex 5.3 High (JSON)
-│   ├── world_arbiter.md      → Opus (일관성)
-│   └── quick_event_gpt.md    → GPT-5.5 High
+├── world_state.json          # ★ 최소 상태 hub (Cursor @ 참조)
+├── state/                    # canonical shards
+├── lore/                     # NPC·지역 상세 (on-demand)
+├── events/seeds.json         # 이벤트 씨앗 카탈로그
+├── rules/
+├── characters/               # stat + lore_ref
+├── prompts/
 ├── config/llm_routing.json
-├── simulation_engine.py      # CLI + SimulationEngine (턴 루프)
+├── simulation_engine.py
 └── utils/
-    ├── turn_processor.py     # process_player_action (단일 진입점)
+    ├── content_loader.py     # lore/events 필요 시 로드
+    ├── turn_processor.py
     ├── llm_router.py
     ├── llm_client.py
     └── state_manager.py

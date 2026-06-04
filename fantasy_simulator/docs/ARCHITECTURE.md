@@ -46,11 +46,11 @@ Result fields: `is_mock`, `degraded`, `fallback_reason`
 
 | Layer | Path | Role |
 |-------|------|------|
-| Canonical | `state/*.json` | Engine read/write |
+| Canonical | `state/*.json` | Engine read/write (minimal) |
 | Mirror | `world_state.json` | Cursor `@world_state.json` hub |
-| Shared | one `StateStore` | Loader + Manager use same instance |
+| Lore | `lore/`, `events/` | Rich text — loaded on demand for LLM only |
 
-Every `StateManager.save()` writes shards then exports the hub mirror.
+See [LORE_AND_EVENTS.md](LORE_AND_EVENTS.md).
 
 ## Keyword routing (default)
 
