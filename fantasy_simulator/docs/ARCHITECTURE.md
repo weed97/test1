@@ -69,6 +69,20 @@ Result fields: `is_mock`, `degraded`, `fallback_reason`
 
 See [LORE_AND_EVENTS.md](LORE_AND_EVENTS.md).
 
+## World systems (faction, tension, main story)
+
+End of each turn (`execute_turn` → `tick_world_systems`):
+
+| Module | Config | State keys |
+|--------|--------|------------|
+| `utils/faction_engine.py` | `config/factions.json` | `flags.faction_reputation` (+ legacy `flags.reputation` sync) |
+| `utils/world_tension.py` | tiers in code | `world.tension` (0–100) |
+| `utils/main_story_engine.py` | `events/main_stories.json` | `flags.main_story` |
+
+Event seeds may gate on `requires_faction_min/max`, `requires_tension_min/max`, and apply `faction_reputation` in outcomes. Legacy quest `reputation.ashpoint` etc. map to faction IDs via `legacy_reputation_keys`.
+
+Long-term arcs: `seal_breaking` (default, linked to `smoke_on_the_mountain`), `crown_war`, `otherworld_invasion`.
+
 ## Keyword routing (default)
 
 | Input keywords | Model |

@@ -58,7 +58,7 @@ class StateManager:
         flags = state.get("flags", {})
         base["flags"] = {
             k: flags[k]
-            for k in ("intro_completed", "scene", "pending_events", "reputation", "quests")
+            for k in ("intro_completed", "scene", "pending_events", "reputation", "faction_reputation", "quests", "main_story")
             if k in flags
         }
         return base
@@ -136,6 +136,7 @@ class StateManager:
             self.loader,
             event_engine=event_engine,
             mode=mode,
+            base_dir=self.base_dir,
         )
 
     def export_legacy(self) -> None:

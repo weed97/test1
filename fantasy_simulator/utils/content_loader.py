@@ -208,4 +208,6 @@ class ContentLoader:
             "active_quest": quest_ctx,
             "rumors": world.get("rumors", []),
             "reputation": flags.get("reputation", {}),
+            "faction_reputation": flags.get("faction_reputation", {}),
+            "main_story": flags.get("main_story"),
         }

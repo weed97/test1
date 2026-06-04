@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "default_story": "seal_breaking",
+  "stories": [
+    {
+      "id": "seal_breaking",
+      "title": "고대 봉인 해제",
+      "theme": "금지된 존재가 깨어나는 이야기",
+      "summary": "관측탑 봉인이 약해지며 검은 연기와 실버 스토커가 깨어난다.",
+      "linked_quest": "smoke_on_the_mountain",
+      "stages": [
+        {"stage": 1, "goal": "마을에서 징후를 수집", "progress_needed": 20},
+        {"stage": 2, "goal": "숲과 탑의 봉인 균열 조사", "progress_needed": 40},
+        {"stage": 3, "goal": "봉인을 강화하거나 의도적으로 해제", "progress_needed": 60},
+        {"stage": 4, "goal": "세계 상태가 영구적으로 바뀜", "progress_needed": 100}
+      ],
+      "progress_sources": {
+        "seed_ids": {
+          "sentinel_stirring": 8,
+          "broken_rune_pillar": 6,
+          "seal_drip": 5,
+          "black_smoke": 4
+        },
+        "quest_stage": {"smoke_on_the_mountain": [10, 15, 25, 40]},
+        "flags": {"grey_cloak_met": 5, "torren_side_quest_done": 3}
+      },
+      "branch_flags": {
+        "reinforce_seal": "world_seal_reinforced",
+        "break_seal": "world_seal_broken"
+      }
+    },
+    {
+      "id": "crown_war",
+      "title": "왕국 내전",
+      "theme": "왕위 계승 분쟁",
+      "summary": "실버우드 변경이 왕국 잔당과 산적단 사이에서 갈라진다.",
+      "linked_quest": null,
+      "stages": [
+        {"stage": 1, "goal": "내전 징후 포착", "progress_needed": 25},
+        {"stage": 2, "goal": "세력 편 선택", "progress_needed": 50},
+        {"stage": 3, "goal": "지역 점령과 협상", "progress_needed": 75},
+        {"stage": 4, "goal": "변경 지도 재편", "progress_needed": 100}
+      ],
+      "progress_sources": {
+        "seed_ids": {"traitor_in_council": 10, "black_council": 12},
+        "faction_min": {"royal_remnant": 20, "bandit_crown": 15},
+        "tension_above": 55
+      },
+      "branch_flags": {
+        "side_royal": "crown_war_royal_victory",
+        "side_bandit": "crown_war_bandit_hold"
+      }
+    },
+    {
+      "id": "otherworld_invasion",
+      "title": "이계 침공",
+      "theme": "다른 차원의 존재가 침공",
+      "summary": "공허 균열이 넓어지며 마을과 숲이 점령 위험에 빠진다.",
+      "linked_quest": null,
+      "stages": [
+        {"stage": 1, "goal": "균열 징후 관측", "progress_needed": 25},
+        {"stage": 2, "goal": "침공군과 첫 교전", "progress_needed": 50},
+        {"stage": 3, "goal": "저항군 결성 또는 항복", "progress_needed": 75},
+        {"stage": 4, "goal": "변경의 운명 확정", "progress_needed": 100}
+      ],
+      "progress_sources": {
+        "seed_ids": {"whispers_from_grave": 8, "false_prophet": 6},
+        "faction_min": {"void_circle": 25},
+        "tension_above": 70
+      },
+      "branch_flags": {
+        "resist": "invasion_resistance",
+        "submit": "invasion_occupied"
+      }
+    }
+  ]
+}

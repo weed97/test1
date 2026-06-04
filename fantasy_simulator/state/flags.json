@@ -38,6 +38,22 @@
     "lilian": 8,
     "grey_cloak": 0
   },
+  "faction_reputation": {
+    "ashpoint_council": 5,
+    "merchant_guild": -42,
+    "bandit_crown": 0,
+    "ash_church": 0,
+    "seal_wardens": 0,
+    "royal_remnant": 0,
+    "void_circle": 0
+  },
+  "main_story": {
+    "id": "seal_breaking",
+    "stage": 1,
+    "progress": 0,
+    "started_turn": 0,
+    "branch": null
+  },
   "quests": {
     "active": "smoke_on_the_mountain",
     "stage": 2,

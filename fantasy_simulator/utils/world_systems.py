@@ -1,0 +1,30 @@
+"""Per-turn world simulation hooks — tension drift and main story tick."""
+
+from __future__ import annotations
+
+import random
+from typing import Any
+
+from utils.faction_engine import FactionEngine
+from utils.main_story_engine import MainStoryEngine
+from utils.world_tension import passive_drift
+
+
+def tick_world_systems(
+    state: dict[str, Any],
+    *,
+    base_dir: Any,
+    turn: int,
+    rng: random.Random | None = None,
+) -> list[str]:
+    """Run lightweight end-of-turn world updates."""
+    lines: list[str] = []
+    FactionEngine(base_dir).ensure_initialized(state)
+
+    _, tension_note = passive_drift(state, rng=rng)
+    if tension_note:
+        lines.append(tension_note)
+
+    main = MainStoryEngine(base_dir)
+    lines.extend(main.tick(state, turn=turn))
+    return lines

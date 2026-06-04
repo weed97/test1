@@ -264,6 +264,17 @@ def execute_turn(
 
     proc = process_player_action(ctx)
     lines.extend(proc["lines"])
+
+    from utils.world_systems import tick_world_systems
+
+    world_lines = tick_world_systems(
+        ctx.state,
+        base_dir=loader.base_dir,
+        turn=ctx.turn,
+        rng=ctx.rules.rng if hasattr(ctx.rules, "rng") else None,
+    )
+    lines.extend(world_lines)
+    ctx.manager.save(ctx.state)
     return TurnResult(
         turn=ctx.turn,
         day=ctx.state["world"]["day"],

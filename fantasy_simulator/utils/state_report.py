@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from utils.state_loader import StateLoader, event_entries
+from utils.world_tension import format_tension_line
 
 
 def format_summary(state: dict[str, Any]) -> str:
@@ -13,7 +14,7 @@ def format_summary(state: dict[str, Any]) -> str:
     lines = [
         f"{world.get('name', 'Eldoria')} — Day {world.get('day', '?')} ({world.get('time_of_day', '?')})",
         f"Location: {world.get('location', '?')}",
-        f"Weather: {world.get('weather', '?')} | Tension: {world.get('tension', 0)}",
+        f"Weather: {world.get('weather', '?')} | {format_tension_line(state)}",
         f"Gold: {state.get('inventory', {}).get('party_gold', 0)}",
     ]
     party = state.get("party", [])
@@ -31,6 +32,7 @@ def format_status_report(
     *,
     event_engine: Any | None = None,
     mode: str = "rule",
+    base_dir: Any | None = None,
 ) -> str:
     """Full status screen for CLI / interactive mode."""
     world = state.get("world", {})
@@ -54,10 +56,25 @@ def format_status_report(
     if state.get("combat"):
         lines.append("(전투 진행 중)")
     rep = state.get("flags", {}).get("reputation", {})
-    if rep:
+    faction_rep = state.get("flags", {}).get("faction_reputation")
+    if faction_rep or rep:
         lines.extend(["", "평판:"])
-        for k, v in sorted(rep.items()):
-            lines.append(f"  - {k}: {v}")
+        if faction_rep:
+            from utils.faction_engine import FactionEngine
+
+            root = base_dir or getattr(loader, "base_dir", None)
+            if root:
+                lines.extend(FactionEngine(root).format_summary(state))
+        elif rep:
+            for k, v in sorted(rep.items()):
+                lines.append(f"  - {k}: {v}")
+    main_story = state.get("flags", {}).get("main_story")
+    if main_story and main_story.get("id"):
+        from utils.main_story_engine import MainStoryEngine
+
+        root = base_dir or getattr(loader, "base_dir", None)
+        if root:
+            lines.extend(["", f"장기 스토리: {MainStoryEngine(root).format_summary(state)}"])
     if event_engine:
         lines.extend(["", f"퀘스트: {event_engine.show_quest_status(state)}"])
     recent = event_entries(state)

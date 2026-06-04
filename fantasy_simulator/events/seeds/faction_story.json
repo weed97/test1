@@ -1,0 +1,107 @@
+{
+  "seeds": [
+    {
+      "id": "guild_price_squeeze",
+      "title": "상인 길드의 짐짓",
+      "summary": "릴리안 일행이 평판에 따라 물가를 조정한다.",
+      "seed_type": "faction",
+      "requires_action": ["talk", "explore"],
+      "related_npc": "lilian_innkeeper",
+      "requires_faction_max": {"merchant_guild": -15},
+      "weight": 14,
+      "outcome": {
+        "summary": "릴리안이 미소를 거두고 물건 값을 올린다. '신뢰는 값이 있어요.'",
+        "gold_delta": -12,
+        "faction_reputation": {"merchant_guild": -3}
+      }
+    },
+    {
+      "id": "council_curfew",
+      "title": "자치회 통행 제한",
+      "summary": "자치회가 불신 세력에게 야간 통행을 금지한다.",
+      "seed_type": "faction",
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "requires_time": ["night"],
+      "requires_faction_max": {"ashpoint_council": -20},
+      "tension_tags": ["crisis"],
+      "weight": 12,
+      "outcome": {
+        "summary": "민병대가 광장 입구를 막는다. '오늘 밤은 집에 있어라.'",
+        "tension_delta": 4,
+        "flags_set": {"council_curfew_active": true}
+      }
+    },
+    {
+      "id": "warden_secret_path",
+      "title": "수호자의 은밀한 길",
+      "summary": "봉인 수호자가 우호적인 모험가에게 지름길을 알려준다.",
+      "seed_type": "faction",
+      "requires_action": ["talk"],
+      "related_npc": "grey_cloak",
+      "requires_faction_min": {"seal_wardens": 15},
+      "requires_quest_stage_min": 2,
+      "weight": 16,
+      "main_plot_link": "seal_breaking",
+      "outcome": {
+        "summary": "회색 망토가 관측탑 뒤편 룬 통로를 가리킨다. 봉인의 숨결이 더 선명해진다.",
+        "faction_reputation": {"seal_wardens": 5, "void_circle": -4},
+        "flags_set": {"warden_path_known": true},
+        "tension_delta": 3
+      }
+    },
+    {
+      "id": "bandit_toll",
+      "title": "산적단 통행세",
+      "summary": "숲길에서 왕관 산적단이 통행세를 요구한다.",
+      "seed_type": "faction",
+      "requires_action": ["explore"],
+      "location_zones": ["forest"],
+      "requires_tension_min": 35,
+      "weight": 13,
+      "tension_tags": ["crisis"],
+      "outcome": {
+        "summary": "가면 산적들이 길을 막는다. 돈을 내면 통과, 거부하면 칼이 나온다.",
+        "gold_delta": -25,
+        "faction_reputation": {"bandit_crown": 8, "merchant_guild": -5},
+        "tension_delta": 5
+      }
+    },
+    {
+      "id": "church_well_blessing",
+      "title": "잿불 교단의 축복",
+      "summary": "교단 성직자가 우물가에서 기도를 올린다.",
+      "seed_type": "faction",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "requires_faction_min": {"ash_church": 10},
+      "requires_tension_max": 60,
+      "tension_tags": ["peace"],
+      "weight": 11,
+      "outcome": {
+        "summary": "성직자가 우물물에 재를 뿌리며 속삭임을 누른다. 마을이 잠시 고요해진다.",
+        "tension_delta": -6,
+        "faction_reputation": {"ash_church": 4, "void_circle": -3},
+        "flags_set": {"well_blessed": true}
+      }
+    },
+    {
+      "id": "void_whisper_offer",
+      "title": "공허의 제안",
+      "summary": "연구회 잔당이 금기 지식을 거래하려 한다.",
+      "seed_type": "faction",
+      "requires_action": ["explore"],
+      "requires_tension_min": 55,
+      "requires_faction_min": {"void_circle": -5},
+      "tension_tags": ["horror", "crisis"],
+      "weight": 10,
+      "main_plot_link": "otherworld_invasion",
+      "outcome": {
+        "summary": "그림자 속 목소리가 균열의 좌표를 속삭인다. 받아들이면 힘이, 거부하면 원한이 남는다.",
+        "faction_reputation": {"void_circle": 10, "ash_church": -8, "seal_wardens": -6},
+        "tension_delta": 8,
+        "flags_set": {"void_offer_heard": true}
+      }
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "reputation_range": [-100, 100],
+  "tiers": [
+    {"id": "hostile", "min": -100, "max": -40, "label_ko": "적대"},
+    {"id": "unfriendly", "min": -39, "max": -10, "label_ko": "불신"},
+    {"id": "neutral", "min": -9, "max": 9, "label_ko": "중립"},
+    {"id": "friendly", "min": 10, "max": 39, "label_ko": "우호"},
+    {"id": "allied", "min": 40, "max": 100, "label_ko": "동맹"}
+  ],
+  "legacy_reputation_keys": {
+    "ashpoint": "ashpoint_council",
+    "lilian": "merchant_guild",
+    "grey_cloak": "seal_wardens"
+  },
+  "factions": [
+    {
+      "id": "ashpoint_council",
+      "name_ko": "애쉬포인트 자치회",
+      "summary": "마을 장로·민병·주민을 대표하는 자치 세력.",
+      "rivals": ["bandit_crown", "void_circle"],
+      "tier_effects": {
+        "hostile": {"zone_blocked": ["ashpoint_plaza"], "price_modifier": 0.15},
+        "unfriendly": {"price_modifier": 0.05},
+        "friendly": {"quest_unlock": ["council_archive"], "price_modifier": -0.05},
+        "allied": {"quest_unlock": ["council_archive", "militia_support"], "zone_bonus": ["ashpoint_plaza"]}
+      }
+    },
+    {
+      "id": "merchant_guild",
+      "name_ko": "실버우드 상인 길드",
+      "summary": "릴리안·핀 등 변경 상인 연합. 물자와 정보를 통제한다.",
+      "rivals": ["bandit_crown"],
+      "tier_effects": {
+        "hostile": {"price_modifier": 0.35, "combat_on_trade": true},
+        "unfriendly": {"price_modifier": 0.15},
+        "friendly": {"price_modifier": -0.1, "quest_unlock": ["guild_caravan"]},
+        "allied": {"price_modifier": -0.2, "quest_unlock": ["guild_caravan", "rare_goods"]}
+      }
+    },
+    {
+      "id": "bandit_crown",
+      "name_ko": "왕관 산적단",
+      "summary": "숲과 고개를 거점으로 약탈하는 무법 집단.",
+      "rivals": ["ashpoint_council", "merchant_guild", "royal_remnant"],
+      "tier_effects": {
+        "hostile": {"zone_blocked": ["northern_forest_road"], "combat_on_trade": true},
+        "friendly": {"quest_unlock": ["bandit_smuggling"], "zone_bonus": ["northern_forest_road"]},
+        "allied": {"quest_unlock": ["bandit_smuggling", "black_market"], "tension_on_contact": -3}
+      }
+    },
+    {
+      "id": "ash_church",
+      "name_ko": "잿불 교단",
+      "summary": "애쉬포인트 우물·성역을 수호하는 종교 세력.",
+      "rivals": ["void_circle"],
+      "tier_effects": {
+        "hostile": {"zone_blocked": ["ashpoint_shrine"]},
+        "friendly": {"quest_unlock": ["well_blessing"], "healing_discount": 0.1},
+        "allied": {"quest_unlock": ["well_blessing", "exorcism_rite"], "rival_penalty": {"void_circle": -8}}
+      }
+    },
+    {
+      "id": "seal_wardens",
+      "name_ko": "봉인 수호자",
+      "summary": "고대 관측탑과 룬 봉인을 지키는 은밀한 결사.",
+      "rivals": ["void_circle"],
+      "tier_effects": {
+        "hostile": {"zone_blocked": ["observation_tower"]},
+        "friendly": {"quest_unlock": ["warden_briefing"], "zone_bonus": ["observation_tower"]},
+        "allied": {"quest_unlock": ["warden_briefing", "seal_reinforcement"], "tension_on_contact": -5}
+      }
+    },
+    {
+      "id": "royal_remnant",
+      "name_ko": "왕국 잔당",
+      "summary": "실버우드 왕좌 분쟁의 잔존 세력. 회색 망토와 연결된다.",
+      "rivals": ["bandit_crown", "void_circle"],
+      "tier_effects": {
+        "hostile": {"combat_on_trade": true},
+        "friendly": {"quest_unlock": ["remnant_intel"]},
+        "allied": {"quest_unlock": ["remnant_intel", "claim_legitimacy"], "tension_on_contact": 4}
+      }
+    },
+    {
+      "id": "void_circle",
+      "name_ko": "공허의 연구회",
+      "summary": "흑마법과 이계 균열을 연구하는 금기 학파.",
+      "rivals": ["ash_church", "seal_wardens", "ashpoint_council"],
+      "tier_effects": {
+        "hostile": {"zone_blocked": ["void_laboratory"]},
+        "friendly": {"quest_unlock": ["void_lore"], "tension_on_contact": 6},
+        "allied": {"quest_unlock": ["void_lore", "rift_experiment"], "tension_on_contact": 10}
+      }
+    }
+  ]
+}

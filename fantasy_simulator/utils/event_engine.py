@@ -7,6 +7,9 @@ import re
 from typing import Any
 
 from utils.content_loader import ContentLoader
+from utils.faction_engine import FactionEngine
+from utils.main_story_engine import MainStoryEngine
+from utils.world_tension import adjust_tension, event_weight_multiplier, get_tension
 
 TIME_ALIASES: dict[str, list[str]] = {
     "morning": ["morning", "아침", "오전"],
@@ -61,6 +64,8 @@ class EventEngine:
     def __init__(self, content: ContentLoader, rng: random.Random) -> None:
         self.content = content
         self.rng = rng
+        self.factions = FactionEngine(content.base_dir)
+        self.main_story = MainStoryEngine(content.base_dir)
 
     def _location_zone(self, state: dict[str, Any]) -> str:
         loc = state.get("world", {}).get("location", "").lower()
@@ -101,6 +106,7 @@ class EventEngine:
         return quest.get("complete_summary", "사이드 퀘스트 완료")
 
     def _reputation(self, state: dict[str, Any]) -> dict[str, int]:
+        self.factions.ensure_initialized(state)
         rep = state.setdefault("flags", {}).setdefault("reputation", {})
         rep.setdefault("ashpoint", 50)
         return rep
@@ -113,9 +119,7 @@ class EventEngine:
         return q
 
     def _adjust_tension(self, state: dict[str, Any], delta: int) -> None:
-        world = state.setdefault("world", {})
-        t = int(world.get("tension", 42))
-        world["tension"] = max(0, min(100, t + delta))
+        adjust_tension(state, delta)
 
     def _apply_outcome(self, state: dict[str, Any], outcome: dict[str, Any]) -> list[str]:
         lines: list[str] = []
@@ -125,11 +129,10 @@ class EventEngine:
             inv = state.setdefault("inventory", {})
             inv["party_gold"] = inv.get("party_gold", 0) + int(outcome["gold_delta"])
             lines.append(f"골드 {outcome['gold_delta']:+d}")
-        rep = self._reputation(state)
-        for key, delta in (outcome.get("reputation") or {}).items():
-            rep[key] = max(-100, min(100, rep.get(key, 0) + int(delta)))
+        lines.extend(self.factions.apply_reputation_outcome(state, outcome))
         for flag, val in (outcome.get("flags_set") or {}).items():
             state.setdefault("flags", {})[flag] = val
+            lines.extend(self.main_story.on_flag_set(state, flag))
             if flag == "torren_side_quest" and val:
                 self._start_torren_side_quest(state)
             if flag == "torren_mold_found" and val:
@@ -167,7 +170,8 @@ class EventEngine:
         quests = flags.get("quests", {})
         quest_stage = int(quests.get("stage", 1))
         active_quest = quests.get("active")
-        tension = int(state.get("world", {}).get("tension", 42))
+        tension = get_tension(state)
+        self.factions.ensure_initialized(state)
 
         eligible: list[dict[str, Any]] = []
         for sid in pending:
@@ -201,6 +205,15 @@ class EventEngine:
             min_tension = seed.get("requires_tension_min")
             if min_tension is not None and tension < int(min_tension):
                 continue
+            max_tension = seed.get("requires_tension_max")
+            if max_tension is not None and tension > int(max_tension):
+                continue
+            if not self.factions.meets_faction_requirements(
+                state,
+                seed.get("requires_faction_min"),
+                seed.get("requires_faction_max"),
+            ):
+                continue
             if any(not flags.get(f) for f in seed.get("requires_flags", [])):
                 continue
             if any(flags.get(f) for f in seed.get("requires_not_flags", [])):
@@ -219,11 +232,15 @@ class EventEngine:
         eligible = self._eligible_seeds(state, action_kind, related_npc=related_npc)
         if not eligible:
             return None
-        weights = [s.get("weight", 10) for s in eligible]
+        weights = [
+            max(1, int(s.get("weight", 10) * event_weight_multiplier(state, s)))
+            for s in eligible
+        ]
         seed = self.rng.choices(eligible, weights=weights, k=1)[0]
         outcome = seed.get("outcome", {})
         summary = outcome.get("summary", seed.get("summary", seed["title"]))
         extra_lines = self._apply_outcome(state, outcome)
+        extra_lines.extend(self.main_story.on_seed_triggered(state, seed))
         self._consume_seed(state, seed["id"])
         self._maybe_advance_quest(state, seed)
 
@@ -253,6 +270,7 @@ class EventEngine:
         triggers = stage_def.get("triggers", [])
         if seed["id"] in triggers or seed.get("id") in stage_def.get("any_seed", []):
             quests["stage"] = stage + 1
+            self.main_story.on_quest_stage(state, active, quests["stage"] - 1)
             if quests["stage"] > len(stages):
                 self._complete_quest(state, quest)
 
@@ -293,7 +311,10 @@ class EventEngine:
         dialogues = self.content.load_npc_dialogues(npc_id, state)
         line = self.rng.choice(dialogues) if dialogues else f"{char['name']}이(가) 짧게 고개를 끄덕인다."
 
+        attitude = self._npc_faction_attitude(state, npc_id)
         outcome_lines = [f"{char['name']}: \"{line}\""]
+        if attitude:
+            outcome_lines.append(attitude)
         quest_update = self._quest_talk_progress(state, npc_id)
         if quest_update:
             outcome_lines.append(quest_update)
@@ -318,6 +339,24 @@ class EventEngine:
             "lines": outcome_lines,
             "event_log_append": [{"turn": turn, "type": "talk", "summary": summary, "npc": npc_id}],
         }
+
+    def _npc_faction_attitude(self, state: dict[str, Any], npc_id: str) -> str | None:
+        npc_factions = {
+            "lilian_innkeeper": "merchant_guild",
+            "merchant_finn": "merchant_guild",
+            "elder_maren": "ashpoint_council",
+            "grey_cloak": "seal_wardens",
+            "torren_blacksmith": "ashpoint_council",
+        }
+        fid = npc_factions.get(npc_id)
+        if not fid:
+            return None
+        label = self.factions.attitude_label(state, fid)
+        tier = self.factions.tier_id(state, fid)
+        if tier in ("hostile", "allied"):
+            name = (self.factions.faction_def(fid) or {}).get("name_ko", fid)
+            return f"({name} 태도: {label})"
+        return None
 
     def _quest_talk_progress(self, state: dict[str, Any], npc_id: str) -> str | None:
         flags = state.setdefault("flags", {})
@@ -430,4 +469,7 @@ class EventEngine:
             stages = side.get("stages", [])
             if st <= len(stages):
                 lines.append(f"[사이드] {side.get('title', '토렌')} — {stages[st - 1]['goal']}")
+        ms_line = self.main_story.format_summary(state)
+        if ms_line:
+            lines.append(f"[장기] {ms_line}")
         return "\n".join(lines) if lines else "진행 중인 퀘스트 없음"
