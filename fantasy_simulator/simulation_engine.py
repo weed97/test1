@@ -89,6 +89,7 @@ class SimulationEngine:
                         state_snapshot=snap,
                         mechanical_result=mechanical,
                     )
+                    outcome_lines.extend(self.pipeline.role_summary())
                     outcome_lines.extend(self.pipeline.structured_logs() or mechanical.get("lines", []))
                     if narr := self.pipeline.narration_text():
                         outcome_lines.append(narr)
@@ -109,8 +110,9 @@ class SimulationEngine:
                         "explore",
                         state_snapshot=snap,
                         mechanical_result=mechanical,
-                        roles=["narrator"],
+                        hybrid=True,
                     )
+                    outcome_lines.extend(self.pipeline.role_summary())
                     if narr := self.pipeline.narration_text():
                         outcome_lines.append(narr)
                     else:
@@ -119,13 +121,9 @@ class SimulationEngine:
                 if self.pipeline:
                     snap = self.loader.store.llm_context_snapshot()
                     self.pipeline.run("explore", state_snapshot=snap)
+                    outcome_lines.extend(self.pipeline.role_summary())
                     if narr := self.pipeline.narration_text():
                         outcome_lines.append(narr)
-                    for r in self.pipeline.results:
-                        if r.parsed and r.role == "world_arbiter":
-                            hint = r.parsed.get("narrative_hint", "")
-                            if hint:
-                                outcome_lines.append(hint)
 
         elif action == "rest":
             mechanical = None
@@ -144,8 +142,9 @@ class SimulationEngine:
                     "rest",
                     state_snapshot=snap,
                     mechanical_result=mechanical,
-                    roles=["narrator"],
+                    hybrid=True,
                 )
+                outcome_lines.extend(self.pipeline.role_summary())
                 if narr := self.pipeline.narration_text():
                     outcome_lines.append(narr)
                 elif mechanical:
@@ -199,14 +198,32 @@ class SimulationEngine:
 
     def show_routing(self) -> str:
         router = self.loader.prompt_router
-        lines = ["=== LLM Routing ==="]
-        for role in self.loader.list_prompts():
-            model = router.model_for_role(role)
+        llm = self.loader.prompt_router.routing
+        models = llm.get("models", {})
+        lines = [
+            "=== Turn Orchestrator ===",
+            f"  engine: {llm.get('orchestrator', 'simulation_engine.py')}",
+            "",
+            "=== Model Assignment ===",
+            f"  규칙 엄격 적용: {models.get('codex_53', {}).get('label', 'codex_53')}",
+            f"  서사·대사: {models.get('opus_48_high', {}).get('label', 'opus_48_high')}",
+            f"  빠른 이벤트 대안: {models.get('gpt_55_high', {}).get('label', 'gpt_55_high')}",
+            "",
+            "=== Role Routing ===",
+        ]
+        for role, cfg in llm.get("roles", {}).items():
+            model_key = cfg.get("model", "?")
+            label = models.get(model_key, {}).get("label", model_key)
+            api_model = models.get(model_key, {}).get("model", "-")
             schema = router.schema_name_for_role(role) or "-"
-            lines.append(f"  {role}: model={model}, schema={schema}")
+            lines.append(f"  {role}: {label} ({api_model}) schema={schema}")
         lines.append("")
-        lines.append("Pipelines:")
+        lines.append("Pipelines (llm):")
         for action, roles in router.routing.get("pipelines", {}).items():
+            lines.append(f"  {action}: {' → '.join(roles)}")
+        lines.append("")
+        lines.append("Hybrid overrides:")
+        for action, roles in router.routing.get("hybrid_overrides", {}).items():
             lines.append(f"  {action}: {' → '.join(roles)}")
         return "\n".join(lines)
 

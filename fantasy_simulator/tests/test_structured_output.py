@@ -45,7 +45,17 @@ class StructuredOutputTests(unittest.TestCase):
         }
         self.assertEqual(validate_schema(valid, schema), [])
 
-    def test_reject_extra_keys_when_additional_properties_false(self) -> None:
+    def test_validate_event_alternatives_schema(self) -> None:
+        schema = self.client.load_schema("event_alternatives")
+        valid = {
+            "alternatives": [
+                {"id": "a", "summary": "test", "risk": "low"},
+                {"id": "b", "summary": "test2", "risk": "high"},
+            ],
+            "recommended_id": "a",
+            "narrative_hint": "hint",
+        }
+        self.assertEqual(validate_schema(valid, schema), [])
         schema = self.client.load_schema("world_arbiter")
         invalid = {
             "world": {},

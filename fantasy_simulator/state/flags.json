@@ -1,4 +1,22 @@
 {
   "intro_completed": false,
-  "shadow_legion_spotted": false
+  "shadow_legion_spotted": false,
+  "last_event_alternatives": {
+    "alternatives": [
+      {
+        "id": "a",
+        "summary": "주변을 정찰한다.",
+        "risk": "low",
+        "tone": "calm"
+      },
+      {
+        "id": "b",
+        "summary": "낯선 발소리가 폐허 저편에서 들린다.",
+        "risk": "medium",
+        "tone": "tense"
+      }
+    ],
+    "recommended_id": "a",
+    "narrative_hint": "주변을 정찰한다."
+  }
 }

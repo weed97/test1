@@ -1,0 +1,11 @@
+## Codex 5.3 지침 (오버레이)
+
+- **반드시** `WorldArbiterOutput` JSON Schema에 맞는 객체만 출력.
+- `world.tension` 0.0~1.0, `time_of_day` enum 준수.
+- `event_log_append` 각 항목: `turn`, `type`, `summary` 필수.
+- `metadata.event_alternatives.recommended_id`가 있으면 해당 대안과 정합적인 `event_log_append` 작성.
+- Markdown·여분 텍스트 금지.
+
+## 출력 계약
+
+단일 JSON 객체만 반환.

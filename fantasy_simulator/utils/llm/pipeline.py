@@ -17,6 +17,7 @@ from utils.structured_output import StructuredOutputClient, StructuredOutputErro
 class RoleResult:
     role: str
     model: str
+    model_label: str
     provider: str
     content: str
     parsed: dict[str, Any] | None = None
@@ -52,11 +53,22 @@ class TurnPipeline:
         state_snapshot: dict[str, Any],
         mechanical_result: dict[str, Any] | None = None,
         roles: list[str] | None = None,
+        hybrid: bool = False,
     ) -> list[RoleResult]:
         self.results = []
         self.prompt_router.set_combat_context(bool(state_snapshot.get("combat")))
-        pipeline = roles or self.prompt_router.pipeline_for_action(action)
-        narrative_hint = ""
+
+        if roles is not None:
+            pipeline = roles
+        elif hybrid:
+            pipeline = self.llm_router.hybrid_pipeline(action) or self.prompt_router.pipeline_for_action(
+                action
+            )
+        else:
+            pipeline = self.prompt_router.pipeline_for_action(action)
+
+        narrative_hint = mechanical_result.get("summary", "") if mechanical_result else ""
+        event_alternatives: dict[str, Any] | None = None
 
         for role in pipeline:
             metadata = {
@@ -66,12 +78,17 @@ class TurnPipeline:
                 "mechanical_result": mechanical_result or {},
                 "mechanical_summary": (mechanical_result or {}).get("summary", ""),
                 "narrative_hint": narrative_hint,
+                "event_alternatives": event_alternatives,
             }
             result = self._invoke_role(role, state_snapshot, metadata)
             self.results.append(result)
 
             if result.parsed:
-                narrative_hint = result.parsed.get("narrative_hint", narrative_hint)
+                if role == "event_alternatives":
+                    event_alternatives = result.parsed
+                    narrative_hint = result.parsed.get("narrative_hint", narrative_hint)
+                elif role == "world_arbiter":
+                    narrative_hint = result.parsed.get("narrative_hint", narrative_hint)
                 self._apply_structured(role, result.parsed)
 
         return self.results
@@ -82,23 +99,17 @@ class TurnPipeline:
         state_snapshot: dict[str, Any],
         metadata: dict[str, Any],
     ) -> RoleResult:
-        resolved = self.llm_router.resolve_role(role)
+        resolved = self.llm_router.resolve_with_fallback(role)
         provider = resolved["provider"]
         model_key = resolved["model_key"]
 
-        if not provider.is_available() and model_key != "mock":
-            fallback = self.llm_router.fallback_model()
-            provider = self.llm_router.provider_for_model(fallback)
-            resolved["model"] = fallback
-
-        system_prompt = self.prompt_router.assemble(role, model=resolved["model_key"])
+        system_prompt = self.prompt_router.assemble(role, model=model_key)
         user_payload = {
             "state": state_snapshot,
             "metadata": {k: v for k, v in metadata.items() if k != "context"},
         }
         if resolved["structured"] and resolved["schema"]:
-            schema = self.structured.load_schema(resolved["schema"])
-            user_payload["output_schema"] = schema
+            user_payload["output_schema"] = self.structured.load_schema(resolved["schema"])
 
         messages = [
             LLMMessage(role="system", content=system_prompt),
@@ -119,6 +130,9 @@ class TurnPipeline:
             structured=resolved["structured"],
             schema_name=resolved["schema"],
             schema=schema_obj,
+            max_tokens=resolved.get("max_tokens"),
+            reasoning_effort=resolved.get("reasoning_effort"),
+            effort=resolved.get("effort"),
             metadata=metadata,
         )
 
@@ -131,6 +145,7 @@ class TurnPipeline:
                 return RoleResult(
                     role=role,
                     model=resolved["model"],
+                    model_label=resolved["model_label"],
                     provider=provider.name,
                     content=response.content,
                     retries=retries,
@@ -140,6 +155,7 @@ class TurnPipeline:
                 return RoleResult(
                     role=role,
                     model=resolved["model"],
+                    model_label=resolved["model_label"],
                     provider=provider.name,
                     content=response.content,
                     parsed=parsed,
@@ -158,14 +174,24 @@ class TurnPipeline:
         raise StructuredOutputError("Structured output retries exhausted", raw=last_raw)
 
     def _apply_structured(self, role: str, parsed: dict[str, Any]) -> None:
-        if role == "world_arbiter":
-            patches = {
-                "world": parsed.get("world", {}),
-                "factions": parsed.get("factions", {}),
-                "flags": parsed.get("flags", {}),
+        if role == "event_alternatives":
+            state = self.state_loader.store.load()
+            flags = state.setdefault("flags", {})
+            flags["last_event_alternatives"] = parsed
+            self.state_loader.store.save(state)
+
+        elif role == "world_arbiter":
+            patches: dict[str, Any] = {
                 "event_log_append": parsed.get("event_log_append", []),
             }
+            if parsed.get("world"):
+                patches["world"] = parsed["world"]
+            if parsed.get("factions"):
+                patches["factions"] = parsed["factions"]
+            if parsed.get("flags"):
+                patches["flags"] = parsed["flags"]
             self.state_loader.store.apply_patches(patches)
+
         elif role == "combat_referee":
             wu = parsed.get("world_updates", {})
             patches: dict[str, Any] = {}
@@ -192,3 +218,10 @@ class TurnPipeline:
             if r.parsed and r.role == "combat_referee":
                 lines.extend(r.parsed.get("combat_log", []))
         return lines
+
+    def role_summary(self) -> list[str]:
+        return [
+            f"{r.role} [{r.model_label}/{r.provider}]"
+            + (f" retries={r.retries}" if r.retries else "")
+            for r in self.results
+        ]

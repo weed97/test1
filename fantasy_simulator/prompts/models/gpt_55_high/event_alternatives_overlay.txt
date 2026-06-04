@@ -1,0 +1,11 @@
+## ChatGPT 5.5 high 지침 (오버레이)
+
+- **빠르게** 2~4개 대안만 생성. 장황한 설명 금지.
+- `reasoning_effort=high`이지만 출력은 **짧고 구조화**된 JSON만.
+- Markdown·코드블록·주석 금지.
+- 각 `summary`는 1~2문장.
+- `recommended_id`는 `alternatives` 중 하나와 **반드시** 일치.
+
+## 출력 계약
+
+단일 JSON 객체만 반환.

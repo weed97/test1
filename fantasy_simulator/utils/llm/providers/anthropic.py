@@ -25,15 +25,23 @@ class AnthropicProvider:
             raise RuntimeError("ANTHROPIC_API_KEY not set")
 
         system_parts = [m.content for m in request.messages if m.role == "system"]
-        user_parts = [m.content for m in request.messages if m.role != "system"]
+        user_messages = []
+        for m in request.messages:
+            if m.role == "system":
+                continue
+            user_messages.append({"role": m.role, "content": m.content})
 
+        max_tokens = request.max_tokens or 4096
         body: dict = {
             "model": request.model,
-            "max_tokens": 4096,
+            "max_tokens": max_tokens,
             "temperature": request.temperature,
             "system": "\n\n".join(system_parts),
-            "messages": [{"role": "user", "content": "\n\n".join(user_parts)}],
+            "messages": user_messages,
         }
+
+        if request.effort == "high":
+            body["thinking"] = {"type": "enabled", "budget_tokens": min(10000, max_tokens // 2)}
 
         req = urllib.request.Request(
             self.api_url,
@@ -46,13 +54,15 @@ class AnthropicProvider:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            with urllib.request.urlopen(req, timeout=180) as resp:
                 raw = json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"Anthropic API error {exc.code}: {detail}") from exc
 
         text = "".join(
-            block.get("text", "") for block in raw.get("content", []) if block.get("type") == "text"
+            block.get("text", "")
+            for block in raw.get("content", [])
+            if block.get("type") == "text"
         )
         return LLMResponse(content=text, model=request.model, provider=self.name, raw=raw)

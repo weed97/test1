@@ -31,6 +31,12 @@ class OpenAIProvider:
             "messages": messages,
         }
 
+        if request.max_tokens is not None:
+            body["max_tokens"] = request.max_tokens
+
+        if request.reasoning_effort:
+            body["reasoning_effort"] = request.reasoning_effort
+
         if request.structured and request.schema:
             body["response_format"] = {
                 "type": "json_schema",
@@ -57,7 +63,8 @@ class OpenAIProvider:
             detail = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"OpenAI API error {exc.code}: {detail}") from exc
 
-        text = raw["choices"][0]["message"]["content"]
+        choice = raw["choices"][0]["message"]
+        text = choice.get("content") or ""
         return LLMResponse(content=text or "{}", model=request.model, provider=self.name, raw=raw)
 
 

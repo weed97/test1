@@ -20,6 +20,9 @@ class LLMRequest:
     structured: bool = False
     schema_name: str | None = None
     schema: dict[str, Any] | None = None
+    max_tokens: int | None = None
+    reasoning_effort: str | None = None
+    effort: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 

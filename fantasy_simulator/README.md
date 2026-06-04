@@ -24,9 +24,10 @@ fantasy_simulator/
 ├── prompts/
 │   ├── base/                 # 공통 역할 프롬프트
 │   └── models/
-│       ├── claude/           # Claude 오버레이 (서사)
-│       └── codex/            # Codex 오버레이 (엄격 JSON)
-├── simulation_engine.py
+│       ├── codex_53/         # Codex 5.3 — 규칙 엄격 JSON
+│       ├── opus_48_high/     # Opus 4.8 high — 서사·대사
+│       └── gpt_55_high/      # ChatGPT 5.5 high — 빠른 이벤트 대안
+├── simulation_engine.py      # 전체 턴 오케스트레이션 (SSOT)
 └── utils/
     ├── state_store.py        # 샤드 load/save
     ├── prompt_router.py      # base + model overlay 조립
@@ -62,28 +63,29 @@ python3 simulation_engine.py --show-routing
 python3 simulation_engine.py --export-legacy
 ```
 
-## LLM 호출 구조
+## LLM 모델 배치
 
-`config/llm_routing.json`에서 역할별 모델과 파이프라인을 정의합니다.
+| 구분 | 모델 | 역할 |
+|------|------|------|
+| **턴 오케스트레이션** | `simulation_engine.py` | 파이프라인 실행, state 저장 |
+| **규칙 엄격 적용** | Codex 5.3 (`codex_53`) | `combat_referee`, `world_arbiter` |
+| **서사·캐릭터 대사** | Opus 4.8 high (`opus_48_high`) | `narrator` |
+| **빠른 이벤트 대안** | ChatGPT 5.5 high (`gpt_55_high`) | `event_alternatives` |
 
-| 역할 | 기본 모델 | structured | 용도 |
-|------|-----------|------------|------|
-| narrator | claude | ✗ | 서사 생성 |
-| combat_referee | codex | ✓ | 전투 JSON 판정 |
-| world_arbiter | codex | ✓ | 거시 세계 갱신 JSON |
+**LLM 파이프라인 (explore):** `event_alternatives` → `world_arbiter` → `narrator`
 
-**파이프라인 예시 (explore):** `world_arbiter` → `narrator`
+**Hybrid (explore):** 규칙 엔진(수치) → `event_alternatives` → `narrator`
 
-- `TurnPipeline`이 턴 액션마다 역할 순서대로 LLM 호출
-- Codex 역할은 `schemas/*.json` + `prompts/models/codex/*_overlay.txt`로 JSON 강제
-- 실패 시 `structured_output.py`가 repair 프롬프트로 재시도 (최대 3회)
+- Codex 5.3: `schemas/*.json` + strict JSON + repair 재시도
+- Opus 4.8 high: `effort=high`, 캐릭터 대사 포함 서사
+- GPT 5.5 high: `reasoning_effort=high`, 2~4개 이벤트 분기 빠른 생성
 
 ## API 키 (선택)
 
 | Provider | 환경 변수 | 역할 |
 |----------|-----------|------|
-| Anthropic | `ANTHROPIC_API_KEY` | Claude (narrator) |
-| OpenAI | `OPENAI_API_KEY` | Codex (structured roles) |
+| Anthropic | `ANTHROPIC_API_KEY` | Opus 4.8 high (narrator) |
+| OpenAI | `OPENAI_API_KEY` | Codex 5.3, ChatGPT 5.5 high |
 
 키가 없으면 `default_model: mock`으로 자동 fallback.
 

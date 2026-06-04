@@ -1,4 +1,7 @@
 {
   "party_gold": 120,
-  "shared_items": ["치유 물약 x3", "고대 지도 조각"]
+  "shared_items": [
+    "치유 물약 x3",
+    "고대 지도 조각"
+  ]
 }

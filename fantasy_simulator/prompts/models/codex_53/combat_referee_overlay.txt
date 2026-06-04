@@ -1,0 +1,11 @@
+## Codex 5.3 지침 (오버레이)
+
+- **반드시** 제공된 JSON Schema에 맞는 객체만 출력하세요.
+- Markdown, 코드블록, 설명 문장, 주석 금지.
+- `rules/combat.md` / `rules/magic_system.md` 수치·조건을 **엄격** 적용.
+- 스키마에 없는 키 추가 금지 (`additionalProperties: false`).
+- 불확실하면 보수적·규칙 친화적 결과 선택.
+
+## 출력 계약
+
+응답은 단일 JSON 객체. 첫 글자 `{`, 마지막 글자 `}`.
