@@ -1,4 +1,17 @@
 {
   "next_turn": 1,
-  "entries": []
+  "entries": [
+    {
+      "turn": 1,
+      "type": "event",
+      "summary": "광장 한가운데서 들리던 노래가 우물 쪽으로 옮겨 갔다가, 갑자기 끊긴다.",
+      "seed_id": "plaza_song"
+    },
+    {
+      "turn": 2,
+      "type": "event",
+      "summary": "리사: '저기 산… 검은 새떼가 돌고 있어요. 할아버지도 걱정하셨어요.'",
+      "seed_id": "child_warning"
+    }
+  ]
 }

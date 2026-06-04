@@ -3,21 +3,22 @@
     "version": 2,
     "simulation_id": "eldoria-chronicle-001",
     "created_at": "2026-06-04T00:00:00Z",
-    "last_updated": "2026-06-04T15:12:45Z",
+    "last_updated": "2026-06-04T15:24:26Z",
     "storage": "sharded"
   },
   "world": {
     "name": "에르도리아",
-    "day": 1,
-    "time_of_day": "저녁",
+    "day": 2,
+    "time_of_day": "afternoon",
     "season": "가을",
     "weather": "clear",
     "location": "실버우드 변경 마을 '애쉬포인트'",
-    "tension": 42,
+    "tension": 51,
     "rumors": [
       "최근 산에서 검은 연기가 피어오른다.",
       "상인들이 말하길, 북쪽 숲에서 이상한 짐승이 나타난다고 한다.",
-      "마을 장로가 최근 건강이 많이 안 좋아졌다는 소문이 있다."
+      "마을 장로가 최근 건강이 많이 안 좋아졌다는 소문이 있다.",
+      "밤마다 우물 근처에서 노래 소리가 난다는 소문이 퍼진다."
     ]
   },
   "factions": {
@@ -43,9 +44,7 @@
     "intro_completed": false,
     "scene": "ashpoint_arrival",
     "pending_events": [
-      "plaza_song",
       "fleeing_merchant",
-      "child_warning",
       "drunk_curse",
       "elder_summon",
       "grey_cloak_approach",
@@ -54,21 +53,25 @@
     ],
     "triggered_events": [
       "well_sound",
-      "militia_patrol"
+      "militia_patrol",
+      "plaza_song",
+      "child_warning"
     ],
     "reputation": {
-      "ashpoint": 52,
+      "ashpoint": 55,
       "torren": 0,
-      "lilian": 5,
+      "lilian": 8,
       "grey_cloak": 0
     },
     "quests": {
       "active": "smoke_on_the_mountain",
-      "stage": 1,
+      "stage": 2,
       "completed": []
     },
     "quest_talked_npcs": [],
-    "well_anomaly": true
+    "well_anomaly": true,
+    "heard_plaza_song": true,
+    "child_warning_heard": true
   },
   "combat": null,
   "event_log": {
@@ -77,14 +80,14 @@
       {
         "turn": 1,
         "type": "event",
-        "summary": "우물 속에서 금속이 긁히는 소리. 바닥에 작은 검은 깃털 하나가 떠올라 있다.",
-        "seed_id": "well_sound"
+        "summary": "광장 한가운데서 들리던 노래가 우물 쪽으로 옮겨 갔다가, 갑자기 끊긴다.",
+        "seed_id": "plaza_song"
       },
       {
         "turn": 2,
         "type": "event",
-        "summary": "민병대장: '최근 밤마다 숲에서 하울링. 여행자는 밤에 마을 밖 나가지 마.'",
-        "seed_id": "militia_patrol"
+        "summary": "리사: '저기 산… 검은 새떼가 돌고 있어요. 할아버지도 걱정하셨어요.'",
+        "seed_id": "child_warning"
       }
     ]
   },

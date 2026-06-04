@@ -13,7 +13,8 @@ from utils.llm_router import (
 from utils.state_loader import StateLoader
 from utils.state_manager import StateManager
 from utils.state_store import StateStore
-from utils.turn_processor import process_player_action
+from utils.game_session import GameSession, SimulationEngine
+from utils.turn_processor import execute_turn, process_player_action
 
 __all__ = [
     "roll",
@@ -33,5 +34,8 @@ __all__ = [
     "classify_action_needs",
     "route_consistency_check",
     "describe_routes",
+    "GameSession",
+    "SimulationEngine",
+    "execute_turn",
     "process_player_action",
 ]

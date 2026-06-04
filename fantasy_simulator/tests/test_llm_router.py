@@ -9,11 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from simulation_engine import (  # noqa: E402
-    _should_run_interactive,
-    parse_player_input,
-    resolve_enemy_id,
-)
+from simulation_engine import _should_run_interactive  # noqa: E402
+from utils.cli import parse_player_input, resolve_enemy_id  # noqa: E402
 from utils.llm_router import decide_model_and_prompt  # noqa: E402
 from utils.state_loader import StateLoader  # noqa: E402
 

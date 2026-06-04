@@ -2,9 +2,7 @@
   "intro_completed": false,
   "scene": "ashpoint_arrival",
   "pending_events": [
-    "plaza_song",
     "fleeing_merchant",
-    "child_warning",
     "drunk_curse",
     "elder_summon",
     "grey_cloak_approach",
@@ -13,19 +11,23 @@
   ],
   "triggered_events": [
     "well_sound",
-    "militia_patrol"
+    "militia_patrol",
+    "plaza_song",
+    "child_warning"
   ],
   "reputation": {
-    "ashpoint": 52,
+    "ashpoint": 55,
     "torren": 0,
-    "lilian": 5,
+    "lilian": 8,
     "grey_cloak": 0
   },
   "quests": {
     "active": "smoke_on_the_mountain",
-    "stage": 1,
+    "stage": 2,
     "completed": []
   },
   "quest_talked_npcs": [],
-  "well_anomaly": true
+  "well_anomaly": true,
+  "heard_plaza_song": true,
+  "child_warning_heard": true
 }

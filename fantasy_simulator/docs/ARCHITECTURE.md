@@ -6,12 +6,16 @@
 Cursor terminal / CLI
         │
         ▼
-simulation_engine.py
-  SimulationEngine.run_turn()
+simulation_engine.py          (thin CLI entry)
+        │
+        ▼
+utils/game_session.py
+  GameSession.run_turn()      ← turn controller (state + engines)
         │
         ▼
 utils/turn_processor.py
-  process_player_action()     ← only resolution entry point
+  execute_turn()              ← time advance, combat start
+    process_player_action()   ← action resolution only
         │
         ├── utils/llm_router.decide_model_and_prompt()
         │
@@ -24,8 +28,20 @@ utils/turn_processor.py
           save state/ + mirror world_state.json
 ```
 
+`SimulationEngine` is a backward-compatible alias for `GameSession`.
+
 There is **no** `handle_player_action` or nested `process_turn` chain.
-`process_turn` is a backward-compatible alias for `process_player_action`.
+
+## Responsibilities
+
+| Module | Role |
+|--------|------|
+| `simulation_engine.py` | argparse, REPL dispatch, debug flags |
+| `utils/game_session.py` | Turn controller — holds state, wires engines |
+| `utils/turn_processor.py` | Action resolution + full turn orchestration |
+| `utils/turn_context.py` | `TurnContext` / `TurnResult` dataclasses |
+| `utils/state_manager.py` | Persist shards, apply LLM results, status report |
+| `utils/cli.py` | Input parsing, interactive loop, friendly errors |
 
 ## LLM providers
 

@@ -34,8 +34,10 @@ fantasy_simulator/
 ## 턴 처리 흐름 (실제 코드)
 
 ```
-1. decide_model_and_prompt(action)   # 키워드 → claude | codex | rule
-2. process_player_action()
+1. GameSession.run_turn()
+2. execute_turn() — time advance, optional combat start
+3. decide_model_and_prompt(action)   # 키워드 → claude | codex | rule
+4. process_player_action()
      hybrid? → rule engine 먼저
      use_llm? → llm_client (실패 시 rule fallback)
      5턴마다 world_arbiter

@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+import copy
+from typing import Any
 
-from utils.llm_client import LLMClient
 from utils.llm_errors import LLMCallError
 from utils.llm_router import decide_model_and_prompt, route_consistency_check
-from utils.rule_engine import RuleEngine
-from utils.state_manager import StateManager
-
-Mode = Literal["rule", "llm", "hybrid"]
+from utils.turn_context import TurnContext, TurnResult
 
 PROMPT_NARRATOR = "narrator_claude.md"
 PROMPT_MECHANICS = "mechanics_codex.md"
@@ -18,14 +15,11 @@ PROMPT_WORLD_ARBITER = "world_arbiter.md"
 PROMPT_QUICK_EVENT = "quick_event_gpt.md"
 
 
-def run_rule_engine(
-    rules: RuleEngine,
-    loader: Any,
-    state: dict[str, Any],
-    action: str,
-    turn: int,
-) -> dict[str, Any]:
+def run_rule_engine(ctx: TurnContext) -> dict[str, Any]:
     """Rule-based resolution: combat, explore, social, investigate, rest."""
+    state, action, turn = ctx.state, ctx.action, ctx.turn
+    rules, loader = ctx.rules, ctx.manager.loader
+
     if state.get("combat") or action == "combat":
         return rules.run_combat_round(turn)
 
@@ -41,7 +35,6 @@ def run_rule_engine(
     if lower == "rest" or "휴식" in action:
         return rules.run_rest(turn, loader)
 
-    # Free-form: try event engine explore, else generic
     if rules.event_engine:
         triggered = rules.event_engine.try_trigger_event(state, "explore", turn)
         if triggered:
@@ -75,48 +68,37 @@ def _normalize_prompt_file(prompt_file: str | None, default: str) -> str:
 
 
 def _apply_rule_turn(
+    ctx: TurnContext,
     *,
-    rules: RuleEngine,
-    loader: Any,
-    state: dict[str, Any],
-    action: str,
-    turn: int,
-    manager: StateManager,
     results: list[dict[str, Any]],
     outcome_lines: list[str],
     reason: str | None = None,
 ) -> None:
-    mechanical = run_rule_engine(rules, loader, state, action, turn)
+    mechanical = run_rule_engine(ctx)
     result = _rule_result(mechanical, reason=reason)
-    manager.apply_result(state, result, turn=turn)
+    ctx.manager.apply_result(ctx.state, result, turn=ctx.turn)
     results.append(result)
     _append_rule_outcome(mechanical, outcome_lines)
     if reason:
-        outcome_lines.append(f"[fallback] {reason}")
+        outcome_lines.append(f"⚠ LLM 대신 규칙 엔진으로 처리했습니다: {reason}")
 
 
-def _invoke_llm(
-    client: LLMClient,
-    *,
-    model: str,
-    prompt_file: str | None,
-    snapshot: dict[str, Any],
-    action: str,
-    metadata: dict[str, Any],
-    rules_text: dict[str, str] | None,
-    route: dict[str, Any] | None = None,
-) -> dict[str, Any]:
+def _invoke_llm(ctx: TurnContext, *, model: str, prompt_file: str | None, metadata: dict[str, Any], rules_text: dict[str, str] | None, route: dict[str, Any] | None) -> dict[str, Any]:
+    client = ctx.client
+    if client is None:
+        raise ValueError("LLM client not configured")
+    snapshot = ctx.manager.snapshot()
     pf = _normalize_prompt_file(prompt_file, PROMPT_NARRATOR)
     if model == "claude":
-        return client.call_claude(pf, snapshot, action, role="narrator", metadata=metadata, route=route)
+        return client.call_claude(pf, snapshot, ctx.action, role="narrator", metadata=metadata, route=route)
     if model == "codex":
         if rules_text is None:
             raise ValueError("rules_text required for codex")
         pf = _normalize_prompt_file(prompt_file, PROMPT_MECHANICS)
-        return client.call_codex(pf, snapshot, action, role="mechanics", rules=rules_text, metadata=metadata, route=route)
+        return client.call_codex(pf, snapshot, ctx.action, role="mechanics", rules=rules_text, metadata=metadata, route=route)
     if model == "gpt":
         pf = _normalize_prompt_file(prompt_file, PROMPT_QUICK_EVENT)
-        return client.call_gpt(pf, snapshot, action, role="quick_event", metadata=metadata, route=route)
+        return client.call_gpt(pf, snapshot, ctx.action, role="quick_event", metadata=metadata, route=route)
     raise ValueError(f"Unsupported LLM model family: {model}")
 
 
@@ -132,22 +114,12 @@ def _format_llm_line(step: dict[str, Any], result: dict[str, Any]) -> str:
     return f"{step.get('role', model)} [{model}/{provider}{tag_str}]"
 
 
-def process_player_action(
-    state: dict[str, Any],
-    action: str,
-    *,
-    mode: Mode,
-    turn: int,
-    manager: StateManager,
-    rules: RuleEngine,
-    client: LLMClient | None,
-) -> dict[str, Any]:
-    """Route action → rule engine and/or LLM → persist via StateManager.
+def process_player_action(ctx: TurnContext) -> dict[str, Any]:
+    """Route action → rule engine and/or LLM → persist. Action resolution only (no time advance)."""
+    state, action, mode = ctx.state, ctx.action, ctx.mode
+    manager, rules, client, turn = ctx.manager, ctx.rules, ctx.client, ctx.turn
 
-    This is the only turn-resolution entry point. simulation_engine.run_turn() calls here.
-    """
     decision = decide_model_and_prompt(action, state, mode=mode, base_dir=manager.base_dir)
-    snapshot = manager.snapshot()
     outcome_lines: list[str] = [
         f"routing: model={decision['model']} priority={decision.get('priority')} "
         f"prompt={decision.get('prompt_file')}",
@@ -156,29 +128,11 @@ def process_player_action(
     rules_text: dict[str, str] | None = None
 
     if mode == "hybrid":
-        _apply_rule_turn(
-            rules=rules,
-            loader=manager.loader,
-            state=state,
-            action=action,
-            turn=turn,
-            manager=manager,
-            results=results,
-            outcome_lines=outcome_lines,
-        )
+        _apply_rule_turn(ctx, results=results, outcome_lines=outcome_lines)
 
     if not decision["use_llm"] or client is None:
         if mode != "hybrid":
-            _apply_rule_turn(
-                rules=rules,
-                loader=manager.loader,
-                state=state,
-                action=action,
-                turn=turn,
-                manager=manager,
-                results=results,
-                outcome_lines=outcome_lines,
-            )
+            _apply_rule_turn(ctx, results=results, outcome_lines=outcome_lines)
         manager.save(state)
         manager.refresh_state(state)
         return {"decision": decision, "results": results, "lines": outcome_lines}
@@ -186,13 +140,7 @@ def process_player_action(
     pipeline = decision.get("pipeline") or []
     llm_steps = [s for s in pipeline if s.get("model") != "rule"]
     if not llm_steps:
-        llm_steps = [
-            {
-                "model": decision["model"],
-                "role": decision.get("role"),
-                "prompt_file": decision.get("prompt_file"),
-            }
-        ]
+        llm_steps = [{"model": decision["model"], "role": decision.get("role"), "prompt_file": decision.get("prompt_file")}]
 
     narrative_hint = ""
     for step in llm_steps:
@@ -207,27 +155,15 @@ def process_player_action(
 
         try:
             result = _invoke_llm(
-                client,
+                ctx,
                 model=model,
                 prompt_file=step.get("prompt_file") or decision.get("prompt_file"),
-                snapshot=snapshot,
-                action=action,
                 metadata=metadata,
                 rules_text=rules_text,
                 route=step,
             )
         except (LLMCallError, ValueError) as exc:
-            _apply_rule_turn(
-                rules=rules,
-                loader=manager.loader,
-                state=state,
-                action=action,
-                turn=turn,
-                manager=manager,
-                results=results,
-                outcome_lines=outcome_lines,
-                reason=f"LLM failed ({model}): {exc}",
-            )
+            _apply_rule_turn(ctx, results=results, outcome_lines=outcome_lines, reason=str(exc))
             continue
 
         if result.get("degraded") and result.get("fallback_reason"):
@@ -249,6 +185,7 @@ def process_player_action(
         outcome_lines.append(_format_llm_line(step, result))
 
     if mode in ("llm", "hybrid") and client is not None:
+        snapshot = manager.snapshot()
         for step in route_consistency_check(turn, state, base_dir=manager.base_dir):
             try:
                 result = client.call_model(
@@ -274,5 +211,64 @@ def process_player_action(
     return {"decision": decision, "results": results, "lines": outcome_lines}
 
 
-# Alias for backward compatibility (removed wrappers lived in simulation_engine)
-process_turn = process_player_action
+def execute_turn(
+    ctx: TurnContext,
+    *,
+    loader: Any,
+    enemy_id: str | None = None,
+) -> TurnResult:
+    """Full turn: advance time, optional combat start, then process_player_action."""
+    from utils.cli import resolve_enemy_id
+
+    time_label = ctx.rules.advance_time()
+    lines: list[str] = []
+    action = ctx.action
+
+    is_combat_start = action.lower().strip().startswith("combat") or action == "combat"
+    if is_combat_start and not ctx.state.get("combat"):
+        if enemy_id is None:
+            parts = action.split(maxsplit=1)
+            enemy_id = resolve_enemy_id(
+                parts[1] if len(parts) > 1 else "malachar",
+                loader.base_dir,
+            )
+        enemy = copy.deepcopy(loader.load_character(enemy_id))
+        party = [copy.deepcopy(c) for c in loader.load_party(ctx.state)]
+        ctx.rules.start_combat(enemy, party, ctx.turn)
+        ctx.manager.append_event(
+            {"turn": ctx.turn, "type": "combat_start", "summary": f"전투 시작: {enemy['name']}"},
+            ctx.state,
+        )
+        lines.append(f"전투가 시작되었다. (적: {enemy_id})")
+        if ctx.mode != "rule" and ctx.client:
+            proc = process_player_action(
+                TurnContext(
+                    state=ctx.state,
+                    action="combat_start",
+                    turn=ctx.turn,
+                    mode=ctx.mode,
+                    manager=ctx.manager,
+                    rules=ctx.rules,
+                    client=ctx.client,
+                )
+            )
+            lines.extend(proc["lines"])
+        ctx.manager.save(ctx.state)
+        return TurnResult(
+            turn=ctx.turn,
+            day=ctx.state["world"]["day"],
+            time=time_label,
+            mode=ctx.mode,
+            lines=lines,
+        )
+
+    proc = process_player_action(ctx)
+    lines.extend(proc["lines"])
+    return TurnResult(
+        turn=ctx.turn,
+        day=ctx.state["world"]["day"],
+        time=time_label,
+        mode=ctx.mode,
+        lines=lines,
+        decision=proc.get("decision"),
+    )
