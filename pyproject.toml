@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aetheria"
+version = "1.0.0"
+description = "A living medieval-fantasy, text-based, NPC-conversational MMORPG simulator."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+keywords = ["game", "rpg", "mmorpg", "simulator", "text-adventure", "fantasy"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Games/Entertainment :: Role-Playing",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+aetheria = "aetheria.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["aetheria*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
