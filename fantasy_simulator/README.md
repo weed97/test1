@@ -27,16 +27,14 @@ fantasy_simulator/
 │       ├── codex_53/         # Codex 5.3 — 규칙 엄격 JSON
 │       ├── opus_48_high/     # Opus 4.8 high — 서사·대사
 │       └── gpt_55_high/      # ChatGPT 5.5 high — 빠른 이벤트 대안
-├── simulation_engine.py      # 전체 턴 오케스트레이션 (SSOT)
+├── simulation_engine.py      # process_turn() orchestrator
 └── utils/
-    ├── state_store.py        # 샤드 load/save
-    ├── prompt_router.py      # base + model overlay 조립
-    ├── structured_output.py  # JSON 추출·검증·repair
-    ├── rule_engine.py        # 규칙 기반 판정 (fallback/hybrid)
-    └── llm/
-        ├── router.py         # provider 라우팅
-        ├── pipeline.py       # 턴당 역할 호출 순서
-        └── providers/        # mock, anthropic, openai
+    ├── llm_router.py         # route_action(action, state) → model/prompt steps
+    ├── llm_client.py         # call_claude / call_codex / call_gpt
+    ├── state_manager.py      # load/save/snapshot/apply_result
+    ├── state_store.py        # sharded state shards
+    ├── rule_engine.py        # run_rule_based fallback
+    └── structured_output.py
 ```
 
 ## 실행 모드

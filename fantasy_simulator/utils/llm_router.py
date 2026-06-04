@@ -103,6 +103,57 @@ def route_consistency_check(
     return [_role_to_step(r, routing) for r in roles]
 
 
+def decide_model_and_prompt(
+    action: str,
+    state: dict[str, Any],
+    *,
+    mode: str = "llm",
+    base_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Minimal routing decision for process_player_action().
+
+    Returns:
+        {
+            "use_llm": bool,
+            "model": "claude" | "codex" | "gpt" | "rule",
+            "role": str,
+            "prompt_file": str | None,
+            "pipeline": list[dict],  # full multi-step pipeline for process_turn
+        }
+    """
+    pipeline = route_action(action, state, mode=mode, base_dir=base_dir)
+    primary = pipeline[0] if pipeline else {"model": "rule", "role": "rule_engine", "prompt_file": None}
+
+    if mode == "rule":
+        return {
+            "use_llm": False,
+            "model": "rule",
+            "role": "rule_engine",
+            "prompt_file": None,
+            "pipeline": pipeline,
+        }
+
+    if primary["model"] == "rule":
+        # hybrid: rule engine first, then LLM steps follow in pipeline[1:]
+        return {
+            "use_llm": False,
+            "model": "rule",
+            "role": "rule_engine",
+            "prompt_file": None,
+            "pipeline": pipeline,
+        }
+
+    return {
+        "use_llm": True,
+        "model": primary["model"],
+        "role": primary["role"],
+        "prompt_file": primary.get("prompt_file"),
+        "structured": primary.get("structured", False),
+        "schema": primary.get("schema"),
+        "pipeline": pipeline,
+    }
+
+
 def describe_routes(routes: list[dict[str, Any]]) -> list[str]:
     return [
         f"{s.get('role', '?')} [{s.get('model', '?')}]"

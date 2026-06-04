@@ -7,7 +7,7 @@
   "properties": {
     "result_type": {
       "type": "string",
-      "enum": ["combat", "magic", "exploration", "rest", "event"]
+      "enum": ["combat", "magic", "exploration", "rest"]
     },
     "success": {"type": "boolean"},
     "description": {"type": "string"},
