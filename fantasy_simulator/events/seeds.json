@@ -1,41 +1,145 @@
 {
-  "version": 1,
-  "description": "LLM 서사 씨앗 — world_state에는 ID만, 상세는 여기",
+  "version": 2,
+  "description": "이벤트 씨앗 — world_state에는 ID만, 상세·결과는 여기",
   "seeds": [
     {
       "id": "plaza_song",
       "title": "광장의 노래",
-      "summary": "밤에 마을 광장에서 누군가 노래를 부른다. 정체를 알 수 없는 아름다운 목소리.",
+      "summary": "밤에 마을 광장에서 누군가 노래를 부른다.",
       "tags": ["night", "mystery", "music"],
-      "hook": "플레이어가 소리를 따라갈지, 무시할지 선택"
+      "requires_time": ["night", "evening"],
+      "requires_action": ["explore", "investigate"],
+      "weight": 15,
+      "hook": "소리를 따라가면 우물 근처에서 노래가 끊긴다.",
+      "outcome": {
+        "summary": "광장 한가운데서 들리던 노래가 우물 쪽으로 옮겨 갔다가, 갑자기 끊긴다.",
+        "tension_delta": 4,
+        "reputation": {"lilian": 3},
+        "flags_set": {"heard_plaza_song": true},
+        "rumor_add": "밤마다 우물 근처에서 노래 소리가 난다는 소문이 퍼진다."
+      }
     },
     {
       "id": "fleeing_merchant",
       "title": "도망치는 상인",
-      "summary": "상인 하나가 급하게 마을을 빠져나가려다 플레이어와 부딪힌다. 무언가를 급히 숨기려는 모습.",
-      "tags": ["day", "urgency"],
-      "hook": "상인을 붙잡고 물어보거나, 흘려보낼 수 있음"
+      "summary": "상인이 급히 마을을 빠져나가려다 부딪힌다.",
+      "requires_time": ["morning", "afternoon", "evening"],
+      "requires_action": ["explore"],
+      "weight": 12,
+      "outcome": {
+        "summary": "상인 핀은 떨리는 목소리로 '북쪽에서 온 물건은 팔면 안 된다'고만 남기고 달아난다.",
+        "tension_delta": 6,
+        "gold_delta": -5,
+        "flags_set": {"merchant_finn_spooked": true},
+        "reputation": {"ashpoint": -2}
+      }
     },
     {
       "id": "well_sound",
       "title": "우물 속 소리",
-      "summary": "마을 우물에서 이상한 소리가 난다. 물속에서 무언가 움직이는 소리.",
-      "tags": ["night", "horror"],
-      "hook": "우물을 조사하면 작은 비밀 또는 허공의 소리"
+      "summary": "우물에서 이상한 소리가 난다.",
+      "requires_time": ["night"],
+      "requires_action": ["explore", "investigate"],
+      "weight": 14,
+      "outcome": {
+        "summary": "우물 속에서 금속이 긁히는 소리. 바닥에 작은 검은 깃털 하나가 떠올라 있다.",
+        "tension_delta": 7,
+        "flags_set": {"well_anomaly": true}
+      }
     },
     {
       "id": "child_warning",
       "title": "아이의 경고",
-      "summary": "어린아이가 플레이어에게 다가와 '저기요... 저기 산에서 이상한 게 보여요'라고 말한다.",
-      "tags": ["day", "mountain", "foreshadow"],
-      "hook": "아이를 믿고 산쪽으로 향하거나, 어른에게 맡길 수 있음"
+      "summary": "어린아이 리사가 산 쪽을 가리킨다.",
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore", "talk"],
+      "weight": 13,
+      "outcome": {
+        "summary": "리사: '저기 산… 검은 새떼가 돌고 있어요. 할아버지도 걱정하셨어요.'",
+        "tension_delta": 5,
+        "reputation": {"ashpoint": 3},
+        "flags_set": {"child_warning_heard": true}
+      }
     },
     {
       "id": "drunk_curse",
       "title": "술 취한 사내의 저주",
-      "summary": "여관에서 술에 취한 사내가 큰 소리로 '북쪽 숲은 이제 저주받았다'고 외친다.",
-      "tags": ["inn", "rumor", "forest"],
-      "hook": "릴리안이 조용히 시키거나, 사내에게 더 물어볼 수 있음"
+      "summary": "여관에서 술 취한 사내가 외친다.",
+      "requires_time": ["evening", "night"],
+      "requires_action": ["explore", "rest"],
+      "weight": 11,
+      "outcome": {
+        "summary": "취객: '북쪽 숲은 저주받았어! 석탑이… 석탑이 다시 살아났다!' 릴리안이 그를 끌고 나간다.",
+        "tension_delta": 4,
+        "reputation": {"lilian": 1},
+        "rumor_add": "북쪽 숲의 석탑에 대해 사람들이 속삭인다."
+      }
+    },
+    {
+      "id": "elder_summon",
+      "title": "장로의 초대",
+      "summary": "마을 장로가 당신을 불렀다.",
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore", "talk"],
+      "weight": 10,
+      "outcome": {
+        "summary": "장로 마렌: '연기는 단순한 산불이 아니네. 실버우드의 봉인이 약해지고 있어.'",
+        "tension_delta": 3,
+        "reputation": {"ashpoint": 8},
+        "flags_set": {"elder_briefed": true}
+      }
+    },
+    {
+      "id": "grey_cloak_approach",
+      "title": "회색 망토의 접근",
+      "summary": "회색 망토가 당신에게 다가온다.",
+      "requires_time": ["evening", "night"],
+      "requires_action": ["explore"],
+      "weight": 9,
+      "outcome": {
+        "summary": "회색 망토: '시간이 없어. 연기의 근원은 옛 관측탑 — 북쪽 숲 깊은 곳이야.'",
+        "tension_delta": 2,
+        "reputation": {"grey_cloak": 10},
+        "flags_set": {"grey_cloak_hint": true}
+      }
+    },
+    {
+      "id": "militia_patrol",
+      "title": "민병대 순찰",
+      "summary": "민병대가 긴장한 표정으로 순찰 중이다.",
+      "requires_action": ["explore"],
+      "weight": 8,
+      "outcome": {
+        "summary": "민병대장: '최근 밤마다 숲에서 하울링. 여행자는 밤에 마을 밖 나가지 마.'",
+        "tension_delta": 3,
+        "reputation": {"ashpoint": 2}
+      }
+    },
+    {
+      "id": "torren_commission",
+      "title": "토렌의 의뢰",
+      "summary": "토렌이 은화를 밀어 밀며 말을 건다.",
+      "requires_action": ["talk", "explore"],
+      "weight": 7,
+      "outcome": {
+        "summary": "토렌: '숲에서 내가 잃어버린 주조금형… 찾아주면, 네 무기를 손봐주지.'",
+        "gold_delta": 15,
+        "reputation": {"torren": 8},
+        "flags_set": {"torren_side_quest": true}
+      }
+    },
+    {
+      "id": "forest_howl",
+      "title": "숲의 하울링",
+      "summary": "북쪽 숲에서 긴 하울링이 울려 퍼진다.",
+      "requires_time": ["night"],
+      "requires_action": ["explore", "rest"],
+      "weight": 16,
+      "outcome": {
+        "summary": "마을 개들이 일제히 짖는다. 하늘은 맑지만, 숲 쪽 하늘이 잠깐 붉게 물든다.",
+        "tension_delta": 10,
+        "flags_set": {"forest_howl_heard": true}
+      }
     }
   ]
 }

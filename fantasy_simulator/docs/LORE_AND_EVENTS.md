@@ -45,3 +45,24 @@ characters/
 ## 씨앗 이벤트 소비
 
 이벤트가 발생하면 `flags.pending_events`에서 ID를 제거하고 `event_log`에 한 줄 요약만 추가.
+
+## 퀘스트 & 평판 (`flags` 샤드)
+
+```json
+"reputation": {"ashpoint": 50, "torren": 0, "lilian": 5},
+"quests": {"active": "smoke_on_the_mountain", "stage": 1, "completed": []}
+```
+
+- **퀘스트 카탈로그:** `events/quests.json`
+- **스토리 bible:** `lore/quests/smoke_on_the_mountain.md`
+- **대사 풀:** `events/dialogues.json`
+
+## CLI 예시
+
+```
+talk torren
+investigate well
+investigate forest
+quest
+combat silver_stalker
+```

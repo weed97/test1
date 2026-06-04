@@ -4,11 +4,27 @@ from __future__ import annotations
 
 import copy
 import random
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from utils.dice import roll_d20
 
+if TYPE_CHECKING:
+    from utils.event_engine import EventEngine
+
 TIME_CYCLE = ["morning", "afternoon", "evening", "night"]
+TIME_TO_CYCLE: dict[str, str] = {
+    "morning": "morning",
+    "아침": "morning",
+    "오전": "morning",
+    "afternoon": "afternoon",
+    "낮": "afternoon",
+    "오후": "afternoon",
+    "evening": "evening",
+    "저녁": "evening",
+    "night": "night",
+    "밤": "night",
+    "한밤": "night",
+}
 ELEMENT_STRONG = 1.5
 ELEMENT_WEAK = 0.5
 
@@ -35,19 +51,36 @@ _ELEMENT_CHART: dict[tuple[str, str], float] = {
 
 
 class RuleEngine:
-    def __init__(self, state: dict[str, Any], rng: random.Random) -> None:
+    def __init__(
+        self,
+        state: dict[str, Any],
+        rng: random.Random,
+        *,
+        event_engine: EventEngine | None = None,
+    ) -> None:
         self.state = state
         self.rng = rng
+        self.event_engine = event_engine
 
     def advance_time(self) -> str:
         world = self.state["world"]
-        idx = TIME_CYCLE.index(world.get("time_of_day", "morning"))
+        raw = world.get("time_of_day", "morning")
+        current = TIME_TO_CYCLE.get(raw, raw if raw in TIME_CYCLE else "morning")
+        world["time_of_day"] = current
+        idx = TIME_CYCLE.index(current)
         if idx >= len(TIME_CYCLE) - 1:
             world["day"] = world.get("day", 1) + 1
             world["time_of_day"] = TIME_CYCLE[0]
         else:
             world["time_of_day"] = TIME_CYCLE[idx + 1]
         return world["time_of_day"]
+
+    def _tension(self) -> int:
+        return int(self.state.get("world", {}).get("tension", 42))
+
+    def _adjust_tension(self, delta: int) -> None:
+        world = self.state.setdefault("world", {})
+        world["tension"] = max(0, min(100, self._tension() + delta))
 
     def _element_multiplier(self, attack_element: str, defense_elements: list[str]) -> float:
         if not attack_element or not defense_elements:
@@ -88,7 +121,7 @@ class RuleEngine:
                 power = spell.get("power", 10)
                 element = spell.get("element", "")
                 mult = self._element_multiplier(element, defender.get("elements", []))
-                if element == "shadow" and self.state["world"].get("tension", 0) >= 0.5:
+                if element == "shadow" and self._tension() >= 50:
                     mult *= 1.2
                 damage = int(power * mult)
                 mana_cost = spell.get("mana_cost", 0)
@@ -182,41 +215,90 @@ class RuleEngine:
             mechanical["combat"] = None
             self.state["combat"] = None
             if winner == "allies":
-                self.state["world"]["tension"] = max(0.0, self.state["world"].get("tension", 0) - 0.05)
+                self._adjust_tension(-8)
+                enemy_id = combat.get("enemy_id", "")
+                if enemy_id == "silver_stalker" and self.event_engine:
+                    quest = self.state.setdefault("flags", {}).setdefault("quests", {})
+                    if quest.get("active") == "smoke_on_the_mountain":
+                        quest["stage"] = 4
+                        catalog = self.event_engine.content.load_quests()
+                        q = catalog.get("smoke_on_the_mountain")
+                        if q:
+                            self.event_engine._complete_quest(self.state, q)
             else:
-                self.state["world"]["tension"] = min(1.0, self.state["world"].get("tension", 0) + 0.15)
+                self._adjust_tension(12)
 
         mechanical["summary"] = lines[-1] if lines else "combat round"
         return mechanical
 
     def run_exploration(self, turn: int) -> dict[str, Any]:
+        if self.event_engine:
+            triggered = self.event_engine.try_trigger_event(self.state, "explore", turn)
+            if triggered:
+                return triggered
+
         world = self.state["world"]
-        tension = world.get("tension", 0)
         natural, _ = roll_d20(0, self.rng)
-        event_log_append: list[dict[str, Any]] = []
+        tension = self._tension()
 
         if natural >= 18:
-            world["tension"] = min(1.0, tension + 0.1)
-            summary = "정찰 중 그림자 군단의 흔적을 발견했다."
-            self.state["flags"]["shadow_legion_spotted"] = True
+            self._adjust_tension(8)
+            summary = "정찰 중 숲 쪽에서 검은 연기와 발자국을 발견했다."
+            self.state.setdefault("flags", {})["smoke_trail_spotted"] = True
         elif natural <= 5:
-            gold = self.rng.randint(5, 25)
+            gold = self.rng.randint(8, 30)
             self.state["inventory"]["party_gold"] = self.state["inventory"].get("party_gold", 0) + gold
             summary = f"버려진 상자에서 {gold} 골드를 획득했다."
+        elif tension >= 60:
+            summary = "마을 사람들이 불안한 눈으로 숲 쪽을 바라본다. 긴장감이 감돈다."
         else:
-            summary = "별다른 사건 없이 주변을 정찰했다."
+            summary = "애쉬포인트 거리를 돌며 별다른 변화는 없었다."
 
-        event_log_append.append({"turn": turn, "type": "explore", "summary": summary})
-        return {"summary": summary, "event_log_append": event_log_append}
+        return {
+            "summary": summary,
+            "event_log_append": [{"turn": turn, "type": "explore", "summary": summary}],
+        }
+
+    def run_social(self, action: str, turn: int, loader: Any) -> dict[str, Any]:
+        if self.event_engine:
+            return self.event_engine.talk(self.state, action, turn, loader)
+        return {"summary": "대화 상대를 찾을 수 없다.", "event_log_append": []}
+
+    def run_investigate(self, action: str, turn: int) -> dict[str, Any]:
+        if self.event_engine:
+            return self.event_engine.investigate(self.state, action, turn)
+        return {
+            "summary": "조사했지만 특별한 단서는 없었다.",
+            "event_log_append": [{"turn": turn, "type": "investigate", "summary": "조사 — 없음"}],
+        }
+
+    def run_quest_status(self) -> dict[str, Any]:
+        if self.event_engine:
+            text = self.event_engine.show_quest_status(self.state)
+        else:
+            text = "퀘스트 시스템 없음"
+        return {"summary": text, "lines": [text], "event_log_append": []}
 
     def run_rest(self, turn: int, loader: Any) -> dict[str, Any]:
+        if self.event_engine:
+            triggered = self.event_engine.try_trigger_event(self.state, "rest", turn)
+            if triggered:
+                triggered.setdefault("lines", [triggered["summary"]])
+                # still heal after rest event
+                self._heal_party(loader)
+                return triggered
+
+        self._heal_party(loader)
+        summary = "파티가 휴식하여 HP와 마나를 회복했다."
+        return {
+            "summary": summary,
+            "lines": [summary],
+            "event_log_append": [{"turn": turn, "type": "rest", "summary": summary}],
+        }
+
+    def _heal_party(self, loader: Any) -> None:
         for cid in self.state.get("party", []):
             char = loader.load_character(cid)
             char["stats"]["hp"] = char["stats"]["max_hp"]
             char["stats"]["mana"] = char["stats"]["max_mana"]
             loader.apply_character_updates(self.state, {cid: {"stats": char["stats"]}})
-        summary = "파티가 휴식하여 HP와 마나를 회복했다."
-        return {
-            "summary": summary,
-            "event_log_append": [{"turn": turn, "type": "rest", "summary": summary}],
-        }

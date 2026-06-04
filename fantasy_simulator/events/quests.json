@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "quests": [
+    {
+      "id": "smoke_on_the_mountain",
+      "title": "산의 검은 연기",
+      "summary": "애쉬포인트를 위협하는 검은 연기의 근원을 찾아라.",
+      "stages": [
+        {
+          "stage": 1,
+          "goal": "마을에서 소문과 정보를 모은다",
+          "hint": "talk torren / talk lilian / talk grey cloak",
+          "triggers": ["elder_summon", "child_warning", "drunk_curse"]
+        },
+        {
+          "stage": 2,
+          "goal": "북쪽 숲 외곽을 조사한다",
+          "hint": "investigate forest 또는 explore (낮)",
+          "triggers": ["forest_howl"]
+        },
+        {
+          "stage": 3,
+          "goal": "옛 관측탑의 봉인을 조사한다",
+          "hint": "explore forest — combat 또는 talk grey cloak",
+          "triggers": []
+        }
+      ],
+      "rewards": {
+        "summary": "퀘스트 완료: 애쉬포인트의 영웅으로 기억된다.",
+        "gold_delta": 120,
+        "tension_delta": -15,
+        "reputation": {"ashpoint": 25, "torren": 10, "lilian": 10}
+      },
+      "complete_summary": "검은 연기의 원인을 막아냈다. 애쉬포인트에 평화가 잠시 돌아온다.",
+      "next_quest": "whispers_in_the_well"
+    },
+    {
+      "id": "whispers_in_the_well",
+      "title": "우물 속 속삭임",
+      "summary": "우물 이상 현상의 진실을 파헤친다.",
+      "stages": [
+        {
+          "stage": 1,
+          "goal": "우물을 조사한다",
+          "hint": "investigate well (밤)",
+          "triggers": ["well_sound", "plaza_song"]
+        }
+      ],
+      "rewards": {
+        "gold_delta": 80,
+        "reputation": {"lilian": 15}
+      },
+      "complete_summary": "우물 아래 고대 통로의 존재를 확인했다.",
+      "next_quest": null
+    }
+  ]
+}

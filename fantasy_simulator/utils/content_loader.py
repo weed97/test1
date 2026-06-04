@@ -21,6 +21,31 @@ class ContentLoader:
         self.lore_dir = self.base_dir / "lore"
         self.events_dir = self.base_dir / "events"
         self._seeds_cache: dict[str, Any] | None = None
+        self._quests_cache: dict[str, Any] | None = None
+        self._dialogues_cache: dict[str, list[str]] | None = None
+
+    def load_quests(self) -> dict[str, dict[str, Any]]:
+        path = self.events_dir / "quests.json"
+        if not path.exists():
+            return {}
+        if self._quests_cache is None:
+            data = load_json(path)
+            self._quests_cache = {q["id"]: q for q in data.get("quests", [])}
+        return self._quests_cache
+
+    def load_npc_dialogues(self, npc_id: str) -> list[str]:
+        path = self.events_dir / "dialogues.json"
+        if not path.exists():
+            return []
+        if self._dialogues_cache is None:
+            self._dialogues_cache = load_json(path)
+        return self._dialogues_cache.get(npc_id, [])
+
+    def get_active_quest(self, state: dict[str, Any]) -> dict[str, Any] | None:
+        qid = state.get("flags", {}).get("quests", {}).get("active")
+        if not qid:
+            return None
+        return self.load_quests().get(qid)
 
     def load_event_seeds(self) -> dict[str, dict[str, Any]]:
         path = self.events_dir / "seeds.json"
@@ -72,6 +97,10 @@ class ContentLoader:
             "torren_blacksmith": "토렌",
             "lilian_innkeeper": "릴리안",
             "grey_cloak": "회색 망토",
+            "elder_maren": "마렌",
+            "child_lysa": "리사",
+            "merchant_finn": "핀",
+            "silver_stalker": "실버",
         }
         sections: list[str] = []
         for nid in npc_ids:
@@ -100,9 +129,29 @@ class ContentLoader:
             if location and (location.split("—")[0].strip() in loc or "애쉬" in loc)
         ]
         if not npc_ids:
-            npc_ids = ["torren_blacksmith", "lilian_innkeeper", "grey_cloak"]
+            npc_ids = [
+                "torren_blacksmith",
+                "lilian_innkeeper",
+                "grey_cloak",
+                "elder_maren",
+                "child_lysa",
+            ]
 
         seeds = self.pending_event_seeds(pending_ids)
+        active_quest = self.get_active_quest(state)
+        quest_ctx = None
+        if active_quest:
+            stage = int(flags.get("quests", {}).get("stage", 1))
+            stages = active_quest.get("stages", [])
+            if stage <= len(stages):
+                quest_ctx = {
+                    "id": active_quest["id"],
+                    "title": active_quest["title"],
+                    "stage": stage,
+                    "goal": stages[stage - 1]["goal"],
+                    "hint": stages[stage - 1].get("hint", ""),
+                }
+
         return {
             "location_lore": self.load_location_lore(location),
             "npc_lore": self.load_npc_lore(npc_ids),
@@ -110,5 +159,7 @@ class ContentLoader:
                 {"id": s["id"], "title": s["title"], "summary": s["summary"], "hook": s.get("hook", "")}
                 for s in seeds
             ],
+            "active_quest": quest_ctx,
             "rumors": world.get("rumors", []),
+            "reputation": flags.get("reputation", {}),
         }

@@ -4,8 +4,28 @@
   "pending_events": [
     "plaza_song",
     "fleeing_merchant",
-    "well_sound",
     "child_warning",
-    "drunk_curse"
-  ]
+    "drunk_curse",
+    "elder_summon",
+    "grey_cloak_approach",
+    "torren_commission",
+    "forest_howl"
+  ],
+  "triggered_events": [
+    "well_sound",
+    "militia_patrol"
+  ],
+  "reputation": {
+    "ashpoint": 52,
+    "torren": 0,
+    "lilian": 5,
+    "grey_cloak": 0
+  },
+  "quests": {
+    "active": "smoke_on_the_mountain",
+    "stage": 1,
+    "completed": []
+  },
+  "quest_talked_npcs": [],
+  "well_anomaly": true
 }

@@ -23,7 +23,8 @@ from typing import Any, Literal, Optional
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from utils.llm_client import LLMClient  # noqa: E402
+from utils.content_loader import ContentLoader  # noqa: E402
+from utils.event_engine import EventEngine  # noqa: E402
 from utils.llm_router import (  # noqa: E402
     classify_action_needs,
     decide_model_and_prompt,
@@ -41,14 +42,17 @@ PROMPT_WORLD_ARBITER = "world_arbiter.md"
 
 INTERACTIVE_HELP = """\
 명령어:
-  explore              탐험
-  rest                 휴식
-  combat [적_id]       전투 시작 (기본: malachar)
+  explore              마을/주변 탐험 (씨앗 이벤트 발생 가능)
+  investigate well     우물 조사
+  investigate forest   북쪽 숲 조사 (퀘스트 2단계)
+  talk torren          NPC 대화 (토렌/릴리안/회색 망토/장로/리사)
+  rest                 휴식 (HP/MP 회복)
+  combat silver_stalker  보스 전투 (3단계 이후)
+  quest                퀘스트 진행 상황
   status               현재 상태
-  help                 이 도움말
-  quit / exit          종료 및 저장
+  help / quit
 
-자유 입력 예: talk to merchant, cast fireball, investigate ruins
+팁: 밤/저녁에 explore하면 다른 이벤트가 뜹니다.
 """
 
 
@@ -159,10 +163,12 @@ class SimulationEngine:
     ) -> None:
         self.loader = loader
         self.manager = StateManager(loader.base_dir, store=loader.store)
+        self.content = ContentLoader(loader.base_dir)
         self.rng = random.Random(seed)
         self.mode = mode
         self.state = loader.load_world_state()
-        self.rules = RuleEngine(self.state, self.rng)
+        self.event_engine = EventEngine(self.content, self.rng)
+        self.rules = RuleEngine(self.state, self.rng, event_engine=self.event_engine)
         self.turn = len(event_entries(self.state))
         self.client: LLMClient | None = None
         if mode in ("llm", "hybrid"):
@@ -251,6 +257,13 @@ class SimulationEngine:
             )
         if self.state.get("combat"):
             lines.extend(["", "(전투 진행 중)"])
+        rep = self.state.get("flags", {}).get("reputation", {})
+        if rep:
+            lines.extend(["", "평판:"])
+            for k, v in sorted(rep.items()):
+                lines.append(f"  - {k}: {v}")
+        if self.event_engine:
+            lines.extend(["", f"퀘스트: {self.event_engine.show_quest_status(self.state)}"])
         recent = event_entries(self.state)
         if recent:
             lines.extend(["", "최근 이벤트:"])

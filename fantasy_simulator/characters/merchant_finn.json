@@ -1,0 +1,14 @@
+{
+  "id": "merchant_finn",
+  "name": "핀",
+  "title": "떠돌이 상인",
+  "role": "npc",
+  "class": "merchant",
+  "level": 2,
+  "stats": {"hp": 40, "max_hp": 40, "mana": 15, "max_mana": 15, "strength": 7, "agility": 10, "intelligence": 12, "vitality": 8},
+  "modifiers": {"attack": 0, "defense": 0, "spellcasting": 0, "agility": 1},
+  "elements": [],
+  "traits": ["교활함", "불안"],
+  "flags": {"knockout_only": true},
+  "lore_ref": "lore/npcs.md#핀-떠도는-상인"
+}

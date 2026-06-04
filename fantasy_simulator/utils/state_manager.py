@@ -56,7 +56,7 @@ class StateManager:
         flags = state.get("flags", {})
         base["flags"] = {
             k: flags[k]
-            for k in ("intro_completed", "scene", "pending_events")
+            for k in ("intro_completed", "scene", "pending_events", "reputation", "quests")
             if k in flags
         }
         return base

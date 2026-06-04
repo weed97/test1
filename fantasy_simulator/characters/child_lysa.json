@@ -1,0 +1,14 @@
+{
+  "id": "child_lysa",
+  "name": "리사",
+  "title": "마을 아이",
+  "role": "npc",
+  "class": "commoner",
+  "level": 1,
+  "stats": {"hp": 25, "max_hp": 25, "mana": 10, "max_mana": 10, "strength": 4, "agility": 12, "intelligence": 10, "vitality": 6},
+  "modifiers": {"attack": 0, "defense": 0, "spellcasting": 0, "agility": 2},
+  "elements": [],
+  "traits": ["순수함", "예민함"],
+  "flags": {"knockout_only": true},
+  "lore_ref": "lore/npcs.md#리사-마을-아이"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "silver_stalker",
+  "name": "실버 스토커",
+  "title": "봉인 파편을 먹은 그림자",
+  "role": "enemy",
+  "class": "aberration",
+  "level": 6,
+  "stats": {"hp": 95, "max_hp": 95, "mana": 50, "max_mana": 50, "strength": 14, "agility": 16, "intelligence": 10, "vitality": 12},
+  "modifiers": {"attack": 5, "defense": 4, "spellcasting": 2, "agility": 3},
+  "elements": ["shadow"],
+  "spells": [
+    {"id": "shadow_lash", "name": "그림자 채찍", "tier": 2, "element": "shadow", "power": 18, "mana_cost": 14}
+  ],
+  "equipment": {
+    "weapon": {"name": "그림자 발톱", "damage": 10, "type": "shadow"},
+    "armor": {"name": "연기 껍질", "reduction": 3}
+  },
+  "traits": ["봉인 파편", "연기 오라"],
+  "flags": {"boss": true},
+  "lore_ref": "lore/locations/northern_forest.md"
+}

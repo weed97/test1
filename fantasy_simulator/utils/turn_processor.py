@@ -25,14 +25,28 @@ def run_rule_engine(
     action: str,
     turn: int,
 ) -> dict[str, Any]:
-    """Rule-based resolution (combat round, explore, rest)."""
+    """Rule-based resolution: combat, explore, social, investigate, rest."""
     if state.get("combat") or action == "combat":
         return rules.run_combat_round(turn)
-    if action == "explore":
+
+    lower = action.lower().strip()
+    if lower.startswith("talk") or lower.startswith("speak") or "대화" in action:
+        return rules.run_social(action, turn, loader)
+    if lower.startswith("investigate") or lower.startswith("inspect") or "조사" in action:
+        return rules.run_investigate(action, turn)
+    if lower in ("quest", "quests", "퀘스트") or lower.startswith("quest "):
+        return rules.run_quest_status()
+    if lower == "explore" or "explore" in lower or "탐험" in action:
         return rules.run_exploration(turn)
-    if action == "rest":
+    if lower == "rest" or "휴식" in action:
         return rules.run_rest(turn, loader)
-    return {"summary": f"Unknown action: {action}", "event_log_append": []}
+
+    # Free-form: try event engine explore, else generic
+    if rules.event_engine:
+        triggered = rules.event_engine.try_trigger_event(state, "explore", turn)
+        if triggered:
+            return triggered
+    return {"summary": f"'{action}' — 알 수 없는 행동.", "event_log_append": []}
 
 
 def _rule_result(mechanical: dict[str, Any], *, reason: str | None = None) -> dict[str, Any]:

@@ -3,7 +3,7 @@
     "version": 2,
     "simulation_id": "eldoria-chronicle-001",
     "created_at": "2026-06-04T00:00:00Z",
-    "last_updated": "2026-06-04T15:07:28Z",
+    "last_updated": "2026-06-04T15:12:45Z",
     "storage": "sharded"
   },
   "world": {
@@ -45,15 +45,48 @@
     "pending_events": [
       "plaza_song",
       "fleeing_merchant",
-      "well_sound",
       "child_warning",
-      "drunk_curse"
-    ]
+      "drunk_curse",
+      "elder_summon",
+      "grey_cloak_approach",
+      "torren_commission",
+      "forest_howl"
+    ],
+    "triggered_events": [
+      "well_sound",
+      "militia_patrol"
+    ],
+    "reputation": {
+      "ashpoint": 52,
+      "torren": 0,
+      "lilian": 5,
+      "grey_cloak": 0
+    },
+    "quests": {
+      "active": "smoke_on_the_mountain",
+      "stage": 1,
+      "completed": []
+    },
+    "quest_talked_npcs": [],
+    "well_anomaly": true
   },
   "combat": null,
   "event_log": {
     "next_turn": 1,
-    "entries": []
+    "entries": [
+      {
+        "turn": 1,
+        "type": "event",
+        "summary": "우물 속에서 금속이 긁히는 소리. 바닥에 작은 검은 깃털 하나가 떠올라 있다.",
+        "seed_id": "well_sound"
+      },
+      {
+        "turn": 2,
+        "type": "event",
+        "summary": "민병대장: '최근 밤마다 숲에서 하울링. 여행자는 밤에 마을 밖 나가지 마.'",
+        "seed_id": "militia_patrol"
+      }
+    ]
   },
   "active_characters": [
     "elara_moonwhisper",
@@ -68,8 +101,12 @@
     "gareth_ironshield": "애쉬포인트 — 여관 '은빛 울림'",
     "torren_blacksmith": "애쉬포인트 — 대장간",
     "lilian_innkeeper": "애쉬포인트 — 여관 '은빛 욬림'",
-    "grey_cloak": "애쉬포인트 — 광장 근처 (목적 불명)",
-    "malachar_voidweaver": "북쪽 숲 — 깊은 곳 (미접촉)"
+    "grey_cloak": "애쉬포인트 — 광장 근처",
+    "elder_maren": "애쉬포인트 — 장로의 집",
+    "child_lysa": "애쉬포인트 — 광장",
+    "merchant_finn": "애쉬포인트 — 마을 입구 (불안)",
+    "malachar_voidweaver": "북쪽 숲 — 깊은 곳 (미접촉)",
+    "silver_stalker": "북쪽 숲 — 옛 관측탑"
   },
   "_event_next_turn": 1
 }
