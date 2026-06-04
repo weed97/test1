@@ -87,6 +87,10 @@ Active combat always routes to Codex.
 
 Unit tests use `tests/fixtures.isolated_game_root()` to copy game data into a temp directory so turns do not mutate the repo's `state/` shards.
 
+Hybrid / LLM paths use `tests/mock_llm_client.MockLLMClient` injected via `TurnContext.client` or `GameSession(..., client=mock)`.
+
+Interactive mode supports **Tab completion** when `readline` is available (`utils/cli.completion_candidates`).
+
 ```bash
 python3 -m unittest discover -s tests -v
 ```

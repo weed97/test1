@@ -21,7 +21,88 @@ INTERACTIVE_HELP = """\
   help / quit
 
 팁: 밤/저녁에 explore하면 다른 이벤트가 뜹니다.
+  Tab 키로 명령어 자동완성 (터미널 지원 시)
 """
+
+BASE_COMMANDS = ("explore", "rest", "quest", "status", "help", "quit", "talk", "investigate", "combat")
+TALK_NPCS = ("torren", "lilian", "grey", "maren", "lysa", "finn", "회색", "장로", "릴리안", "토렌")
+INVESTIGATE_TARGETS = ("well", "forest", "우물", "숲")
+META_COMMANDS = ("status", "help", "quit", "exit", "q", "stat", "s", "h", "?")
+
+
+def _root_path(base_dir: Path | str | Any) -> Path:
+    if hasattr(base_dir, "base_dir"):
+        return Path(base_dir.base_dir)
+    return Path(base_dir)
+
+
+def enemy_short_names(base_dir: Path | str | Any) -> list[str]:
+    """Short names for combat tab completion."""
+    names: set[str] = set()
+    for path in sorted(_root_path(base_dir).joinpath("characters").glob("*.json")):
+        stem = path.stem
+        names.add(stem.split("_")[0])
+        names.add(stem)
+    return sorted(names)
+
+
+def completion_candidates(line: str, base_dir: Path | str | Any | None = None) -> list[str]:
+    """Return tab-completion options for the partial input line (testable without readline)."""
+    buffer = line
+    parts = buffer.split()
+    if not parts:
+        return list(BASE_COMMANDS)
+
+    cmd = parts[0].lower()
+    completing_word = parts[-1] if parts else ""
+    ends_with_space = buffer.endswith(" ") or (len(parts) > 1 and not completing_word)
+
+    if len(parts) == 1 and not buffer.endswith(" "):
+        return [c for c in BASE_COMMANDS if c.startswith(cmd)]
+
+    if cmd == "talk":
+        prefix = "" if len(parts) == 1 or buffer.endswith(" ") else completing_word.lower()
+        return [n for n in TALK_NPCS if n.lower().startswith(prefix)]
+
+    if cmd == "investigate":
+        prefix = "" if len(parts) == 1 or buffer.endswith(" ") else completing_word.lower()
+        return [t for t in INVESTIGATE_TARGETS if t.lower().startswith(prefix)]
+
+    if cmd == "combat" and base_dir is not None:
+        prefix = "" if len(parts) == 1 or buffer.endswith(" ") else completing_word.lower()
+        return [e for e in enemy_short_names(base_dir) if e.lower().startswith(prefix)]
+
+    if cmd in META_COMMANDS and len(parts) == 1:
+        return [c for c in META_COMMANDS if c.startswith(cmd)]
+
+    return []
+
+
+def setup_readline_completer(base_dir: Path | str | Any) -> bool:
+    """Enable Tab completion when readline is available. Returns True if enabled."""
+    try:
+        import readline
+    except ImportError:
+        return False
+
+    def _completer(text: str, state: int) -> str | None:
+        line = readline.get_line_buffer()
+        options = completion_candidates(line, base_dir)
+        # readline passes `text` = word fragment; filter to suffix matches
+        if text:
+            options = [o for o in options if o.lower().startswith(text.lower())]
+        return options[state] if state < len(options) else None
+
+    readline.set_completer(_completer)
+    readline.parse_and_bind("tab: complete")
+    if hasattr(readline, "set_completer_delims"):
+        readline.set_completer_delims(" \t\n")
+    return True
+
+
+def prompt_player_input() -> str:
+    """Read one line from the player."""
+    return input("\n행동을 입력하세요: ")
 
 
 def resolve_enemy_id(query: str, base_dir: Path | str | Any) -> str:
@@ -86,10 +167,12 @@ def run_interactive_loop(session: GameSession) -> int:
     print("=== Eldoria 시뮬레이터 시작 ===")
     print(f"모드: {session.mode}")
     print("명령어: explore · talk <npc> · investigate · quest · help · quit")
+    if setup_readline_completer(session.manager.base_dir):
+        print("Tab: 명령어 자동완성")
 
     while True:
         try:
-            raw = input("\n행동을 입력하세요: ")
+            raw = prompt_player_input()
         except (EOFError, KeyboardInterrupt):
             print("\n\n게임 종료. 상태 저장 중...")
             session.save()

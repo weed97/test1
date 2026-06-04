@@ -26,6 +26,7 @@ from utils.state_manager import StateManager  # noqa: E402
 # Re-exports for tests / backward compatibility
 from utils.cli import (  # noqa: E402
     INTERACTIVE_HELP,
+    completion_candidates,
     parse_player_input,
     resolve_enemy_id,
 )

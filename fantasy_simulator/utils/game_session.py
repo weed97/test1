@@ -28,6 +28,7 @@ class GameSession:
         mode: Mode = "rule",
         rng: random.Random | None = None,
         seed: int | None = None,
+        client: LLMClient | None = None,
     ) -> None:
         self.manager = manager
         self.loader = manager.loader
@@ -38,9 +39,12 @@ class GameSession:
         self.event_engine = EventEngine(self.content, self.rng)
         self.rules = RuleEngine(self.state, self.rng, event_engine=self.event_engine)
         self.turn = len(event_entries(self.state))
-        self.client: LLMClient | None = None
-        if mode in ("llm", "hybrid"):
+        if client is not None:
+            self.client = client
+        elif mode in ("llm", "hybrid"):
             self.client = LLMClient(manager.base_dir)
+        else:
+            self.client = None
 
     @classmethod
     def from_root(
