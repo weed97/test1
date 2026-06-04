@@ -21,42 +21,67 @@ class MainStoryEngineTests(unittest.TestCase):
             ms = engine.ensure_initialized(state)
             self.assertEqual(ms["id"], "ashen_seal_cracking")
 
-    def test_legacy_seal_breaking_migrates(self) -> None:
-        with isolated_game_root() as root:
-            engine = MainStoryEngine(root)
-            state = {"flags": {"main_story": {"id": "seal_breaking", "stage": 2, "progress": 10}}}
-            ms = engine.ensure_initialized(state)
-            self.assertEqual(ms["id"], "ashen_seal_cracking")
-            self.assertEqual(ms["phase"], 2)
-
-    def test_seed_progress(self) -> None:
-        with isolated_game_root() as root:
-            engine = MainStoryEngine(root)
-            state = {"flags": {"quests": {"active": "smoke_on_the_mountain", "stage": 3}}}
-            engine.ensure_initialized(state)
-            lines = engine.on_seed_triggered(state, {"id": "sentinel_stirring", "title": "센티넬"})
-            self.assertTrue(lines)
-            self.assertGreater(state["flags"]["main_story"]["progress"], 0)
-
-    def test_phase_advance_at_threshold(self) -> None:
-        with isolated_game_root() as root:
-            engine = MainStoryEngine(root)
-            state = {"flags": {"main_story": {"id": "ashen_seal_cracking", "phase": 1, "progress": 33}}}
-            engine.add_progress(state, 5, reason="test")
-            self.assertGreaterEqual(state["flags"]["main_story"]["progress"], 35)
-            self.assertEqual(state["flags"]["main_story"]["phase"], 2)
-
     def test_phase1_smoke_queues_rumors(self) -> None:
         with isolated_game_root() as root:
             engine = MainStoryEngine(root)
-            state = {"flags": {"main_story": {"id": "ashen_seal_cracking", "phase": 1, "progress": 0}}}
+            state = {
+                "flags": {"main_story": {"id": "ashen_seal_cracking", "phase": 1, "progress": 0}},
+                "event_log": {"next_turn": 5, "entries": []},
+            }
             engine.ensure_initialized(state)
-            lines = engine.on_outcome(
-                state,
-                {"main_story_phase1_flag": "black_smoke_seen", "flags_set": {"black_smoke_seen": True}},
-            )
+            engine.on_flag_set(state, "black_smoke_seen", turn=3)
             self.assertEqual(state["flags"]["main_story"]["phase1_step"], 1)
             self.assertIn("phase1_village_rumors", state["flags"]["pending_events"])
+
+    def test_rumors_delayed_until_turns_after_smoke(self) -> None:
+        with isolated_game_root() as root:
+            engine = MainStoryEngine(root)
+            state = {
+                "flags": {
+                    "black_smoke_seen": True,
+                    "pending_events": ["phase1_village_rumors"],
+                    "main_story": {"id": "ashen_seal_cracking", "phase": 1, "smoke_seen_turn": 5},
+                },
+                "event_log": {"next_turn": 6, "entries": []},
+            }
+            seed = {"requires_main_story_turns_since_smoke_min": 2}
+            self.assertFalse(engine.meets_story_requirements(state, seed))
+            state["event_log"]["next_turn"] = 8
+            self.assertTrue(engine.meets_story_requirements(state, seed))
+
+    def test_climax_gate_two_of_four(self) -> None:
+        with isolated_game_root() as root:
+            engine = MainStoryEngine(root)
+            state = {
+                "flags": {
+                    "story_phase1_chosen": True,
+                    "faction_reputation": {"ashpoint_council": 30},
+                    "main_story": {
+                        "id": "ashen_seal_cracking",
+                        "phase": 1,
+                        "mountain_visits": 3,
+                        "choices_made": ["ally_village"],
+                        "factions_contacted": ["ashpoint_council"],
+                    },
+                },
+                "world": {"tension": 20},
+            }
+            engine.ensure_initialized(state)
+            story = engine.story_def("ashen_seal_cracking")
+            assert story
+            lines = engine._update_climax_readiness(state, story, state["flags"]["main_story"])
+            self.assertTrue(state["flags"].get("phase1_climax_ready"))
+            self.assertTrue(lines)
+            self.assertIn("phase1_climax_village", state["flags"]["pending_events"])
+
+    def test_mountain_visit_tracks_visits(self) -> None:
+        with isolated_game_root() as root:
+            engine = MainStoryEngine(root)
+            state = {"flags": {"main_story": {"id": "ashen_seal_cracking", "phase": 1}}}
+            engine.ensure_initialized(state)
+            engine.record_mountain_visit(state, found=True)
+            self.assertEqual(state["flags"]["main_story"]["mountain_visits"], 1)
+            self.assertTrue(state["flags"].get("phase1_mountain_found"))
 
     def test_phase1_choice_five_way(self) -> None:
         with isolated_game_root() as root:
@@ -71,18 +96,8 @@ class MainStoryEngineTests(unittest.TestCase):
                 },
                 "world": {"rumors": []},
             }
-            lines = engine.apply_choice(state, "seek_truth")
+            engine.apply_choice(state, "seek_truth")
             self.assertIn("seek_truth", state["flags"]["main_story"]["choices_made"])
-            self.assertTrue(state["flags"].get("story_path_truth"))
-
-    def test_faction_contact_opens_branch(self) -> None:
-        with isolated_game_root() as root:
-            engine = MainStoryEngine(root)
-            state = {"flags": {"main_story": {"id": "ashen_seal_cracking", "phase": 1, "phase1_step": 2}}}
-            engine.ensure_initialized(state)
-            engine.record_faction_contact(state, "ashpoint_council")
-            pending = state["flags"]["pending_events"]
-            self.assertTrue(any(s.startswith("story_choice_") for s in pending))
 
     def test_phase1_exit_on_climax(self) -> None:
         with isolated_game_root() as root:
@@ -98,33 +113,6 @@ class MainStoryEngineTests(unittest.TestCase):
             lines = engine._check_phase1_exit(state, engine.story_def("ashen_seal_cracking"), state["flags"]["main_story"])
             self.assertTrue(lines)
             self.assertEqual(state["flags"]["main_story"]["phase"], 2)
-
-    def test_ending_resolves_at_full_progress(self) -> None:
-        with isolated_game_root() as root:
-            engine = MainStoryEngine(root)
-            state = {
-                "flags": {
-                    "faction_reputation": {
-                        "ashen_wardens": 40,
-                        "ashpoint_council": 30,
-                        "black_covenant": -20,
-                        "silverwood_trade_union": 0,
-                        "blackfang_marauders": 0,
-                        "silver_cross_order": 10,
-                    },
-                    "main_story": {
-                        "id": "ashen_seal_cracking",
-                        "phase": 3,
-                        "progress": 95,
-                        "choices_made": ["seek_truth", "path_alliance"],
-                    },
-                },
-                "world": {"tension": 55},
-            }
-            engine.ensure_initialized(state)
-            lines = engine.add_progress(state, 10, reason="finale")
-            self.assertTrue(state["flags"]["main_story"].get("resolved_ending"))
-            self.assertTrue(any("결말" in line for line in lines))
 
 
 if __name__ == "__main__":

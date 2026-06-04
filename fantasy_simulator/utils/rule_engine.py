@@ -249,6 +249,8 @@ class RuleEngine:
         zone = self.event_engine._location_zone(self.state) if self.event_engine else "ashpoint"
 
         if zone == "tower":
+            if self.event_engine:
+                self.event_engine.main_story.record_mountain_visit(self.state, found=True)
             if natural >= 15:
                 summary = "관측탑 2층으로 이어지는 계단이 보인다. 봉인 파편 없이는 올라가기 위험하다."
             elif natural <= 5:
@@ -257,6 +259,11 @@ class RuleEngine:
             else:
                 summary = "탑 내부에서 금속이 긁히는 소리. 룬 센티넬이 아직 깨어 있는 것 같다."
         elif zone == "forest":
+            if self.event_engine:
+                self.event_engine.main_story.record_mountain_visit(
+                    self.state,
+                    found=bool(self.state.get("flags", {}).get("tower_sighted")),
+                )
             if natural >= 18:
                 summary = "나무 사이로 옛 관측탑의 윤곽이 보인다. investigate tower 또는 explore."
                 self.state.setdefault("flags", {})["tower_sighted"] = True

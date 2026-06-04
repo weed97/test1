@@ -43,6 +43,12 @@
         "ally_covenant_power": "pursue_power"
       },
       "phase1_flow": {
+        "sections": {
+          "early": {"name": "검은 연기의 시작", "turn_range": "1-8"},
+          "mid": {"name": "세력들의 움직임", "turn_range": "9-25"},
+          "late": {"name": "첫 번째 분기", "turn_range": "26-45"},
+          "climax": {"name": "봉인의 첫 균열", "turn_range": "40-50"}
+        },
         "flags_to_step": {
           "black_smoke_seen": 1,
           "phase1_rumors_spread": 2,
@@ -51,14 +57,15 @@
           "phase1_climax_done": 5
         },
         "step_queue": {
-          "1": ["phase1_village_rumors"],
+          "1": ["phase1_village_rumors", "phase1_strange_dream"],
+          "2": ["story_faction_approach_council"],
           "3": [
-            "story_faction_approach_council",
-            "story_faction_approach_trade",
-            "story_faction_approach_blackfang",
-            "story_faction_approach_warden",
-            "story_faction_approach_covenant",
-            "story_faction_approach_knights"
+            "phase1_merchant_interest",
+            "phase1_blackfang_raid",
+            "phase1_suspicious_traveler",
+            "phase1_warden_warning",
+            "story_faction_approach_knights",
+            "phase1_village_split"
           ],
           "4": [
             "story_choice_council",
@@ -66,10 +73,27 @@
             "story_choice_covenant",
             "story_choice_opportunist",
             "story_choice_stay_neutral"
-          ],
-          "5": ["phase1_climax_descent"]
+          ]
         },
-        "branch_queue_min_contacts": 1
+        "climax_seeds": [
+          "phase1_climax_village",
+          "phase1_climax_power",
+          "phase1_climax_truth",
+          "phase1_climax_chaos",
+          "phase1_climax_neutral",
+          "phase1_climax_descent"
+        ],
+        "branch_queue_min_contacts": 1,
+        "rumor_delay_turns": 2
+      },
+      "phase1_climax_gate": {
+        "required_count": 2,
+        "conditions": [
+          {"id": "tension", "tension_min": 30},
+          {"id": "alliance", "faction_rep_min": 25},
+          {"id": "mountain", "mountain_visits_min": 3},
+          {"id": "contacts", "factions_contacted_min": 2}
+        ]
       },
       "phase1_exit": {
         "min_progress": 15,

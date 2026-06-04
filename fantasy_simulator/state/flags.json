@@ -56,6 +56,9 @@
     "leading_ending": null,
     "phase1_step": 0,
     "factions_contacted": [],
+    "mountain_visits": 0,
+    "phase1_subphase": "early",
+    "smoke_seen_turn": null,
     "rumor_tone": "uncertain",
     "resolved_ending": null
   },

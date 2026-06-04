@@ -121,7 +121,7 @@ class EventEngine:
     def _adjust_tension(self, state: dict[str, Any], delta: int) -> None:
         adjust_tension(state, delta)
 
-    def _apply_outcome(self, state: dict[str, Any], outcome: dict[str, Any]) -> list[str]:
+    def _apply_outcome(self, state: dict[str, Any], outcome: dict[str, Any], *, turn: int | None = None) -> list[str]:
         lines: list[str] = []
         if "tension_delta" in outcome:
             self._adjust_tension(state, int(outcome["tension_delta"]))
@@ -130,10 +130,10 @@ class EventEngine:
             inv["party_gold"] = inv.get("party_gold", 0) + int(outcome["gold_delta"])
             lines.append(f"골드 {outcome['gold_delta']:+d}")
         lines.extend(self.factions.apply_reputation_outcome(state, outcome))
-        lines.extend(self.main_story.on_outcome(state, outcome))
+        lines.extend(self.main_story.on_outcome(state, outcome, turn=turn))
         for flag, val in (outcome.get("flags_set") or {}).items():
             state.setdefault("flags", {})[flag] = val
-            lines.extend(self.main_story.on_flag_set(state, flag))
+            lines.extend(self.main_story.on_flag_set(state, flag, turn=turn))
             if flag == "torren_side_quest" and val:
                 self._start_torren_side_quest(state)
             if flag == "torren_mold_found" and val:
@@ -242,7 +242,7 @@ class EventEngine:
         seed = self.rng.choices(eligible, weights=weights, k=1)[0]
         outcome = seed.get("outcome", {})
         summary = outcome.get("summary", seed.get("summary", seed["title"]))
-        extra_lines = self._apply_outcome(state, outcome)
+        extra_lines = self._apply_outcome(state, outcome, turn=turn)
         extra_lines.extend(self.main_story.on_seed_triggered(state, seed))
         self._consume_seed(state, seed["id"])
         self._maybe_advance_quest(state, seed)
@@ -379,6 +379,7 @@ class EventEngine:
         lower = action.lower()
 
         if "forest" in lower or "숲" in lower:
+            self.main_story.record_mountain_visit(state, found=bool(state.get("flags", {}).get("tower_sighted")))
             quests = self._quests(state)
             if quests.get("active") == "smoke_on_the_mountain" and quests.get("stage") == 2:
                 quests["stage"] = 3
@@ -397,6 +398,7 @@ class EventEngine:
                 )
 
         if "tower" in lower or "관측" in lower or "석탑" in lower:
+            self.main_story.record_mountain_visit(state, found=True)
             quests = self._quests(state)
             if quests.get("active") == "smoke_on_the_mountain" and int(quests.get("stage", 1)) >= 3:
                 state.setdefault("world", {})["location"] = "옛 관측탑 — 입구"

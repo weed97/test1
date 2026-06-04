@@ -8,6 +8,13 @@ from utils.io_helpers import load_json
 from utils.world_tension import adjust_tension, get_tension
 
 
+def _current_turn(state: dict[str, Any]) -> int:
+    log = state.get("event_log", {})
+    if isinstance(log, dict):
+        return max(1, int(log.get("next_turn", 1)) - 1)
+    return len(log) if log else 1
+
+
 class MainStoryEngine:
     def __init__(self, base_dir: Any) -> None:
         from pathlib import Path
@@ -57,6 +64,9 @@ class MainStoryEngine:
                     "resolved_ending": None,
                     "phase1_step": 0,
                     "factions_contacted": [],
+                    "mountain_visits": 0,
+                    "phase1_subphase": "early",
+                    "smoke_seen_turn": None,
                 }
             )
 
@@ -67,6 +77,9 @@ class MainStoryEngine:
         ms.setdefault("rumor_tone", "uncertain")
         ms.setdefault("phase1_step", 0)
         ms.setdefault("factions_contacted", [])
+        ms.setdefault("mountain_visits", 0)
+        ms.setdefault("phase1_subphase", "early")
+        ms.setdefault("smoke_seen_turn", None)
         return ms
 
     def _migrate_story_state(self, ms: dict[str, Any]) -> None:
@@ -196,11 +209,12 @@ class MainStoryEngine:
         self._recalculate_ending_scores(state, story, ms)
         if int(ms.get("phase", 1)) == 1:
             self._advance_phase1_from_flag(state, story, ms, "story_phase1_chosen")
-            lines.extend(self._queue_phase1_step_events(state, story, ms, 5))
+            ms["phase1_subphase"] = "late"
             amount = story.get("progress_sources", {}).get("flags", {}).get("story_phase1_chosen")
             if amount and "story_phase1_chosen" in (choice.get("flags_set") or {}):
                 lines.extend(self.add_progress(state, int(amount), reason="1단계 분기"))
-            else:
+            lines.extend(self._update_climax_readiness(state, story, ms))
+            if not state.get("flags", {}).get("phase1_climax_ready"):
                 lines.extend(self._check_phase1_exit(state, story, ms))
 
         summary = choice.get("summary")
@@ -256,25 +270,107 @@ class MainStoryEngine:
         story: dict[str, Any],
         ms: dict[str, Any],
         flag: str,
+        *,
+        turn: int | None = None,
     ) -> list[str]:
         if int(ms.get("phase", 1)) != 1:
             return []
         flow = self._phase1_flow(story)
         flags_to_step = flow.get("flags_to_step", {})
         step = flags_to_step.get(flag)
-        if step is None:
+        if step is None and flag not in ("black_smoke_seen",):
             return []
         lines: list[str] = []
         current = int(ms.get("phase1_step", 0))
-        if int(step) > current:
+
+        if flag == "black_smoke_seen":
+            ms["phase1_subphase"] = "early"
+            ms["smoke_seen_turn"] = turn if turn is not None else _current_turn(state)
+            if current < 1:
+                ms["phase1_step"] = 1
+                lines.extend(self._queue_phase1_step_events(state, story, ms, 1))
+
+        if step is not None and int(step) > current:
             ms["phase1_step"] = int(step)
             lines.extend(self._queue_phase1_step_events(state, story, ms, int(step)))
-        if flag == "phase1_rumors_spread" and not state.get("flags", {}).get("phase1_factions_active"):
+
+        if flag == "phase1_rumors_spread":
             state.setdefault("flags", {})["phase1_factions_active"] = True
+            ms["phase1_subphase"] = "mid"
             if int(ms.get("phase1_step", 0)) < 3:
                 ms["phase1_step"] = 3
                 lines.extend(self._queue_phase1_step_events(state, story, ms, 3))
+            lines.extend(self._queue_phase1_step_events(state, story, ms, 2))
+
+        if flag == "phase1_climax_done":
+            ms["phase1_subphase"] = "climax"
+
         return lines
+
+    def record_mountain_visit(self, state: dict[str, Any], *, found: bool = False) -> list[str]:
+        ms = self.ensure_initialized(state)
+        story = self.story_def(ms["id"])
+        if not story or int(ms.get("phase", 1)) != 1:
+            return []
+        ms["mountain_visits"] = int(ms.get("mountain_visits", 0)) + 1
+        flags = state.setdefault("flags", {})
+        flags["phase1_mountain_visited"] = True
+        if found:
+            flags["phase1_mountain_found"] = True
+        lines = [f"[1단계] 북쪽 산 방문 ({ms['mountain_visits']}회)"]
+        if story:
+            lines.extend(self._update_climax_readiness(state, story, ms))
+        return lines
+
+    def _climax_conditions_met(self, state: dict[str, Any], story: dict[str, Any], ms: dict[str, Any]) -> tuple[int, list[str]]:
+        gate = story.get("phase1_climax_gate", {})
+        conditions = gate.get("conditions", [])
+        flags = state.get("flags", {})
+        faction_rep = flags.get("faction_reputation", {})
+        met: list[str] = []
+        for cond in conditions:
+            cid = cond.get("id", "")
+            if cond.get("tension_min") is not None and get_tension(state) >= int(cond["tension_min"]):
+                met.append(cid)
+            elif cond.get("faction_rep_min") is not None:
+                if any(int(v) >= int(cond["faction_rep_min"]) for v in faction_rep.values()):
+                    met.append(cid)
+            elif cond.get("mountain_visits_min") is not None:
+                if int(ms.get("mountain_visits", 0)) >= int(cond["mountain_visits_min"]):
+                    met.append(cid)
+            elif cond.get("factions_contacted_min") is not None:
+                if len(ms.get("factions_contacted", [])) >= int(cond["factions_contacted_min"]):
+                    met.append(cid)
+        return len(met), met
+
+    def _update_climax_readiness(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+    ) -> list[str]:
+        if int(ms.get("phase", 1)) != 1:
+            return []
+        if not state.get("flags", {}).get("story_phase1_chosen"):
+            return []
+        if state.get("flags", {}).get("phase1_climax_done"):
+            return []
+        gate = story.get("phase1_climax_gate", {})
+        required = int(gate.get("required_count", 2))
+        count, met_ids = self._climax_conditions_met(state, story, ms)
+        ms["climax_conditions_met"] = met_ids
+        if count < required:
+            return []
+        flags = state.setdefault("flags", {})
+        if flags.get("phase1_climax_ready"):
+            return []
+        flags["phase1_climax_ready"] = True
+        ms["phase1_subphase"] = "climax"
+        pending = flags.setdefault("pending_events", [])
+        for seed_id in self._phase1_flow(story).get("climax_seeds", []):
+            if seed_id not in pending:
+                pending.append(seed_id)
+        return [f"[1단계 클라이맥스] 조건 {count}/{len(gate.get('conditions', []))} 충족 — 봉인의 첫 균열 임박"]
 
     def _queue_phase1_step_events(
         self,
@@ -318,6 +414,7 @@ class MainStoryEngine:
             if int(ms.get("phase1_step", 0)) < 4 and not state.get("flags", {}).get("story_phase1_chosen"):
                 ms["phase1_step"] = max(int(ms.get("phase1_step", 0)), 3)
                 lines.extend(self._queue_phase1_step_events(state, story, ms, 4))
+        lines.extend(self._update_climax_readiness(state, story, ms))
         return lines
 
     def _check_phase1_exit(
@@ -371,13 +468,20 @@ class MainStoryEngine:
         return [f"[1단계 완료] 균열의 전조 — {reason}"]
 
     def _phase1_step_label(self, story: dict[str, Any], step: int) -> str:
+        sub = {
+            "early": "【초반】검은 연기의 시작",
+            "mid": "【중반】세력들의 움직임",
+            "late": "【후반】첫 번째 분기",
+            "climax": "【클라이맥스】봉인의 첫 균열",
+        }
+        sections = self._phase1_flow(story).get("sections", {})
         labels = {
             0: "대기",
             1: "검은 연기 목격",
             2: "소문 확산",
-            3: "세력 접촉",
+            3: "세력 움직임",
             4: "첫 분기",
-            5: "1단계 클라이맥스",
+            5: "봉인 첫 균열",
         }
         return labels.get(step, f"단계 {step}")
 
@@ -483,21 +587,24 @@ class MainStoryEngine:
             return []
         return self.add_progress(state, int(stage_deltas[stage - 1]), reason=f"퀘스트 {stage}단계")
 
-    def on_flag_set(self, state: dict[str, Any], flag: str) -> list[str]:
+    def on_flag_set(self, state: dict[str, Any], flag: str, *, turn: int | None = None) -> list[str]:
         ms = self.ensure_initialized(state)
         story = self.story_def(ms["id"])
         if not story:
             return []
         lines: list[str] = []
-        lines.extend(self._advance_phase1_from_flag(state, story, ms, flag))
+        if flag == "black_smoke_seen" and ms.get("smoke_seen_turn") is None:
+            ms["smoke_seen_turn"] = turn if turn is not None else _current_turn(state)
+        lines.extend(self._advance_phase1_from_flag(state, story, ms, flag, turn=turn))
         amount = story.get("progress_sources", {}).get("flags", {}).get(flag)
         if amount:
             lines.extend(self.add_progress(state, int(amount), reason=flag))
         else:
+            lines.extend(self._update_climax_readiness(state, story, ms))
             lines.extend(self._check_phase1_exit(state, story, ms))
         return lines
 
-    def on_outcome(self, state: dict[str, Any], outcome: dict[str, Any]) -> list[str]:
+    def on_outcome(self, state: dict[str, Any], outcome: dict[str, Any], *, turn: int | None = None) -> list[str]:
         lines: list[str] = []
         choice_id = outcome.get("main_story_choice")
         if choice_id:
@@ -510,7 +617,7 @@ class MainStoryEngine:
             ms = self.ensure_initialized(state)
             story = self.story_def(ms["id"])
             if story:
-                lines.extend(self._advance_phase1_from_flag(state, story, ms, p1_flag))
+                lines.extend(self._advance_phase1_from_flag(state, story, ms, p1_flag, turn=turn))
         return lines
 
     def tick(self, state: dict[str, Any], *, turn: int) -> list[str]:
@@ -529,6 +636,7 @@ class MainStoryEngine:
             lines.append(f"[메인 스토리] {story['title']} — {bump}")
 
         self._recalculate_ending_scores(state, story, ms)
+        lines.extend(self._update_climax_readiness(state, story, ms))
         lines.extend(self._check_phase1_exit(state, story, ms))
         leading = ms.get("leading_ending")
         if leading and turn % 10 == 0:
@@ -556,9 +664,17 @@ class MainStoryEngine:
         if phase == 1:
             step = int(ms.get("phase1_step", 0))
             contacts = len(ms.get("factions_contacted", []))
+            visits = int(ms.get("mountain_visits", 0))
+            sub = ms.get("phase1_subphase", "early")
+            sections = self._phase1_flow(story).get("sections", {})
+            section_name = sections.get(sub, {}).get("name", sub)
             parts.append(
-                f"1단계 흐름: {self._phase1_step_label(story, step)} | 세력 접촉 {contacts}"
+                f"1단계 [{section_name}] {self._phase1_step_label(story, step)} | "
+                f"세력 {contacts} · 산 {visits}회"
             )
+            met = ms.get("climax_conditions_met", [])
+            if met and not state.get("flags", {}).get("phase1_climax_done"):
+                parts.append(f"클라이맥스 조건: {len(met)}/4 ({', '.join(met)})")
         if ms.get("resolved_ending"):
             ending = next((e for e in story.get("endings", []) if e["id"] == ms["resolved_ending"]), None)
             if ending:
@@ -625,5 +741,15 @@ class MainStoryEngine:
             return False
         not_choice = seed.get("requires_not_main_story_choice")
         if not_choice and not_choice in ms.get("choices_made", []):
+            return False
+        turns_since = seed.get("requires_main_story_turns_since_smoke_min")
+        if turns_since is not None:
+            smoke_turn = ms.get("smoke_seen_turn")
+            if smoke_turn is None:
+                return False
+            if _current_turn(state) - int(smoke_turn) < int(turns_since):
+                return False
+        mv_min = seed.get("requires_main_story_mountain_visits_min")
+        if mv_min is not None and int(ms.get("mountain_visits", 0)) < int(mv_min):
             return False
         return True

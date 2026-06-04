@@ -62,7 +62,7 @@ class EventEngineTests(unittest.TestCase):
         self.assertIn("연기", result["summary"])
 
     def test_load_all_seed_shards(self) -> None:
-        self.assertEqual(len(self.content.load_event_seeds()), 113)
+        self.assertEqual(len(self.content.load_event_seeds()), 120)
 
     def test_expansion_seed_has_hook(self) -> None:
         seed = self.content.get_event_seed("whispering_well")
