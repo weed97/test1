@@ -62,7 +62,7 @@ def decide_model_and_prompt(
     mode: str = "llm",
     base_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Minimal keyword router for handle_player_action().
+    """Minimal keyword router for process_player_action().
 
     Returns:
         {

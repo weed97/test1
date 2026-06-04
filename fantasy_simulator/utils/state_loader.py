@@ -23,13 +23,14 @@ class StateLoader:
     """Central accessor for simulation assets rooted at `base_dir`."""
 
     base_dir: Path
-    store: StateStore = field(init=False)
+    store: StateStore | None = None
     _characters: dict[str, dict[str, Any]] = field(default_factory=dict, init=False)
     _rules: dict[str, str] = field(default_factory=dict, init=False)
     _prompt_router: PromptRouter | None = field(default=None, init=False)
 
     def __post_init__(self) -> None:
-        self.store = StateStore.from_package_root(self.base_dir)
+        if self.store is None:
+            self.store = StateStore.from_package_root(self.base_dir)
 
     @classmethod
     def from_package_root(cls, root: Path | str | None = None) -> StateLoader:

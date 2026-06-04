@@ -107,6 +107,7 @@ class LLMClient:
     ) -> dict[str, Any]:
         route = route or {"role": role, "schema": None, "structured": False, "temperature": 0.7}
         resolved = self.llm_router.resolve_with_fallback(role)
+        is_mock = resolved["model_key"] == self.llm_router.fallback_model()
 
         system_prompt = self.load_prompt(prompt_file)
         user_payload: dict[str, Any] = {
@@ -154,6 +155,8 @@ class LLMClient:
                     "text": response.content,
                     "parsed": None,
                     "provider": provider.name,
+                    "model_key": resolved["model_key"],
+                    "is_mock": is_mock,
                     "retries": retries,
                 }
             try:
@@ -164,6 +167,8 @@ class LLMClient:
                     "text": response.content,
                     "parsed": parsed,
                     "provider": provider.name,
+                    "model_key": resolved["model_key"],
+                    "is_mock": is_mock,
                     "retries": retries,
                 }
             except StructuredOutputError as exc:
@@ -177,6 +182,54 @@ class LLMClient:
                 request.messages.append(LLMMessage(role="user", content=repair))
 
         raise StructuredOutputError("Structured output retries exhausted", raw=last_raw)
+
+    def provider_status(self) -> dict[str, Any]:
+        """Report which configured models can reach live APIs vs mock fallback."""
+        models: dict[str, Any] = {}
+        for key, cfg in self.llm_router.routing.get("models", {}).items():
+            provider_name = cfg.get("provider", "unknown")
+            if provider_name == "mock":
+                models[key] = {
+                    "label": cfg.get("label", key),
+                    "provider": "mock",
+                    "available": True,
+                    "live": False,
+                }
+                continue
+            provider = self.llm_router.provider_for_model(key)
+            live = provider.is_available()
+            models[key] = {
+                "label": cfg.get("label", key),
+                "provider": provider_name,
+                "model": cfg.get("model"),
+                "available": live,
+                "live": live,
+            }
+        fallback = self.llm_router.fallback_model()
+        any_live = any(m.get("live") for m in models.values())
+        return {
+            "any_live_provider": any_live,
+            "active_fallback": fallback,
+            "note": (
+                "Live API keys detected — real providers will be used."
+                if any_live
+                else "No API keys — all roles fall back to mock provider."
+            ),
+            "models": models,
+        }
+
+    def format_provider_status(self) -> str:
+        status = self.provider_status()
+        lines = [
+            "=== LLM Provider Status ===",
+            f"  {status['note']}",
+            f"  fallback: {status['active_fallback']}",
+            "",
+        ]
+        for key, info in status["models"].items():
+            tag = "live" if info.get("live") else "mock/offline"
+            lines.append(f"  {info['label']} ({key}): {tag}")
+        return "\n".join(lines)
 
 
 def call_claude(

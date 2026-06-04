@@ -79,6 +79,7 @@ class InteractiveCLITests(unittest.TestCase):
             status=False,
             show_routing=False,
             show_prompts=False,
+            show_providers=False,
             export_legacy=False,
             interactive=False,
             turns=3,

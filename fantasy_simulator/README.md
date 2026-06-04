@@ -19,8 +19,9 @@ fantasy_simulator/
 │   ├── world_arbiter.md      → Opus (일관성)
 │   └── quick_event_gpt.md    → GPT-5.5 High
 ├── config/llm_routing.json
-├── simulation_engine.py      # 메인 오케스트레이터
+├── simulation_engine.py      # CLI + SimulationEngine (턴 루프)
 └── utils/
+    ├── turn_processor.py     # process_player_action (단일 진입점)
     ├── llm_router.py
     ├── llm_client.py
     └── state_manager.py
@@ -59,6 +60,7 @@ python3 simulation_engine.py --batch --mode rule --turns 3 --seed 42
 python3 simulation_engine.py --batch --mode llm --action explore
 
 python3 simulation_engine.py --show-routing
+python3 simulation_engine.py --show-providers   # API 키 / mock 상태 확인
 python3 simulation_engine.py --show-prompts
 
 # 수동 hub 동기화

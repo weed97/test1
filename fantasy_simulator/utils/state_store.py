@@ -40,7 +40,10 @@ class StateStore:
     def legacy_path(self) -> Path:
         return self.base_dir / "world_state.json"
 
-    def load(self) -> dict[str, Any]:
+    def load(self, *, force: bool = False) -> dict[str, Any]:
+        if force:
+            self._cache.clear()
+
         if self._cache:
             return self._cache
 
@@ -55,6 +58,10 @@ class StateStore:
             )
         return self._cache
 
+    def reload(self) -> dict[str, Any]:
+        """Discard in-memory cache and reload from disk."""
+        return self.load(force=True)
+
     def save(self, state: dict[str, Any] | None = None) -> None:
         state = state if state is not None else self._cache
         if not state:
@@ -67,8 +74,10 @@ class StateStore:
         self._save_shards(state)
 
     def export_legacy(self, path: Path | None = None) -> None:
-        """Write monolithic world_state.json for backward compatibility."""
-        save_json(path or self.legacy_path, self.load())
+        """Write monolithic world_state.json hub mirror from canonical state/."""
+        target = path or self.legacy_path
+        state = self.load()
+        save_json(target, state)
 
     def get_recent_events(self, limit: int = 10) -> list[dict[str, Any]]:
         log = self.load().get("event_log", [])
@@ -85,6 +94,7 @@ class StateStore:
             log = {"next_turn": len(log) + 1, "entries": log}
             state["event_log"] = log
         log["entries"].append(entry)
+        self.save(state)
 
     def llm_context_snapshot(self, *, event_limit: int = 10) -> dict[str, Any]:
         """Compact state for LLM prompts — omits full event history."""

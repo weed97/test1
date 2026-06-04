@@ -1,4 +1,15 @@
 {
   "next_turn": 1,
-  "entries": []
+  "entries": [
+    {
+      "turn": 1,
+      "type": "explore",
+      "summary": "별다른 사건 없이 주변을 정찰했다."
+    },
+    {
+      "turn": 2,
+      "type": "explore",
+      "summary": "별다른 사건 없이 주변을 정찰했다."
+    }
+  ]
 }

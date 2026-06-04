@@ -12,13 +12,20 @@ from utils.state_store import StateStore
 class StateManager:
     """Facade for sharded world_state + summaries for LLM prompts."""
 
-    def __init__(self, base_dir: Path | str) -> None:
+    def __init__(self, base_dir: Path | str, *, store: StateStore | None = None) -> None:
         self.base_dir = Path(base_dir)
-        self.store = StateStore.from_package_root(self.base_dir)
-        self.loader = StateLoader.from_package_root(self.base_dir)
+        self.store = store or StateStore.from_package_root(self.base_dir)
+        self.loader = StateLoader(base_dir=self.base_dir, store=self.store)
 
-    def load(self) -> dict[str, Any]:
-        return self.store.load()
+    def load(self, *, force: bool = False) -> dict[str, Any]:
+        return self.store.load(force=force)
+
+    def refresh_state(self, state: dict[str, Any]) -> dict[str, Any]:
+        """Reload canonical store into an existing dict (keeps RuleEngine refs valid)."""
+        fresh = self.load(force=True)
+        state.clear()
+        state.update(fresh)
+        return state
 
     def save(self, state: dict[str, Any] | None = None, *, sync_hub: bool = True) -> None:
         """Persist sharded state/ and optionally mirror to world_state.json for Cursor."""
@@ -90,7 +97,7 @@ class StateManager:
             char_updates = changes.get("character_updates", {})
             if char_updates:
                 self.loader.apply_character_updates(state, char_updates)
-            state.update(self.load())
+            self.refresh_state(state)
 
         elif role == "quick_event":
             flags = state.setdefault("flags", {})
@@ -98,13 +105,13 @@ class StateManager:
             changes = parsed.get("suggested_state_changes") or {}
             if changes:
                 self.store.apply_state_changes(changes, turn=turn)
-            self.save(state)
+            self.refresh_state(state)
 
         elif role == "world_arbiter":
             flags = state.setdefault("flags", {})
             flags["last_consistency_check"] = parsed
             flags["consistency_score"] = parsed.get("consistency_score")
-            self.save(state)
+            self.refresh_state(state)
 
         return state
 

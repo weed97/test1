@@ -3,18 +3,20 @@
     "version": 2,
     "simulation_id": "eldoria-chronicle-001",
     "created_at": "2026-06-04T00:00:00Z",
-    "last_updated": "2026-06-04T00:00:00Z",
+    "last_updated": "2026-06-04T14:40:54Z",
     "storage": "sharded"
   },
   "world": {
     "name": "엘도리아",
-    "day": 1,
+    "day": 2,
     "time_of_day": "morning",
     "season": "spring",
     "weather": "clear",
     "location": "왕국 수도 — 아르카디아",
     "tension": 0.2,
-    "active_threats": ["북부 국경의 그림자 군단"]
+    "active_threats": [
+      "북부 국경의 그림자 군단"
+    ]
   },
   "factions": {
     "arcadia_kingdom": {
@@ -28,24 +30,79 @@
       "morale": 0.8
     }
   },
-  "active_characters": ["elara_moonwhisper", "gareth_ironshield"],
-  "party": ["elara_moonwhisper", "gareth_ironshield"],
+  "inventory": {
+    "party_gold": 120,
+    "shared_items": [
+      "치유 물약 x3",
+      "고대 지도 조각"
+    ]
+  },
+  "flags": {
+    "intro_completed": false,
+    "shadow_legion_spotted": true,
+    "last_event_alternatives": {
+      "alternatives": [
+        {
+          "id": "a",
+          "summary": "주변을 정찰한다.",
+          "risk": "low",
+          "tone": "calm"
+        },
+        {
+          "id": "b",
+          "summary": "낯선 발소리가 폐허 저편에서 들린다.",
+          "risk": "medium",
+          "tone": "tense"
+        }
+      ],
+      "recommended_id": "a",
+      "narrative_hint": "주변을 정찰한다."
+    },
+    "last_quick_event": {
+      "event_title": "Whispers in the alley",
+      "description": "A quiet moment passes in Eldoria.",
+      "potential_consequences": [
+        "investigate",
+        "move on"
+      ],
+      "suggested_state_changes": {}
+    },
+    "last_consistency_check": {
+      "consistency_score": 8,
+      "issues_found": [],
+      "recommended_corrections": [],
+      "narrative_direction_suggestion": "Maintain rising tension toward the shadow legion threat."
+    },
+    "consistency_score": 8
+  },
+  "combat": null,
+  "event_log": {
+    "next_turn": 1,
+    "entries": [
+      {
+        "turn": 1,
+        "type": "explore",
+        "summary": "별다른 사건 없이 주변을 정찰했다."
+      },
+      {
+        "turn": 2,
+        "type": "explore",
+        "summary": "별다른 사건 없이 주변을 정찰했다."
+      }
+    ]
+  },
+  "active_characters": [
+    "elara_moonwhisper",
+    "gareth_ironshield"
+  ],
+  "party": [
+    "elara_moonwhisper",
+    "gareth_ironshield"
+  ],
   "npc_locations": {
     "elara_moonwhisper": "아르카디아 — 마법탑 서관",
     "gareth_ironshield": "아르카디아 — 왕성 연무장",
     "malachar_voidweaver": "어둠의 숲 — 파멸의 제단"
   },
-  "inventory": {
-    "party_gold": 120,
-    "shared_items": ["치유 물약 x3", "고대 지도 조각"]
-  },
-  "event_log": {
-    "next_turn": 1,
-    "entries": []
-  },
-  "flags": {
-    "intro_completed": false,
-    "shadow_legion_spotted": false
-  },
-  "combat": null
+  "_event_next_turn": 1
 }
