@@ -1,0 +1,215 @@
+{
+  "seeds": [
+    {
+      "id": "phase3_tower_alarm",
+      "title": "관측탑의 경보",
+      "summary": "석탑 꼭대기에서 봉인 경보가 울린다. 변경 전체가 숨을 멈춘다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_main_story_phase": 3,
+      "requires_not_flags": ["phase3_opening_done"],
+      "weight": 30,
+      "tension_tags": ["crisis"],
+      "outcome": {
+        "summary": "관측탑의 룬이 붉게 타오른다. 봉인은 손가락 두 마디만 남았다.",
+        "lines": [
+          "종이 울리자, 마을·숲·탑이 동시에 고개를 든다.",
+          "회색 망토의 속삭임: \"3단계 — 이제 선택이 아니라, 결말이야.\""
+        ],
+        "tension_delta": 6,
+        "flags_set": {"phase3_tower_alarm": true, "phase3_opening_done": true},
+        "main_story_phase3_flag": "phase3_opening_done"
+      }
+    },
+    {
+      "id": "phase3_elder_last_plea",
+      "title": "장로의 마지막 간청",
+      "summary": "마렌이 봉인 강화를 간청한다. 눈에는 눈물과 두려움이 섞여 있다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk"],
+      "related_npc": "elder_maren",
+      "requires_main_story_phase": 3,
+      "requires_not_flags": ["phase3_elder_last_plea"],
+      "weight": 22,
+      "outcome": {
+        "summary": "장로 마렌: \"봉인을 강화하세. 세계가 좁아져도… 살아남을 수 있어.\"",
+        "lines": [
+          "회관 지붕 위, 깃발들이 바람에 찢어지듯 펄럭인다.",
+          "\"배신의 길을 택했다면… 돌아오지 않아도 되네.\""
+        ],
+        "tension_delta": 3,
+        "faction_reputation": {"ashpoint_council": 5},
+        "flags_set": {"phase3_elder_last_plea": true}
+      }
+    },
+    {
+      "id": "phase3_faction_ultimatum",
+      "title": "세력들의 최후통첩",
+      "summary": "자치회·기사단·감시자가 각각 다른 명령을 내린다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "talk"],
+      "requires_main_story_phase": 3,
+      "requires_flags": ["phase3_opening_done"],
+      "requires_not_flags": ["phase3_faction_ultimatum"],
+      "requires_tension_min": 50,
+      "weight": 20,
+      "outcome": {
+        "summary": "세력들의 깃발이 산비탈에 나란히 선다. 각자 다른 결말을 외친다.",
+        "lines": [
+          "자치회: \"봉인을 강화하라!\" — 기사단: \"질서를 세워라!\" — 감시자: \"인간은 물러나라!\"",
+          "칠흑의 속삭임만이 웃는다. \"약한 자는 선택할 수 없지.\""
+        ],
+        "tension_delta": 5,
+        "flags_set": {"phase3_faction_ultimatum": true, "phase3_crisis_done": true},
+        "main_story_phase3_flag": "phase3_crisis_done"
+      }
+    },
+    {
+      "id": "phase3_covenant_final_offer",
+      "title": "칠흑의 마지막 제안",
+      "summary": "우물가에서 봉인 해제의 힘을 마지막으로 제안한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "requires_time": ["night"],
+      "location_zones": ["ashpoint"],
+      "requires_main_story_phase": 3,
+      "requires_flags": ["phase3_opening_done"],
+      "requires_not_flags": ["phase3_covenant_final_offer"],
+      "weight": 16,
+      "outcome": {
+        "summary": "칠흑의 서약: \"봉인을 풀어라. 네가 강해지거나, 세계가 죽거나.\"",
+        "lines": [
+          "우물 속 거울에, 봉인석의 균열이 손가락 너비로 벌어진다.",
+          "속삭임: \"강화할수록 세계는 좁아지고, 파괴할수록 너는 커진다.\""
+        ],
+        "tension_delta": 8,
+        "faction_reputation": {"black_covenant": 8},
+        "flags_set": {"phase3_covenant_final_offer": true}
+      }
+    },
+    {
+      "id": "story_choice_final_reinforce",
+      "title": "봉인 강화",
+      "summary": "남은 힘을 모두 봉인에 쏟기로 결심한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore"],
+      "requires_main_story_phase": 3,
+      "requires_not_flags": ["story_phase3_chosen"],
+      "weight": 24,
+      "outcome": {
+        "summary": "당신은 봉인 강화를 택했다. 세계는 좁아지지만, 붕괴는 멈출 수 있다.",
+        "main_story_choice": "final_reinforce"
+      }
+    },
+    {
+      "id": "story_choice_final_break",
+      "title": "봉인 해제",
+      "summary": "고대 존재를 받아들이기로 결심한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "requires_main_story_phase": 3,
+      "requires_tension_min": 55,
+      "requires_not_flags": ["story_phase3_chosen"],
+      "weight": 22,
+      "outcome": {
+        "summary": "당신은 봉인 해제를 택했다. 파멸이든 해방이든, 진실은 드러난다.",
+        "main_story_choice": "final_break"
+      }
+    },
+    {
+      "id": "story_choice_final_chaos",
+      "title": "혼돈 수용",
+      "summary": "어느 편도, 봉인도 구원하지 않는다 — 판을 포기한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "rest"],
+      "requires_main_story_phase": 3,
+      "requires_not_flags": ["story_phase3_chosen"],
+      "weight": 20,
+      "outcome": {
+        "summary": "당신은 판을 포기했다. 세력들은 당신을 '없는 말'로 기록한다.",
+        "main_story_choice": "final_chaos"
+      }
+    },
+    {
+      "id": "phase3_climax_alliance",
+      "title": "결말의 문 — 동맹의 맹세",
+      "summary": "맺은 동맹 아래, 봉인 앞에서 마지막 선택을 실행한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_flags": ["phase3_climax_ready"],
+      "requires_main_story_choice": "path_alliance",
+      "requires_not_flags": ["phase3_climax_done"],
+      "weight": 40,
+      "tension_tags": ["crisis", "horror"],
+      "outcome": {
+        "summary": "동맹의 깃발 아래, 당신의 최후 선택이 봉인에 새겨진다.",
+        "lines": [
+          "세력들이 함께 주문을 외친다 — 강화든, 파괴든, 이름은 하나다.",
+          "봉인석이 빛나거나, 갈라지거나, 침묵한다. 3단계는 끝났다.",
+          "변경의 하늘이… 당신이 고른 색으로 물든다."
+        ],
+        "tension_delta": 10,
+        "flags_set": {"phase3_climax_done": true},
+        "main_story_phase3_flag": "phase3_climax_done"
+      }
+    },
+    {
+      "id": "phase3_climax_neutral",
+      "title": "결말의 문 — 균형의 끝",
+      "summary": "어느 편도 아닌 채, 혼자서 봉인 앞에 선다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_flags": ["phase3_climax_ready"],
+      "requires_main_story_choice": "path_neutral",
+      "requires_not_flags": ["phase3_climax_done"],
+      "weight": 40,
+      "outcome": {
+        "summary": "중립의 끝 — 당신만이 봉인 앞에 남았다. 세력들은 서로를 견제한다.",
+        "lines": [
+          "아무도 당신 손을 잡지 않는다. 봉인만이 당신을 바라본다.",
+          "선택의 무게가 균열에 스며든다. 하늘이 갈라진다.",
+          "혼돈이든 질서든, 이제 이름이 붙는다."
+        ],
+        "tension_delta": 8,
+        "flags_set": {"phase3_climax_done": true},
+        "main_story_phase3_flag": "phase3_climax_done"
+      }
+    },
+    {
+      "id": "phase3_climax_betrayal",
+      "title": "결말의 문 — 배신자의 각인",
+      "summary": "모든 약속을 깨고, 봉인 앞에서 판을 뒤집는다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_flags": ["phase3_climax_ready"],
+      "requires_main_story_choice": "path_betrayal",
+      "requires_not_flags": ["phase3_climax_done"],
+      "weight": 40,
+      "outcome": {
+        "summary": "배신의 각인 — 봉인은 당신의 손끝에서 움직인다. 모두가 적이 된다.",
+        "lines": [
+          "화살과 주문이 동시에 날아온다. 당신은 웃으며 균열에 손을 댄다.",
+          "봉인이 밝게, 혹은 어둡게 반응한다. 배신은 기록된다.",
+          "에르도리아의 이 장면에, 당신 이름이 새겨진다."
+        ],
+        "tension_delta": 12,
+        "flags_set": {"phase3_climax_done": true},
+        "main_story_phase3_flag": "phase3_climax_done"
+      }
+    }
+  ]
+}

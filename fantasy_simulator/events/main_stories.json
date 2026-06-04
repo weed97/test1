@@ -203,6 +203,86 @@
         "min_progress": 55,
         "any_of": [{"flag": "phase2_climax_done"}]
       },
+      "phase3_flow": {
+        "sections": {
+          "early": {"name": "봉인 직전", "turn_range": "116-130"},
+          "mid": {"name": "최후의 압박", "turn_range": "131-145"},
+          "late": {"name": "최후의 선택", "turn_range": "146-160"},
+          "climax": {"name": "결말의 문", "turn_range": "155-170"}
+        },
+        "flags_to_step": {
+          "phase3_opening_done": 1,
+          "phase3_crisis_done": 2,
+          "story_phase3_chosen": 3,
+          "phase3_climax_done": 4
+        },
+        "step_queue": {
+          "1": ["phase3_tower_alarm", "phase3_elder_last_plea"],
+          "2": [
+            "story_seal_near_break",
+            "phase3_faction_ultimatum",
+            "phase3_covenant_final_offer"
+          ],
+          "3": [
+            "story_choice_final_reinforce",
+            "story_choice_final_break",
+            "story_choice_final_chaos"
+          ],
+          "4": [
+            "phase3_climax_alliance",
+            "phase3_climax_neutral",
+            "phase3_climax_betrayal"
+          ]
+        },
+        "climax_seeds": [
+          "phase3_climax_alliance",
+          "phase3_climax_neutral",
+          "phase3_climax_betrayal"
+        ],
+        "branch_queue_min_crisis": 1
+      },
+      "phase3_climax_gate": {
+        "required_count": 2,
+        "conditions": [
+          {"id": "tension", "tension_min": 55},
+          {"id": "seal", "flag": "story_seal_near_break"},
+          {"id": "chosen", "flag": "story_phase3_chosen"},
+          {"id": "rep", "faction_rep_min": 15}
+        ]
+      },
+      "phase3_exit": {
+        "min_progress": 85,
+        "any_of": [{"flag": "phase3_climax_done"}]
+      },
+      "phase3_choices": [
+        {
+          "id": "final_reinforce",
+          "label": "봉인을 강화한다",
+          "summary": "남은 힘을 모두 봉인에 쏟는다. 세계는 좁아지지만, 붕괴는 멈춘다.",
+          "flags_set": {"story_final_reinforce": true, "story_phase3_chosen": true},
+          "ending_bias": {"seal_maintained": 20, "new_order": 12, "ancient_awakening": -15},
+          "tension_delta": -8,
+          "blocks_choices": ["final_break", "final_chaos"]
+        },
+        {
+          "id": "final_break",
+          "label": "봉인을 푼다",
+          "summary": "고대 존재를 받아들인다. 파멸이든 해방이든, 진실은 드러난다.",
+          "flags_set": {"story_final_break": true, "story_phase3_chosen": true},
+          "ending_bias": {"ancient_awakening": 25, "power_absorption": 5, "seal_maintained": -20},
+          "tension_delta": 15,
+          "blocks_choices": ["final_reinforce", "final_chaos"]
+        },
+        {
+          "id": "final_chaos",
+          "label": "판을 포기한다",
+          "summary": "어느 세력도, 봉인도 당신을 구원하지 않는다. 혼돈만이 남는다.",
+          "flags_set": {"story_final_chaos": true, "story_phase3_chosen": true},
+          "ending_bias": {"age_of_chaos": 25, "new_order": -8, "seal_maintained": -10},
+          "tension_delta": 8,
+          "blocks_choices": ["final_reinforce", "final_break"]
+        }
+      ],
       "phase2_choices": [
         {
           "id": "path_alliance",
@@ -290,7 +370,12 @@
           "phase2_climax_neutral": 10,
           "phase2_climax_betrayal": 10,
           "story_faction_clash": 10,
-          "story_seal_near_break": 12
+          "story_seal_near_break": 12,
+          "phase3_tower_alarm": 5,
+          "phase3_faction_ultimatum": 6,
+          "phase3_climax_alliance": 12,
+          "phase3_climax_neutral": 12,
+          "phase3_climax_betrayal": 12
         },
         "quest_stage": {"smoke_on_the_mountain": [12, 18, 30]},
         "flags": {
@@ -302,7 +387,12 @@
           "phase2_opening_done": 4,
           "phase2_escalation_done": 5,
           "story_phase2_chosen": 10,
-          "phase2_climax_done": 12
+          "phase2_climax_done": 12,
+          "phase3_opening_done": 4,
+          "phase3_crisis_done": 6,
+          "story_phase3_chosen": 10,
+          "phase3_climax_done": 15,
+          "story_seal_near_break": 8
         }
       },
       "phase_events": {},

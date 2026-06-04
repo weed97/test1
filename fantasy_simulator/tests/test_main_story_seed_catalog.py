@@ -21,7 +21,7 @@ class MainStorySeedCatalogTests(unittest.TestCase):
             stories = load_json(root / "events" / "main_stories.json").get("stories", [])
             story = next(s for s in stories if s["id"] == "ashen_seal_cracking")
             missing: list[str] = []
-            for flow_key in ("phase1_flow", "phase2_flow"):
+            for flow_key in ("phase1_flow", "phase2_flow", "phase3_flow"):
                 flow = story.get(flow_key, {})
                 for step_events in flow.get("step_queue", {}).values():
                     for sid in step_events:

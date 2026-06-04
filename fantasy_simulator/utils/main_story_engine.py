@@ -81,6 +81,8 @@ class MainStoryEngine:
                     "smoke_seen_turn": None,
                     "phase2_step": 0,
                     "phase2_subphase": "early",
+                    "phase3_step": 0,
+                    "phase3_subphase": "early",
                 }
             )
 
@@ -96,6 +98,8 @@ class MainStoryEngine:
         ms.setdefault("smoke_seen_turn", None)
         ms.setdefault("phase2_step", 0)
         ms.setdefault("phase2_subphase", "early")
+        ms.setdefault("phase3_step", 0)
+        ms.setdefault("phase3_subphase", "early")
         return ms
 
     def _migrate_story_state(self, ms: dict[str, Any]) -> None:
@@ -129,8 +133,12 @@ class MainStoryEngine:
         self._recalculate_ending_scores(state, story, ms)
         lines.extend(self._check_phase1_exit(state, story, ms))
         lines.extend(self._check_phase2_exit(state, story, ms))
+        lines.extend(self._check_phase3_exit(state, story, ms))
         if int(ms.get("progress", 0)) >= 100 and not ms.get("resolved_ending"):
-            lines.extend(self._try_resolve_ending(state, story, ms))
+            if int(ms.get("phase", 1)) >= 3 and not state.get("flags", {}).get("phase3_climax_done"):
+                pass
+            else:
+                lines.extend(self._try_resolve_ending(state, story, ms))
         return lines
 
     def _phase_def(self, story: dict[str, Any], phase: int) -> dict[str, Any] | None:
@@ -151,9 +159,13 @@ class MainStoryEngine:
                 return
             if int(ms.get("phase", 1)) == 2 and not flags.get("phase2_climax_done"):
                 return
+            if int(ms.get("phase", 1)) == 3 and not flags.get("phase3_climax_done"):
+                return
             ms["phase"] = phase_idx + 2
             if ms["phase"] == 2:
                 self._begin_phase2(state, story, ms)
+            elif ms["phase"] == 3:
+                self._begin_phase3(state, story, ms)
             next_phase = phases[phase_idx + 1]
             state.setdefault("flags", {})["main_story_phase_bump"] = next_phase.get("name", "")
 
@@ -182,7 +194,7 @@ class MainStoryEngine:
 
     def _find_choice(self, story: dict[str, Any], choice_id: str) -> dict[str, Any] | None:
         choice_id = self._resolve_choice_id(story, choice_id)
-        for pool in ("phase1_choices", "phase2_choices"):
+        for pool in ("phase1_choices", "phase2_choices", "phase3_choices"):
             for choice in story.get(pool, []):
                 if choice["id"] == choice_id:
                     return choice
@@ -249,6 +261,15 @@ class MainStoryEngine:
             lines.extend(self._update_phase2_climax_readiness(state, story, ms))
             if not state.get("flags", {}).get("phase2_climax_ready"):
                 lines.extend(self._check_phase2_exit(state, story, ms))
+        elif int(ms.get("phase", 1)) == 3:
+            self._advance_phase3_from_flag(state, story, ms, "story_phase3_chosen")
+            ms["phase3_subphase"] = "late"
+            amount = story.get("progress_sources", {}).get("flags", {}).get("story_phase3_chosen")
+            if amount and "story_phase3_chosen" in (choice.get("flags_set") or {}):
+                lines.extend(self.add_progress(state, int(amount), reason="3단계 최후 선택"))
+            lines.extend(self._update_phase3_climax_readiness(state, story, ms))
+            if not state.get("flags", {}).get("phase3_climax_ready"):
+                lines.extend(self._check_phase3_exit(state, story, ms))
 
         summary = choice.get("summary")
         if summary:
@@ -265,6 +286,9 @@ class MainStoryEngine:
             "path_alliance": "story_choice_alliance",
             "path_neutral": "story_choice_neutral",
             "path_betrayal": "story_choice_betrayal",
+            "final_reinforce": "story_choice_final_reinforce",
+            "final_break": "story_choice_final_break",
+            "final_chaos": "story_choice_final_chaos",
         }
 
     def _remove_blocked_choice_events(
@@ -710,8 +734,235 @@ class MainStoryEngine:
             ms["phase"] = 3
             next_name = phases[2]["name"] if len(phases) > 2 else "3단계"
             state.setdefault("flags", {})["main_story_phase_bump"] = next_name
+            self._begin_phase3(state, story, ms)
         self._maybe_queue_phase_events(state, story, ms, phase2_needed - 1)
         return [f"[2단계 완료] 세력의 대립 — {reason}"]
+
+    def _phase3_flow(self, story: dict[str, Any]) -> dict[str, Any]:
+        return story.get("phase3_flow", {})
+
+    def _begin_phase3(self, state: dict[str, Any], story: dict[str, Any], ms: dict[str, Any]) -> list[str]:
+        if int(ms.get("phase", 1)) != 3 or ms.get("phase3_begun"):
+            return []
+        ms["phase3_begun"] = True
+        ms["phase3_subphase"] = "early"
+        if int(ms.get("phase3_step", 0)) < 1:
+            ms["phase3_step"] = 1
+        return self._queue_phase3_step_events(state, story, ms, 1)
+
+    def _advance_phase3_from_flag(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+        flag: str,
+    ) -> list[str]:
+        if int(ms.get("phase", 1)) != 3:
+            return []
+        flow = self._phase3_flow(story)
+        flags_to_step = flow.get("flags_to_step", {})
+        step = flags_to_step.get(flag)
+        lines: list[str] = []
+        current = int(ms.get("phase3_step", 0))
+
+        if flag == "story_seal_near_break" and not state.get("flags", {}).get("phase3_crisis_done"):
+            state.setdefault("flags", {})["phase3_crisis_done"] = True
+            flag = "phase3_crisis_done"
+
+        if step is not None and int(step) > current:
+            ms["phase3_step"] = int(step)
+            lines.extend(self._queue_phase3_step_events(state, story, ms, int(step)))
+
+        if flag == "phase3_opening_done":
+            ms["phase3_subphase"] = "early"
+            if int(ms.get("phase3_step", 0)) < 2:
+                ms["phase3_step"] = max(int(ms.get("phase3_step", 0)), 1)
+                lines.extend(self._queue_phase3_step_events(state, story, ms, 2))
+
+        if flag == "phase3_crisis_done":
+            ms["phase3_subphase"] = "mid"
+            if int(ms.get("phase3_step", 0)) < 3:
+                ms["phase3_step"] = 3
+                lines.extend(self._queue_phase3_step_events(state, story, ms, 3))
+
+        if flag == "story_phase3_chosen":
+            ms["phase3_subphase"] = "late"
+
+        if flag == "phase3_climax_done":
+            ms["phase3_subphase"] = "climax"
+
+        return lines
+
+    def _phase3_crisis_count(self, state: dict[str, Any]) -> int:
+        flags = state.get("flags", {})
+        count = 0
+        for key in (
+            "story_seal_near_break",
+            "phase3_faction_ultimatum",
+            "phase3_covenant_final_offer",
+        ):
+            if flags.get(key):
+                count += 1
+        return count
+
+    def _queue_phase3_step_events(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+        step: int,
+    ) -> list[str]:
+        if int(ms.get("phase", 1)) != 3:
+            return []
+        flow = self._phase3_flow(story)
+        step_queue = flow.get("step_queue", {})
+        events = step_queue.get(str(step), [])
+        if step == 3:
+            min_crisis = int(flow.get("branch_queue_min_crisis", 1))
+            if self._phase3_crisis_count(state) < min_crisis:
+                return []
+            if state.get("flags", {}).get("story_phase3_chosen"):
+                return []
+        pending = state.setdefault("flags", {}).setdefault("pending_events", [])
+        added: list[str] = []
+        for event_id in events:
+            if event_id not in pending:
+                pending.append(event_id)
+                added.append(event_id)
+        if added and step == 3:
+            return ["[3단계] 봉인 직전 — 최후의 선택지가 열렸다."]
+        return []
+
+    def _phase3_climax_conditions_met(
+        self, state: dict[str, Any], story: dict[str, Any], ms: dict[str, Any]
+    ) -> tuple[int, list[str]]:
+        gate = story.get("phase3_climax_gate", {})
+        conditions = gate.get("conditions", [])
+        flags = state.get("flags", {})
+        faction_rep = flags.get("faction_reputation", {})
+        met: list[str] = []
+        for cond in conditions:
+            cid = cond.get("id", "")
+            if cond.get("tension_min") is not None and get_tension(state) >= int(cond["tension_min"]):
+                met.append(cid)
+            elif cond.get("faction_rep_min") is not None:
+                if any(int(v) >= int(cond["faction_rep_min"]) for v in faction_rep.values()):
+                    met.append(cid)
+            elif cond.get("flag") and flags.get(cond["flag"]):
+                met.append(cid)
+        return len(met), met
+
+    def _update_phase3_climax_readiness(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+    ) -> list[str]:
+        if int(ms.get("phase", 1)) != 3:
+            return []
+        if not state.get("flags", {}).get("story_phase3_chosen"):
+            return []
+        if state.get("flags", {}).get("phase3_climax_done"):
+            return []
+        gate = story.get("phase3_climax_gate", {})
+        required = int(gate.get("required_count", 2))
+        count, met_ids = self._phase3_climax_conditions_met(state, story, ms)
+        ms["phase3_climax_conditions_met"] = met_ids
+        if count < required:
+            return []
+        flags = state.setdefault("flags", {})
+        if flags.get("phase3_climax_ready"):
+            return []
+        flags["phase3_climax_ready"] = True
+        ms["phase3_subphase"] = "climax"
+        pending = flags.setdefault("pending_events", [])
+        for seed_id in self._phase3_flow(story).get("climax_seeds", []):
+            if seed_id not in pending:
+                pending.append(seed_id)
+        return [f"[3단계 클라이맥스] 조건 {count}/{len(gate.get('conditions', []))} 충족 — 결말의 문 임박"]
+
+    def _check_phase3_exit(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+    ) -> list[str]:
+        if int(ms.get("phase", 1)) != 3 or ms.get("phase3_complete"):
+            return []
+        exit_cfg = story.get("phase3_exit")
+        if not exit_cfg:
+            return []
+        if int(ms.get("progress", 0)) < int(exit_cfg.get("min_progress", 0)):
+            return []
+        flags = state.get("flags", {})
+        for rule in exit_cfg.get("any_of", []):
+            if rule.get("flag") and flags.get(rule["flag"]):
+                return self._complete_phase3(state, story, ms, rule["flag"])
+        return []
+
+    def _complete_phase3(
+        self,
+        state: dict[str, Any],
+        story: dict[str, Any],
+        ms: dict[str, Any],
+        reason: str,
+    ) -> list[str]:
+        ms["phase3_complete"] = True
+        phases = story.get("phases", [])
+        phase3_needed = int(phases[2].get("progress_needed", 100)) if len(phases) > 2 else 100
+        if int(ms.get("progress", 0)) < phase3_needed:
+            ms["progress"] = phase3_needed
+        lines = [f"[3단계 완료] 최후의 선택 — {reason}"]
+        if not ms.get("resolved_ending"):
+            lines.extend(self._try_resolve_ending(state, story, ms))
+        return lines
+
+    def _phase3_step_label(self, story: dict[str, Any], step: int) -> str:
+        labels = {
+            0: "대기",
+            1: "봉인 직전",
+            2: "최후의 압박",
+            3: "최후의 선택",
+            4: "결말의 문",
+        }
+        return labels.get(step, f"단계 {step}")
+
+    def _phase3_next_hint(self, state: dict[str, Any], ms: dict[str, Any], story: dict[str, Any]) -> str | None:
+        flags = state.get("flags", {})
+        if int(ms.get("phase", 1)) != 3 or flags.get("phase3_climax_done") or ms.get("resolved_ending"):
+            return None
+        if flags.get("phase3_climax_ready"):
+            path2 = next((c for c in reversed(ms.get("choices_made", [])) if c.startswith("path_")), None)
+            return {
+                "path_alliance": "관측탑·숲 — 동맹과 함께 결말의 문을 열어라",
+                "path_neutral": "탑·숲 — 홀로 결말의 문 앞에 서라",
+                "path_betrayal": "탑·숲 — 배신의 각인을 새겨라",
+            }.get(path2 or "", "관측탑·숲 — 결말의 문을 완료하라")
+        if flags.get("story_phase3_chosen"):
+            gate = story.get("phase3_climax_gate", {})
+            required = int(gate.get("required_count", 2))
+            _, met = self._phase3_climax_conditions_met(state, story, ms)
+            missing: list[str] = []
+            for cond in gate.get("conditions", []):
+                cid = cond.get("id", "")
+                if cid in met:
+                    continue
+                if cond.get("tension_min") is not None:
+                    missing.append(f"긴장 {cond['tension_min']}+")
+                elif cond.get("faction_rep_min") is not None:
+                    missing.append(f"세력 평판 {cond['faction_rep_min']}+")
+                elif cond.get("flag"):
+                    missing.append(cond["flag"])
+            if missing:
+                return f"결말 준비 ({len(met)}/{required}) — {', '.join(missing[:2])}"
+            return "결말 준비 완료 — 관측탑으로 향하라"
+        crisis = self._phase3_crisis_count(state)
+        min_crisis = int(self._phase3_flow(story).get("branch_queue_min_crisis", 1))
+        if crisis >= min_crisis and not flags.get("story_phase3_chosen"):
+            return "탑·숲·마을 — 봉인 강화·해제·혼돈 중 하나를 선택하라"
+        if flags.get("phase3_opening_done"):
+            return "탑·숲 탐색 — 봉인 직전의 압박을 견뎌라"
+        return "관측탑·숲 — 봉인 경보를 확인하라"
 
     def _phase2_step_label(self, story: dict[str, Any], step: int) -> str:
         labels = {
@@ -937,11 +1188,17 @@ class MainStoryEngine:
         lines.extend(self._advance_phase1_from_flag(state, story, ms, flag, turn=turn))
         if int(ms.get("phase", 1)) == 2:
             lines.extend(self._advance_phase2_from_flag(state, story, ms, flag))
+        if int(ms.get("phase", 1)) == 3:
+            lines.extend(self._advance_phase3_from_flag(state, story, ms, flag))
         amount = story.get("progress_sources", {}).get("flags", {}).get(flag)
         if amount:
             lines.extend(self.add_progress(state, int(amount), reason=flag))
         else:
-            if int(ms.get("phase", 1)) == 2:
+            phase = int(ms.get("phase", 1))
+            if phase == 3:
+                lines.extend(self._update_phase3_climax_readiness(state, story, ms))
+                lines.extend(self._check_phase3_exit(state, story, ms))
+            elif phase == 2:
                 lines.extend(self._update_phase2_climax_readiness(state, story, ms))
                 lines.extend(self._check_phase2_exit(state, story, ms))
             else:
@@ -969,6 +1226,12 @@ class MainStoryEngine:
             story = self.story_def(ms["id"])
             if story:
                 lines.extend(self._advance_phase2_from_flag(state, story, ms, p2_flag))
+        p3_flag = outcome.get("main_story_phase3_flag")
+        if p3_flag:
+            ms = self.ensure_initialized(state)
+            story = self.story_def(ms["id"])
+            if story:
+                lines.extend(self._advance_phase3_from_flag(state, story, ms, p3_flag))
         return lines
 
     def tick(self, state: dict[str, Any], *, turn: int) -> list[str]:
@@ -993,6 +1256,10 @@ class MainStoryEngine:
             self._begin_phase2(state, story, ms)
         lines.extend(self._update_phase2_climax_readiness(state, story, ms))
         lines.extend(self._check_phase2_exit(state, story, ms))
+        if int(ms.get("phase", 1)) == 3:
+            self._begin_phase3(state, story, ms)
+        lines.extend(self._update_phase3_climax_readiness(state, story, ms))
+        lines.extend(self._check_phase3_exit(state, story, ms))
         leading = ms.get("leading_ending")
         if leading and turn % 10 == 0:
             ending = next((e for e in story.get("endings", []) if e["id"] == leading), None)
@@ -1049,6 +1316,22 @@ class MainStoryEngine:
             hint = self._phase2_next_hint(state, ms, story)
             if hint:
                 parts.append(f"다음: {hint}")
+        elif phase == 3 and not ms.get("resolved_ending"):
+            step = int(ms.get("phase3_step", 0))
+            sub = ms.get("phase3_subphase", "early")
+            sections = self._phase3_flow(story).get("sections", {})
+            section_name = sections.get(sub, {}).get("name", sub)
+            crisis = self._phase3_crisis_count(state)
+            parts.append(
+                f"3단계 [{section_name}] {self._phase3_step_label(story, step)} | "
+                f"위기 이벤트 {crisis}"
+            )
+            met = ms.get("phase3_climax_conditions_met", [])
+            if met and not state.get("flags", {}).get("phase3_climax_done"):
+                parts.append(f"결말 조건: {len(met)}/4 ({', '.join(met)})")
+            hint = self._phase3_next_hint(state, ms, story)
+            if hint:
+                parts.append(f"다음: {hint}")
         if ms.get("resolved_ending"):
             ending = next((e for e in story.get("endings", []) if e["id"] == ms["resolved_ending"]), None)
             if ending:
@@ -1095,6 +1378,8 @@ class MainStoryEngine:
             "factions_contacted": [],
             "phase2_step": 0,
             "phase2_subphase": "early",
+            "phase3_step": 0,
+            "phase3_subphase": "early",
         }
         return True
 

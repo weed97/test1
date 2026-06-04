@@ -186,7 +186,8 @@
       "outcome": {
         "summary": "균열이 손가락 두 마디만 남았다. 지금까지의 선택이 결말을 부른다.",
         "tension_delta": 10,
-        "flags_set": {"story_seal_near_break": true}
+        "flags_set": {"story_seal_near_break": true, "phase3_crisis_done": true},
+        "main_story_phase3_flag": "phase3_crisis_done"
       }
     },
     {
