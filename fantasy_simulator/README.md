@@ -63,23 +63,35 @@ python3 simulation_engine.py --show-routing
 python3 simulation_engine.py --export-legacy
 ```
 
+## Core flow (`simulation_engine.py`)
+
+```python
+from utils.llm_router import route_action
+from utils.llm_client import LLMClient, call_claude, call_codex
+from utils.state_manager import StateManager
+
+def process_turn(state, action, mode, turn, manager, rules, client):
+    routes = route_action(action, state, mode=mode, turn=turn)
+    for step in routes:
+        if step["model"] == "rule":
+            result = run_rule_based(rules, ...)
+        elif step["model"] == "claude":
+            result = call_claude(client, step["prompt_file"], snapshot, action)
+        elif step["model"] == "codex":
+            result = call_codex(client, step["prompt_file"], snapshot, action)
+        elif step["model"] == "gpt":
+            result = client.call_gpt(step["prompt_file"], snapshot, action)
+        manager.apply_result(state, result, turn=turn)
+```
+
 ## Prompt files
 
-| File | Model | When | Output |
-|------|-------|------|--------|
-| `prompts/narrator_claude.md` | Opus 4.8 High | 서사·묘사·대사 | plain text |
-| `prompts/mechanics_codex.md` | Codex 5.3 High | 전투·마법·규칙 행동 | **JSON only** |
-| `prompts/world_arbiter.md` | Opus 4.8 High | 5턴마다 일관성 검사 | JSON |
-| `prompts/quick_event_gpt.md` | GPT-5.5 High | 가벼운 이벤트/브랜치 | JSON |
-
-**LLM explore:** `quick_event → mechanics → narrator`  
-**Hybrid explore:** `[rule_engine] → quick_event → narrator`  
-**Consistency:** every `consistency_check_interval` turns (default 5)
-
-```bash
-python3 simulation_engine.py --show-prompts
-python3 simulation_engine.py --show-routing
-```
+| File | Model | Output |
+|------|-------|--------|
+| `prompts/narrator_claude.md` | Opus 4.8 High | plain text |
+| `prompts/mechanics_codex.md` | Codex 5.3 High | JSON only |
+| `prompts/world_arbiter.md` | Opus 4.8 High | JSON (every 5 turns) |
+| `prompts/quick_event_gpt.md` | GPT-5.5 High | JSON |
 
 ## API 키 (선택)
 

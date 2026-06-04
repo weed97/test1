@@ -2,10 +2,11 @@
 
 from utils.dice import roll, roll_d20
 from utils.io_helpers import load_json, save_json, load_text
+from utils.llm_client import LLMClient, call_claude, call_codex, call_gpt
+from utils.llm_router import route_action, route_consistency_check, describe_routes
 from utils.state_loader import StateLoader
+from utils.state_manager import StateManager
 from utils.state_store import StateStore
-from utils.prompt_router import PromptRouter
-from utils.structured_output import StructuredOutputClient, StructuredOutputError, extract_json_object
 
 __all__ = [
     "roll",
@@ -15,8 +16,12 @@ __all__ = [
     "load_text",
     "StateLoader",
     "StateStore",
-    "PromptRouter",
-    "StructuredOutputClient",
-    "StructuredOutputError",
-    "extract_json_object",
+    "StateManager",
+    "LLMClient",
+    "call_claude",
+    "call_codex",
+    "call_gpt",
+    "route_action",
+    "route_consistency_check",
+    "describe_routes",
 ]
