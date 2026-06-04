@@ -94,6 +94,8 @@ class MainStoryEngineTests(unittest.TestCase):
                 },
             }
             engine.ensure_initialized(state)
+            engine.record_mountain_visit(state)
+            self.assertFalse(state["flags"].get("phase1_elder_declined"))
             lines = engine.record_mountain_visit(state)
             self.assertTrue(state["flags"].get("phase1_elder_declined"))
             self.assertTrue(state["flags"].get("phase1_elder_responded"))
@@ -112,6 +114,18 @@ class MainStoryEngineTests(unittest.TestCase):
             summary = engine.format_summary(state)
             self.assertIn("다음:", summary)
             self.assertIn("소문", summary)
+
+    def test_progress_alone_does_not_skip_phase1(self) -> None:
+        with isolated_game_root() as root:
+            engine = MainStoryEngine(root)
+            state = {
+                "flags": {
+                    "main_story": {"id": "ashen_seal_cracking", "phase": 1, "progress": 34},
+                },
+            }
+            engine.ensure_initialized(state)
+            engine.add_progress(state, 5, reason="test")
+            self.assertEqual(state["flags"]["main_story"]["phase"], 1)
 
     def test_phase1_choice_five_way(self) -> None:
         with isolated_game_root() as root:

@@ -55,7 +55,7 @@
           "마을 사람들이 하늘을 올려다본다. 아무도 '산불'이라고 말하지 않는다.",
           "북쪽 산 — 잿빛 봉인의 균열이, 아주 작게 시작되었다."
         ],
-        "tension_delta": 8,
+        "tension_delta": 6,
         "flags_set": {"black_smoke_seen": true, "phase1_smoke_witnessed": true},
         "main_story_phase1_flag": "black_smoke_seen",
         "rumor_add": "산에서 검은 연기가 피어오른 날이 또 있었다."

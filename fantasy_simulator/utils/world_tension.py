@@ -83,7 +83,12 @@ def passive_drift(state: dict[str, Any], *, rng: Any | None = None) -> tuple[int
         delta -= 1
 
     if rng is not None and delta == 0:
-        roll = rng.randint(-1, 2)
+        ms = flags.get("main_story", {})
+        phase1_active = int(ms.get("phase", 0)) == 1 and not flags.get("phase1_climax_done")
+        if phase1_active:
+            roll = rng.randint(0, 1)
+        else:
+            roll = rng.randint(-1, 2)
         if roll > 0 and tension < 80:
             delta = roll
         elif roll < 0 and tension > 15:

@@ -89,19 +89,16 @@
       "phase1_climax_gate": {
         "required_count": 2,
         "conditions": [
-          {"id": "tension", "tension_min": 30},
-          {"id": "alliance", "faction_rep_min": 25},
-          {"id": "mountain", "mountain_visits_min": 3},
+          {"id": "tension", "tension_min": 25},
+          {"id": "alliance", "faction_rep_min": 20},
+          {"id": "mountain", "mountain_visits_min": 2},
           {"id": "contacts", "factions_contacted_min": 2}
         ]
       },
       "phase1_exit": {
         "min_progress": 15,
         "any_of": [
-          {"flag": "phase1_climax_done"},
-          {"faction_rep_min": 25},
-          {"tension_min": 60},
-          {"factions_contacted_min": 2, "requires_flag": "story_phase1_chosen"}
+          {"flag": "phase1_climax_done"}
         ]
       },
       "phase1_choices": [

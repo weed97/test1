@@ -11,7 +11,7 @@
       "requires_flags": ["black_smoke_seen"],
       "requires_not_flags": ["phase1_rumors_spread"],
       "requires_main_story_turns_since_smoke_min": 2,
-      "weight": 28,
+      "weight": 32,
       "outcome": {
         "summary": "소문은 하룻밤 사이에 불길처럼 번졌다.",
         "lines": [

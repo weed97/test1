@@ -129,6 +129,9 @@ class MainStoryEngine:
             return
         needed = int(phases[phase_idx].get("progress_needed", 100))
         if int(ms.get("progress", 0)) >= needed and phase_idx + 1 < len(phases):
+            flags = state.get("flags", {})
+            if int(ms.get("phase", 1)) == 1 and not flags.get("phase1_climax_done"):
+                return
             ms["phase"] = phase_idx + 2
             next_phase = phases[phase_idx + 1]
             state.setdefault("flags", {})["main_story_phase_bump"] = next_phase.get("name", "")
@@ -319,19 +322,27 @@ class MainStoryEngine:
             flags["phase1_mountain_found"] = True
         lines = [f"[1단계] 북쪽 산 방문 ({ms['mountain_visits']}회)"]
         if flags.get("phase1_elder_request") and not flags.get("phase1_elder_responded"):
-            flags["phase1_elder_declined"] = True
-            flags["phase1_elder_responded"] = True
-            from utils.faction_engine import FactionEngine
-
-            lines.extend(
-                FactionEngine(self.base_dir).apply_reputation_outcome(
-                    state, {"faction_reputation": {"ashpoint_council": -6}}
+            pending = int(ms.get("elder_pending_mountain_visits", 0)) + 1
+            ms["elder_pending_mountain_visits"] = pending
+            if pending == 1:
+                lines.append(
+                    "[1단계] 장로의 부탁을 아직 받지 않은 채 산길에 섰다. "
+                    "마을에서 눈치 보는 시선이 느껴진다."
                 )
-            )
-            lines.append(
-                "[1단계] 장로의 부탁을 거두치 않고 산으로 향했다. "
-                "자치회는 당신을 '독단적인 이방인'으로 기록하기 시작한다."
-            )
+            elif pending >= 2:
+                flags["phase1_elder_declined"] = True
+                flags["phase1_elder_responded"] = True
+                from utils.faction_engine import FactionEngine
+
+                lines.extend(
+                    FactionEngine(self.base_dir).apply_reputation_outcome(
+                        state, {"faction_reputation": {"ashpoint_council": -6}}
+                    )
+                )
+                lines.append(
+                    "[1단계] 장로의 부탁을 거두치 않고 산으로 향했다. "
+                    "자치회는 당신을 '독단적인 이방인'으로 기록하기 시작한다."
+                )
         if story:
             lines.extend(self._update_climax_readiness(state, story, ms))
         return lines
@@ -447,6 +458,9 @@ class MainStoryEngine:
         flags = state.get("flags", {})
         faction_rep = flags.get("faction_reputation", {})
         for rule in exit_cfg.get("any_of", []):
+            req_flag = rule.get("requires_flag")
+            if req_flag and not flags.get(req_flag):
+                continue
             if rule.get("flag") and flags.get(rule["flag"]):
                 return self._complete_phase1(state, story, ms, rule["flag"])
             if rule.get("faction_rep_min") is not None:
@@ -455,10 +469,9 @@ class MainStoryEngine:
                     return self._complete_phase1(state, story, ms, "faction_alliance")
             if rule.get("tension_min") is not None and get_tension(state) >= int(rule["tension_min"]):
                 return self._complete_phase1(state, story, ms, "tension")
-            req_flag = rule.get("requires_flag")
             if rule.get("factions_contacted_min") is not None:
                 minimum = int(rule["factions_contacted_min"])
-                if len(ms.get("factions_contacted", [])) >= minimum and (not req_flag or flags.get(req_flag)):
+                if len(ms.get("factions_contacted", [])) >= minimum:
                     return self._complete_phase1(state, story, ms, "multi_contact")
         return []
 
