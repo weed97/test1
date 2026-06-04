@@ -24,6 +24,19 @@ characters/
   grey_cloak.json
 ```
 
+## Shard catalog
+
+| File | Count | seed_type |
+|------|-------|-----------|
+| `seeds/core.json` | 15 | core Act 1–2 |
+| `seeds/expansion_village.json` | 19 | random / world |
+| `seeds/horror.json` | 15 | horror_event |
+| `seeds/political.json` | 5 | political |
+| `seeds/character.json` | 4 | character_event (+ `related_npc`) |
+| `seeds/quest_hooks.json` | 3 | quest (multi-stage hooks) |
+
+**Total: 61** seeds. Filter: `location_zones`, `requires_tension_min`, `related_npc` (talk).
+
 ## 씨앗 카탈로그 (shard)
 
 - **manifest:** `events/seeds.json` — shard 목록 + `seed_types`

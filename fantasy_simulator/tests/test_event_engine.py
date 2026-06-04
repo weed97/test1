@@ -61,7 +61,7 @@ class EventEngineTests(unittest.TestCase):
         self.assertIn("연기", result["summary"])
 
     def test_load_all_seed_shards(self) -> None:
-        self.assertEqual(len(self.content.load_event_seeds()), 34)
+        self.assertEqual(len(self.content.load_event_seeds()), 61)
 
     def test_expansion_seed_has_hook(self) -> None:
         seed = self.content.get_event_seed("whispering_well")
@@ -69,6 +69,21 @@ class EventEngineTests(unittest.TestCase):
         assert seed is not None
         self.assertEqual(seed.get("seed_type"), "random_event")
         self.assertIn("hook", seed)
+
+    def test_horror_seed_in_catalog(self) -> None:
+        seed = self.content.get_event_seed("whispers_from_grave")
+        self.assertIsNotNone(seed)
+        assert seed is not None
+        self.assertEqual(seed.get("seed_type"), "horror_event")
+
+    def test_character_event_requires_matching_npc(self) -> None:
+        self.state["flags"]["pending_events"] = ["lilian_information"]
+        self.state["world"]["time_of_day"] = "afternoon"
+        out = self.engine.talk(self.state, "talk torren", 1, self.loader)
+        self.assertIn("토렌", out["summary"])
+        self.assertIn("lilian_information", self.state["flags"]["pending_events"])
+        out2 = self.engine.talk(self.state, "talk lilian", 2, self.loader)
+        self.assertNotIn("lilian_information", self.state["flags"]["pending_events"])
 
     def test_stage_dialogue_for_torren(self) -> None:
         lines = self.content.load_npc_dialogues("torren_blacksmith", self.state)

@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "description": "정치 · 음모 · 권력 이벤트",
+  "seeds": [
+    {
+      "id": "noble_assassination_attempt",
+      "seed_type": "political",
+      "title": "귀족 암살 미수",
+      "summary": "마을에 들른 귀족이 암살당할 뻔했다.",
+      "tags": ["politics", "conspiracy", "noble"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_flags": ["noble_caravan_seen"],
+      "weight": 12,
+      "hook": "마을에 들른 귀족이 암살당할 뻔했다. 범인은 아직 잡히지 않았다.",
+      "outcome": {
+        "summary": "석궁 화살은 귀족이 아닌 경비병을 맞혔다. 회색 망토? 아니면 변경 밀수단? 증거는 없다.",
+        "tension_delta": 11,
+        "flags_set": {"noble_assassination_attempt": true},
+        "reputation": {"ashpoint": -3}
+      }
+    },
+    {
+      "id": "traitor_in_council",
+      "seed_type": "political",
+      "title": "회의의 배신자",
+      "summary": "마을 회의에서 정보 유출 의심.",
+      "tags": ["politics", "betrayal"],
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["talk", "explore"],
+      "location_zones": ["ashpoint"],
+      "weight": 10,
+      "hook": "마을 회의에서 누군가 정보를 새고 있다는 의심이 커지고 있다.",
+      "outcome": {
+        "summary": "장로: '연기 소식이 숲 도적에게 먼저 갔어.' 민병대장과 상인 핀, 둘 중 하나 — 아니면 셋 다.",
+        "tension_delta": 9,
+        "flags_set": {"traitor_rumor": true},
+        "reputation": {"ashpoint": -2}
+      }
+    },
+    {
+      "id": "false_flag_attack",
+      "seed_type": "political",
+      "title": "거짓 깃발",
+      "summary": "공격자가 다른 세력 소속으로 의심된다.",
+      "tags": ["politics", "war", "deception"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint", "forest"],
+      "requires_tension_min": 40,
+      "weight": 9,
+      "hook": "마을을 공격한 무리가 사실은 다른 세력이 보낸 자들로 의심된다.",
+      "outcome": {
+        "summary": "숲에서 발견된 깃발 — 귀족 문장이 아니라 변경 밀수단. '누군가 싸움을 유도하고 있어.'",
+        "tension_delta": 13,
+        "flags_set": {"false_flag_suspected": true},
+        "rumor_add": "공격은 도적이 아니라 누군가 꾸민 것일지도."
+      }
+    },
+    {
+      "id": "marriage_alliance",
+      "seed_type": "political",
+      "title": "결혼 동맹",
+      "summary": "영주가 수상한 결혼 동맹을 제안한다.",
+      "tags": ["politics", "marriage", "scheme"],
+      "requires_action": ["talk", "explore"],
+      "location_zones": ["ashpoint"],
+      "requires_flags": ["noble_caravan_seen"],
+      "weight": 8,
+      "hook": "지역 영주가 플레이어 쪽과 결혼 동맹을 제안한다. 조건이 수상하다.",
+      "outcome": {
+        "summary": "사절: '실버우드 변경을 … 혼인으로 묶자.' 대가로 봉인 감시권. 회색 망토는 거부하라고 속삭인다.",
+        "tension_delta": 8,
+        "flags_set": {"marriage_alliance_offered": true},
+        "gold_delta": 30
+      }
+    },
+    {
+      "id": "blackmail_letters",
+      "seed_type": "political",
+      "title": "협박 편지",
+      "summary": "주요 인사에게 협박 편지가 도착한다.",
+      "tags": ["politics", "blackmail"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "weight": 11,
+      "hook": "마을 주요 인사들에게 협박 편지가 도착하기 시작했다.",
+      "outcome": {
+        "summary": "릴리안·토렌·장로 — 모두 같은 봉투. '연기를 조용히 하라. 아니면 우물이 말하리라.'",
+        "tension_delta": 10,
+        "flags_set": {"blackmail_letters_arrived": true},
+        "reputation": {"lilian": -2, "torren": -2}
+      }
+    }
+  ]
+}

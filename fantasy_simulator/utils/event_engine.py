@@ -150,7 +150,13 @@ class EventEngine:
         if seed_id not in triggered:
             triggered.append(seed_id)
 
-    def _eligible_seeds(self, state: dict[str, Any], action_kind: str) -> list[dict[str, Any]]:
+    def _eligible_seeds(
+        self,
+        state: dict[str, Any],
+        action_kind: str,
+        *,
+        related_npc: str | None = None,
+    ) -> list[dict[str, Any]]:
         pending = state.get("flags", {}).get("pending_events", [])
         if not pending:
             return []
@@ -161,12 +167,21 @@ class EventEngine:
         quests = flags.get("quests", {})
         quest_stage = int(quests.get("stage", 1))
         active_quest = quests.get("active")
+        tension = int(state.get("world", {}).get("tension", 42))
 
         eligible: list[dict[str, Any]] = []
         for sid in pending:
             seed = catalog.get(sid)
             if not seed:
                 continue
+            seed_npc = seed.get("related_npc")
+            if seed_npc:
+                if not related_npc or seed_npc != related_npc:
+                    continue
+            elif related_npc:
+                acts = set(seed.get("requires_action", ["explore"]))
+                if "talk" in acts and "explore" in acts:
+                    continue
             req_time = seed.get("requires_time")
             if req_time and not (time_tags & set(req_time)):
                 continue
@@ -183,6 +198,9 @@ class EventEngine:
             if min_stage is not None:
                 if active_quest != "smoke_on_the_mountain" or quest_stage < int(min_stage):
                     continue
+            min_tension = seed.get("requires_tension_min")
+            if min_tension is not None and tension < int(min_tension):
+                continue
             if any(not flags.get(f) for f in seed.get("requires_flags", [])):
                 continue
             if any(flags.get(f) for f in seed.get("requires_not_flags", [])):
@@ -195,8 +213,10 @@ class EventEngine:
         state: dict[str, Any],
         action_kind: str,
         turn: int,
+        *,
+        related_npc: str | None = None,
     ) -> dict[str, Any] | None:
-        eligible = self._eligible_seeds(state, action_kind)
+        eligible = self._eligible_seeds(state, action_kind, related_npc=related_npc)
         if not eligible:
             return None
         weights = [s.get("weight", 10) for s in eligible]
@@ -265,6 +285,10 @@ class EventEngine:
         rep = self._reputation(state)
         npc_rep_key = npc_id.split("_")[0] if npc_id != "grey_cloak" else "grey_cloak"
         rep[npc_rep_key] = rep.get(npc_rep_key, 0) + 2
+
+        triggered = self.try_trigger_event(state, "talk", turn, related_npc=npc_id)
+        if triggered:
+            return triggered
 
         dialogues = self.content.load_npc_dialogues(npc_id, state)
         line = self.rng.choice(dialogues) if dialogues else f"{char['name']}이(가) 짧게 고개를 끄덕인다."

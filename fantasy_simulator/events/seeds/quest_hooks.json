@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "description": "퀘스트 시드 — flags.side_quests 와 quests.json 연동 훅",
+  "seeds": [
+    {
+      "id": "quest_missing_hunter",
+      "seed_type": "quest",
+      "title": "사라진 사냥꾼",
+      "summary": "마을 사냥꾼이 이틀째 돌아오지 않는다. 가족이 부탁한다.",
+      "tags": ["investigation", "forest", "quest"],
+      "quest_stages": ["조사", "추적", "진실 발견"],
+      "reward_hint": "정보 또는 유물",
+      "requires_action": ["talk", "explore"],
+      "location_zones": ["ashpoint"],
+      "requires_not_flags": ["quest_missing_hunter_started"],
+      "weight": 14,
+      "hook": "마을 사냥꾼이 이틀째 돌아오지 않는다. 가족이 부탁한다.",
+      "outcome": {
+        "summary": "[퀘스트] 사라진 사냥꾼 — 카엘의 아내: '숲 북쪽… investigate forest.'",
+        "tension_delta": 8,
+        "flags_set": {"quest_missing_hunter_started": true},
+        "reputation": {"ashpoint": 5}
+      }
+    },
+    {
+      "id": "quest_cursed_item",
+      "seed_type": "quest",
+      "title": "저주받은 물건",
+      "summary": "여행자가 저주받은 물건을 떠넘기려 한다.",
+      "tags": ["cursed", "moral", "quest"],
+      "quest_stages": ["물건 인수", "저주 조사", "해결 방법 찾기"],
+      "reward_hint": "강력한 아이템 또는 적대 세력",
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_not_flags": ["quest_cursed_item_started"],
+      "weight": 12,
+      "hook": "한 여행자가 플레이어에게 저주받은 물건을 떠넘기려 한다.",
+      "outcome": {
+        "summary": "[퀘스트] 저주받은 물건 — 펜던트를 받을지(investigate well) 거절할지 선택.",
+        "tension_delta": 9,
+        "flags_set": {"quest_cursed_item_started": true}
+      }
+    },
+    {
+      "id": "quest_noble_conspiracy",
+      "seed_type": "quest",
+      "title": "귀족의 음모",
+      "summary": "귀족 일행의 방문이 단순하지 않다.",
+      "tags": ["politics", "conspiracy", "quest"],
+      "quest_stages": ["정보 수집", "증거 확보", "결정"],
+      "reward_hint": "정치적 영향력 또는 적",
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_flags": ["noble_caravan_seen"],
+      "requires_not_flags": ["quest_noble_conspiracy_started"],
+      "weight": 11,
+      "hook": "마을에 온 귀족 일행이 단순한 방문이 아니라는 증거가 나오고 있다.",
+      "outcome": {
+        "summary": "[퀘스트] 귀족의 음모 — 사절의 수레에 봉인 파편 모형. talk grey cloak / investigate.",
+        "tension_delta": 10,
+        "flags_set": {"quest_noble_conspiracy_started": true},
+        "reputation": {"grey_cloak": 3}
+      }
+    }
+  ]
+}

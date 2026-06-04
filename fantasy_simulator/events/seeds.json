@@ -1,10 +1,22 @@
 {
-  "version": 3,
+  "version": 4,
   "description": "이벤트 씨앗 manifest — world_state/flags.pending_events에는 ID만 저장. 상세는 events/seeds/*.json shard에서 ContentLoader가 on-demand 로드.",
   "shards": [
     "seeds/core.json",
-    "seeds/expansion_village.json"
+    "seeds/expansion_village.json",
+    "seeds/horror.json",
+    "seeds/political.json",
+    "seeds/character.json",
+    "seeds/quest_hooks.json"
   ],
-  "seed_types": ["random_event", "world_event", "quest_seed"],
+  "seed_types": [
+    "random_event",
+    "world_event",
+    "quest_seed",
+    "horror_event",
+    "political",
+    "character_event",
+    "quest"
+  ],
   "seeds": []
 }

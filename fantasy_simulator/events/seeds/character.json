@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "description": "NPC 연계 캐릭터 이벤트 — talk/explore 트리거",
+  "seeds": [
+    {
+      "id": "torren_secret",
+      "seed_type": "character_event",
+      "title": "토렌의 밤",
+      "summary": "토렌이 밤에 몰래 산으로 향한다.",
+      "tags": ["npc", "secret", "character_driven"],
+      "related_npc": "torren_blacksmith",
+      "requires_time": ["night"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "weight": 10,
+      "hook": "대장장이 토렌이 밤에 몰래 산으로 향하는 것을 목격했다.",
+      "outcome": {
+        "summary": "토렌은 주조금형 없이도 숲 외곽 룬 기둥에 기도한다. '…이번열, 끝내야 해.'",
+        "tension_delta": 9,
+        "flags_set": {"torren_secret_witnessed": true},
+        "reputation": {"torren": 5}
+      }
+    },
+    {
+      "id": "lilian_information",
+      "seed_type": "character_event",
+      "title": "릴리안의 거래",
+      "summary": "릴리안이 은밀히 정보를 팔려 한다.",
+      "tags": ["npc", "information", "trust"],
+      "related_npc": "lilian_innkeeper",
+      "requires_action": ["talk"],
+      "location_zones": ["ashpoint"],
+      "weight": 11,
+      "hook": "여관 주인 릴리안이 플레이어에게만 은밀히 정보를 팔려고 한다.",
+      "outcome": {
+        "summary": "릴리안: '20골드. 회색 망토의 진짜 이름 — …아직 확실치 않아요. 하지만 우물과 연결돼 있어요.'",
+        "tension_delta": 7,
+        "gold_delta": -20,
+        "flags_set": {"lilian_info_bought": true},
+        "reputation": {"lilian": 8}
+      }
+    },
+    {
+      "id": "gray_cloak_reveal",
+      "seed_type": "character_event",
+      "title": "회색 망토의 기억",
+      "summary": "회색 망토가 플레이어의 과거를 안다.",
+      "tags": ["npc", "mystery", "backstory"],
+      "related_npc": "grey_cloak",
+      "requires_action": ["talk"],
+      "location_zones": ["ashpoint", "forest"],
+      "requires_tension_min": 35,
+      "weight": 9,
+      "hook": "회색 망토 사내가 플레이어의 과거를 알고 있는 듯한 말을 한다.",
+      "outcome": {
+        "summary": "회색 망토: '…당신도 예전에 봉인 앞에서 선택했지. 이번엔 다르길.'",
+        "tension_delta": 12,
+        "flags_set": {"grey_cloak_backstory_hint": true},
+        "reputation": {"grey_cloak": 12}
+      }
+    },
+    {
+      "id": "elder_collapse",
+      "seed_type": "character_event",
+      "title": "장로의 쓰러짐",
+      "summary": "장로가 쓰러지며 플레이어의 이름을 부른다.",
+      "tags": ["npc", "death", "plot"],
+      "related_npc": "elder_maren",
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 50,
+      "weight": 7,
+      "hook": "마을 장로가 갑자기 쓰러졌다. 마지막 순간에 플레이어의 이름을 불렀다.",
+      "outcome": {
+        "summary": "마렌 장로는 곧 깨어난다. '…미안하네. 봉인 의식… 네 이름이 거기 있었어.'",
+        "tension_delta": 10,
+        "flags_set": {"elder_collapse_event": true},
+        "reputation": {"ashpoint": 10}
+      }
+    }
+  ]
+}

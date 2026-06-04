@@ -1,0 +1,270 @@
+{
+  "version": 1,
+  "description": "호러 / 다크 판타지 톤 이벤트 — 주로 밤, tension 상승",
+  "seeds": [
+    {
+      "id": "whispers_from_grave",
+      "seed_type": "horror_event",
+      "title": "무덤의 속삭임",
+      "summary": "밤에 무덤 근처에서 이름을 부르는 소리가 들린다.",
+      "tags": ["horror", "supernatural", "personal"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "weight": 12,
+      "hook": "밤에 무덤 근처에서 누군가 이름을 부르는 소리가 들린다.",
+      "outcome": {
+        "summary": "담장 너머에서 '…돌아와…' 속삭임. 이름은 당신 것과 같다. 아침이 되자 흔적은 사라진다.",
+        "tension_delta": 14,
+        "flags_set": {"whispers_from_grave_heard": true},
+        "rumor_add": "무덤 근처에서 이름을 부르는 소리가 난다."
+      }
+    },
+    {
+      "id": "rotting_smell",
+      "seed_type": "horror_event",
+      "title": "썩는 냄새",
+      "summary": "마을 한쪽에서 시체 썩는 냄새가 진동한다.",
+      "tags": ["horror", "investigation"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "weight": 11,
+      "hook": "마을 한쪽에서 갑자기 시체 썩는 냄새가 진동한다.",
+      "outcome": {
+        "summary": "냄새는 북쪽 숲 바람과 함께 밀려온다. 아무도 시체를 찾지 못했지만, 민병대는 밤 순찰을 늘린다.",
+        "tension_delta": 10,
+        "flags_set": {"rotting_smell_event": true},
+        "reputation": {"ashpoint": -2}
+      }
+    },
+    {
+      "id": "child_possessed",
+      "seed_type": "horror_event",
+      "title": "아이의 다른 목소리",
+      "summary": "리사가 이상한 말을 하기 시작한다. 목소리가 달라졌다.",
+      "tags": ["horror", "possession", "moral_choice"],
+      "requires_time": ["night", "evening"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "weight": 9,
+      "hook": "어린아이가 갑자기 이상한 말을 하기 시작한다. 목소리가 달라졌다.",
+      "outcome": {
+        "summary": "리사: '…봉인… 열어…' — 목소리는 어른처럼 낮다. 잠시 후 정신을 차리고 무슨 일인지 모른다.",
+        "tension_delta": 16,
+        "flags_set": {"child_possessed_glimpse": true},
+        "reputation": {"ashpoint": -3}
+      }
+    },
+    {
+      "id": "self_harm_mirror",
+      "seed_type": "horror_event",
+      "title": "거울 속 미소",
+      "summary": "거울 속 자신이 웃고 있다. 실제로는 웃지 않는다.",
+      "tags": ["horror", "psychological"],
+      "requires_time": ["night"],
+      "requires_action": ["rest", "explore"],
+      "location_zones": ["ashpoint"],
+      "weight": 10,
+      "hook": "거울 속 자신의 모습이 미소를 짓고 있다. 실제로는 웃고 있지 않다.",
+      "outcome": {
+        "summary": "여관 거울. 반사된 당신만 입꼬리를 올린다. 거울을 가리자, 벽 너머에서 가벼운 웃음.",
+        "tension_delta": 13,
+        "flags_set": {"mirror_smile_seen": true},
+        "reputation": {"lilian": -2}
+      }
+    },
+    {
+      "id": "blood_writing",
+      "seed_type": "horror_event",
+      "title": "피로 쓴 글",
+      "summary": "벽에 피로 쓴 글. 아직도 흐른다.",
+      "tags": ["horror", "mystery"],
+      "requires_time": ["night", "morning"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "weight": 8,
+      "hook": "벽에 누군가 자신의 피로 글을 쓰고 있다. 아직도 피가 흐른다.",
+      "outcome": {
+        "summary": "우물 옆 벽 — '돌려줘' 세 글자. 피는 차갑고, 실버우드 룬과 같은 획.",
+        "tension_delta": 15,
+        "flags_set": {"blood_writing_seen": true},
+        "rumor_add": "우물가 벽에 피 글씨가 나타났다."
+      }
+    },
+    {
+      "id": "missing_faces",
+      "seed_type": "horror_event",
+      "title": "흐려진 얼굴",
+      "summary": "마을 사람들의 얼굴이 점점 흐려 보인다.",
+      "tags": ["horror", "existential"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 45,
+      "weight": 9,
+      "hook": "마을 사람들 중 몇 명의 얼굴이 점점 흐려 보이기 시작한다.",
+      "outcome": {
+        "summary": "토렌의 흉터, 릴리안의 미소 — 잠깐 기억나지 않는다. tension이 높을수록 더 심해진다.",
+        "tension_delta": 12,
+        "flags_set": {"missing_faces_dread": true}
+      }
+    },
+    {
+      "id": "crying_in_walls",
+      "seed_type": "horror_event",
+      "title": "벽 속 울음",
+      "summary": "벽 안에서 아이가 울고 있다. 아이는 없다.",
+      "tags": ["horror", "supernatural"],
+      "requires_time": ["night"],
+      "requires_action": ["rest", "explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "weight": 11,
+      "hook": "벽 안에서 아이가 울고 있는 소리가 들린다. 하지만 아이는 없다.",
+      "outcome": {
+        "summary": "여관 2층 벽. 울음은 점점 작아지다 '…엄마…' 한 마디로 끝난다. 릴리안은 창백해진 채 침묵한다.",
+        "tension_delta": 14,
+        "flags_set": {"crying_in_walls_heard": true}
+      }
+    },
+    {
+      "id": "eaten_from_inside",
+      "seed_type": "horror_event",
+      "title": "배 속",
+      "summary": "한 사내가 배를 부여잡고 괴로워하다 벌레가 쏟아진다.",
+      "tags": ["horror", "body_horror", "extreme"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 55,
+      "weight": 5,
+      "hook": "한 사내가 갑자기 배를 부여잡고 괴로워하다가 입에서 벌레가 쏟아진다.",
+      "outcome": {
+        "summary": "취객이 쓰러진다. 검은 벌레는 연기 냄새를 풍기고, 곧 재처럼 사라진다. 장로만 고개를 떨군다.",
+        "tension_delta": 18,
+        "flags_set": {"body_horror_witnessed": true},
+        "reputation": {"ashpoint": -5}
+      }
+    },
+    {
+      "id": "shadow_that_remembers",
+      "seed_type": "horror_event",
+      "title": "기억하는 그림자",
+      "summary": "플레이어의 그림자가 가끔 다른 행동을 한다.",
+      "tags": ["horror", "psychological"],
+      "requires_time": ["evening", "night"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint", "forest"],
+      "weight": 10,
+      "hook": "플레이어의 그림자가 가끔 다른 행동을 한다.",
+      "outcome": {
+        "summary": "달빛 아래 그림자만 한 박자 늦게 고개를 돌린다. blink하면 다시 정상.",
+        "tension_delta": 11,
+        "flags_set": {"shadow_remembers": true}
+      }
+    },
+    {
+      "id": "silent_village",
+      "seed_type": "horror_event",
+      "title": "고요한 아침",
+      "summary": "아침인데 마을이 너무 조용하다.",
+      "tags": ["horror", "atmosphere", "dread"],
+      "requires_time": ["morning"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
+      "weight": 8,
+      "hook": "아침이 됐는데 마을이 너무 조용하다. 닭 울음소리도, 사람 소리도 없다.",
+      "outcome": {
+        "summary": "30초간 아무 소리도 없다. 그다음 평소처럼 시장 소음. 사람들은 '별일 없었다'고만 한다.",
+        "tension_delta": 13,
+        "flags_set": {"silent_village_morning": true}
+      }
+    },
+    {
+      "id": "returned_dead",
+      "seed_type": "horror_event",
+      "title": "돌아온 죽은 자",
+      "summary": "죽은 줄 알았던 사람이 문을 두드린다.",
+      "tags": ["horror", "undead", "emotional"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
+      "weight": 7,
+      "hook": "죽은 줄 알았던 사람이 문을 두드린다. 목소리가 같다.",
+      "outcome": {
+        "summary": "실종 사냥꾼 카엘… 같다. 문을 열면 아무도 없고, 발자국은 우물 쪽으로 이어진다.",
+        "tension_delta": 17,
+        "flags_set": {"returned_dead_knock": true},
+        "rumor_add": "죽은 이가 문을 두드렸다는 말."
+      }
+    },
+    {
+      "id": "nightmare_sharing",
+      "seed_type": "horror_event",
+      "title": "같은 악몽",
+      "summary": "마을 사람들이 같은 악몽을 꾼다.",
+      "tags": ["horror", "shared_dream"],
+      "requires_time": ["morning"],
+      "requires_action": ["talk", "explore"],
+      "location_zones": ["ashpoint"],
+      "weight": 9,
+      "hook": "마을 사람들이 같은 악몽을 꾸기 시작했다. 그리고 그 꿈이 현실이 된다.",
+      "outcome": {
+        "summary": "토렌·릴리안·장로 — 모두 '검은 탑' 꿈. 아침, 광장 우물가에 꿈속 룬과 같은 글자.",
+        "tension_delta": 15,
+        "flags_set": {"shared_nightmare": true},
+        "reputation": {"ashpoint": -4}
+      }
+    },
+    {
+      "id": "butchered_livestock",
+      "seed_type": "horror_event",
+      "title": "도살된 가축",
+      "summary": "가축이 정교하게 도살되어 있다.",
+      "tags": ["horror", "crime"],
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "weight": 10,
+      "hook": "가축들이 이상하게 도살되어 있다. 사람 손으로 한 것처럼 정교하다.",
+      "outcome": {
+        "summary": "절개선은 룬 모양. 피는 차갑고, 연기 냄새. 민병대: '이건 짐승이 한 게 아니야.'",
+        "tension_delta": 10,
+        "flags_set": {"butchered_livestock": true}
+      }
+    },
+    {
+      "id": "name_stealer",
+      "seed_type": "horror_event",
+      "title": "이름을 아는 자",
+      "summary": "한 번도 말하지 않은 이름을 아는 누군가.",
+      "tags": ["horror", "identity"],
+      "requires_time": ["night", "evening"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint", "forest"],
+      "weight": 10,
+      "hook": "누군가 플레이어의 이름을 알고 있다. 하지만 한 번도 말한 적이 없다.",
+      "outcome": {
+        "summary": "어둠 속 속삭임: '…(당신 이름)…' 회색 망토는 나타나지 않았다. 우물 수면에 같은 글자.",
+        "tension_delta": 12,
+        "flags_set": {"name_stealer_event": true}
+      }
+    },
+    {
+      "id": "endless_stair",
+      "seed_type": "horror_event",
+      "title": "끝없는 계단",
+      "summary": "지하실 계단이 끝이 보이지 않는다.",
+      "tags": ["horror", "spatial_anomaly"],
+      "requires_time": ["night"],
+      "requires_action": ["investigate", "explore"],
+      "location_zones": ["ashpoint", "tower"],
+      "weight": 8,
+      "hook": "지하실 계단을 내려가는데 끝이 보이지 않는다. 올라가려 해도 계속 내려간다.",
+      "outcome": {
+        "summary": "열 번째 계단에서 멈춘다. 아래에서는 차가운 바람. 돌아오면 여관 지하실 — 평범한 저장고뿐.",
+        "tension_delta": 16,
+        "flags_set": {"endless_stair_glimpse": true},
+        "location": "애쉬포인트 — 여관 지하"
+      }
+    }
+  ]
+}

@@ -16,7 +16,12 @@
     "old_prophecy",
     "poisoned_well_rumor",
     "forgotten_grave",
-    "singing_night"
+    "singing_night",
+    "whispers_from_grave",
+    "rotting_smell",
+    "traitor_in_council",
+    "torren_secret",
+    "quest_missing_hunter"
   ],
   "triggered_events": [
     "well_sound",

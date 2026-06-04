@@ -194,7 +194,14 @@ class ContentLoader:
             "location_lore": self.load_location_lore(location),
             "npc_lore": self.load_npc_lore(npc_ids),
             "event_seeds": [
-                {"id": s["id"], "title": s["title"], "summary": s["summary"], "hook": s.get("hook", "")}
+                {
+                    "id": s["id"],
+                    "title": s["title"],
+                    "summary": s["summary"],
+                    "hook": s.get("hook", ""),
+                    "seed_type": s.get("seed_type"),
+                    "related_npc": s.get("related_npc"),
+                }
                 for s in seeds
             ],
             "active_quest": quest_ctx,
