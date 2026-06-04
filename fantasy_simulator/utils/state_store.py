@@ -128,6 +128,26 @@ class StateStore:
                 state[key] = value
         self.save(state)
 
+    def apply_state_changes(self, changes: dict[str, Any], *, turn: int | None = None) -> None:
+        """Apply mechanics_codex state_changes blob to sharded state."""
+        if not changes:
+            return
+        patches: dict[str, Any] = {}
+        for key in ("world", "factions", "flags", "inventory", "combat"):
+            if key in changes:
+                patches[key] = changes[key]
+        if changes.get("event_log_append"):
+            patches["event_log_append"] = changes["event_log_append"]
+        elif turn is not None and changes.get("description"):
+            patches["event_log_append"] = [
+                {
+                    "turn": turn,
+                    "type": changes.get("result_type", "event"),
+                    "summary": changes["description"],
+                }
+            ]
+        self.apply_patches(patches)
+
     def _shards_exist(self) -> bool:
         return (self.state_dir / "meta.json").exists()
 

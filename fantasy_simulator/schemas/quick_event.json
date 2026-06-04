@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QuickEventOutput",
+  "type": "object",
+  "required": [
+    "event_title",
+    "description",
+    "potential_consequences",
+    "suggested_state_changes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "event_title": {"type": "string"},
+    "description": {"type": "string"},
+    "potential_consequences": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "suggested_state_changes": {"type": "object"}
+  }
+}

@@ -1,25 +1,26 @@
 {
   "default_model": "mock",
   "orchestrator": "simulation_engine.py",
+  "consistency_check_interval": 5,
   "structured_output": {
     "max_retries": 3,
     "repair_on_failure": true
   },
   "models": {
     "codex_53": {
-      "label": "Codex 5.3",
+      "label": "Codex 5.3 High",
       "provider": "openai",
       "model": "codex-5.3",
       "env_api_key": "OPENAI_API_KEY",
       "temperature_default": 0.0,
       "traits": {
-        "role": "규칙 엄격 적용",
+        "role": "규칙 엄격 적용 (mechanics_codex)",
         "structured_output": "strict",
         "rule_following": "strict"
       }
     },
     "opus_48_high": {
-      "label": "Opus 4.8 high",
+      "label": "Claude Opus 4.8 High",
       "provider": "anthropic",
       "model": "claude-opus-4-8",
       "env_api_key": "ANTHROPIC_API_KEY",
@@ -27,20 +28,20 @@
       "max_tokens": 8192,
       "temperature_default": 0.85,
       "traits": {
-        "role": "서사 묘사·캐릭터 대사",
+        "role": "서사·대사 (narrator) / 일관성 (world_arbiter)",
         "narration": "rich",
         "dialogue": "character_voice"
       }
     },
     "gpt_55_high": {
-      "label": "ChatGPT 5.5 high",
+      "label": "GPT-5.5 High",
       "provider": "openai",
       "model": "gpt-5.5",
       "env_api_key": "OPENAI_API_KEY",
       "reasoning_effort": "high",
       "temperature_default": 0.6,
       "traits": {
-        "role": "빠른 이벤트 대안 생성",
+        "role": "빠른 이벤트 (quick_event_gpt)",
         "latency": "low",
         "creativity": "high"
       }
@@ -57,42 +58,48 @@
     }
   },
   "roles": {
-    "event_alternatives": {
-      "model": "gpt_55_high",
-      "structured": true,
-      "schema": "event_alternatives",
-      "temperature": 0.6,
-      "description": "빠른 이벤트 분기/대안 생성"
-    },
-    "world_arbiter": {
-      "model": "codex_53",
-      "structured": true,
-      "schema": "world_arbiter",
-      "temperature": 0.0,
-      "description": "거시 세계·규칙 엄격 적용"
-    },
-    "combat_referee": {
-      "model": "codex_53",
-      "structured": true,
-      "schema": "combat_referee",
-      "temperature": 0.0,
-      "description": "전투 판정·규칙 엄격 적용"
-    },
     "narrator": {
       "model": "opus_48_high",
+      "prompt": "narrator_claude.md",
       "structured": false,
       "temperature": 0.85,
-      "description": "서사 묘사·캐릭터 대사"
+      "description": "서사·묘사·대사 — plain text"
+    },
+    "mechanics": {
+      "model": "codex_53",
+      "prompt": "mechanics_codex.md",
+      "structured": true,
+      "schema": "mechanics_codex",
+      "temperature": 0.0,
+      "description": "전투·마법·규칙 — JSON only"
+    },
+    "world_arbiter": {
+      "model": "opus_48_high",
+      "prompt": "world_arbiter.md",
+      "structured": true,
+      "schema": "world_arbiter_consistency",
+      "temperature": 0.3,
+      "description": "5~10턴마다 세계 일관성 검사 — JSON"
+    },
+    "quick_event": {
+      "model": "gpt_55_high",
+      "prompt": "quick_event_gpt.md",
+      "structured": true,
+      "schema": "quick_event",
+      "temperature": 0.6,
+      "description": "가벼운 랜덤 이벤트/브랜치 — JSON"
     }
   },
   "pipelines": {
-    "explore": ["event_alternatives", "world_arbiter", "narrator"],
-    "rest": ["event_alternatives", "world_arbiter", "narrator"],
-    "combat_round": ["combat_referee", "narrator"],
-    "combat_start": ["narrator"]
+    "explore": ["quick_event", "mechanics", "narrator"],
+    "rest": ["mechanics", "narrator"],
+    "combat_round": ["mechanics", "narrator"],
+    "combat_start": ["narrator"],
+    "consistency_check": ["world_arbiter"]
   },
   "hybrid_overrides": {
-    "explore": ["event_alternatives", "narrator"],
-    "rest": ["event_alternatives", "narrator"]
+    "explore": ["quick_event", "narrator"],
+    "rest": ["narrator"],
+    "combat_round": ["mechanics", "narrator"]
   }
 }

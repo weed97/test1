@@ -134,6 +134,7 @@ class SimulationEngine:
             if self.mode == "llm" and self.pipeline:
                 snap = self.loader.store.llm_context_snapshot()
                 self.pipeline.run("rest", state_snapshot=snap)
+                outcome_lines.extend(self.pipeline.role_summary())
                 if narr := self.pipeline.narration_text():
                     outcome_lines.append(narr)
             elif self.mode == "hybrid" and self.pipeline:
@@ -154,6 +155,15 @@ class SimulationEngine:
 
         else:
             outcome_lines.append(f"알 수 없는 행동: {action}")
+
+        if self.mode in ("llm", "hybrid") and self.pipeline:
+            interval = self.loader.prompt_router.routing.get("consistency_check_interval", 5)
+            if interval > 0 and self.turn % interval == 0:
+                snap = self.loader.store.llm_context_snapshot()
+                self.pipeline.run_consistency_check(snap)
+                if report := self.pipeline.consistency_report():
+                    outcome_lines.append(f"[world_arbiter] {report}")
+                outcome_lines.extend(self.pipeline.role_summary())
 
         self.loader.save_world_state(self.state)
         return {
@@ -215,8 +225,13 @@ class SimulationEngine:
             model_key = cfg.get("model", "?")
             label = models.get(model_key, {}).get("label", model_key)
             api_model = models.get(model_key, {}).get("model", "-")
+            prompt = cfg.get("prompt", "-")
             schema = router.schema_name_for_role(role) or "-"
-            lines.append(f"  {role}: {label} ({api_model}) schema={schema}")
+            out = "text" if not cfg.get("structured") else "JSON"
+            lines.append(f"  {role}: {label} | {prompt} | output={out} | schema={schema}")
+        interval = llm.get("consistency_check_interval", 5)
+        lines.append("")
+        lines.append(f"Consistency check: every {interval} turns (world_arbiter.md)")
         lines.append("")
         lines.append("Pipelines (llm):")
         for action, roles in router.routing.get("pipelines", {}).items():
@@ -273,9 +288,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 0
 
     if args.show_prompts:
-        for role, text in engine.get_prompt_bundle().items():
+        for role in loader.list_prompts():
             model = loader.prompt_router.model_for_role(role)
-            print(f"--- {role} (model={model}, {len(text)} chars) ---")
+            prompt_file = loader.prompt_router.prompt_file_for_role(role) or "?"
+            text = loader.load_prompt(role)
+            print(f"--- {role} (model={model}, file={prompt_file}, {len(text)} chars) ---")
             print(text[:500] + ("..." if len(text) > 500 else ""))
             print()
         return 0

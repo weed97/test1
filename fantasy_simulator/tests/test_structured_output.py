@@ -28,12 +28,13 @@ class StructuredOutputTests(unittest.TestCase):
     def test_extract_from_markdown_block(self) -> None:
         text = (
             'Here is output:\n```json\n'
-            '{"world": {"day": 1}, "event_log_append": [], "narrative_hint": "hint"}\n```'
+            '{"consistency_score": 8, "issues_found": [], '
+            '"recommended_corrections": [], "narrative_direction_suggestion": "hint"}\n```'
         )
         data = extract_json_object(text)
-        self.assertEqual(data["narrative_hint"], "hint")
-        parsed = self.client.parse_and_validate(text, "world_arbiter")
-        self.assertIn("world", parsed)
+        self.assertEqual(data["narrative_direction_suggestion"], "hint")
+        parsed = self.client.parse_and_validate(text, "world_arbiter_consistency")
+        self.assertIn("consistency_score", parsed)
 
     def test_validate_combat_schema(self) -> None:
         schema = self.client.load_schema("combat_referee")
@@ -56,11 +57,24 @@ class StructuredOutputTests(unittest.TestCase):
             "narrative_hint": "hint",
         }
         self.assertEqual(validate_schema(valid, schema), [])
-        schema = self.client.load_schema("world_arbiter")
+    def test_validate_mechanics_schema(self) -> None:
+        schema = self.client.load_schema("mechanics_codex")
+        valid = {
+            "result_type": "exploration",
+            "success": True,
+            "description": "Found gold.",
+            "state_changes": {},
+            "consequences": ["+10 gold"],
+        }
+        self.assertEqual(validate_schema(valid, schema), [])
+
+    def test_validate_world_arbiter_consistency_schema(self) -> None:
+        schema = self.client.load_schema("world_arbiter_consistency")
         invalid = {
-            "world": {},
-            "event_log_append": [],
-            "narrative_hint": "x",
+            "consistency_score": 8,
+            "issues_found": [],
+            "recommended_corrections": [],
+            "narrative_direction_suggestion": "ok",
             "extra": True,
         }
         errors = validate_schema(invalid, schema)

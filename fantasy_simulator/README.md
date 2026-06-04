@@ -63,22 +63,23 @@ python3 simulation_engine.py --show-routing
 python3 simulation_engine.py --export-legacy
 ```
 
-## LLM 모델 배치
+## Prompt files
 
-| 구분 | 모델 | 역할 |
-|------|------|------|
-| **턴 오케스트레이션** | `simulation_engine.py` | 파이프라인 실행, state 저장 |
-| **규칙 엄격 적용** | Codex 5.3 (`codex_53`) | `combat_referee`, `world_arbiter` |
-| **서사·캐릭터 대사** | Opus 4.8 high (`opus_48_high`) | `narrator` |
-| **빠른 이벤트 대안** | ChatGPT 5.5 high (`gpt_55_high`) | `event_alternatives` |
+| File | Model | When | Output |
+|------|-------|------|--------|
+| `prompts/narrator_claude.md` | Opus 4.8 High | 서사·묘사·대사 | plain text |
+| `prompts/mechanics_codex.md` | Codex 5.3 High | 전투·마법·규칙 행동 | **JSON only** |
+| `prompts/world_arbiter.md` | Opus 4.8 High | 5턴마다 일관성 검사 | JSON |
+| `prompts/quick_event_gpt.md` | GPT-5.5 High | 가벼운 이벤트/브랜치 | JSON |
 
-**LLM 파이프라인 (explore):** `event_alternatives` → `world_arbiter` → `narrator`
+**LLM explore:** `quick_event → mechanics → narrator`  
+**Hybrid explore:** `[rule_engine] → quick_event → narrator`  
+**Consistency:** every `consistency_check_interval` turns (default 5)
 
-**Hybrid (explore):** 규칙 엔진(수치) → `event_alternatives` → `narrator`
-
-- Codex 5.3: `schemas/*.json` + strict JSON + repair 재시도
-- Opus 4.8 high: `effort=high`, 캐릭터 대사 포함 서사
-- GPT 5.5 high: `reasoning_effort=high`, 2~4개 이벤트 분기 빠른 생성
+```bash
+python3 simulation_engine.py --show-prompts
+python3 simulation_engine.py --show-routing
+```
 
 ## API 키 (선택)
 

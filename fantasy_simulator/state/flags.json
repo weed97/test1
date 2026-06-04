@@ -1,6 +1,6 @@
 {
   "intro_completed": false,
-  "shadow_legion_spotted": false,
+  "shadow_legion_spotted": true,
   "last_event_alternatives": {
     "alternatives": [
       {
@@ -18,5 +18,21 @@
     ],
     "recommended_id": "a",
     "narrative_hint": "주변을 정찰한다."
-  }
+  },
+  "last_quick_event": {
+    "event_title": "Whispers in the alley",
+    "description": "A quiet moment passes in Eldoria.",
+    "potential_consequences": [
+      "investigate",
+      "move on"
+    ],
+    "suggested_state_changes": {}
+  },
+  "last_consistency_check": {
+    "consistency_score": 8,
+    "issues_found": [],
+    "recommended_corrections": [],
+    "narrative_direction_suggestion": "Maintain rising tension toward the shadow legion threat."
+  },
+  "consistency_score": 8
 }

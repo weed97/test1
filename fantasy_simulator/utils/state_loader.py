@@ -79,6 +79,9 @@ class StateLoader:
     def load_active_characters(self, state: dict[str, Any]) -> list[dict[str, Any]]:
         return [self.load_character(cid) for cid in state.get("active_characters", [])]
 
+    def list_prompts(self) -> list[str]:
+        return self.prompt_router.list_roles()
+
     def load_prompt(self, role: str, *, model: str | None = None) -> str:
         return self.prompt_router.assemble(role, model=model)
 
@@ -92,10 +95,6 @@ class StateLoader:
 
     def list_characters(self) -> list[str]:
         return sorted(p.stem for p in self.characters_dir.glob("*.json"))
-
-    def list_prompts(self) -> list[str]:
-        base = self.base_dir / "prompts" / "base"
-        return sorted(p.stem for p in base.glob("*.txt"))
 
     def apply_character_updates(
         self, state: dict[str, Any], updates: dict[str, dict[str, Any]]

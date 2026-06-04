@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorldArbiterConsistencyOutput",
+  "type": "object",
+  "required": [
+    "consistency_score",
+    "issues_found",
+    "recommended_corrections",
+    "narrative_direction_suggestion"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "consistency_score": {"type": "integer", "minimum": 1, "maximum": 10},
+    "issues_found": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "recommended_corrections": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "narrative_direction_suggestion": {"type": "string"}
+  }
+}

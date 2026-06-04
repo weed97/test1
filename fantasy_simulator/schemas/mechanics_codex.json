@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MechanicsCodexOutput",
+  "type": "object",
+  "required": ["result_type", "success", "description", "state_changes", "consequences"],
+  "additionalProperties": false,
+  "properties": {
+    "result_type": {
+      "type": "string",
+      "enum": ["combat", "magic", "exploration", "rest", "event"]
+    },
+    "success": {"type": "boolean"},
+    "description": {"type": "string"},
+    "state_changes": {"type": "object"},
+    "consequences": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

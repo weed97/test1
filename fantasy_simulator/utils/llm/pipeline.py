@@ -68,7 +68,8 @@ class TurnPipeline:
             pipeline = self.prompt_router.pipeline_for_action(action)
 
         narrative_hint = mechanical_result.get("summary", "") if mechanical_result else ""
-        event_alternatives: dict[str, Any] | None = None
+        quick_event: dict[str, Any] | None = None
+        mechanics_result: dict[str, Any] | None = None
 
         for role in pipeline:
             metadata = {
@@ -78,20 +79,38 @@ class TurnPipeline:
                 "mechanical_result": mechanical_result or {},
                 "mechanical_summary": (mechanical_result or {}).get("summary", ""),
                 "narrative_hint": narrative_hint,
-                "event_alternatives": event_alternatives,
+                "quick_event": quick_event,
+                "mechanics_result": mechanics_result,
             }
             result = self._invoke_role(role, state_snapshot, metadata)
             self.results.append(result)
 
             if result.parsed:
-                if role == "event_alternatives":
-                    event_alternatives = result.parsed
-                    narrative_hint = result.parsed.get("narrative_hint", narrative_hint)
-                elif role == "world_arbiter":
-                    narrative_hint = result.parsed.get("narrative_hint", narrative_hint)
-                self._apply_structured(role, result.parsed)
+                if role == "quick_event":
+                    quick_event = result.parsed
+                    narrative_hint = result.parsed.get("description", narrative_hint)
+                elif role == "mechanics":
+                    mechanics_result = result.parsed
+                    narrative_hint = result.parsed.get("description", narrative_hint)
+                self._apply_structured(role, result.parsed, turn=state_snapshot.get("next_turn"))
 
         return self.results
+
+    def run_consistency_check(self, state_snapshot: dict[str, Any]) -> RoleResult:
+        """World arbiter — long-term consistency (every N turns)."""
+        metadata = {
+            "role": "world_arbiter",
+            "action": "consistency_check",
+            "context": state_snapshot,
+            "mechanical_result": {},
+            "mechanical_summary": "",
+            "narrative_hint": "",
+        }
+        result = self._invoke_role("world_arbiter", state_snapshot, metadata)
+        self.results = [result]
+        if result.parsed:
+            self._apply_structured("world_arbiter", result.parsed, turn=state_snapshot.get("next_turn"))
+        return result
 
     def _invoke_role(
         self,
@@ -101,13 +120,19 @@ class TurnPipeline:
     ) -> RoleResult:
         resolved = self.llm_router.resolve_with_fallback(role)
         provider = resolved["provider"]
-        model_key = resolved["model_key"]
 
-        system_prompt = self.prompt_router.assemble(role, model=model_key)
-        user_payload = {
+        system_prompt = self.prompt_router.assemble(role)
+        user_payload: dict[str, Any] = {
             "state": state_snapshot,
             "metadata": {k: v for k, v in metadata.items() if k != "context"},
         }
+
+        if role == "mechanics":
+            user_payload["rules"] = {
+                "combat": self.state_loader.load_rule("combat"),
+                "magic_system": self.state_loader.load_rule("magic_system"),
+            }
+
         if resolved["structured"] and resolved["schema"]:
             user_payload["output_schema"] = self.structured.load_schema(resolved["schema"])
 
@@ -173,38 +198,36 @@ class TurnPipeline:
 
         raise StructuredOutputError("Structured output retries exhausted", raw=last_raw)
 
-    def _apply_structured(self, role: str, parsed: dict[str, Any]) -> None:
-        if role == "event_alternatives":
+    def _apply_structured(self, role: str, parsed: dict[str, Any], *, turn: int | None) -> None:
+        if role == "quick_event":
             state = self.state_loader.store.load()
             flags = state.setdefault("flags", {})
-            flags["last_event_alternatives"] = parsed
+            flags["last_quick_event"] = parsed
+            changes = parsed.get("suggested_state_changes") or {}
+            if changes:
+                self.state_loader.store.apply_state_changes(changes, turn=turn)
             self.state_loader.store.save(state)
 
-        elif role == "world_arbiter":
-            patches: dict[str, Any] = {
-                "event_log_append": parsed.get("event_log_append", []),
-            }
-            if parsed.get("world"):
-                patches["world"] = parsed["world"]
-            if parsed.get("factions"):
-                patches["factions"] = parsed["factions"]
-            if parsed.get("flags"):
-                patches["flags"] = parsed["flags"]
-            self.state_loader.store.apply_patches(patches)
-
-        elif role == "combat_referee":
-            wu = parsed.get("world_updates", {})
-            patches: dict[str, Any] = {}
-            if "combat" in wu:
-                patches["combat"] = wu["combat"]
-            if wu.get("event_log_append"):
-                patches["event_log_append"] = wu["event_log_append"]
-            if patches:
-                self.state_loader.store.apply_patches(patches)
-            char_updates = parsed.get("character_updates", {})
+        elif role == "mechanics":
+            changes = parsed.get("state_changes") or {}
+            if not changes.get("event_log_append") and parsed.get("description") and turn:
+                changes = dict(changes)
+                changes.setdefault(
+                    "event_log_append",
+                    [{"turn": turn, "type": parsed.get("result_type", "event"), "summary": parsed["description"]}],
+                )
+            self.state_loader.store.apply_state_changes(changes, turn=turn)
+            char_updates = changes.get("character_updates", {})
             if char_updates:
                 state = self.state_loader.store.load()
                 self.state_loader.apply_character_updates(state, char_updates)
+
+        elif role == "world_arbiter":
+            state = self.state_loader.store.load()
+            flags = state.setdefault("flags", {})
+            flags["last_consistency_check"] = parsed
+            flags["consistency_score"] = parsed.get("consistency_score")
+            self.state_loader.store.save(state)
 
     def narration_text(self) -> str:
         for r in reversed(self.results):
@@ -213,11 +236,26 @@ class TurnPipeline:
         return ""
 
     def structured_logs(self) -> list[str]:
-        lines = []
+        lines: list[str] = []
         for r in self.results:
-            if r.parsed and r.role == "combat_referee":
-                lines.extend(r.parsed.get("combat_log", []))
-        return lines
+            if not r.parsed:
+                continue
+            if r.role == "mechanics":
+                lines.append(r.parsed.get("description", ""))
+                lines.extend(r.parsed.get("consequences", []))
+            elif r.role == "quick_event":
+                lines.append(f"[{r.parsed.get('event_title', 'event')}] {r.parsed.get('description', '')}")
+        return [ln for ln in lines if ln]
+
+    def consistency_report(self) -> str:
+        for r in self.results:
+            if r.role == "world_arbiter" and r.parsed:
+                p = r.parsed
+                return (
+                    f"Consistency {p.get('consistency_score')}/10 — "
+                    f"{p.get('narrative_direction_suggestion', '')}"
+                )
+        return ""
 
     def role_summary(self) -> list[str]:
         return [

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 
 from utils.llm.base import LLMRequest, LLMResponse
 
@@ -32,69 +31,61 @@ def _mock_for_role(role: str, request: LLMRequest) -> str:
     ctx = request.metadata.get("context", {})
     turn = ctx.get("next_turn", 1)
     mech = request.metadata.get("mechanical_summary", "")
+    action = request.metadata.get("action", "explore")
 
-    if role == "event_alternatives":
-        base = mech or "주변을 정찰한다."
+    if role == "quick_event":
+        summary = mech or "A quiet moment passes in Eldoria."
         payload = {
-            "alternatives": [
-                {"id": "a", "summary": base, "risk": "low", "tone": "calm"},
-                {
-                    "id": "b",
-                    "summary": "낯선 발소리가 폐허 저편에서 들린다.",
-                    "risk": "medium",
-                    "tone": "tense",
-                },
-            ],
-            "recommended_id": "a",
-            "narrative_hint": base or "Mock event hint.",
+            "event_title": "Whispers in the alley",
+            "description": summary,
+            "potential_consequences": ["investigate", "move on"],
+            "suggested_state_changes": {},
         }
+        return json.dumps(payload, ensure_ascii=False)
+
+    if role == "mechanics":
+        mechanical = request.metadata.get("mechanical_result", {})
+        result_type = "combat" if ctx.get("combat") else action if action in ("rest", "explore") else "event"
+        if result_type == "explore":
+            result_type = "exploration"
+        lines = mechanical.get("lines", [])
+        desc = mechanical.get("summary") or mech or "Mechanical resolution."
+        payload = {
+            "result_type": result_type,
+            "success": True,
+            "description": desc,
+            "state_changes": {
+                "event_log_append": [
+                    {"turn": turn, "type": result_type, "summary": desc}
+                ]
+            },
+            "consequences": lines or [desc],
+        }
+        if mechanical.get("character_updates"):
+            payload["state_changes"]["character_updates"] = mechanical["character_updates"]
+        if mechanical.get("combat") is not None or "combat" in mechanical:
+            payload["state_changes"]["combat"] = mechanical.get("combat")
         return json.dumps(payload, ensure_ascii=False)
 
     if role == "world_arbiter":
-        alts = request.metadata.get("event_alternatives") or {}
-        hint = alts.get("narrative_hint") or mech or "Mock world update."
         payload = {
-            "world": ctx.get("world", {}),
-            "factions": ctx.get("factions", {}),
-            "flags": ctx.get("flags", {}),
-            "event_log_append": [
-                {
-                    "turn": turn,
-                    "type": request.metadata.get("action", "explore"),
-                    "summary": hint,
-                }
-            ],
-            "narrative_hint": hint,
-        }
-        return json.dumps(payload, ensure_ascii=False)
-
-    if role == "combat_referee":
-        mechanical = request.metadata.get("mechanical_result", {})
-        payload = {
-            "combat_log": mechanical.get("lines", ["Mock combat round."]),
-            "combat_state": {
-                "round": mechanical.get("round", 1),
-                "participants": {},
-                "status_effects": {},
-            },
-            "world_updates": {
-                "combat": mechanical.get("combat"),
-                "event_log_append": mechanical.get("event_log_append", []),
-            },
-            "character_updates": mechanical.get("character_updates", {}),
+            "consistency_score": 8,
+            "issues_found": [],
+            "recommended_corrections": [],
+            "narrative_direction_suggestion": "Maintain rising tension toward the shadow legion threat.",
         }
         return json.dumps(payload, ensure_ascii=False)
 
     if role == "narrator":
         hint = request.metadata.get("narrative_hint", "")
-        alts = request.metadata.get("event_alternatives") or {}
-        if not hint and alts:
-            hint = alts.get("narrative_hint", "")
-        body = hint or mech or "Mock narration."
+        qe = request.metadata.get("quick_event") or {}
+        if not hint and qe:
+            hint = qe.get("description", "")
+        body = hint or mech or "The party presses onward through Eldoria."
         return (
-            f"[내레이션]\n{body}\n\n"
-            f"엘라라: \"조심해, 이 근처는 뭔가 수상해.\"\n\n"
-            f"[상태 요약]\n- Turn {turn}\n- (mock / opus placeholder)"
+            f"The wind carried the scent of old stone and distant rain. {body}\n\n"
+            f"Elara lowered her voice. \"Stay close. The road remembers more than we do.\"\n\n"
+            f"Gareth nodded, hand resting on his sword. \"Then we make our own path.\""
         )
 
     return json.dumps({"message": f"mock response for {role}"}, ensure_ascii=False)
