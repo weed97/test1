@@ -11,9 +11,9 @@ def test_world_bootstraps_with_regions_and_factions() -> None:
 def test_travel_requires_neighbor() -> None:
     engine = SimulatorEngine(player_name="Tester", seed=42)
     engine.player.region_key = "eldenhaven"
-    result = engine.travel("stormwatch")
+    result = engine.travel("moonmere")
     assert "travel from" in result.lower()
-    blocked = engine.travel("cinderfall")
+    blocked = engine.travel("goldmeadow")
     assert "cannot travel directly" in blocked.lower() or "already in that region" in blocked.lower()
 
 
