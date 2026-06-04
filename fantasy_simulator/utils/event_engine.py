@@ -32,6 +32,14 @@ NPC_ALIASES: dict[str, str] = {
     "상인": "merchant_finn",
 }
 
+FOREST_ACT2_SEEDS = (
+    "broken_rune_pillar",
+    "tower_whisper",
+    "mold_in_moss",
+    "seal_drip",
+    "sentinel_stirring",
+)
+
 
 def resolve_npc_id(text: str) -> str | None:
     lower = text.lower()
@@ -53,6 +61,44 @@ class EventEngine:
     def __init__(self, content: ContentLoader, rng: random.Random) -> None:
         self.content = content
         self.rng = rng
+
+    def _location_zone(self, state: dict[str, Any]) -> str:
+        loc = state.get("world", {}).get("location", "").lower()
+        if any(x in loc for x in ("관측", "tower", "석탑")):
+            return "tower"
+        if any(x in loc for x in ("숲", "forest")):
+            return "forest"
+        return "ashpoint"
+
+    def _side_quests(self, state: dict[str, Any]) -> dict[str, Any]:
+        return state.setdefault("flags", {}).setdefault("side_quests", {})
+
+    def _activate_forest_act2_seeds(self, state: dict[str, Any]) -> None:
+        pending = state.setdefault("flags", {}).setdefault("pending_events", [])
+        triggered = set(state.get("flags", {}).get("triggered_events", []))
+        for sid in FOREST_ACT2_SEEDS:
+            if sid not in pending and sid not in triggered:
+                pending.append(sid)
+
+    def _start_torren_side_quest(self, state: dict[str, Any]) -> None:
+        sq = self._side_quests(state)
+        if sq.get("torren_lost_mold", {}).get("status") != "done":
+            sq["torren_lost_mold"] = {"status": "active", "stage": 2}
+
+    def _complete_side_quest(self, state: dict[str, Any], quest_id: str) -> str | None:
+        catalog = self.content.load_quests()
+        quest = catalog.get(quest_id)
+        if not quest:
+            return None
+        sq = self._side_quests(state)
+        sq[quest_id] = {"status": "done", "stage": len(quest.get("stages", [])) + 1}
+        rewards = quest.get("rewards", {})
+        outcome: dict[str, Any] = {"summary": quest.get("complete_summary", "사이드 퀘스트 완료")}
+        for key in ("gold_delta", "tension_delta", "reputation", "flags_set", "rumor_add"):
+            if key in rewards:
+                outcome[key] = rewards[key]
+        self._apply_outcome(state, outcome)
+        return quest.get("complete_summary", "사이드 퀘스트 완료")
 
     def _reputation(self, state: dict[str, Any]) -> dict[str, int]:
         rep = state.setdefault("flags", {}).setdefault("reputation", {})
@@ -84,6 +130,12 @@ class EventEngine:
             rep[key] = max(-100, min(100, rep.get(key, 0) + int(delta)))
         for flag, val in (outcome.get("flags_set") or {}).items():
             state.setdefault("flags", {})[flag] = val
+            if flag == "torren_side_quest" and val:
+                self._start_torren_side_quest(state)
+            if flag == "torren_mold_found" and val:
+                sq = self._side_quests(state)
+                if sq.get("torren_lost_mold", {}).get("status") == "active":
+                    sq["torren_lost_mold"]["stage"] = 3
         if outcome.get("rumor_add"):
             state.setdefault("world", {}).setdefault("rumors", []).append(outcome["rumor_add"])
         if outcome.get("location"):
@@ -104,6 +156,12 @@ class EventEngine:
             return []
         catalog = self.content.load_event_seeds()
         time_tags = _current_time_tags(state.get("world", {}).get("time_of_day", ""))
+        zone = self._location_zone(state)
+        flags = state.get("flags", {})
+        quests = flags.get("quests", {})
+        quest_stage = int(quests.get("stage", 1))
+        active_quest = quests.get("active")
+
         eligible: list[dict[str, Any]] = []
         for sid in pending:
             seed = catalog.get(sid)
@@ -114,6 +172,20 @@ class EventEngine:
                 continue
             req_action = seed.get("requires_action", ["explore"])
             if action_kind not in req_action and "any" not in req_action:
+                continue
+            seed_zones = seed.get("location_zones")
+            if seed_zones:
+                if zone not in seed_zones:
+                    continue
+            elif zone != "ashpoint":
+                continue
+            min_stage = seed.get("requires_quest_stage_min")
+            if min_stage is not None:
+                if active_quest != "smoke_on_the_mountain" or quest_stage < int(min_stage):
+                    continue
+            if any(not flags.get(f) for f in seed.get("requires_flags", [])):
+                continue
+            if any(flags.get(f) for f in seed.get("requires_not_flags", [])):
                 continue
             eligible.append(seed)
         return eligible
@@ -181,6 +253,9 @@ class EventEngine:
     def talk(self, state: dict[str, Any], action: str, turn: int, loader: Any) -> dict[str, Any]:
         npc_id = resolve_npc_id(action)
         if not npc_id:
+            triggered = self.try_trigger_event(state, "talk", turn)
+            if triggered:
+                return triggered
             return {
                 "summary": "누구와 이야기할지 unclear. 예: talk torren, talk 릴리안",
                 "event_log_append": [],
@@ -191,7 +266,7 @@ class EventEngine:
         npc_rep_key = npc_id.split("_")[0] if npc_id != "grey_cloak" else "grey_cloak"
         rep[npc_rep_key] = rep.get(npc_rep_key, 0) + 2
 
-        dialogues = self.content.load_npc_dialogues(npc_id)
+        dialogues = self.content.load_npc_dialogues(npc_id, state)
         line = self.rng.choice(dialogues) if dialogues else f"{char['name']}이(가) 짧게 고개를 끄덕인다."
 
         outcome_lines = [f"{char['name']}: \"{line}\""]
@@ -199,9 +274,18 @@ class EventEngine:
         if quest_update:
             outcome_lines.append(quest_update)
 
-        # Special: grey cloak at high tension
+        flags = state.setdefault("flags", {})
+        if (
+            npc_id == "torren_blacksmith"
+            and flags.get("torren_mold_found")
+            and not flags.get("torren_side_quest_done")
+        ):
+            done_msg = self._complete_side_quest(state, "torren_lost_mold")
+            if done_msg:
+                outcome_lines.append(f"[사이드 퀘스트] {done_msg}")
+
         if npc_id == "grey_cloak" and state.get("world", {}).get("tension", 0) >= 40:
-            state.setdefault("flags", {})["grey_cloak_met"] = True
+            flags["grey_cloak_met"] = True
             outcome_lines.append("회색 망토가 작은 지도 조각을 슬쩍 보여준다.")
 
         summary = f"{char['name']}와(과) 대화했다."
@@ -234,8 +318,27 @@ class EventEngine:
                 quests["stage"] = 3
                 state.setdefault("world", {})["location"] = "북쪽 숲 — 연기가 보이는 외곽"
                 self._adjust_tension(state, 8)
+                self._activate_forest_act2_seeds(state)
                 summary = "숲 속에서 검은 연기와 부서진 석탑 흔적을 발견했다. 무언가가 깨어나고 있다."
-                return self._mechanical(summary, turn, "investigate", extra_lines=["[퀘스트] 3단계: 연기의 근원에 접근"])
+                return self._mechanical(
+                    summary,
+                    turn,
+                    "investigate",
+                    extra_lines=[
+                        "[퀘스트] 3단계: 옛 관측탑 조사 (investigate tower / combat rune_sentinel)",
+                        "[숲] 새로운 이벤트 씨앗이 활성화되었다.",
+                    ],
+                )
+
+        if "tower" in lower or "관측" in lower or "석탑" in lower:
+            quests = self._quests(state)
+            if quests.get("active") == "smoke_on_the_mountain" and int(quests.get("stage", 1)) >= 3:
+                state.setdefault("world", {})["location"] = "옛 관측탑 — 입구"
+                triggered = self.try_trigger_event(state, "investigate", turn)
+                if triggered:
+                    return triggered
+                summary = "관측탑 입구. 석재 사이로 차가운 바람이 새어 나온다. explore로 더 깊이 들어가거나, combat rune_sentinel."
+                return self._mechanical(summary, turn, "investigate")
 
         if "well" in lower or "우물" in lower:
             self._adjust_tension(state, 5)
@@ -272,17 +375,35 @@ class EventEngine:
         }
 
     def show_quest_status(self, state: dict[str, Any]) -> str:
+        lines: list[str] = []
         quests = self._quests(state)
         active = quests.get("active")
-        if not active:
-            return "진행 중인 퀘스트 없음"
-        catalog = self.content.load_quests()
-        quest = catalog.get(active)
-        if not quest:
-            return f"퀘스트 {active}"
-        stage = int(quests.get("stage", 1))
-        stages = quest.get("stages", [])
-        if stage <= len(stages):
-            s = stages[stage - 1]
-            return f"{quest['title']} — {stage}/{len(stages)}: {s['goal']}"
-        return f"{quest['title']} — 완료 대기"
+        if active:
+            catalog = self.content.load_quests()
+            quest = catalog.get(active)
+            if quest:
+                stage = int(quests.get("stage", 1))
+                stages = quest.get("stages", [])
+                if stage <= len(stages):
+                    s = stages[stage - 1]
+                    hint = s.get("hint", "")
+                    lines.append(f"{quest['title']} — {stage}/{len(stages)}: {s['goal']}")
+                    if hint:
+                        lines.append(f"  힌트: {hint}")
+                else:
+                    lines.append(f"{quest['title']} — 완료 대기")
+            else:
+                lines.append(f"퀘스트 {active}")
+        else:
+            lines.append("진행 중인 메인 퀘스트 없음")
+
+        sq = self._side_quests(state)
+        torren = sq.get("torren_lost_mold", {})
+        if torren.get("status") == "active":
+            catalog = self.content.load_quests()
+            side = catalog.get("torren_lost_mold", {})
+            st = int(torren.get("stage", 1))
+            stages = side.get("stages", [])
+            if st <= len(stages):
+                lines.append(f"[사이드] {side.get('title', '토렌')} — {stages[st - 1]['goal']}")
+        return "\n".join(lines) if lines else "진행 중인 퀘스트 없음"

@@ -21,8 +21,8 @@
         {
           "stage": 3,
           "goal": "옛 관측탑의 봉인을 조사한다",
-          "hint": "explore forest — combat 또는 talk grey cloak",
-          "triggers": []
+          "hint": "explore forest · investigate tower · combat rune_sentinel → silver_stalker",
+          "triggers": ["sentinel_stirring", "broken_rune_pillar"]
         }
       ],
       "rewards": {
@@ -33,6 +33,37 @@
       },
       "complete_summary": "검은 연기의 원인을 막아냈다. 애쉬포인트에 평화가 잠시 돌아온다.",
       "next_quest": "whispers_in_the_well"
+    },
+    {
+      "id": "torren_lost_mold",
+      "title": "잃어버린 주조금형",
+      "type": "side",
+      "summary": "토렌의 주조금형을 북쪽 숲에서 찾아 반환한다.",
+      "stages": [
+        {
+          "stage": 1,
+          "goal": "토렌의 의뢰를 받는다",
+          "hint": "explore/talk — torren_commission 이벤트"
+        },
+        {
+          "stage": 2,
+          "goal": "숲에서 주조금형을 찾는다",
+          "hint": "explore 또는 investigate (북쪽 숲, torren_side_quest)"
+        },
+        {
+          "stage": 3,
+          "goal": "토렌에게 금형을 돌려준다",
+          "hint": "talk torren"
+        }
+      ],
+      "rewards": {
+        "summary": "토렌이 파티 무기를 손봐주었다.",
+        "gold_delta": 40,
+        "reputation": {"torren": 15, "ashpoint": 5},
+        "flags_set": {"torren_weapon_upgrade": true, "torren_side_quest_done": true}
+      },
+      "complete_summary": "주조금형을 되찾아 토렌의 신뢰를 얻었다. 무기 손질 완료.",
+      "next_quest": null
     },
     {
       "id": "whispers_in_the_well",

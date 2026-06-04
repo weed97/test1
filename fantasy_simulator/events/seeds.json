@@ -134,11 +134,91 @@
       "summary": "북쪽 숲에서 긴 하울링이 울려 퍼진다.",
       "requires_time": ["night"],
       "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
       "weight": 16,
       "outcome": {
         "summary": "마을 개들이 일제히 짖는다. 하늘은 맑지만, 숲 쪽 하늘이 잠깐 붉게 물든다.",
         "tension_delta": 10,
         "flags_set": {"forest_howl_heard": true}
+      }
+    },
+    {
+      "id": "broken_rune_pillar",
+      "title": "부서진 룬 기둥",
+      "summary": "숲 속에 실버우드 룬이 새겨진 기둥이 쓰러져 있다.",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest", "tower"],
+      "requires_quest_stage_min": 3,
+      "weight": 18,
+      "hook": "기둥 균열에서 검은 연기가 피어오른다.",
+      "outcome": {
+        "summary": "룬 기둥의 글자가 희미하게 빛난다. '봉인·지키·잠들' — 마지막 글자만 검게 탔다.",
+        "tension_delta": 5,
+        "flags_set": {"rune_pillar_found": true},
+        "location": "북쪽 숲 — 룬 기둥 유적"
+      }
+    },
+    {
+      "id": "tower_whisper",
+      "title": "탑 속 속삭임",
+      "summary": "관측탑 쪽에서 바람과 섞인 속삭임이 들린다.",
+      "requires_time": ["night", "evening"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["forest", "tower"],
+      "requires_quest_stage_min": 3,
+      "weight": 15,
+      "outcome": {
+        "summary": "속삭임: '…파편… 돌려줘…' 바람이 멈추자, 탑 꼭대기에서 희미한 빛이 번쩍인다.",
+        "tension_delta": 8,
+        "flags_set": {"tower_whisper_heard": true},
+        "reputation": {"grey_cloak": 3}
+      }
+    },
+    {
+      "id": "mold_in_moss",
+      "title": "이끼 속 주조금형",
+      "summary": "쓰러진 나무 이끼 사이에서 금속이 반짝인다.",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest"],
+      "requires_flags": ["torren_side_quest"],
+      "requires_not_flags": ["torren_mold_found"],
+      "weight": 25,
+      "outcome": {
+        "summary": "토렌의 주조금형을 찾았다. 실버우드 문양이 새겨져 있고, 아직 따뜻하다.",
+        "tension_delta": 2,
+        "flags_set": {"torren_mold_found": true},
+        "reputation": {"torren": 5}
+      }
+    },
+    {
+      "id": "seal_drip",
+      "title": "봉인 액체",
+      "summary": "관측탑 바닥에서 검은 액체가 룬을 따라 흐른다.",
+      "requires_action": ["investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_quest_stage_min": 3,
+      "weight": 14,
+      "outcome": {
+        "summary": "액체는 차갑고, 손끝이 닿자 룬이 잠깐 빛났다. 누군가 봉인을 '먹고' 있는 흔적이다.",
+        "tension_delta": 6,
+        "flags_set": {"seal_drip_seen": true},
+        "location": "옛 관측탑 — 1층"
+      }
+    },
+    {
+      "id": "sentinel_stirring",
+      "title": "수호자의 눈",
+      "summary": "석탑 입구에서 돌 눈이 빛을 뱉는다.",
+      "requires_action": ["explore"],
+      "location_zones": ["forest", "tower"],
+      "requires_quest_stage_min": 3,
+      "requires_not_flags": ["rune_sentinel_defeated"],
+      "weight": 12,
+      "outcome": {
+        "summary": "관측탑 입구의 석像이 스스로 돌아선다. 룬 센티넬이 깨어났다! (combat rune_sentinel)",
+        "tension_delta": 10,
+        "flags_set": {"sentinel_ready": true},
+        "location": "옛 관측탑 — 입구"
       }
     }
   ]

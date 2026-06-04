@@ -57,12 +57,38 @@ characters/
 - **스토리 bible:** `lore/quests/smoke_on_the_mountain.md`
 - **대사 풀:** `events/dialogues.json`
 
+## Act 2 — 북쪽 숲 / 관측탑 (quest stage 3+)
+
+`investigate forest` (stage 2→3) 시 **숲 전용 씨앗 5개**가 `pending_events`에 추가됩니다.
+
+| seed id | 트리거 | 내용 |
+|---------|--------|------|
+| broken_rune_pillar | explore/investigate | 룬 기둥 발견 |
+| tower_whisper | explore/rest (밤) | 탑 속삭임 |
+| mold_in_moss | explore (torren_side_quest) | 주조금형 (사이드) |
+| seal_drip | investigate | 봉인 액체 |
+| sentinel_stirring | explore | 룬 센티넬 전투 힌트 |
+
+- **mini-boss:** `combat rune_sentinel` → `seal_fragment_obtained`
+- **boss:** `combat silver_stalker` (파편 획득 후)
+
+## 사이드 퀘스트
+
+- `torren_lost_mold`: torren_commission → 숲에서 mold_in_moss → talk torren
+
+## 대사 (stage-aware)
+
+`events/dialogues.json` v2 — `by_quest_stage`, `by_flag` 풀.  
+`ContentLoader.load_npc_dialogues(npc_id, state)`가 퀘스트 stage에 맞는 대사 선택.
+
 ## CLI 예시
 
 ```
 talk torren
 investigate well
 investigate forest
+investigate tower
 quest
+combat rune_sentinel
 combat silver_stalker
 ```

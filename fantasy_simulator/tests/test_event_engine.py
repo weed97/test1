@@ -60,8 +60,27 @@ class EventEngineTests(unittest.TestCase):
         self.assertEqual(self.state["flags"]["quests"]["stage"], 3)
         self.assertIn("연기", result["summary"])
 
-    def test_load_ten_seeds(self) -> None:
-        self.assertEqual(len(self.content.load_event_seeds()), 10)
+    def test_load_fifteen_seeds(self) -> None:
+        self.assertEqual(len(self.content.load_event_seeds()), 15)
+
+    def test_stage_dialogue_for_torren(self) -> None:
+        lines = self.content.load_npc_dialogues("torren_blacksmith", self.state)
+        self.assertTrue(any("릴리안" in line or "회색" in line for line in lines))
+
+    def test_forest_seeds_activate_at_stage_3(self) -> None:
+        self.state["flags"]["quests"]["stage"] = 2
+        self.engine.investigate(self.state, "investigate forest", turn=10)
+        pending = self.state["flags"]["pending_events"]
+        self.assertIn("broken_rune_pillar", pending)
+        self.assertIn("sentinel_stirring", pending)
+
+    def test_torren_side_quest_turn_in(self) -> None:
+        self.state["flags"]["torren_side_quest"] = True
+        self.state["flags"]["torren_mold_found"] = True
+        self.engine._start_torren_side_quest(self.state)
+        result = self.engine.talk(self.state, "talk torren", 20, self.loader)
+        self.assertTrue(self.state["flags"].get("torren_side_quest_done"))
+        self.assertTrue(any("사이드" in line for line in result.get("lines", [])))
 
 
 if __name__ == "__main__":

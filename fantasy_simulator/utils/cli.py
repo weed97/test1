@@ -13,9 +13,11 @@ INTERACTIVE_HELP = """\
   explore              마을/주변 탐험 (씨앗 이벤트 발생 가능)
   investigate well     우물 조사
   investigate forest   북쪽 숲 조사 (퀘스트 2단계)
+  investigate tower    옛 관측탑 조사 (3단계)
   talk torren          NPC 대화 (토렌/릴리안/회색 망토/장로/리사)
   rest                 휴식 (HP/MP 회복)
-  combat silver_stalker  보스 전투 (3단계 이후)
+  combat rune_sentinel   관측탑 수호자 (3단계)
+  combat silver_stalker  보스 전투 (파편 획득 후)
   quest                퀘스트 진행 상황
   status               현재 상태
   help / quit

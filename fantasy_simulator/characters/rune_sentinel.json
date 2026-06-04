@@ -1,0 +1,21 @@
+{
+  "id": "rune_sentinel",
+  "name": "룬 센티넬",
+  "title": "관측탑의 잠든 수호자",
+  "role": "enemy",
+  "class": "construct",
+  "level": 4,
+  "stats": {"hp": 72, "max_hp": 72, "mana": 40, "max_mana": 40, "strength": 12, "agility": 10, "intelligence": 14, "vitality": 14},
+  "modifiers": {"attack": 4, "defense": 6, "spellcasting": 3, "agility": 0},
+  "elements": ["earth", "light"],
+  "spells": [
+    {"id": "rune_pulse", "name": "룬 파동", "tier": 1, "element": "light", "power": 12, "mana_cost": 10}
+  ],
+  "equipment": {
+    "weapon": {"name": "석탑의 주먹", "damage": 8, "type": "blunt"},
+    "armor": {"name": "고대 석재", "reduction": 5}
+  },
+  "traits": ["봉인 잔재", "빛 약점"],
+  "flags": {"mini_boss": true},
+  "lore_ref": "lore/locations/observation_tower.md"
+}

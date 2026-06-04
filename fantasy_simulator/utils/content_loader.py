@@ -33,13 +33,36 @@ class ContentLoader:
             self._quests_cache = {q["id"]: q for q in data.get("quests", [])}
         return self._quests_cache
 
-    def load_npc_dialogues(self, npc_id: str) -> list[str]:
+    def load_npc_dialogues(self, npc_id: str, state: dict[str, Any] | None = None) -> list[str]:
         path = self.events_dir / "dialogues.json"
         if not path.exists():
             return []
         if self._dialogues_cache is None:
             self._dialogues_cache = load_json(path)
-        return self._dialogues_cache.get(npc_id, [])
+        entry = self._dialogues_cache.get(npc_id, [])
+        if isinstance(entry, list):
+            return entry
+        if not isinstance(entry, dict):
+            return []
+
+        flags = state.get("flags", {}) if state else {}
+        quests = flags.get("quests", {})
+        active = quests.get("active")
+        stage = int(quests.get("stage", 1))
+        pools: list[str] = []
+
+        for flag, lines in entry.get("by_flag", {}).items():
+            if flags.get(flag):
+                pools.extend(lines)
+
+        stage_key = f"{active}:{stage}" if active else ""
+        stage_lines = entry.get("by_quest_stage", {}).get(stage_key, [])
+        if stage_lines:
+            pools.extend(stage_lines)
+
+        if pools:
+            return pools
+        return entry.get("default", [])
 
     def get_active_quest(self, state: dict[str, Any]) -> dict[str, Any] | None:
         qid = state.get("flags", {}).get("quests", {}).get("active")
@@ -76,6 +99,10 @@ class ContentLoader:
             if "애쉬포인트" in location and path.stem == "ashpoint":
                 return load_text(path)
             if "ashpoint" in location_lower and path.stem == "ashpoint":
+                return load_text(path)
+            if ("관측" in location or "tower" in location_lower or "석탑" in location) and path.stem == "observation_tower":
+                return load_text(path)
+            if ("숲" in location or "forest" in location_lower) and path.stem == "northern_forest":
                 return load_text(path)
 
         # Default: ashpoint for Silverwood frontier start

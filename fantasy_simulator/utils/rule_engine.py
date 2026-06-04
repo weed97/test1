@@ -217,6 +217,12 @@ class RuleEngine:
             if winner == "allies":
                 self._adjust_tension(-8)
                 enemy_id = combat.get("enemy_id", "")
+                flags = self.state.setdefault("flags", {})
+                if enemy_id == "rune_sentinel":
+                    flags["rune_sentinel_defeated"] = True
+                    flags["seal_fragment_obtained"] = True
+                    lines.append("봉인 파편 조각을 손에 넣었다. 실버 스토커와의 전투 준비가 되었다.")
+                    self._adjust_tension(-5)
                 if enemy_id == "silver_stalker" and self.event_engine:
                     quest = self.state.setdefault("flags", {}).setdefault("quests", {})
                     if quest.get("active") == "smoke_on_the_mountain":
@@ -240,8 +246,26 @@ class RuleEngine:
         world = self.state["world"]
         natural, _ = roll_d20(0, self.rng)
         tension = self._tension()
+        zone = self.event_engine._location_zone(self.state) if self.event_engine else "ashpoint"
 
-        if natural >= 18:
+        if zone == "tower":
+            if natural >= 15:
+                summary = "관측탑 2층으로 이어지는 계단이 보인다. 봉인 파편 없이는 올라가기 위험하다."
+            elif natural <= 5:
+                summary = "바닥의 검은 액체가 발밑까지 번졌다. 급히 물러선다."
+                self._adjust_tension(5)
+            else:
+                summary = "탑 내부에서 금속이 긁히는 소리. 룬 센티넬이 아직 깨어 있는 것 같다."
+        elif zone == "forest":
+            if natural >= 18:
+                summary = "나무 사이로 옛 관측탑의 윤곽이 보인다. investigate tower 또는 explore."
+                self.state.setdefault("flags", {})["tower_sighted"] = True
+            elif natural <= 5:
+                summary = "숲 안개 속에서 무언가가 따라오는 기분. tension 상승."
+                self._adjust_tension(6)
+            else:
+                summary = "짙은 숲길. 발밑 이끼에 실버우드 룬 조각이 박혀 있다."
+        elif natural >= 18:
             self._adjust_tension(8)
             summary = "정찰 중 숲 쪽에서 검은 연기와 발자국을 발견했다."
             self.state.setdefault("flags", {})["smoke_trail_spotted"] = True
@@ -289,7 +313,13 @@ class RuleEngine:
                 return triggered
 
         self._heal_party(loader)
-        summary = "파티가 휴식하여 HP와 마나를 회복했다."
+        zone = self.event_engine._location_zone(self.state) if self.event_engine else "ashpoint"
+        if zone == "forest":
+            summary = "숲 한구석에서 잠깐 눈을 붙였다. 새 소리가 멎어 있어 불안하다."
+        elif zone == "tower":
+            summary = "관측탑 벽에 기대어 숨을 고른다. 룬이 희미하게 진동한다."
+        else:
+            summary = "릴리안의 여관에서 휴식 — HP와 마나를 회복했다."
         return {
             "summary": summary,
             "lines": [summary],
