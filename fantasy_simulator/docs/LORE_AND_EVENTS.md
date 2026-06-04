@@ -11,13 +11,27 @@ lore/
     ashpoint.md        # 지역 묘사
 
 events/
-  seeds.json           # 이벤트 씨앗 카탈로그 (ID + summary + hook)
+  seeds.json           # manifest (ID hub — pending_events는 flags에만)
+  seeds/
+    core.json          # Act 1–2 핵심 씨앗
+    expansion_village.json  # 마을 확장 랜덤/월드 이벤트
+  quests.json
+  dialogues.json
 
 characters/
   torren_blacksmith.json   # 엔진용 최소 stat + lore_ref
   lilian_innkeeper.json
   grey_cloak.json
 ```
+
+## 씨앗 카탈로그 (shard)
+
+- **manifest:** `events/seeds.json` — shard 목록 + `seed_types`
+- **shard:** `events/seeds/*.json` — hook, outcome, tags, `seed_type`
+- **state:** `flags.pending_events` — **ID만** (메모리 효율)
+- **런타임:** `ContentLoader.load_event_seeds()`가 shard merge → `try_trigger_event` 시 outcome 적용
+
+`seed_type`: `random_event` | `world_event` | `quest_seed`
 
 ## world_state에 넣는 것 (최소)
 

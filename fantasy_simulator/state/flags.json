@@ -7,7 +7,16 @@
     "elder_summon",
     "grey_cloak_approach",
     "torren_commission",
-    "forest_howl"
+    "forest_howl",
+    "whispering_well",
+    "drunken_prophet",
+    "black_smoke",
+    "missing_hunter",
+    "strange_merchant",
+    "old_prophecy",
+    "poisoned_well_rumor",
+    "forgotten_grave",
+    "singing_night"
   ],
   "triggered_events": [
     "well_sound",

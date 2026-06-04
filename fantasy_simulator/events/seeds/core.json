@@ -1,0 +1,248 @@
+{
+  "version": 1,
+  "description": "Act 1 애쉬포인트 + Act 2 숲/관측탑 핵심 씨앗",
+  "seeds": [
+    {
+      "id": "plaza_song",
+      "seed_type": "random_event",
+      "title": "광장의 노래",
+      "summary": "밤에 마을 광장에서 누군가 노래를 부른다.",
+      "tags": ["night", "mystery", "music", "mysterious", "atmosphere"],
+      "requires_time": ["night", "evening"],
+      "requires_action": ["explore", "investigate"],
+      "weight": 15,
+      "hook": "밤에 마을 광장에서 정체를 알 수 없는 아름다운 노랫소리가 들린다.",
+      "outcome": {
+        "summary": "광장 한가운데서 들리던 노래가 우물 쪽으로 옮겨 갔다가, 갑자기 끊긴다.",
+        "tension_delta": 4,
+        "reputation": {"lilian": 3},
+        "flags_set": {"heard_plaza_song": true},
+        "rumor_add": "밤마다 우물 근처에서 노래 소리가 난다는 소문이 퍼진다."
+      }
+    },
+    {
+      "id": "fleeing_merchant",
+      "seed_type": "random_event",
+      "title": "도망치는 상인",
+      "summary": "상인이 급히 마을을 빠져나가려다 부딪힌다.",
+      "tags": ["npc_interaction", "suspicious"],
+      "requires_time": ["morning", "afternoon", "evening"],
+      "requires_action": ["explore"],
+      "weight": 12,
+      "hook": "한 상인이 급하게 마을을 빠져나가려다 플레이어와 부딪힌다.",
+      "outcome": {
+        "summary": "상인 핀은 떨리는 목소리로 '북쪽에서 온 물건은 팔면 안 된다'고만 남기고 달아난다.",
+        "tension_delta": 6,
+        "gold_delta": -5,
+        "flags_set": {"merchant_finn_spooked": true},
+        "reputation": {"ashpoint": -2}
+      }
+    },
+    {
+      "id": "well_sound",
+      "seed_type": "random_event",
+      "title": "우물 속 소리",
+      "summary": "우물에서 이상한 소리가 난다.",
+      "tags": ["mystery", "supernatural"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "investigate"],
+      "weight": 14,
+      "outcome": {
+        "summary": "우물 속에서 금속이 긁히는 소리. 바닥에 작은 검은 깃털 하나가 떠올라 있다.",
+        "tension_delta": 7,
+        "flags_set": {"well_anomaly": true}
+      }
+    },
+    {
+      "id": "child_warning",
+      "seed_type": "random_event",
+      "title": "아이의 경고",
+      "summary": "어린아이 리사가 산 쪽을 가리킨다.",
+      "tags": ["foreshadowing", "innocent"],
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore", "talk"],
+      "weight": 13,
+      "hook": "어린아이가 다가와 '저 산에서 이상한 게 움직여요'라고 말한다.",
+      "outcome": {
+        "summary": "리사: '저기 산… 검은 새떼가 돌고 있어요. 할아버지도 걱정하셨어요.'",
+        "tension_delta": 5,
+        "reputation": {"ashpoint": 3},
+        "flags_set": {"child_warning_heard": true}
+      }
+    },
+    {
+      "id": "drunk_curse",
+      "seed_type": "random_event",
+      "title": "술 취한 사내의 저주",
+      "summary": "여관에서 술 취한 사내가 외친다.",
+      "tags": ["rumor", "foreshadowing"],
+      "requires_time": ["evening", "night"],
+      "requires_action": ["explore", "rest"],
+      "weight": 11,
+      "hook": "여관에서 술에 취한 사내가 '북쪽 숲은 이미 죽었다'고 외친다.",
+      "outcome": {
+        "summary": "취객: '북쪽 숲은 저주받았어! 석탑이… 석탑이 다시 살아났다!' 릴리안이 그를 끌고 나간다.",
+        "tension_delta": 4,
+        "reputation": {"lilian": 1},
+        "rumor_add": "북쪽 숲의 석탑에 대해 사람들이 속삭인다."
+      }
+    },
+    {
+      "id": "elder_summon",
+      "seed_type": "random_event",
+      "title": "장로의 초대",
+      "summary": "마을 장로가 당신을 불렀다.",
+      "tags": ["lore", "main_plot"],
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore", "talk"],
+      "weight": 10,
+      "outcome": {
+        "summary": "장로 마렌: '연기는 단순한 산불이 아니네. 실버우드의 봉인이 약해지고 있어.'",
+        "tension_delta": 3,
+        "reputation": {"ashpoint": 8},
+        "flags_set": {"elder_briefed": true}
+      }
+    },
+    {
+      "id": "grey_cloak_approach",
+      "seed_type": "random_event",
+      "title": "회색 망토의 접근",
+      "summary": "회색 망토가 당신에게 다가온다.",
+      "requires_time": ["evening", "night"],
+      "requires_action": ["explore"],
+      "weight": 9,
+      "outcome": {
+        "summary": "회색 망토: '시간이 없어. 연기의 근원은 옛 관측탑 — 북쪽 숲 깊은 곳이야.'",
+        "tension_delta": 2,
+        "reputation": {"grey_cloak": 10},
+        "flags_set": {"grey_cloak_hint": true}
+      }
+    },
+    {
+      "id": "militia_patrol",
+      "seed_type": "random_event",
+      "title": "민병대 순찰",
+      "summary": "민병대가 긴장한 표정으로 순찰 중이다.",
+      "requires_action": ["explore"],
+      "weight": 8,
+      "outcome": {
+        "summary": "민병대장: '최근 밤마다 숲에서 하울링. 여행자는 밤에 마을 밖 나가지 마.'",
+        "tension_delta": 3,
+        "reputation": {"ashpoint": 2}
+      }
+    },
+    {
+      "id": "torren_commission",
+      "seed_type": "random_event",
+      "title": "토렌의 의뢰",
+      "summary": "토렌이 은화를 밀어 밀며 말을 건다.",
+      "requires_action": ["talk", "explore"],
+      "weight": 7,
+      "outcome": {
+        "summary": "토렌: '숲에서 내가 잃어버린 주조금형… 찾아주면, 네 무기를 손봐주지.'",
+        "gold_delta": 15,
+        "reputation": {"torren": 8},
+        "flags_set": {"torren_side_quest": true}
+      }
+    },
+    {
+      "id": "forest_howl",
+      "seed_type": "world_event",
+      "title": "숲의 하울링",
+      "summary": "북쪽 숲에서 긴 하울링이 울려 퍼진다.",
+      "requires_time": ["night"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
+      "weight": 16,
+      "outcome": {
+        "summary": "마을 개들이 일제히 짖는다. 하늘은 맑지만, 숲 쪽 하늘이 잠깐 붉게 물든다.",
+        "tension_delta": 10,
+        "flags_set": {"forest_howl_heard": true}
+      }
+    },
+    {
+      "id": "broken_rune_pillar",
+      "seed_type": "random_event",
+      "title": "부서진 룬 기둥",
+      "summary": "숲 속에 실버우드 룬이 새겨진 기둥이 쓰러져 있다.",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest", "tower"],
+      "requires_quest_stage_min": 3,
+      "weight": 18,
+      "hook": "기둥 균열에서 검은 연기가 피어오른다.",
+      "outcome": {
+        "summary": "룬 기둥의 글자가 희미하게 빛난다. '봉인·지키·잠들' — 마지막 글자만 검게 탔다.",
+        "tension_delta": 5,
+        "flags_set": {"rune_pillar_found": true},
+        "location": "북쪽 숲 — 룬 기둥 유적"
+      }
+    },
+    {
+      "id": "tower_whisper",
+      "seed_type": "random_event",
+      "title": "탑 속 속삭임",
+      "summary": "관측탑 쪽에서 바람과 섞인 속삭임이 들린다.",
+      "requires_time": ["night", "evening"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["forest", "tower"],
+      "requires_quest_stage_min": 3,
+      "weight": 15,
+      "outcome": {
+        "summary": "속삭임: '…파편… 돌려줘…' 바람이 멈추자, 탑 꼭대기에서 희미한 빛이 번쩍인다.",
+        "tension_delta": 8,
+        "flags_set": {"tower_whisper_heard": true},
+        "reputation": {"grey_cloak": 3}
+      }
+    },
+    {
+      "id": "mold_in_moss",
+      "seed_type": "quest_seed",
+      "title": "이끼 속 주조금형",
+      "summary": "쓰러진 나무 이끼 사이에서 금속이 반짝인다.",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest"],
+      "requires_flags": ["torren_side_quest"],
+      "requires_not_flags": ["torren_mold_found"],
+      "weight": 25,
+      "outcome": {
+        "summary": "토렌의 주조금형을 찾았다. 실버우드 문양이 새겨져 있고, 아직 따뜻하다.",
+        "tension_delta": 2,
+        "flags_set": {"torren_mold_found": true},
+        "reputation": {"torren": 5}
+      }
+    },
+    {
+      "id": "seal_drip",
+      "seed_type": "random_event",
+      "title": "봉인 액체",
+      "summary": "관측탑 바닥에서 검은 액체가 룬을 따라 흐른다.",
+      "requires_action": ["investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_quest_stage_min": 3,
+      "weight": 14,
+      "outcome": {
+        "summary": "액체는 차갑고, 손끝이 닿자 룬이 잠깐 빛났다. 누군가 봉인을 '먹고' 있는 흔적이다.",
+        "tension_delta": 6,
+        "flags_set": {"seal_drip_seen": true},
+        "location": "옛 관측탑 — 1층"
+      }
+    },
+    {
+      "id": "sentinel_stirring",
+      "seed_type": "world_event",
+      "title": "수호자의 눈",
+      "summary": "석탑 입구에서 돌 눈이 빛을 뱉는다.",
+      "requires_action": ["explore"],
+      "location_zones": ["forest", "tower"],
+      "requires_quest_stage_min": 3,
+      "requires_not_flags": ["rune_sentinel_defeated"],
+      "weight": 12,
+      "outcome": {
+        "summary": "관측탑 입구의 석像이 스스로 돌아선다. 룬 센티넬이 깨어났다! (combat rune_sentinel)",
+        "tension_delta": 10,
+        "flags_set": {"sentinel_ready": true},
+        "location": "옛 관측탑 — 입구"
+      }
+    }
+  ]
+}

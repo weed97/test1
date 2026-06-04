@@ -60,8 +60,15 @@ class EventEngineTests(unittest.TestCase):
         self.assertEqual(self.state["flags"]["quests"]["stage"], 3)
         self.assertIn("연기", result["summary"])
 
-    def test_load_fifteen_seeds(self) -> None:
-        self.assertEqual(len(self.content.load_event_seeds()), 15)
+    def test_load_all_seed_shards(self) -> None:
+        self.assertEqual(len(self.content.load_event_seeds()), 34)
+
+    def test_expansion_seed_has_hook(self) -> None:
+        seed = self.content.get_event_seed("whispering_well")
+        self.assertIsNotNone(seed)
+        assert seed is not None
+        self.assertEqual(seed.get("seed_type"), "random_event")
+        self.assertIn("hook", seed)
 
     def test_stage_dialogue_for_torren(self) -> None:
         lines = self.content.load_npc_dialogues("torren_blacksmith", self.state)

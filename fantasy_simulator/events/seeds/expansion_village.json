@@ -1,0 +1,342 @@
+{
+  "version": 1,
+  "description": "애쉬포인트 마을 확장 랜덤/월드 이벤트 (community catalog)",
+  "seeds": [
+    {
+      "id": "whispering_well",
+      "seed_type": "random_event",
+      "title": "속삭이는 우물",
+      "summary": "마을 우물에서 누군가 속삭이는 소리가 들린다.",
+      "tags": ["mystery", "supernatural"],
+      "requires_time": ["night", "evening"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "weight": 14,
+      "hook": "마을 우물에서 누군가 속삭이는 소리가 들린다.",
+      "outcome": {
+        "summary": "우물가에 기대면 '…파편… 돌려…' 하는 속삭임. 물결은 일렁이지 않는다.",
+        "tension_delta": 8,
+        "flags_set": {"whispering_well_heard": true},
+        "rumor_add": "우물이 사람 말을 흉내 낸다는 소문."
+      }
+    },
+    {
+      "id": "drunken_prophet",
+      "seed_type": "random_event",
+      "title": "술취한 예언자",
+      "summary": "여관에서 술에 취한 사내가 북쪽 숲에 대해 외친다.",
+      "tags": ["rumor", "foreshadowing"],
+      "requires_time": ["evening", "night"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
+      "weight": 11,
+      "hook": "여관에서 술에 취한 사내가 '북쪽 숲은 이미 죽었다'고 외친다.",
+      "outcome": {
+        "summary": "취객: '숲은 죽었어! 살아 있는 건 그림자뿐!' 릴리안이 술잔을 치우며 눈짓으로 조용히 하라고 한다.",
+        "tension_delta": 5,
+        "reputation": {"lilian": 1},
+        "rumor_add": "북쪽 숲은 이미 죽었다는 말이 돈다."
+      }
+    },
+    {
+      "id": "black_smoke",
+      "seed_type": "world_event",
+      "title": "검은 연기",
+      "summary": "북쪽 산에서 검은 연기가 피어오르고 있다.",
+      "tags": ["main_plot", "danger"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "weight": 13,
+      "hook": "북쪽 산에서 검은 연기가 피어오르고 있다.",
+      "outcome": {
+        "summary": "하늘이 잠시 어두워진다. 연기 기둥이 산 너머로 솟구치고, 마을 종이 울린다.",
+        "tension_delta": 12,
+        "flags_set": {"black_smoke_seen": true},
+        "rumor_add": "산에서 검은 연기가 피어오른 날이 또 있었다."
+      }
+    },
+    {
+      "id": "merchant_hurry",
+      "seed_type": "random_event",
+      "title": "급한 상인",
+      "summary": "상인이 급히 마을을 빠져나가려다 부딪힌다.",
+      "tags": ["npc_interaction", "suspicious"],
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "weight": 10,
+      "hook": "한 상인이 급하게 마을을 빠져나가려다 플레이어와 부딪힌다.",
+      "outcome": {
+        "summary": "상인은 마차에서 떨어진 작은 상자를 주워들고 '보지 마!'라고 외친 뒤 달아난다.",
+        "tension_delta": 4,
+        "gold_delta": 5,
+        "flags_set": {"merchant_hurry_seen": true}
+      }
+    },
+    {
+      "id": "singing_night",
+      "seed_type": "random_event",
+      "title": "노래하는 밤",
+      "summary": "밤에 마을 광장에서 정체를 알 수 없는 노랫소리가 들린다.",
+      "tags": ["mysterious", "atmosphere"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
+      "weight": 12,
+      "hook": "밤에 마을 광장에서 정체를 알 수 없는 아름다운 노랫소리가 들린다.",
+      "outcome": {
+        "summary": "노래는 슬프고, 가사는 실버우드 고대어 같다. 새벽이 되자 갑자기 잦아든다.",
+        "tension_delta": 7,
+        "flags_set": {"singing_night_heard": true},
+        "reputation": {"lilian": 2}
+      }
+    },
+    {
+      "id": "missing_hunter",
+      "seed_type": "quest_seed",
+      "title": "실종된 사냥꾼",
+      "summary": "마을 사냥꾼 한 명이 이틀째 돌아오지 않는다.",
+      "tags": ["quest", "investigation"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "weight": 9,
+      "hook": "마을 사냥꾼 한 명이 이틀째 돌아오지 않는다.",
+      "outcome": {
+        "summary": "민병대장: '카엘은 숲 북쪽으로만 갔어. 화살통은 돌아왔는데, 사람은…' investigate forest 힌트.",
+        "tension_delta": 10,
+        "flags_set": {"missing_hunter_rumor": true},
+        "reputation": {"ashpoint": 4},
+        "rumor_add": "사냥꾼 카엘이 실종됐다."
+      }
+    },
+    {
+      "id": "strange_merchant",
+      "seed_type": "random_event",
+      "title": "낯선 상인",
+      "summary": "평소에 보지 못한 상인이 이상한 물건을 판다.",
+      "tags": ["merchant", "suspicious_item"],
+      "requires_time": ["morning", "afternoon", "evening"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "weight": 8,
+      "hook": "평소에 보지 못한 상인이 마을에 나타나 이상한 물건을 판다.",
+      "outcome": {
+        "summary": "망토 깊은 상인이 '봉인 파편 모형'을 내민다. '진짜는 아니야. …아마.'",
+        "tension_delta": 5,
+        "flags_set": {"strange_merchant_met": true}
+      }
+    },
+    {
+      "id": "old_prophecy",
+      "seed_type": "world_event",
+      "title": "오래된 예언",
+      "summary": "마을 장로가 최근 '오래된 예언'에 대해 자주 언급한다.",
+      "tags": ["lore", "main_plot"],
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "weight": 10,
+      "hook": "마을 장로가 최근 '오래된 예언'에 대해 자주 언급한다.",
+      "outcome": {
+        "summary": "장로 마렌: '연기가 세 번 피어오르면, 봉인은 깨진다.' — 그는 하늘을 올려다본다.",
+        "tension_delta": 9,
+        "flags_set": {"old_prophecy_heard": true},
+        "reputation": {"ashpoint": 6}
+      }
+    },
+    {
+      "id": "blood_moon",
+      "seed_type": "world_event",
+      "title": "붉은 달",
+      "summary": "오늘 밤, 달이 붉게 물들었다.",
+      "tags": ["omen", "atmosphere"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint", "forest"],
+      "weight": 7,
+      "hook": "오늘 밤, 달이 붉게 물들었다.",
+      "outcome": {
+        "summary": "붉은 달 아래 숲 쪽에서 하울링이 길게 울린다. 마을 개들은 짖지 않는다.",
+        "tension_delta": 15,
+        "flags_set": {"blood_moon_seen": true},
+        "rumor_add": "붉은 달이 뜬 밤, 애쉬포인트는 조용했다."
+      }
+    },
+    {
+      "id": "talking_animal",
+      "seed_type": "random_event",
+      "title": "말하는 늑대",
+      "summary": "숲에서 다친 늑대가 사람의 말을 한다.",
+      "tags": ["supernatural", "moral_choice"],
+      "requires_action": ["explore"],
+      "location_zones": ["forest"],
+      "requires_quest_stage_min": 2,
+      "weight": 11,
+      "hook": "숲에서 다친 늑대 한 마리가 사람의 말을 한다.",
+      "outcome": {
+        "summary": "늑대: '…봉인… 풀어…' 눈이 잠깐 사람처럼 보였다. 치료해주면 조용히 숲으로 사라진다.",
+        "tension_delta": 8,
+        "flags_set": {"talking_wolf_spared": true},
+        "reputation": {"ashpoint": 3}
+      }
+    },
+    {
+      "id": "betrayed_smuggler",
+      "seed_type": "random_event",
+      "title": "배신당한 밀수업자",
+      "summary": "밀수업자가 배신당한 듯한 표정으로 마을에 들어온다.",
+      "tags": ["crime", "npc_drama"],
+      "requires_time": ["evening", "night"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "weight": 9,
+      "hook": "한 밀수업자가 배신당한 듯한 표정으로 마을에 들어온다.",
+      "outcome": {
+        "summary": "밀수업자: '회색 망토에게 속았어. 유물은… 탑으로 갔다.' 그는 손을 떨며 여관으로 향한다.",
+        "tension_delta": 6,
+        "reputation": {"grey_cloak": -3},
+        "flags_set": {"betrayed_smuggler_met": true}
+      }
+    },
+    {
+      "id": "forgotten_grave",
+      "seed_type": "random_event",
+      "title": "잊힌 무덤",
+      "summary": "마을 뒤편 오래된 무덤에서 파낸 흔적이 발견된다.",
+      "tags": ["mystery", "dark"],
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "weight": 10,
+      "hook": "마을 뒤편 오래된 무덤에서 최근 누군가 파낸 흔적이 발견된다.",
+      "outcome": {
+        "summary": "관 속에는 비어 있고, 실버우드 룬 조각만 남아 있다. 누군가 봉인 재료를 훔친 듯하다.",
+        "tension_delta": 7,
+        "flags_set": {"forgotten_grave_found": true}
+      }
+    },
+    {
+      "id": "noble_caravan",
+      "seed_type": "world_event",
+      "title": "귀족 행렬",
+      "summary": "귀족 일행의 마차가 마을에 들른다.",
+      "tags": ["politics", "opportunity"],
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "weight": 8,
+      "hook": "귀족 일행의 마차가 마을에 들른다. 경비가 unusually 많다.",
+      "outcome": {
+        "summary": "귀족은 연기를 '변경의 통행세 문제'로 치부한다. 경비병은 숲 쪽만 경계한다.",
+        "tension_delta": 8,
+        "gold_delta": 20,
+        "reputation": {"ashpoint": 5},
+        "flags_set": {"noble_caravan_seen": true}
+      }
+    },
+    {
+      "id": "cursed_item",
+      "seed_type": "random_event",
+      "title": "저주받은 물건",
+      "summary": "여행자가 이상한 물건을 넘기려 한다.",
+      "tags": ["cursed", "moral_choice"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "weight": 9,
+      "hook": "한 여행자가 '이 물건을 가져가 달라'며 플레이어에게 강하게 권한다.",
+      "outcome": {
+        "summary": "낡은 펜던트. 손에 쥐면 차갑다. 거절하면 여행자는 안도하고, 받으면 tension 상승.",
+        "tension_delta": 9,
+        "flags_set": {"cursed_pendant_refused": true}
+      }
+    },
+    {
+      "id": "village_festival",
+      "seed_type": "world_event",
+      "title": "마을 축제",
+      "summary": "오랜만에 축제가 열리지만 분위기가 다르다.",
+      "tags": ["festival", "social"],
+      "requires_time": ["evening"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
+      "weight": 10,
+      "hook": "마을에서 오랜만에 축제가 열린다. 하지만 분위기가 평소와 다르다.",
+      "outcome": {
+        "summary": "축제는 열렸지만, 사람들은 웃지 않는다. 광장에서 노래 대신 연기 냄새가 난다.",
+        "tension_delta": 4,
+        "reputation": {"ashpoint": 6, "lilian": 4},
+        "flags_set": {"village_festival_held": true}
+      }
+    },
+    {
+      "id": "shadow_in_forest",
+      "seed_type": "random_event",
+      "title": "숲의 그림자",
+      "summary": "숲에서 플레이어를 따라오는 그림자가 있다.",
+      "tags": ["horror", "pursuit"],
+      "requires_time": ["night", "evening"],
+      "requires_action": ["explore"],
+      "location_zones": ["forest"],
+      "requires_quest_stage_min": 2,
+      "weight": 14,
+      "hook": "숲에서 플레이어를 따라오는 그림자가 있다.",
+      "outcome": {
+        "summary": "뒤돌아보면 그림자는 사라진다. 발밑에는 실버 스토커의 발톱 자국만.",
+        "tension_delta": 10,
+        "flags_set": {"forest_shadow_seen": true}
+      }
+    },
+    {
+      "id": "old_soldier",
+      "seed_type": "random_event",
+      "title": "노병",
+      "summary": "한쪽 팔을 잃은 노병이 마을에 나타난다.",
+      "tags": ["npc", "past"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "weight": 8,
+      "hook": "한쪽 팔을 잃은 노병이 마을에 나타나 '그때의 빚'을 갚으러 왔다고 말한다.",
+      "outcome": {
+        "summary": "노병은 토렌을 찾아간다. '북쪽 전쟁 때 네가 날 살렸지. 이번엔 내가 빚을 갚을 차례야.'",
+        "tension_delta": 6,
+        "reputation": {"torren": 5},
+        "flags_set": {"old_soldier_arrived": true}
+      }
+    },
+    {
+      "id": "poisoned_well_rumor",
+      "seed_type": "random_event",
+      "title": "우물 독 소문",
+      "summary": "우물물이 이상하다는 소문이 퍼진다.",
+      "tags": ["rumor", "danger"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "weight": 11,
+      "hook": "최근 우물물이 이상하다는 소문이 퍼지고 있다.",
+      "outcome": {
+        "summary": "아이들은 우물물을 마시지 않는다. 릴리안: '독이 아니에요. …마법 잔재일지도.'",
+        "tension_delta": 7,
+        "flags_set": {"poisoned_well_rumor": true},
+        "reputation": {"lilian": 3}
+      }
+    },
+    {
+      "id": "fallen_star",
+      "seed_type": "world_event",
+      "title": "별똥별",
+      "summary": "어젯밤 북쪽에서 별이 떨어진 것 같다.",
+      "tags": ["omen", "main_plot"],
+      "requires_time": ["morning"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint", "forest"],
+      "weight": 9,
+      "hook": "어젯밤, 별이 떨어진 것 같은 빛이 북쪽에서 보였다.",
+      "outcome": {
+        "summary": "북쪽 하늘에 검은 흔적. 장로: '봉인 파편이 떨어졌을지도.' 회색 망토는 그쪽으로 향했다.",
+        "tension_delta": 11,
+        "flags_set": {"fallen_star_seen": true},
+        "rumor_add": "별이 떨어진 밤, 연기가 더 짙어졌다."
+      }
+    }
+  ]
+}

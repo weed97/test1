@@ -71,12 +71,23 @@ class ContentLoader:
         return self.load_quests().get(qid)
 
     def load_event_seeds(self) -> dict[str, dict[str, Any]]:
-        path = self.events_dir / "seeds.json"
-        if not path.exists():
-            return {}
-        if self._seeds_cache is None:
-            data = load_json(path)
-            self._seeds_cache = {s["id"]: s for s in data.get("seeds", [])}
+        if self._seeds_cache is not None:
+            return self._seeds_cache
+
+        merged: dict[str, dict[str, Any]] = {}
+        manifest = self.events_dir / "seeds.json"
+        if manifest.exists():
+            data = load_json(manifest)
+            for seed in data.get("seeds", []):
+                merged[seed["id"]] = seed
+
+        shard_dir = self.events_dir / "seeds"
+        if shard_dir.is_dir():
+            for path in sorted(shard_dir.glob("*.json")):
+                for seed in load_json(path).get("seeds", []):
+                    merged[seed["id"]] = seed
+
+        self._seeds_cache = merged
         return self._seeds_cache
 
     def get_event_seed(self, seed_id: str) -> dict[str, Any] | None:
