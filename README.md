@@ -8,7 +8,7 @@ and JSON saves.
 ## Run
 
 ```bash
-python -m fantasy_mmorpg --name Aria --class mage
+python3 -m fantasy_mmorpg --name Aria --class mage
 ```
 
 Available classes:
@@ -66,5 +66,5 @@ Names are fuzzy, so `go woods`, `talk ansem`, and `accept herbs` work.
 ## Test
 
 ```bash
-python -m unittest
+python3 -m unittest discover -s tests
 ```
