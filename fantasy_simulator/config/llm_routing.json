@@ -1,0 +1,62 @@
+{
+  "default_model": "mock",
+  "structured_output": {
+    "max_retries": 3,
+    "repair_on_failure": true
+  },
+  "models": {
+    "claude": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "env_api_key": "ANTHROPIC_API_KEY",
+      "traits": {
+        "narration": "strong",
+        "structured_output": "good",
+        "rule_following": "balanced"
+      }
+    },
+    "codex": {
+      "provider": "openai",
+      "model": "gpt-4.1",
+      "env_api_key": "OPENAI_API_KEY",
+      "traits": {
+        "narration": "concise",
+        "structured_output": "strict",
+        "rule_following": "strict"
+      }
+    },
+    "mock": {
+      "provider": "mock",
+      "traits": {
+        "narration": "deterministic",
+        "structured_output": "strict",
+        "rule_following": "strict"
+      }
+    }
+  },
+  "roles": {
+    "narrator": {
+      "model": "claude",
+      "structured": false,
+      "temperature": 0.8
+    },
+    "combat_referee": {
+      "model": "codex",
+      "structured": true,
+      "schema": "combat_referee",
+      "temperature": 0.0
+    },
+    "world_arbiter": {
+      "model": "codex",
+      "structured": true,
+      "schema": "world_arbiter",
+      "temperature": 0.1
+    }
+  },
+  "pipelines": {
+    "explore": ["world_arbiter", "narrator"],
+    "rest": ["world_arbiter", "narrator"],
+    "combat_round": ["combat_referee", "narrator"],
+    "combat_start": ["narrator"]
+  }
+}

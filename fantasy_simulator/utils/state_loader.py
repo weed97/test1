@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from utils.io_helpers import load_json, load_text, save_json
+from utils.prompt_router import PromptRouter
+from utils.state_store import StateStore
+
+
+def event_entries(state: dict[str, Any]) -> list[dict[str, Any]]:
+    log = state.get("event_log", [])
+    if isinstance(log, dict):
+        return list(log.get("entries", []))
+    return list(log)
 
 
 @dataclass
@@ -15,9 +23,13 @@ class StateLoader:
     """Central accessor for simulation assets rooted at `base_dir`."""
 
     base_dir: Path
+    store: StateStore = field(init=False)
     _characters: dict[str, dict[str, Any]] = field(default_factory=dict, init=False)
-    _prompts: dict[str, str] = field(default_factory=dict, init=False)
     _rules: dict[str, str] = field(default_factory=dict, init=False)
+    _prompt_router: PromptRouter | None = field(default=None, init=False)
+
+    def __post_init__(self) -> None:
+        self.store = StateStore.from_package_root(self.base_dir)
 
     @classmethod
     def from_package_root(cls, root: Path | str | None = None) -> StateLoader:
@@ -41,13 +53,17 @@ class StateLoader:
     def prompts_dir(self) -> Path:
         return self.base_dir / "prompts"
 
+    @property
+    def prompt_router(self) -> PromptRouter:
+        if self._prompt_router is None:
+            self._prompt_router = PromptRouter.from_package_root(self.base_dir)
+        return self._prompt_router
+
     def load_world_state(self) -> dict[str, Any]:
-        return load_json(self.world_state_path)
+        return self.store.load()
 
     def save_world_state(self, state: dict[str, Any]) -> None:
-        state.setdefault("meta", {})
-        state["meta"]["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        save_json(self.world_state_path, state)
+        self.store.save(state)
 
     def load_character(self, character_id: str) -> dict[str, Any]:
         if character_id not in self._characters:
@@ -63,13 +79,8 @@ class StateLoader:
     def load_active_characters(self, state: dict[str, Any]) -> list[dict[str, Any]]:
         return [self.load_character(cid) for cid in state.get("active_characters", [])]
 
-    def load_prompt(self, role: str) -> str:
-        if role not in self._prompts:
-            path = self.prompts_dir / f"{role}.txt"
-            if not path.exists():
-                raise FileNotFoundError(f"Prompt not found: {role} ({path})")
-            self._prompts[role] = load_text(path)
-        return self._prompts[role]
+    def load_prompt(self, role: str, *, model: str | None = None) -> str:
+        return self.prompt_router.assemble(role, model=model)
 
     def load_rule(self, name: str) -> str:
         if name not in self._rules:
@@ -83,12 +94,12 @@ class StateLoader:
         return sorted(p.stem for p in self.characters_dir.glob("*.json"))
 
     def list_prompts(self) -> list[str]:
-        return sorted(p.stem for p in self.prompts_dir.glob("*.txt"))
+        base = self.base_dir / "prompts" / "base"
+        return sorted(p.stem for p in base.glob("*.txt"))
 
     def apply_character_updates(
         self, state: dict[str, Any], updates: dict[str, dict[str, Any]]
     ) -> None:
-        """Merge runtime character stat changes back into loaded cache and optionally persist."""
         for cid, patch in updates.items():
             char = self.load_character(cid)
             _deep_merge(char, patch)
@@ -97,7 +108,8 @@ class StateLoader:
             save_json(path, char)
 
     def append_event_log(self, state: dict[str, Any], entry: dict[str, Any]) -> None:
-        state.setdefault("event_log", []).append(entry)
+        self.store.append_event(entry)
+        state["event_log"] = self.store.load()["event_log"]
 
 
 def _deep_merge(base: dict[str, Any], patch: dict[str, Any]) -> None:

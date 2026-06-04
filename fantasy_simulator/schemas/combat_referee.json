@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CombatRefereeOutput",
+  "type": "object",
+  "required": ["combat_log", "combat_state", "world_updates", "character_updates"],
+  "additionalProperties": false,
+  "properties": {
+    "combat_log": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "combat_state": {
+      "type": "object",
+      "required": ["round"],
+      "properties": {
+        "round": {"type": "integer", "minimum": 1},
+        "participants": {"type": "object"},
+        "status_effects": {"type": "object"}
+      }
+    },
+    "world_updates": {
+      "type": "object",
+      "required": ["event_log_append"],
+      "properties": {
+        "combat": {},
+        "event_log_append": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      }
+    },
+    "character_updates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "stats": {"type": "object"}
+        }
+      }
+    }
+  }
+}

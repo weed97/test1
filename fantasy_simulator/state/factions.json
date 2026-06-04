@@ -1,0 +1,12 @@
+{
+  "arcadia_kingdom": {
+    "name": "아르카디아 왕국",
+    "influence": 0.75,
+    "morale": 0.6
+  },
+  "shadow_legion": {
+    "name": "그림자 군단",
+    "influence": 0.35,
+    "morale": 0.8
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "active_characters": [
+    "elara_moonwhisper",
+    "gareth_ironshield"
+  ],
+  "party": [
+    "elara_moonwhisper",
+    "gareth_ironshield"
+  ],
+  "npc_locations": {
+    "elara_moonwhisper": "아르카디아 — 마법탑 서관",
+    "gareth_ironshield": "아르카디아 — 왕성 연무장",
+    "malachar_voidweaver": "어둠의 숲 — 파멸의 제단"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorldArbiterOutput",
+  "type": "object",
+  "required": ["world", "event_log_append", "narrative_hint"],
+  "additionalProperties": false,
+  "properties": {
+    "world": {
+      "type": "object",
+      "properties": {
+        "day": {"type": "integer", "minimum": 1},
+        "time_of_day": {
+          "type": "string",
+          "enum": ["morning", "afternoon", "evening", "night"]
+        },
+        "weather": {"type": "string"},
+        "tension": {"type": "number", "minimum": 0, "maximum": 1},
+        "location": {"type": "string"}
+      }
+    },
+    "factions": {"type": "object"},
+    "flags": {"type": "object"},
+    "event_log_append": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["turn", "type", "summary"],
+        "properties": {
+          "turn": {"type": "integer"},
+          "type": {"type": "string"},
+          "summary": {"type": "string"}
+        }
+      }
+    },
+    "narrative_hint": {"type": "string"}
+  }
+}

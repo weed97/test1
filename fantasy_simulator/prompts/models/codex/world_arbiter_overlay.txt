@@ -1,0 +1,11 @@
+## Codex 모델 지침 (오버레이)
+
+- **반드시** `WorldArbiterOutput` JSON Schema에 맞는 객체만 출력하세요.
+- `world.tension`은 0.0~1.0 범위를 벗어나면 안 됩니다.
+- `time_of_day`는 morning → afternoon → evening → night 순환만 허용합니다.
+- `event_log_append` 각 항목에 `turn`, `type`, `summary` 필수.
+- Markdown, 코드블록, 여분 텍스트 금지.
+
+## 출력 계약
+
+응답은 단일 JSON 객체 하나만 반환합니다.
