@@ -56,10 +56,15 @@ class ContentLoader:
                 pools.extend(lines)
 
         ms = flags.get("main_story", {})
-        if int(ms.get("phase", 0)) == 1:
+        story_phase = int(ms.get("phase", 0))
+        if story_phase == 1:
             sub = ms.get("phase1_subphase")
             if sub:
                 pools.extend(entry.get("by_main_story_phase", {}).get(sub, []))
+        elif story_phase == 2:
+            sub = ms.get("phase2_subphase")
+            if sub:
+                pools.extend(entry.get("by_main_story_phase2", {}).get(sub, []))
 
         stage_key = f"{active}:{stage}" if active else ""
         stage_lines = entry.get("by_quest_stage", {}).get(stage_key, [])

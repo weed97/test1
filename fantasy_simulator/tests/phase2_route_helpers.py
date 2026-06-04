@@ -17,6 +17,7 @@ from utils.world_tension import set_tension
 PHASE2_COMMON_PREFIX: list[str] = [
     "talk elder maren",
     "investigate forest",
+    "explore forest",
 ]
 
 PHASE2_ROUTE_SPECS: dict[str, dict[str, Any]] = {
@@ -24,7 +25,7 @@ PHASE2_ROUTE_SPECS: dict[str, dict[str, Any]] = {
         "choice_id": "path_alliance",
         "phase1_choice": "ally_village",
         "branch_seed": "story_choice_alliance",
-        "branch_action": "explore",
+        "branch_action": "talk elder maren",
         "climax_seed": "phase2_climax_alliance",
         "climax_actions": ["explore forest"],
         "climax_location": "ashpoint",
@@ -33,7 +34,7 @@ PHASE2_ROUTE_SPECS: dict[str, dict[str, Any]] = {
         "choice_id": "path_neutral",
         "phase1_choice": "stay_neutral",
         "branch_seed": "story_choice_neutral",
-        "branch_action": "explore",
+        "branch_action": "talk lilian",
         "climax_seed": "phase2_climax_neutral",
         "climax_actions": ["explore forest"],
         "climax_location": "북쪽 숲 — 연기가 보이는 외곽",
@@ -42,8 +43,7 @@ PHASE2_ROUTE_SPECS: dict[str, dict[str, Any]] = {
         "choice_id": "path_betrayal",
         "phase1_choice": "exploit_chaos",
         "branch_seed": "story_choice_betrayal",
-        "branch_action": "explore",
-        "branch_location": "ashpoint",
+        "branch_action": "investigate forest",
         "climax_seed": "phase2_climax_betrayal",
         "climax_actions": ["investigate forest"],
         "climax_location": "북쪽 숲 — 연기가 보이는 외곽",
@@ -56,6 +56,12 @@ PHASE2_MILESTONE_FLAGS = (
     "story_phase2_chosen",
     "phase2_climax_ready",
     "phase2_climax_done",
+)
+
+STORY_CHOICE_SEEDS = (
+    "story_choice_alliance",
+    "story_choice_neutral",
+    "story_choice_betrayal",
 )
 
 
@@ -79,14 +85,32 @@ def setup_phase2_session(
     return session, engine
 
 
-def _set_pending(session: GameSession, seed_ids: list[str]) -> None:
-    session.state["flags"]["pending_events"] = seed_ids
+def _set_location(session: GameSession, action: str, *, default: str = "ashpoint") -> None:
+    if "forest" in action or "investigate" in action:
+        session.state["world"]["location"] = "북쪽 숲 — 연기가 보이는 외곽"
+    else:
+        session.state["world"]["location"] = default
     session.manager.save(session.state)
 
 
-def _boost_tension_for_phase2(session: GameSession, target: int = 50) -> None:
-    set_tension(session.state, target)
+def _isolate_branch_seed(session: GameSession, branch_seed: str) -> None:
+    pending = session.state["flags"].setdefault("pending_events", [])
+    for sid in STORY_CHOICE_SEEDS:
+        while sid in pending:
+            pending.remove(sid)
+    if branch_seed not in pending:
+        pending.append(branch_seed)
     session.manager.save(session.state)
+
+
+def _record_milestones(
+    milestones: dict[str, int],
+    turn: int,
+    flags: dict[str, Any],
+) -> None:
+    for key in PHASE2_MILESTONE_FLAGS:
+        if flags.get(key) and key not in milestones:
+            milestones[key] = turn
 
 
 def run_phase2_route_clear(
@@ -99,48 +123,37 @@ def run_phase2_route_clear(
     """Run Phase 2 opening, escalation, branch, and climax."""
     milestones: dict[str, int] = {}
     turn = start_turn
-    session.state["world"]["location"] = "ashpoint"
-    session.manager.save(session.state)
 
     for action in PHASE2_COMMON_PREFIX:
-        if "forest" in action:
-            session.state["world"]["location"] = "북쪽 숲 — 연기가 보이는 외곽"
-        else:
-            session.state["world"]["location"] = "ashpoint"
-        session.manager.save(session.state)
+        _set_location(session, action)
         turn += 1
         session.run_turn(action)
         flags = session.state["flags"]
         ms = flags["main_story"]
         if on_step:
             on_step(turn, action, flags, ms)
-        for key in PHASE2_MILESTONE_FLAGS:
-            if flags.get(key) and key not in milestones:
-                milestones[key] = turn
+        _record_milestones(milestones, turn, flags)
 
-    _boost_tension_for_phase2(session, 50)
-    pending = session.state["flags"].setdefault("pending_events", [])
-    pending[:] = [sid for sid in pending if sid.startswith("story_choice_")]
-    _set_pending(session, ["phase2_faction_raid"])
-    turn += 1
-    session.state["world"]["location"] = "북쪽 숲 — 연기가 보이는 외곽"
-    session.manager.save(session.state)
-    session.run_turn("explore")
-    flags = session.state["flags"]
-    ms = flags["main_story"]
-    if on_step:
-        on_step(turn, "explore", flags, ms)
-    for key in PHASE2_MILESTONE_FLAGS:
-        if flags.get(key) and key not in milestones:
-            milestones[key] = turn
+    if not session.state["flags"].get("phase2_escalation_done"):
+        set_tension(session.state, 50)
+        session.manager.save(session.state)
+        _set_location(session, "explore forest")
+        for _ in range(4):
+            if session.state["flags"].get("phase2_escalation_done"):
+                break
+            turn += 1
+            session.run_turn("explore")
+            flags = session.state["flags"]
+            ms = flags["main_story"]
+            if on_step:
+                on_step(turn, "explore", flags, ms)
+            _record_milestones(milestones, turn, flags)
 
-    pending = session.state["flags"].setdefault("pending_events", [])
-    for sid in ("story_choice_alliance", "story_choice_neutral", "story_choice_betrayal"):
-        while sid in pending:
-            pending.remove(sid)
-    _set_pending(session, [spec["branch_seed"]])
-    session.state["world"]["location"] = spec.get("branch_location", "ashpoint")
-    session.manager.save(session.state)
+    _isolate_branch_seed(session, spec["branch_seed"])
+    if spec["branch_action"].startswith("talk"):
+        _set_location(session, spec["branch_action"])
+    else:
+        _set_location(session, spec["branch_action"])
 
     turn += 1
     session.run_turn(spec["branch_action"])
@@ -148,34 +161,36 @@ def run_phase2_route_clear(
     ms = flags["main_story"]
     if on_step:
         on_step(turn, spec["branch_action"], flags, ms)
-    for key in PHASE2_MILESTONE_FLAGS:
-        if flags.get(key) and key not in milestones:
-            milestones[key] = turn
+    _record_milestones(milestones, turn, flags)
 
     if not flags.get("phase2_climax_ready"):
-        rep = flags.setdefault("faction_reputation", {})
-        rep.setdefault("ashpoint_council", 25)
-        flags["story_faction_clash_seen"] = True
-        engine = MainStoryEngine(session.manager.base_dir)
-        story = engine.story_def(ms["id"])
-        if story and flags.get("story_phase2_chosen"):
-            engine._update_phase2_climax_readiness(session.state, story, ms)
+        set_tension(session.state, 50)
         session.manager.save(session.state)
+        _set_location(session, "explore forest")
+        for _ in range(3):
+            if flags.get("phase2_climax_ready"):
+                break
+            turn += 1
+            session.run_turn("explore")
+            flags = session.state["flags"]
+            ms = flags["main_story"]
+            if on_step:
+                on_step(turn, "explore", flags, ms)
+            _record_milestones(milestones, turn, flags)
 
-    _set_pending(session, [spec["climax_seed"]])
+    session.state["flags"]["pending_events"] = [spec["climax_seed"]]
     session.state["world"]["location"] = spec.get("climax_location", "ashpoint")
     session.manager.save(session.state)
 
     for action in spec["climax_actions"]:
+        _set_location(session, action, default=spec.get("climax_location", "ashpoint"))
         turn += 1
         session.run_turn(action)
         flags = session.state["flags"]
         ms = flags["main_story"]
         if on_step:
             on_step(turn, action, flags, ms)
-        for key in PHASE2_MILESTONE_FLAGS:
-            if flags.get(key) and key not in milestones:
-                milestones[key] = turn
+        _record_milestones(milestones, turn, flags)
         if flags.get("phase2_climax_done"):
             break
 

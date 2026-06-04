@@ -35,6 +35,18 @@ NPC_ALIASES: dict[str, str] = {
     "상인": "merchant_finn",
 }
 
+FRONTIER_ZONES = frozenset({"ashpoint", "forest", "tower"})
+
+
+def _seed_location_zones(seed: dict[str, Any]) -> frozenset[str]:
+    explicit = seed.get("location_zones")
+    if explicit:
+        return frozenset(explicit)
+    if seed.get("seed_type") == "main_story" or seed.get("main_plot_link"):
+        return FRONTIER_ZONES
+    return frozenset({"ashpoint"})
+
+
 FOREST_ACT2_SEEDS = (
     "broken_rune_pillar",
     "tower_whisper",
@@ -185,7 +197,7 @@ class EventEngine:
                     continue
             elif related_npc:
                 acts = set(seed.get("requires_action", ["explore"]))
-                if "talk" in acts and "explore" in acts:
+                if "talk" in acts and "explore" in acts and seed.get("seed_type") != "main_story":
                     continue
             req_time = seed.get("requires_time")
             if req_time and not (time_tags & set(req_time)):
@@ -193,11 +205,7 @@ class EventEngine:
             req_action = seed.get("requires_action", ["explore"])
             if action_kind not in req_action and "any" not in req_action:
                 continue
-            seed_zones = seed.get("location_zones")
-            if seed_zones:
-                if zone not in seed_zones:
-                    continue
-            elif zone != "ashpoint":
+            if zone not in _seed_location_zones(seed):
                 continue
             min_stage = seed.get("requires_quest_stage_min")
             if min_stage is not None:
