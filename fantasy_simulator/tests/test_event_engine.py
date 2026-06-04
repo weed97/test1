@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from tests.fixtures import isolated_game_root  # noqa: E402
 from utils.content_loader import ContentLoader  # noqa: E402
 from utils.event_engine import EventEngine, resolve_npc_id  # noqa: E402
 from utils.state_loader import StateLoader  # noqa: E402
@@ -17,11 +18,23 @@ from utils.state_loader import StateLoader  # noqa: E402
 
 class EventEngineTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.content = ContentLoader(ROOT)
+        self._isolated = isolated_game_root()
+        self.root = self._isolated.__enter__()
+        self.content = ContentLoader(self.root)
         self.rng = random.Random(42)
         self.engine = EventEngine(self.content, self.rng)
-        self.loader = StateLoader.from_package_root(ROOT)
+        self.loader = StateLoader.from_package_root(self.root)
         self.state = self.loader.load_world_state()
+        # Reset quest to stage 1 for deterministic talk tests
+        self.state["flags"]["quests"] = {
+            "active": "smoke_on_the_mountain",
+            "stage": 1,
+            "completed": [],
+        }
+        self.state["flags"]["quest_talked_npcs"] = []
+
+    def tearDown(self) -> None:
+        self._isolated.__exit__(None, None, None)
 
     def test_resolve_npc_aliases(self) -> None:
         self.assertEqual(resolve_npc_id("talk torren"), "torren_blacksmith")

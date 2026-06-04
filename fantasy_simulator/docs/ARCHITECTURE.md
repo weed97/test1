@@ -41,6 +41,7 @@ There is **no** `handle_player_action` or nested `process_turn` chain.
 | `utils/turn_processor.py` | Action resolution + full turn orchestration |
 | `utils/turn_context.py` | `TurnContext` / `TurnResult` dataclasses |
 | `utils/state_manager.py` | Persist shards, apply LLM results, status report |
+| `utils/state_report.py` | CLI status/summary formatting (presentation only) |
 | `utils/cli.py` | Input parsing, interactive loop, friendly errors |
 
 ## LLM providers
@@ -81,3 +82,11 @@ Active combat always routes to Codex.
 ## Files to ignore
 
 - `utils/llm/pipeline.py` — deprecated legacy pipeline
+
+## Testing
+
+Unit tests use `tests/fixtures.isolated_game_root()` to copy game data into a temp directory so turns do not mutate the repo's `state/` shards.
+
+```bash
+python3 -m unittest discover -s tests -v
+```

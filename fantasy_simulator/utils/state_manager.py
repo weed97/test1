@@ -11,9 +11,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from utils.state_loader import StateLoader, event_entries
+from utils.state_loader import StateLoader
 from utils.state_store import StateStore
 from utils.content_loader import ContentLoader
+from utils.state_report import format_status_report as _format_status_report
+from utils.state_report import format_summary as _format_summary
 
 
 class StateManager:
@@ -63,21 +65,7 @@ class StateManager:
 
     def summary(self, state: dict[str, Any] | None = None) -> str:
         """Human-readable one-page status summary."""
-        state = state or self.load()
-        world = state.get("world", {})
-        lines = [
-            f"{world.get('name', 'Eldoria')} — Day {world.get('day', '?')} ({world.get('time_of_day', '?')})",
-            f"Location: {world.get('location', '?')}",
-            f"Weather: {world.get('weather', '?')} | Tension: {world.get('tension', 0)}",
-            f"Gold: {state.get('inventory', {}).get('party_gold', 0)}",
-        ]
-        party = state.get("party", [])
-        if party:
-            lines.append("Party: " + ", ".join(party))
-        recent = event_entries(state)
-        if recent:
-            lines.append("Recent: " + recent[-1].get("summary", ""))
-        return "\n".join(lines)
+        return _format_summary(state or self.load())
 
     def append_event(self, entry: dict[str, Any], state: dict[str, Any]) -> None:
         self.store.append_event(entry)
@@ -143,39 +131,12 @@ class StateManager:
         mode: str = "rule",
     ) -> str:
         """Full status screen for CLI / interactive mode."""
-        world = state.get("world", {})
-        lines = [
-            f"=== {world.get('name', 'Eldoria')} | Day {world.get('day', '?')} ({world.get('time_of_day', '?')}) ===",
-            f"모드: {mode} | 저장: state/ (sharded)",
-            self.summary(state),
-            "",
-            "파티:",
-        ]
-        for cid in state.get("party", []):
-            c = self.loader.load_character(cid)
-            if state.get("combat") and cid in state["combat"]["allies"]:
-                stats = state["combat"]["allies"][cid]["stats"]
-            else:
-                stats = c["stats"]
-            lines.append(
-                f"  - {c['name']}: HP {stats['hp']}/{stats['max_hp']} "
-                f"MP {stats['mana']}/{stats['max_mana']}"
-            )
-        if state.get("combat"):
-            lines.append("(전투 진행 중)")
-        rep = state.get("flags", {}).get("reputation", {})
-        if rep:
-            lines.extend(["", "평판:"])
-            for k, v in sorted(rep.items()):
-                lines.append(f"  - {k}: {v}")
-        if event_engine:
-            lines.extend(["", f"퀘스트: {event_engine.show_quest_status(state)}"])
-        recent = event_entries(state)
-        if recent:
-            lines.extend(["", "최근 이벤트:"])
-            for ev in recent[-5:]:
-                lines.append(f"  [{ev.get('type')}] {ev.get('summary')}")
-        return "\n".join(lines)
+        return _format_status_report(
+            state,
+            self.loader,
+            event_engine=event_engine,
+            mode=mode,
+        )
 
     def export_legacy(self) -> None:
         self.store.export_legacy()

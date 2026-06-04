@@ -23,9 +23,10 @@ fantasy_simulator/
 ├── characters/
 ├── prompts/
 ├── config/llm_routing.json
-├── simulation_engine.py      # CLI + SimulationEngine.run_turn
+├── simulation_engine.py      # thin CLI entry
 └── utils/
-    ├── turn_processor.py     # process_player_action() — 단일 진입점
+    ├── game_session.py       # GameSession.run_turn() — turn controller
+    ├── turn_processor.py     # execute_turn() → process_player_action()
     ├── llm_router.py         # decide_model_and_prompt() 키워드 라우팅
     ├── llm_client.py         # live API / mock / retry / degrade
     └── state_manager.py      # save + hub sync
