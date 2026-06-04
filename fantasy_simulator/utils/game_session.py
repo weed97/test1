@@ -11,8 +11,9 @@ from utils.content_loader import ContentLoader
 from utils.event_engine import EventEngine
 from utils.llm_client import LLMClient
 from utils.rule_engine import RuleEngine
-from utils.state_loader import StateLoader, event_entries
+from utils.state_loader import StateLoader
 from utils.state_manager import StateManager
+from utils.main_story_engine import _advance_turn_counter, _current_turn
 from utils.turn_context import Mode, TurnContext, TurnResult
 from utils.turn_processor import execute_turn
 
@@ -38,7 +39,7 @@ class GameSession:
         self.content = ContentLoader(manager.base_dir)
         self.event_engine = EventEngine(self.content, self.rng)
         self.rules = RuleEngine(self.state, self.rng, event_engine=self.event_engine)
-        self.turn = len(event_entries(self.state))
+        self.turn = _current_turn(self.state) - 1
         if client is not None:
             self.client = client
         elif mode in ("llm", "hybrid"):
@@ -84,12 +85,15 @@ class GameSession:
 
     def run_turn(self, action: str = "explore", *, enemy_id: str | None = None) -> dict[str, Any]:
         """Advance one turn. Delegates to turn_processor.execute_turn()."""
-        self.turn += 1
+        turn = _current_turn(self.state)
         result = execute_turn(
-            self.ctx(action, turn=self.turn),
+            self.ctx(action, turn=turn),
             loader=self.loader,
             enemy_id=enemy_id,
         )
+        _advance_turn_counter(self.state, turn)
+        self.turn = turn
+        self.manager.save(self.state)
         self.manager.refresh_state(self.state)
         return result.to_dict()
 

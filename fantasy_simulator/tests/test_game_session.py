@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT))
 
 from tests.fixtures import isolated_game_root  # noqa: E402
 from utils.game_session import GameSession  # noqa: E402
-from utils.state_loader import event_entries  # noqa: E402
+from utils.main_story_engine import _current_turn  # noqa: E402
 
 
 class GameSessionTests(unittest.TestCase):
@@ -34,7 +34,7 @@ class GameSessionTests(unittest.TestCase):
         self.assertIsNone(self.session.client)
 
     def test_turn_counter_matches_event_log(self) -> None:
-        self.assertEqual(self.session.turn, len(event_entries(self.session.state)))
+        self.assertEqual(self.session.turn, _current_turn(self.session.state) - 1)
 
     def test_ctx_bundles_dependencies(self) -> None:
         ctx = self.session.ctx("explore", turn=99)

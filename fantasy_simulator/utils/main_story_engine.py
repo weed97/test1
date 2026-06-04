@@ -9,10 +9,22 @@ from utils.world_tension import adjust_tension, get_tension
 
 
 def _current_turn(state: dict[str, Any]) -> int:
+    """Turn number for the next player action (1-indexed, matches event_log entries)."""
     log = state.get("event_log", {})
     if isinstance(log, dict):
-        return max(1, int(log.get("next_turn", 1)) - 1)
-    return len(log) if log else 1
+        entries = log.get("entries", [])
+        stored = int(log.get("next_turn", 1))
+        if entries:
+            last = max(int(e.get("turn", 0)) for e in entries)
+            return max(stored, last + 1)
+        return max(1, stored)
+    return max(1, len(log) + 1)
+
+
+def _advance_turn_counter(state: dict[str, Any], played_turn: int) -> None:
+    log = state.setdefault("event_log", {"next_turn": 1, "entries": []})
+    if isinstance(log, dict):
+        log["next_turn"] = max(int(log.get("next_turn", 1)), int(played_turn) + 1)
 
 
 class MainStoryEngine:
@@ -288,7 +300,8 @@ class MainStoryEngine:
 
         if flag == "black_smoke_seen":
             ms["phase1_subphase"] = "early"
-            ms["smoke_seen_turn"] = turn if turn is not None else _current_turn(state)
+            if ms.get("smoke_seen_turn") is None:
+                ms["smoke_seen_turn"] = turn if turn is not None else _current_turn(state)
             if current < 1:
                 ms["phase1_step"] = 1
                 lines.extend(self._queue_phase1_step_events(state, story, ms, 1))
