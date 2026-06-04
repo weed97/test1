@@ -1,0 +1,36 @@
+{
+  "id": "elara_moonwhisper",
+  "name": "엘라라 문위스퍼",
+  "title": "별빛 학자",
+  "role": "player",
+  "class": "archmage",
+  "level": 5,
+  "stats": {
+    "hp": 68,
+    "max_hp": 68,
+    "mana": 90,
+    "max_mana": 90,
+    "strength": 8,
+    "agility": 12,
+    "intelligence": 18,
+    "vitality": 10
+  },
+  "modifiers": {
+    "attack": 2,
+    "defense": 3,
+    "spellcasting": 6,
+    "agility": 1
+  },
+  "elements": ["arcane", "light"],
+  "spells": [
+    {"id": "arcane_bolt", "name": "비전 화살", "tier": 1, "element": "arcane", "power": 12, "mana_cost": 12},
+    {"id": "lunar_heal", "name": "월광 치유", "tier": 2, "element": "light", "power": 20, "mana_cost": 20},
+    {"id": "starfall", "name": "별락", "tier": 3, "element": "arcane", "power": 35, "mana_cost": 28}
+  ],
+  "equipment": {
+    "weapon": {"name": "별빛 지팡이", "damage": 6, "type": "arcane"},
+    "armor": {"name": "학자 로브", "reduction": 2}
+  },
+  "traits": ["마법 연구", "위기 감지"],
+  "flags": {"knockout_only": true}
+}

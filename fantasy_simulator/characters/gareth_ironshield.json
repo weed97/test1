@@ -1,0 +1,33 @@
+{
+  "id": "gareth_ironshield",
+  "name": "가레스 아이언실드",
+  "title": "왕국 기사단장",
+  "role": "player",
+  "class": "knight",
+  "level": 6,
+  "stats": {
+    "hp": 110,
+    "max_hp": 110,
+    "mana": 20,
+    "max_mana": 20,
+    "strength": 16,
+    "agility": 10,
+    "intelligence": 9,
+    "vitality": 15
+  },
+  "modifiers": {
+    "attack": 5,
+    "defense": 6,
+    "spellcasting": 0,
+    "agility": 0
+  },
+  "elements": [],
+  "spells": [],
+  "equipment": {
+    "weapon": {"name": "왕국 장검", "damage": 14, "type": "physical"},
+    "armor": {"name": "판금 갑옷", "reduction": 6},
+    "shield": {"name": "철벽 방패", "block": 3}
+  },
+  "traits": ["도발", "철벽"],
+  "flags": {"knockout_only": true}
+}

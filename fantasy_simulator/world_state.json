@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "version": 1,
+    "simulation_id": "eldoria-chronicle-001",
+    "created_at": "2026-06-04T00:00:00Z",
+    "last_updated": "2026-06-04T00:00:00Z"
+  },
+  "world": {
+    "name": "엘도리아",
+    "day": 1,
+    "time_of_day": "morning",
+    "season": "spring",
+    "weather": "clear",
+    "location": "왕국 수도 — 아르카디아",
+    "tension": 0.2,
+    "active_threats": ["북부 국경의 그림자 군단"]
+  },
+  "factions": {
+    "arcadia_kingdom": {
+      "name": "아르카디아 왕국",
+      "influence": 0.75,
+      "morale": 0.6
+    },
+    "shadow_legion": {
+      "name": "그림자 군단",
+      "influence": 0.35,
+      "morale": 0.8
+    }
+  },
+  "active_characters": ["elara_moonwhisper", "gareth_ironshield"],
+  "party": ["elara_moonwhisper", "gareth_ironshield"],
+  "npc_locations": {
+    "elara_moonwhisper": "아르카디아 — 마법탑 서관",
+    "gareth_ironshield": "아르카디아 — 왕성 연무장",
+    "malachar_voidweaver": "어둠의 숲 — 파멸의 제단"
+  },
+  "inventory": {
+    "party_gold": 120,
+    "shared_items": ["치유 물약 x3", "고대 지도 조각"]
+  },
+  "event_log": [],
+  "flags": {
+    "intro_completed": false,
+    "shadow_legion_spotted": false
+  },
+  "combat": null
+}

@@ -1,0 +1,36 @@
+{
+  "id": "malachar_voidweaver",
+  "name": "말라카르 보이드위버",
+  "title": "그림자 군단 대마법사",
+  "role": "enemy",
+  "class": "warlock",
+  "level": 7,
+  "stats": {
+    "hp": 95,
+    "max_hp": 95,
+    "mana": 120,
+    "max_mana": 120,
+    "strength": 10,
+    "agility": 14,
+    "intelligence": 17,
+    "vitality": 12
+  },
+  "modifiers": {
+    "attack": 4,
+    "defense": 4,
+    "spellcasting": 5,
+    "agility": 2
+  },
+  "elements": ["shadow", "arcane"],
+  "spells": [
+    {"id": "shadow_lance", "name": "그림자 창", "tier": 2, "element": "shadow", "power": 18, "mana_cost": 18},
+    {"id": "void_rift", "name": "공허 균열", "tier": 3, "element": "shadow", "power": 32, "mana_cost": 30},
+    {"id": "soul_drain", "name": "영혼 흡수", "tier": 2, "element": "shadow", "power": 15, "mana_cost": 16, "lifesteal": 0.5}
+  ],
+  "equipment": {
+    "weapon": {"name": "공허의 지팡이", "damage": 10, "type": "shadow"},
+    "armor": {"name": "그림자 망토", "reduction": 3}
+  },
+  "traits": ["어둠의 계약", "공포의 기운"],
+  "flags": {"knockout_only": false}
+}
