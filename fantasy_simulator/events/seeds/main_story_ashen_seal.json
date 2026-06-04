@@ -13,7 +13,11 @@
       "requires_not_flags": ["story_phase1_chosen"],
       "weight": 30,
       "outcome": {
-        "summary": "장로 마렌: '마을의 안전이 걸렸네. 우리와 함께 이 사건을 마을 안에서 해결하세.'",
+        "summary": "장로 마렌: \"마을의 안전이 걸렸네. 우리와 함께 이 사건을 마을 안에서 해결하세.\"",
+        "lines": [
+          "회관 지붕 위 깃발이 바람에 펄럭인다. 애쉬포인트 자치회의 문양.",
+          "\"외부 세력에 맡기면, 마을은 다시 전쟁터가 될 걸세.\""
+        ],
         "main_story_choice": "ally_village"
       }
     },
@@ -30,7 +34,11 @@
       "requires_not_flags": ["story_phase1_chosen"],
       "weight": 28,
       "outcome": {
-        "summary": "잿빛 감시자: '봉인의 진실을 원한다면, 인간의 편부터 버려라.'",
+        "summary": "잿빛 감시자: \"봉인의 진실을 원한다면, 인간의 편부터 버려라.\"",
+        "lines": [
+          "낡은 두루마리 — 봉인은 '악'이 아니라 '기억'을 가두는 장치였다.",
+          "회색 망토: \"2단계에서 진실을 증명할 각오가 있느냐?\""
+        ],
         "main_story_choice": "seek_truth"
       }
     },
@@ -48,7 +56,11 @@
       "requires_not_flags": ["story_phase1_chosen"],
       "weight": 26,
       "outcome": {
-        "summary": "칠흑의 서약: '약한 자는 봉인을 지킬 수 없다. 힘을 원하느냐?'",
+        "summary": "칠흑의 서약: \"약한 자는 봉인을 지킬 수 없다. 힘을 원하느냐?\"",
+        "lines": [
+          "우물 속 거울 같은 수면에, 당신의 눈이 검게 물든다.",
+          "속삭임: \"대가는 나중에 치르면 된다. 지금은 살아남아라.\""
+        ],
         "main_story_choice": "pursue_power"
       }
     },
@@ -64,7 +76,11 @@
       "requires_not_flags": ["story_phase1_chosen"],
       "weight": 22,
       "outcome": {
-        "summary": "릴리안과 검은송곳니 사절: '혼란 속에서 이득을 나누자. 편은 필요 없어.'",
+        "summary": "릴리안과 검은송곳니 사절: \"혼란 속에서 이득을 나누자. 편은 필요 없어.\"",
+        "lines": [
+          "릴리안: \"실버우드 상인 연합은 승자 편에 서요.\"",
+          "산적 사절: \"봉인이 깨지면, 우리가 숲을 지배하지. 같이 움직이자.\""
+        ],
         "main_story_choice": "exploit_chaos"
       }
     },
@@ -81,6 +97,10 @@
       "weight": 20,
       "outcome": {
         "summary": "당신은 깃발 없이 걸어 나간다. 세력들은 당신을 '아직 모르는 말'로 기록한다.",
+        "lines": [
+          "제안은 모두 거절했다. 마을 사람들은 안도하거나, 불안해한다.",
+          "중립은 2단계에서 더 많은 선택지를 남긴다 — 대신, 아무도 당신을 돕지 않을 수도 있다."
+        ],
         "main_story_choice": "stay_neutral"
       }
     },

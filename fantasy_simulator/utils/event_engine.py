@@ -247,7 +247,8 @@ class EventEngine:
         self._consume_seed(state, seed["id"])
         self._maybe_advance_quest(state, seed)
 
-        lines = [summary, *extra_lines]
+        narrative = [str(line) for line in (outcome.get("lines") or []) if line]
+        lines = [summary, *narrative, *extra_lines]
         return {
             "summary": summary,
             "lines": lines,

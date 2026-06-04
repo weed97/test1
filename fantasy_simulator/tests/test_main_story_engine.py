@@ -83,6 +83,36 @@ class MainStoryEngineTests(unittest.TestCase):
             self.assertEqual(state["flags"]["main_story"]["mountain_visits"], 1)
             self.assertTrue(state["flags"].get("phase1_mountain_found"))
 
+    def test_elder_decline_on_mountain_before_response(self) -> None:
+        with isolated_game_root() as root:
+            engine = MainStoryEngine(root)
+            state = {
+                "flags": {
+                    "main_story": {"id": "ashen_seal_cracking", "phase": 1},
+                    "phase1_elder_request": True,
+                    "faction_reputation": {"ashpoint_council": 0},
+                },
+            }
+            engine.ensure_initialized(state)
+            lines = engine.record_mountain_visit(state)
+            self.assertTrue(state["flags"].get("phase1_elder_declined"))
+            self.assertTrue(state["flags"].get("phase1_elder_responded"))
+            self.assertTrue(any("독단" in line for line in lines))
+
+    def test_phase1_hint_in_summary(self) -> None:
+        with isolated_game_root() as root:
+            engine = MainStoryEngine(root)
+            state = {
+                "flags": {
+                    "main_story": {"id": "ashen_seal_cracking", "phase": 1, "phase1_step": 1},
+                    "black_smoke_seen": True,
+                },
+            }
+            engine.ensure_initialized(state)
+            summary = engine.format_summary(state)
+            self.assertIn("다음:", summary)
+            self.assertIn("소문", summary)
+
     def test_phase1_choice_five_way(self) -> None:
         with isolated_game_root() as root:
             engine = MainStoryEngine(root)

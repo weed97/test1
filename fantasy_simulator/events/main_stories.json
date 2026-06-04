@@ -58,7 +58,7 @@
         },
         "step_queue": {
           "1": ["phase1_village_rumors", "phase1_strange_dream"],
-          "2": ["story_faction_approach_council"],
+          "2": ["story_faction_approach_council", "phase1_elder_accept"],
           "3": [
             "phase1_merchant_interest",
             "phase1_blackfang_raid",

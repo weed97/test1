@@ -62,7 +62,7 @@ class EventEngineTests(unittest.TestCase):
         self.assertIn("연기", result["summary"])
 
     def test_load_all_seed_shards(self) -> None:
-        self.assertEqual(len(self.content.load_event_seeds()), 120)
+        self.assertEqual(len(self.content.load_event_seeds()), 121)
 
     def test_expansion_seed_has_hook(self) -> None:
         seed = self.content.get_event_seed("whispering_well")
@@ -111,6 +111,16 @@ class EventEngineTests(unittest.TestCase):
         result = self.engine.talk(self.state, "talk torren", 20, self.loader)
         self.assertTrue(self.state["flags"].get("torren_side_quest_done"))
         self.assertTrue(any("사이드" in line for line in result.get("lines", [])))
+
+    def test_outcome_lines_appended_to_event(self) -> None:
+        self.state["flags"]["pending_events"] = ["black_smoke"]
+        self.state["world"]["location"] = "ashpoint"
+        self.state["world"]["time_of_day"] = "afternoon"
+        result = self.engine.try_trigger_event(self.state, "explore", turn=1)
+        self.assertIsNotNone(result)
+        assert result is not None
+        self.assertGreater(len(result["lines"]), 2)
+        self.assertTrue(any("봉인" in line for line in result["lines"]))
 
 
 if __name__ == "__main__":

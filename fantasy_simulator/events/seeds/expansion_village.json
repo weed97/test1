@@ -50,6 +50,11 @@
       "hook": "북쪽 산에서 검은 연기가 피어오르고 있다.",
       "outcome": {
         "summary": "하늘이 잠시 어두워진다. 연기 기둥이 산 너머로 솟구치고, 마을 종이 울린다.",
+        "lines": [
+          "종소리가 세 번 울린다 — 전쟁 때와 같은 신호다.",
+          "마을 사람들이 하늘을 올려다본다. 아무도 '산불'이라고 말하지 않는다.",
+          "북쪽 산 — 잿빛 봉인의 균열이, 아주 작게 시작되었다."
+        ],
         "tension_delta": 8,
         "flags_set": {"black_smoke_seen": true, "phase1_smoke_witnessed": true},
         "main_story_phase1_flag": "black_smoke_seen",

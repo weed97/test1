@@ -318,6 +318,20 @@ class MainStoryEngine:
         if found:
             flags["phase1_mountain_found"] = True
         lines = [f"[1단계] 북쪽 산 방문 ({ms['mountain_visits']}회)"]
+        if flags.get("phase1_elder_request") and not flags.get("phase1_elder_responded"):
+            flags["phase1_elder_declined"] = True
+            flags["phase1_elder_responded"] = True
+            from utils.faction_engine import FactionEngine
+
+            lines.extend(
+                FactionEngine(self.base_dir).apply_reputation_outcome(
+                    state, {"faction_reputation": {"ashpoint_council": -6}}
+                )
+            )
+            lines.append(
+                "[1단계] 장로의 부탁을 거두치 않고 산으로 향했다. "
+                "자치회는 당신을 '독단적인 이방인'으로 기록하기 시작한다."
+            )
         if story:
             lines.extend(self._update_climax_readiness(state, story, ms))
         return lines
@@ -484,6 +498,51 @@ class MainStoryEngine:
             5: "봉인 첫 균열",
         }
         return labels.get(step, f"단계 {step}")
+
+    def _phase1_next_hint(self, state: dict[str, Any], ms: dict[str, Any], story: dict[str, Any]) -> str | None:
+        flags = state.get("flags", {})
+        if int(ms.get("phase", 1)) != 1 or flags.get("phase1_climax_done"):
+            return None
+        if flags.get("phase1_climax_ready"):
+            choice = next((c for c in ms.get("choices_made", []) if c), None)
+            route = {
+                "ally_village": "마을·숲 — 민병대와 함께 균열을 막아라",
+                "pursue_power": "탑·숲 — 봉인에서 새어 나오는 힘을 목격하라",
+                "seek_truth": "탑·숲 — 감시자와 함께 봉인 기록을 확인하라",
+                "exploit_chaos": "마을·숲 — 혼란 속에서 내려오는 괴물을 목격하라",
+                "stay_neutral": "탑·숲 — 어느 편도 아닌 채 균열을 바라보라",
+            }.get(choice or "", "숲·탑 탐색 — 봉인의 첫 균열을 목격하라")
+            return route
+        if flags.get("story_phase1_chosen"):
+            gate = story.get("phase1_climax_gate", {})
+            required = int(gate.get("required_count", 2))
+            _, met = self._climax_conditions_met(state, story, ms)
+            missing: list[str] = []
+            for cond in gate.get("conditions", []):
+                cid = cond.get("id", "")
+                if cid in met:
+                    continue
+                if cond.get("tension_min") is not None:
+                    missing.append(f"긴장 {cond['tension_min']}+")
+                elif cond.get("faction_rep_min") is not None:
+                    missing.append(f"세력 평판 {cond['faction_rep_min']}+")
+                elif cond.get("mountain_visits_min") is not None:
+                    missing.append(f"산 방문 {cond['mountain_visits_min']}회")
+                elif cond.get("factions_contacted_min") is not None:
+                    missing.append(f"세력 접촉 {cond['factions_contacted_min']}곳")
+            if missing:
+                return f"클라이맥스 준비 ({len(met)}/{required}) — {', '.join(missing[:2])}"
+            return "클라이맥스 조건 충족 — 숲·탑으로 향하라"
+        contacts = len(ms.get("factions_contacted", []))
+        if int(ms.get("phase1_step", 0)) >= 3 and contacts >= 1 and not flags.get("story_phase1_chosen"):
+            return "마을·숲 대화·탐색 — A~E 첫 분기 선택지를 찾아라"
+        if flags.get("phase1_elder_request") and not flags.get("phase1_elder_responded"):
+            return "장로 마렌과 대화(수락) 또는 산 탐색(거절) — 부탁에 답하라"
+        if flags.get("phase1_rumors_spread"):
+            return "마을 대화·탐색 — 장로 부탁과 세력들의 움직임을 살펴라"
+        if flags.get("black_smoke_seen"):
+            return "마을 대화·휴식 — 소문이 퍼질 때까지 2턴 정도 기다려라"
+        return "마을 탐색 — 북쪽 산의 검은 연기를 목격하라"
 
     def _recalculate_ending_scores(
         self,
@@ -675,6 +734,9 @@ class MainStoryEngine:
             met = ms.get("climax_conditions_met", [])
             if met and not state.get("flags", {}).get("phase1_climax_done"):
                 parts.append(f"클라이맥스 조건: {len(met)}/4 ({', '.join(met)})")
+            hint = self._phase1_next_hint(state, ms, story)
+            if hint:
+                parts.append(f"다음: {hint}")
         if ms.get("resolved_ending"):
             ending = next((e for e in story.get("endings", []) if e["id"] == ms["resolved_ending"]), None)
             if ending:
