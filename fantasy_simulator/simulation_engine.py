@@ -41,6 +41,113 @@ PROMPT_MECHANICS = "mechanics_codex.md"
 PROMPT_WORLD_ARBITER = "world_arbiter.md"
 PROMPT_QUICK_EVENT = "quick_event_gpt.md"
 
+INTERACTIVE_HELP = """\
+명령어:
+  explore              탐험
+  rest                 휴식
+  combat [적_id]       전투 시작 (기본: malachar)
+  status               현재 상태
+  help                 이 도움말
+  quit / exit          종료 및 저장
+
+자유 입력 예: talk to merchant, cast fireball, investigate ruins
+"""
+
+
+def load_world_state(manager: StateManager) -> dict[str, Any]:
+    """Load world state from sharded state/ (+ world_state.json hub)."""
+    return manager.load()
+
+
+def save_world_state(manager: StateManager, state: dict[str, Any]) -> None:
+    """Persist state/ shards and sync world_state.json hub."""
+    manager.save(state)
+
+
+def resolve_enemy_id(query: str, loader: StateLoader) -> str:
+    """Match partial enemy name to characters/*.json id."""
+    q = query.strip().lower().replace("-", "_").replace(" ", "_")
+    char_dir = loader.base_dir / "characters"
+    available = sorted(p.stem for p in char_dir.glob("*.json"))
+    if q in available:
+        return q
+    for cid in available:
+        if q in cid or cid.startswith(q):
+            return cid
+    return q
+
+
+def parse_player_input(raw: str, loader: StateLoader | None = None) -> dict[str, Any]:
+    """Parse REPL input into a structured command."""
+    text = raw.strip()
+    if not text:
+        return {"kind": "empty"}
+    lower = text.lower()
+    if lower in ("quit", "exit", "q"):
+        return {"kind": "quit"}
+    if lower in ("status", "stat", "s"):
+        return {"kind": "status"}
+    if lower in ("help", "h", "?"):
+        return {"kind": "help"}
+    if lower.startswith("combat"):
+        parts = text.split(maxsplit=1)
+        enemy_query = parts[1] if len(parts) > 1 else "malachar"
+        enemy_id = resolve_enemy_id(enemy_query, loader) if loader else enemy_query
+        return {"kind": "turn", "action": "combat", "enemy_id": enemy_id}
+    return {"kind": "turn", "action": text}
+
+
+def print_turn_result(result: dict[str, Any]) -> None:
+    print(f"\n[Turn {result['turn']}] Day {result['day']} — {result['time']} ({result['mode']})")
+    for line in result["lines"]:
+        print(f"  {line}")
+
+
+def run_interactive_loop(engine: SimulationEngine) -> int:
+    """Interactive while-True REPL for Cursor terminal play."""
+    print("=== Eldoria 시뮬레이터 시작 ===")
+    print(f"모드: {engine.mode}")
+    print("명령어: explore, rest, combat <적>, status, help, quit")
+    print("자유 입력도 가능 (예: 'cast fireball', 'investigate ruins')")
+
+    while True:
+        try:
+            raw = input("\n행동을 입력하세요: ")
+        except (EOFError, KeyboardInterrupt):
+            print("\n\n게임 종료. 상태 저장 중...")
+            save_world_state(engine.manager, engine.state)
+            return 0
+
+        parsed = parse_player_input(raw, engine.loader)
+        kind = parsed["kind"]
+
+        if kind == "empty":
+            continue
+        if kind == "quit":
+            save_world_state(engine.manager, engine.state)
+            print("게임 종료. 상태 저장 완료.")
+            return 0
+        if kind == "status":
+            print(engine.status_report())
+            continue
+        if kind == "help":
+            print(INTERACTIVE_HELP)
+            continue
+
+        try:
+            result = engine.run_turn(
+                action=parsed["action"],
+                enemy_id=parsed.get("enemy_id"),
+            )
+        except (KeyError, FileNotFoundError, ValueError) as exc:
+            print(f"  오류: {exc}")
+            continue
+
+        print_turn_result(result)
+        save_world_state(engine.manager, engine.state)
+
+    return 0
+
 
 def run_existing_rule_logic(
     rules: RuleEngine,
@@ -289,15 +396,22 @@ class SimulationEngine:
             {"turn": self.turn, "type": "combat_start", "summary": f"전투 시작: {enemy['name']}"},
         )
 
-    def run_turn(self, action: str = "explore") -> dict[str, Any]:
+    def run_turn(self, action: str = "explore", *, enemy_id: str | None = None) -> dict[str, Any]:
         self.turn += 1
         time_label = self.rules.advance_time()
         outcome_lines: list[str] = []
 
-        # Combat start narration-only turn
-        if action == "combat" and not self.state.get("combat"):
-            self.start_combat("malachar_voidweaver")
-            outcome_lines.append("전투가 시작되었다.")
+        # Combat start (combat / combat <enemy_id>)
+        is_combat_start = action.lower().strip().startswith("combat") or action == "combat"
+        if is_combat_start and not self.state.get("combat"):
+            if enemy_id is None:
+                parts = action.split(maxsplit=1)
+                enemy_id = resolve_enemy_id(
+                    parts[1] if len(parts) > 1 else "malachar",
+                    self.loader,
+                )
+            self.start_combat(enemy_id)
+            outcome_lines.append(f"전투가 시작되었다. (적: {enemy_id})")
             if self.mode != "rule" and self.client:
                 proc = process_turn(
                     self.state,
@@ -448,7 +562,35 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--show-routing", action="store_true", help="LLM 라우팅 구조")
     p.add_argument("--export-legacy", action="store_true", help="world_state.json 내보내기")
     p.add_argument("--combat", metavar="ENEMY_ID", help="보스 전투")
+    p.add_argument(
+        "--batch",
+        action="store_true",
+        help="비대화형 배치 모드 (--turns/--action 사용)",
+    )
+    p.add_argument(
+        "--interactive",
+        "-i",
+        action="store_true",
+        help="대화형 CLI (기본값: 터미널 연결 시)",
+    )
     return p
+
+
+def _should_run_interactive(args: argparse.Namespace) -> bool:
+    """Interactive REPL unless batch/info flags are set."""
+    if args.batch or args.combat or args.status:
+        return False
+    if args.show_routing or args.show_prompts or args.export_legacy:
+        return False
+    if args.interactive:
+        return True
+    import sys
+
+    if not sys.stdin.isatty():
+        return False
+    if args.turns != 1 or args.action != "explore":
+        return False
+    return True
 
 
 def main(argv: Optional[list[str]] = None) -> int:
@@ -484,6 +626,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.status:
         print(engine.status_report())
         return 0
+
+    if _should_run_interactive(args):
+        return run_interactive_loop(engine)
 
     action = "combat" if args.combat else args.action
     if args.combat:

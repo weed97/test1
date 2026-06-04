@@ -50,15 +50,23 @@ fantasy_simulator/
 ```bash
 cd fantasy_simulator
 
+# 대화형 플레이 (Cursor 터미널)
+python3 simulation_engine.py
+python3 simulation_engine.py --mode hybrid -i
+
+# 배치/스크립트 모드
+python3 simulation_engine.py --batch --mode rule --turns 3 --seed 42
+python3 simulation_engine.py --batch --mode llm --action explore
+
 python3 simulation_engine.py --show-routing
 python3 simulation_engine.py --show-prompts
-python3 simulation_engine.py --mode rule --turns 1 --seed 42
-python3 simulation_engine.py --mode hybrid --action explore
-python3 simulation_engine.py --mode llm --turns 1
 
 # 수동 hub 동기화
 python3 simulation_engine.py --export-legacy
 ```
+
+**대화형 명령:** `explore`, `rest`, `combat <적>`, `status`, `help`, `quit`  
+자유 입력도 가능 (예: `cast fireball`, `investigate ruins`)
 
 ## 모드
 
