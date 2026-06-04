@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""Fantasy Simulator — turn orchestrator with minimal LLM routing."""
+"""Fantasy Simulator — multi-model orchestrator for Cursor.
+
+Player action branching (see docs/CURSOR_MULTI_MODEL.md):
+  서사 필요       → Claude Opus 4.8  (prompts/narrator_claude.md)
+  규칙 적용 필요   → Codex 5.3 High   (prompts/mechanics_codex.md, JSON only)
+  빠른 아이디어    → GPT-5.5 High     (prompts/quick_event_gpt.md)
+  둘 다 필요       → 순차: Codex → Opus (기본 파이프라인)
+  일관성 검사      → Opus + world_arbiter.md (5턴마다)
+
+Central state: world_state.json (auto-synced each turn from state/ shards).
+"""
 
 from __future__ import annotations
 
@@ -15,6 +25,7 @@ sys.path.insert(0, str(ROOT))
 
 from utils.llm_client import LLMClient  # noqa: E402
 from utils.llm_router import (  # noqa: E402
+    classify_action_needs,
     decide_model_and_prompt,
     describe_routes,
     route_consistency_check,
@@ -103,10 +114,14 @@ def process_player_action(
     rules: RuleEngine,
     client: LLMClient | None,
 ) -> dict[str, Any]:
-    """Minimal routing: decide_model_and_prompt → claude / codex / gpt / rule."""
+    """Minimal routing: classify needs → sequential model calls → sync world_state.json."""
     snapshot = manager.snapshot()
+    needs = classify_action_needs(action, state)
     decision = decide_model_and_prompt(action, state, mode=mode, base_dir=manager.base_dir)
-    outcome_lines: list[str] = list(describe_routes(decision["pipeline"]))
+    outcome_lines: list[str] = [
+        f"needs: narrative={needs['narrative']} mechanics={needs['mechanics']} quick={needs['quick_ideas']}",
+    ]
+    outcome_lines.extend(describe_routes(decision["pipeline"]))
     results: list[dict[str, Any]] = []
     mechanical: dict[str, Any] | None = None
     narrative_hint = ""
@@ -328,23 +343,32 @@ class SimulationEngine:
         routing = _load_routing(self.loader.base_dir)
         models = routing.get("models", {})
         lines = [
+            "=== Multi-Model Architecture (Cursor) ===",
+            "  See docs/CURSOR_MULTI_MODEL.md",
+            "",
             "=== Turn Orchestrator ===",
-            "  engine: simulation_engine.py",
-            "  entry:  process_player_action() → decide_model_and_prompt()",
+            "  engine: simulation_engine.py + Cursor Composer",
+            "  hub:    world_state.json (auto-sync each turn)",
+            "",
+            "=== Role → Model ===",
+            "  서사·캐릭터  → Claude Opus 4.8  (narrator_claude.md)",
+            "  규칙·메카닉스 → Codex 5.3 High   (mechanics_codex.md, JSON)",
+            "  빠른 아이디어 → GPT-5.5 High      (quick_event_gpt.md)",
+            "  일관성 검사  → Claude Opus 4.8  (world_arbiter.md, every 5 turns)",
+            "",
+            "=== Action needs (current: explore) ===",
+        ]
+        needs = classify_action_needs("explore", self.state)
+        for k, v in needs.items():
+            lines.append(f"  {k}: {v}")
+        lines.extend([
             "",
             "=== Minimal routing API ===",
-            "  decide_model_and_prompt(action, state)",
+            "  classify_action_needs / decide_model_and_prompt",
             "  call_claude_narrator / call_codex_mechanics / call_gpt_quick_event",
-            "  run_existing_rule_logic / apply_changes_to_state",
             "",
-            "=== Prompt files ===",
-            "  narrator_claude.md  → claude (Opus 4.8 High)",
-            "  mechanics_codex.md  → codex (Codex 5.3 High)",
-            "  world_arbiter.md    → claude (consistency JSON)",
-            "  quick_event_gpt.md  → gpt   (GPT-5.5 High)",
-            "",
-            "=== Sample route (llm explore) ===",
-        ]
+            "=== LLM explore pipeline (Codex → Opus) ===",
+        ])
         from utils.llm_router import route_action
 
         sample = route_action("explore", self.state, mode="llm", base_dir=self.loader.base_dir)

@@ -101,5 +101,33 @@
     "explore": ["quick_event", "narrator"],
     "rest": ["narrator"],
     "combat_round": ["mechanics", "narrator"]
+  },
+  "cursor_operating_model": {
+    "hub_file": "world_state.json",
+    "orchestrator": "simulation_engine.py + Cursor Composer",
+    "roles": {
+      "narrative": {
+        "model": "Claude Opus 4.8 High",
+        "prompt": "prompts/narrator_claude.md",
+        "cursor": "별도 Chat 또는 Composer"
+      },
+      "mechanics": {
+        "model": "Codex 5.3 High",
+        "prompt": "prompts/mechanics_codex.md",
+        "cursor": "Mechanics 전용 Chat, JSON 강제"
+      },
+      "quick_ideas": {
+        "model": "GPT-5.5 High",
+        "prompt": "prompts/quick_event_gpt.md",
+        "cursor": "브레인스토밍 Chat"
+      },
+      "consistency": {
+        "model": "Claude Opus 4.8 High",
+        "prompt": "prompts/world_arbiter.md",
+        "cursor": "주기적 Chat — world_state 모순 검사"
+      }
+    },
+    "default_pipeline_order": "quick_event → mechanics (Codex) → narrator (Opus)",
+    "note": "규칙 먼저, 서사 나중 — Codex JSON 결과를 Opus가 서사화"
   }
 }

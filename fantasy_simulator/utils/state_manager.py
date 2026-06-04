@@ -20,8 +20,15 @@ class StateManager:
     def load(self) -> dict[str, Any]:
         return self.store.load()
 
-    def save(self, state: dict[str, Any] | None = None) -> None:
+    def save(self, state: dict[str, Any] | None = None, *, sync_hub: bool = True) -> None:
+        """Persist sharded state/ and optionally mirror to world_state.json for Cursor."""
         self.store.save(state)
+        if sync_hub:
+            self.sync_hub()
+
+    def sync_hub(self) -> None:
+        """Write monolithic world_state.json — Cursor-facing SSOT mirror."""
+        self.store.export_legacy()
 
     def snapshot(self, *, event_limit: int = 10) -> dict[str, Any]:
         """Compact state for LLM user messages."""

@@ -103,6 +103,29 @@ def route_consistency_check(
     return [_role_to_step(r, routing) for r in roles]
 
 
+def classify_action_needs(
+    action: str,
+    state: dict[str, Any],
+) -> dict[str, bool]:
+    """What model capabilities does this action require?
+
+    Used by simulation_engine to document branching:
+      narrative   → Claude Opus  (narrator_claude.md)
+      mechanics   → Codex 5.3    (mechanics_codex.md, JSON)
+      quick_ideas → GPT-5.5      (quick_event_gpt.md)
+    """
+    in_combat = bool(state.get("combat"))
+    needs_mechanics = action in ("combat", "rest", "explore") or in_combat
+    needs_narrative = action in ("explore", "rest", "combat", "combat_start") or in_combat
+    needs_quick = action in ("explore", "rest") and not in_combat
+    return {
+        "narrative": needs_narrative,
+        "mechanics": needs_mechanics,
+        "quick_ideas": needs_quick,
+        "consistency_check": False,  # set by turn interval in engine
+    }
+
+
 def decide_model_and_prompt(
     action: str,
     state: dict[str, Any],

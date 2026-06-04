@@ -1,116 +1,79 @@
-# Fantasy Simulator
+# Fantasy Simulator — Eldoria
 
-판타지 세계 **엘도리아**를 턴제로 시뮬레이션하는 오케스트레이터입니다.
+Cursor 멀티 모델 운영을 위한 판타지 시뮬레이터.  
+**`world_state.json`이 중앙 SSOT**이며, 매 턴마다 자동 동기화됩니다.
 
-## 디렉터리 구조
+> 상세 운영 가이드: [docs/CURSOR_MULTI_MODEL.md](docs/CURSOR_MULTI_MODEL.md)
+
+## 프로젝트 구조
 
 ```
 fantasy_simulator/
-├── state/                    # 샤arded world state (권장 SSOT)
-│   ├── meta.json
-│   ├── world.json
-│   ├── factions.json
-│   ├── party.json
-│   ├── inventory.json
-│   ├── flags.json
-│   ├── combat.json
-│   └── event_log.json        # entries[] + next_turn (로그 분리)
-├── world_state.json          # 레거시 단일 파일 (마이그레이션/내보내기용)
-├── config/
-│   └── llm_routing.json      # 역할→모델 라우팅, 파이프라인 정의
-├── schemas/                  # structured output JSON Schema
-├── rules/
-├── characters/
-├── prompts/
-│   ├── base/                 # 공통 역할 프롬프트
-│   └── models/
-│       ├── codex_53/         # Codex 5.3 — 규칙 엄격 JSON
-│       ├── opus_48_high/     # Opus 4.8 high — 서사·대사
-│       └── gpt_55_high/      # ChatGPT 5.5 high — 빠른 이벤트 대안
-├── simulation_engine.py      # process_turn() orchestrator
+├── world_state.json          # ★ 현재 세계 상태 (Cursor SSOT)
+├── state/                    # 엔진 내부 샤드 (자동 관리)
+├── rules/                    # 마법 체계, 전투 규칙
+├── characters/               # 캐릭터 데이터
+├── prompts/                  # 역할별 시스템 프롬프트
+│   ├── narrator_claude.md    → Opus 4.8 High
+│   ├── mechanics_codex.md    → Codex 5.3 High (JSON)
+│   ├── world_arbiter.md      → Opus (일관성)
+│   └── quick_event_gpt.md    → GPT-5.5 High
+├── config/llm_routing.json
+├── simulation_engine.py      # 메인 오케스트레이터
 └── utils/
-    ├── llm_router.py         # route_action(action, state) → model/prompt steps
-    ├── llm_client.py         # call_claude / call_codex / call_gpt
-    ├── state_manager.py      # load/save/snapshot/apply_result
-    ├── state_store.py        # sharded state shards
-    ├── rule_engine.py        # run_rule_based fallback
-    └── structured_output.py
+    ├── llm_router.py
+    ├── llm_client.py
+    └── state_manager.py
 ```
 
-## 실행 모드
+## 멀티 모델 분기 (`simulation_engine.py`)
 
-| 모드 | 설명 |
-|------|------|
-| `rule` | 규칙 엔진만 (LLM 불필요, 오프라인) |
-| `llm` | LLM 파이프라인 (world_arbiter→narrator 등) |
-| `hybrid` | 규칙으로 주사위/수치 → LLM으로 서사·검증 |
+| 필요 | 모델 | 프롬프트 |
+|------|------|----------|
+| 서사·캐릭터 | Claude Opus 4.8 High | `narrator_claude.md` |
+| 규칙·메카닉스 | Codex 5.3 High | `mechanics_codex.md` (JSON only) |
+| 빠른 아이디어 | GPT-5.5 High | `quick_event_gpt.md` |
+| 오케스트레이션 | Cursor Composer + 엔진 | `simulation_engine.py` |
+
+**기본 순서 (explore):** GPT → **Codex(규칙)** → **Opus(서사)**
+
+## Cursor 사용법
+
+1. **Composer** — `@world_state.json` + `@simulation_engine.py`로 턴 실행/파일 관리
+2. **Opus Chat** — 서사 전담, `narrator_claude.md` 시스템 프롬프트
+3. **Codex Chat** — 규칙 전담, `mechanics_codex.md`, JSON only
+4. **GPT/Composer** — `quick_event_gpt.md`로 브레인스토밍
+5. **주기적** — Opus + `world_arbiter.md`로 `world_state.json` 모순 검사
+
+## CLI
 
 ```bash
 cd fantasy_simulator
 
-# 규칙만
-python3 simulation_engine.py --mode rule --turns 3 --seed 42
-
-# Hybrid: 규칙 + mock LLM (API 키 불필요)
-python3 simulation_engine.py --mode hybrid --turns 2 --action explore
-
-# LLM 라우팅 확인
 python3 simulation_engine.py --show-routing
+python3 simulation_engine.py --show-prompts
+python3 simulation_engine.py --mode rule --turns 1 --seed 42
+python3 simulation_engine.py --mode hybrid --action explore
+python3 simulation_engine.py --mode llm --turns 1
 
-# state/ → world_state.json 내보내기
+# 수동 hub 동기화
 python3 simulation_engine.py --export-legacy
 ```
 
-## Core flow (`simulation_engine.py`)
+## 모드
 
-```python
-from utils.llm_router import route_action
-from utils.llm_client import LLMClient, call_claude, call_codex
-from utils.state_manager import StateManager
-
-def process_turn(state, action, mode, turn, manager, rules, client):
-    routes = route_action(action, state, mode=mode, turn=turn)
-    for step in routes:
-        if step["model"] == "rule":
-            result = run_rule_based(rules, ...)
-        elif step["model"] == "claude":
-            result = call_claude(client, step["prompt_file"], snapshot, action)
-        elif step["model"] == "codex":
-            result = call_codex(client, step["prompt_file"], snapshot, action)
-        elif step["model"] == "gpt":
-            result = client.call_gpt(step["prompt_file"], snapshot, action)
-        manager.apply_result(state, result, turn=turn)
-```
-
-## Prompt files
-
-| File | Model | Output |
-|------|-------|--------|
-| `prompts/narrator_claude.md` | Opus 4.8 High | plain text |
-| `prompts/mechanics_codex.md` | Codex 5.3 High | JSON only |
-| `prompts/world_arbiter.md` | Opus 4.8 High | JSON (every 5 turns) |
-| `prompts/quick_event_gpt.md` | GPT-5.5 High | JSON |
+| 모드 | 동작 |
+|------|------|
+| `rule` | rule engine만 (오프라인) |
+| `hybrid` | rule → GPT/Opus (탐색), rule → Codex → Opus (전투) |
+| `llm` | 전체 LLM 파이프라인 |
 
 ## API 키 (선택)
 
-| Provider | 환경 변수 | 역할 |
-|----------|-----------|------|
-| Anthropic | `ANTHROPIC_API_KEY` | Opus 4.8 high (narrator) |
-| OpenAI | `OPENAI_API_KEY` | Codex 5.3, ChatGPT 5.5 high |
-
-키가 없으면 `default_model: mock`으로 자동 fallback.
-
-## world_state 샤딩
-
-단일 JSON 대신 `state/` 샤드로 분리:
-
-- **world.json** — 날짜, 날씨, 긴장도
-- **event_log.json** — `entries[]` (히스토리 독립 성장)
-- **combat.json** — 전투 중에만 non-null
-
-기존 `world_state.json`이 있으면 최초 로드 시 자동 마이그레이션.
-
-LLM 컨텍스트에는 `StateStore.llm_context_snapshot()`으로 최근 이벤트 10건만 전달.
+```bash
+export ANTHROPIC_API_KEY=...   # Opus
+export OPENAI_API_KEY=...      # Codex, GPT-5.5
+```
 
 ## 테스트
 
