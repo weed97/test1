@@ -201,6 +201,7 @@ class ContentLoader:
                     "hook": s.get("hook", ""),
                     "seed_type": s.get("seed_type"),
                     "related_npc": s.get("related_npc"),
+                    "main_plot_link": s.get("main_plot_link"),
                 }
                 for s in seeds
             ],

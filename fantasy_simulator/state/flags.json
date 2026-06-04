@@ -21,7 +21,10 @@
     "rotting_smell",
     "traitor_in_council",
     "torren_secret",
-    "quest_missing_hunter"
+    "quest_missing_hunter",
+    "black_council",
+    "false_prophet",
+    "past_accomplice"
   ],
   "triggered_events": [
     "well_sound",

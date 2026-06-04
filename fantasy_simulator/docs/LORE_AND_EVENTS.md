@@ -35,7 +35,11 @@ characters/
 | `seeds/character.json` | 4 | character_event (+ `related_npc`) |
 | `seeds/quest_hooks.json` | 3 | quest (multi-stage hooks) |
 
-**Total: 61** seeds. Filter: `location_zones`, `requires_tension_min`, `related_npc` (talk).
+| `seeds/horror_extreme.json` | 15 | horror_event (extreme, high tension) |
+| `seeds/conspiracy.json` | 5 | conspiracy + `main_plot_link` |
+| `seeds/player_past.json` | 6 | player past character_event |
+
+**Total: 87** seeds. Extreme horror uses `requires_tension_min` 48–68 and low `weight`.
 
 ## 씨앗 카탈로그 (shard)
 

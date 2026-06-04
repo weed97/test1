@@ -61,7 +61,7 @@ class EventEngineTests(unittest.TestCase):
         self.assertIn("연기", result["summary"])
 
     def test_load_all_seed_shards(self) -> None:
-        self.assertEqual(len(self.content.load_event_seeds()), 61)
+        self.assertEqual(len(self.content.load_event_seeds()), 87)
 
     def test_expansion_seed_has_hook(self) -> None:
         seed = self.content.get_event_seed("whispering_well")
@@ -75,6 +75,13 @@ class EventEngineTests(unittest.TestCase):
         self.assertIsNotNone(seed)
         assert seed is not None
         self.assertEqual(seed.get("seed_type"), "horror_event")
+
+    def test_conspiracy_seed_links_main_plot(self) -> None:
+        seed = self.content.get_event_seed("black_council")
+        self.assertIsNotNone(seed)
+        assert seed is not None
+        self.assertEqual(seed.get("seed_type"), "conspiracy")
+        self.assertEqual(seed.get("main_plot_link"), "smoke_on_the_mountain")
 
     def test_character_event_requires_matching_npc(self) -> None:
         self.state["flags"]["pending_events"] = ["lilian_information"]

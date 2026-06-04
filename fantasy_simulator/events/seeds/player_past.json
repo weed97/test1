@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "description": "플레이어 과거 연계 — 어떤 백스토리든 연결 가능한 encounter",
+  "seeds": [
+    {
+      "id": "past_accomplice",
+      "seed_type": "character_event",
+      "title": "과거의 공범",
+      "summary": "누군가 '그때 네가 날 버렸지'라고 말한다.",
+      "tags": ["player_past", "betrayal", "character_driven"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint", "forest"],
+      "requires_tension_min": 30,
+      "weight": 8,
+      "hook": "한 사내가 플레이어를 알아보고 '그때 네가 날 버렸지'라고 말한다.",
+      "outcome": {
+        "summary": "낯선 자: '…봉인 앞에서 네가 선택했잖아.' 사라지기 전 지도 조각을 떨어뜨린다.",
+        "tension_delta": 12,
+        "flags_set": {"past_accomplice_met": true},
+        "reputation": {"grey_cloak": 2}
+      }
+    },
+    {
+      "id": "old_debt_collector",
+      "seed_type": "character_event",
+      "title": "채무 collector",
+      "summary": "과거 빚을 받으러 온 자. 이자는 목숨.",
+      "tags": ["player_past", "debt", "threat"],
+      "requires_time": ["night", "evening"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "weight": 9,
+      "hook": "과거에 플레이어가 진 빚을 받으러 온 자가 나타났다. 이자는 목숨이다.",
+      "outcome": {
+        "summary": "망토 깊은 자: '…한 life, 한 파편.' 거절하면 tension만 오르고, 받아들이면 gold -50.",
+        "tension_delta": 10,
+        "gold_delta": -50,
+        "flags_set": {"old_debt_acknowledged": true}
+      }
+    },
+    {
+      "id": "survivor_of_your_sins",
+      "seed_type": "character_event",
+      "title": "죄의 생존자",
+      "summary": "플레이어의 과거로 가족을 잃은 자가 복수를 요구한다.",
+      "tags": ["player_past", "revenge", "moral"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint", "forest"],
+      "requires_tension_min": 40,
+      "weight": 7,
+      "hook": "플레이어가 과거에 저지른 일로 가족을 잃은 자가 나타나 복수를 요구한다.",
+      "outcome": {
+        "summary": "눈에 눈. '…네가 숲에 불을 질렀을 때.' 선택: 사과(reputation+) 또는 대립(tension+).",
+        "tension_delta": 14,
+        "flags_set": {"survivor_of_sins_met": true},
+        "reputation": {"ashpoint": 5}
+      }
+    },
+    {
+      "id": "forgotten_lover",
+      "seed_type": "character_event",
+      "title": "잊힌 연인",
+      "summary": "과거 연인이 나타났다. 플레이어를 죽이려 한다.",
+      "tags": ["player_past", "romance", "tragedy"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 38,
+      "weight": 7,
+      "hook": "플레이어의 과거 연인이 나타났다. 하지만 그/그녀는 플레이어를 죽이려고 한다.",
+      "outcome": {
+        "summary": "여관 복도 — 단검. '…네가 날 선택하지 않았을 때.' 사라지고, 침대에 검은 깃털.",
+        "tension_delta": 13,
+        "flags_set": {"forgotten_lover_seen": true},
+        "reputation": {"lilian": -3}
+      }
+    },
+    {
+      "id": "child_you_abandoned",
+      "seed_type": "character_event",
+      "title": "버린 아이",
+      "summary": "과거에 버린 아이가 어른이 되어 나타났다.",
+      "tags": ["player_past", "family", "guilt"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 42,
+      "weight": 6,
+      "hook": "플레이어가 과거에 버린 아이가 이제 어른이 되어 나타났다. 눈에 증오가 가득하다.",
+      "outcome": {
+        "summary": "…리사와 다른 얼굴. '…왜 나를 두고 갔어?' 환영인지, 진짜인지 모른다.",
+        "tension_delta": 15,
+        "flags_set": {"abandoned_child_vision": true}
+      }
+    },
+    {
+      "id": "former_comrade",
+      "seed_type": "character_event",
+      "title": "전우",
+      "summary": "과거 동료가 '배신자'라고 부른다.",
+      "tags": ["player_past", "comrade", "conflict"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint", "forest"],
+      "weight": 9,
+      "hook": "과거에 함께했던 동료가 나타났다. 그는 플레이어를 '배신자'라고 부른다.",
+      "outcome": {
+        "summary": "가레스가 경계한다. 낯선 전사: '…북쪽 전쟁, 기억하지?' 토렌만 고개를 돌린다.",
+        "tension_delta": 11,
+        "flags_set": {"former_comrade_met": true},
+        "reputation": {"torren": 4}
+      }
+    }
+  ]
+}

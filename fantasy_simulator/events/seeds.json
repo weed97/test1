@@ -5,8 +5,11 @@
     "seeds/core.json",
     "seeds/expansion_village.json",
     "seeds/horror.json",
+    "seeds/horror_extreme.json",
     "seeds/political.json",
     "seeds/character.json",
+    "seeds/conspiracy.json",
+    "seeds/player_past.json",
     "seeds/quest_hooks.json"
   ],
   "seed_types": [
@@ -16,7 +19,8 @@
     "horror_event",
     "political",
     "character_event",
-    "quest"
+    "quest",
+    "conspiracy"
   ],
   "seeds": []
 }

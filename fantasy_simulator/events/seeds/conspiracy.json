@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "description": "장기 메인 스토리 연계 음모 — smoke_on_the_mountain / 봉인",
+  "seeds": [
+    {
+      "id": "black_council",
+      "seed_type": "conspiracy",
+      "title": "검은 회의",
+      "summary": "장로, 상인 길드, 정체 불명의 사제가 비밀리에 모인다.",
+      "tags": ["conspiracy", "main_plot", "politics"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "requires_flags": ["elder_briefed"],
+      "requires_tension_min": 40,
+      "weight": 9,
+      "main_plot_link": "smoke_on_the_mountain",
+      "hook": "마을 장로, 상인 길드장, 그리고 정체를 알 수 없는 사제가 비밀리에 모임을 가졌다.",
+      "outcome": {
+        "summary": "우물가 지하 — 세 그림자. '봉인을 유지하려면… 희생이.' 회색 망토는 그 회의에 없었다.",
+        "tension_delta": 12,
+        "flags_set": {"black_council_witnessed": true},
+        "reputation": {"ashpoint": -4}
+      }
+    },
+    {
+      "id": "false_prophet",
+      "seed_type": "conspiracy",
+      "title": "거짓 예언자",
+      "summary": "구원자 예언을 퍼뜨리는 자. 배후가 수상하다.",
+      "tags": ["conspiracy", "cult", "main_plot"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 35,
+      "weight": 10,
+      "main_plot_link": "smoke_on_the_mountain",
+      "hook": "최근 마을에서 '구원자'가 나타날 것이라는 예언을 퍼뜨리는 자가 있다. 그 배후가 수상하다.",
+      "outcome": {
+        "summary": "외부 사제: '연기를 삼킨 자가 구원한다.' 장로는 분노, 회색 망토는 조용히 고개를 젓는다.",
+        "tension_delta": 10,
+        "flags_set": {"false_prophet_active": true},
+        "rumor_add": "구원자가 온다는 예언이 돈다."
+      }
+    },
+    {
+      "id": "stolen_relic",
+      "seed_type": "conspiracy",
+      "title": "도난당한 유물",
+      "summary": "마을 유물이 사라졌다. 봉인의 열쇠라는 소문.",
+      "tags": ["conspiracy", "relic", "main_plot"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "requires_quest_stage_min": 2,
+      "weight": 11,
+      "main_plot_link": "smoke_on_the_mountain",
+      "hook": "마을에 전해 내려오던 유물이 사라졌다. 그리고 그 유물이 '봉인'을 풀기 위한 열쇠라는 소문이 돈다.",
+      "outcome": {
+        "summary": "장로의 지팡이 룬이 비었다. '…실버 스토커가 가져갔거나, 누군가 넘겼거나.'",
+        "tension_delta": 14,
+        "flags_set": {"stolen_relic": true},
+        "reputation": {"ashpoint": 5}
+      }
+    },
+    {
+      "id": "noble_puppet",
+      "seed_type": "conspiracy",
+      "title": "귀족의 꼭두각시",
+      "summary": "귀족이 다른 세력의 꼭두각시라는 증거.",
+      "tags": ["conspiracy", "politics", "main_plot"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_flags": ["noble_caravan_seen"],
+      "weight": 10,
+      "main_plot_link": "smoke_on_the_mountain",
+      "hook": "최근 마을에 영향력을 행사하는 귀족이 사실은 다른 세력의 꼭두각시라는 증거가 나오고 있다.",
+      "outcome": {
+        "summary": "밀수단 문장이 귀족 수레에. '연기를 키우면 변경 통행세가 오른다.' — 핀 상인의 속삭임.",
+        "tension_delta": 11,
+        "flags_set": {"noble_puppet_evidence": true}
+      }
+    },
+    {
+      "id": "blood_contract",
+      "seed_type": "conspiracy",
+      "title": "피의 계약",
+      "summary": "주요 인사들의 피로 맺은 계약 기록.",
+      "tags": ["conspiracy", "dark_deal", "main_plot"],
+      "requires_action": ["investigate", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_flags": ["elder_briefed"],
+      "requires_tension_min": 45,
+      "weight": 8,
+      "main_plot_link": "smoke_on_the_mountain",
+      "hook": "마을 주요 인사들이 과거에 피로 맺은 계약이 있다는 기록이 발견되었다.",
+      "outcome": {
+        "summary": "우물 지하 — 40년 전 서명: 장로, 토렌(젊은), '…실버우드 수호.' 토렌은 창백해진다.",
+        "tension_delta": 13,
+        "flags_set": {"blood_contract_found": true},
+        "reputation": {"torren": -5, "ashpoint": 3}
+      }
+    }
+  ]
+}

@@ -1,0 +1,281 @@
+{
+  "version": 1,
+  "description": "극한 호러 이벤트 — high tension, low weight, 주로 밤",
+  "seeds": [
+    {
+      "id": "skinned_hunter",
+      "seed_type": "horror_event",
+      "title": "벗겨진 사냥꾼",
+      "summary": "사냥꾼이 가죽이 벗겨진 채 마을 입구에 매달려 있다. 아직 살아 있다.",
+      "tags": ["horror", "extreme", "body_horror"],
+      "requires_time": ["night", "morning"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 58,
+      "weight": 4,
+      "hook": "사냥꾼 한 명이 가죽이 벗겨진 채로 마을 입구에 매달려 있다. 아직 살아있다.",
+      "outcome": {
+        "summary": "카엘… 같다. 눈은 깜빡인다. 입술: '…탑…' — 다음 순간 연기와 함께 흔적만 남는다.",
+        "tension_delta": 22,
+        "flags_set": {"skinned_hunter_seen": true},
+        "reputation": {"ashpoint": -8}
+      }
+    },
+    {
+      "id": "family_dinner",
+      "seed_type": "horror_event",
+      "title": "가족의 저녁",
+      "summary": "한 가족의 저녁 식탁. 고기가 가족 구성원이다.",
+      "tags": ["horror", "cannibalism", "extreme"],
+      "requires_time": ["evening", "night"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 62,
+      "weight": 3,
+      "hook": "한 가족이 저녁 식사를 하고 있다. 식탁 위에 올려진 고기가 그들의 가족 구성원이다.",
+      "outcome": {
+        "summary": "빈집에서 발견. 식탁은 차갑고, 벽에 '감사합니다'만 쓰여 있다. 아무도 기억하지 못한다.",
+        "tension_delta": 20,
+        "flags_set": {"family_dinner_horror": true}
+      }
+    },
+    {
+      "id": "self_burial",
+      "seed_type": "horror_event",
+      "title": "스스로 묻는 자",
+      "summary": "마을 사람이 스스로 무덤을 파고 들어간다.",
+      "tags": ["horror", "psychological", "cult"],
+      "requires_time": ["night"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 55,
+      "weight": 5,
+      "hook": "마을 사람이 스스로 무덤을 파고 들어가고 있다. 표정이 평온하다.",
+      "outcome": {
+        "summary": "취객이 흙 속에서 웃는다. '봉인은… 아래…' 장로만 그를 끌어낸다. 아침엔 기억 못 함.",
+        "tension_delta": 17,
+        "flags_set": {"self_burial_witnessed": true},
+        "rumor_add": "스스로 무덤에 들어간 사람이 있다."
+      }
+    },
+    {
+      "id": "child_eating_mother",
+      "seed_type": "horror_event",
+      "title": "어둠의 아이",
+      "summary": "아이가 어머니의 몸을… 눈이 검게 물들어 있다.",
+      "tags": ["horror", "extreme", "body_horror"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 65,
+      "weight": 2,
+      "hook": "어린아이가 죽은 어머니의 몸을 뜯어먹고 있다. 눈이 완전히 검게 물들어 있다.",
+      "outcome": {
+        "summary": "환영처럼 사라진다. 리사는 무사하다 — 하지만 잠깐 눈동자가 검게 변한 것 같다.",
+        "tension_delta": 25,
+        "flags_set": {"child_horror_vision": true},
+        "reputation": {"ashpoint": -10}
+      }
+    },
+    {
+      "id": "whispering_wound",
+      "seed_type": "horror_event",
+      "title": "속삭이는 상처",
+      "summary": "플레이어의 상처에서 목소리가 난다.",
+      "tags": ["horror", "body_horror", "personal"],
+      "requires_action": ["rest", "explore"],
+      "location_zones": ["ashpoint", "forest", "tower"],
+      "requires_tension_min": 50,
+      "weight": 6,
+      "hook": "플레이어의 상처에서 누군가의 목소리가 들려온다. 상처가 천천히 말을 하고 있다.",
+      "outcome": {
+        "summary": "전투 흉터가 잠깐 벌어지며 '…돌려줘…' 속삭임. 치유 후에도 희미한 냉기.",
+        "tension_delta": 15,
+        "flags_set": {"whispering_wound": true}
+      }
+    },
+    {
+      "id": "living_meat",
+      "seed_type": "horror_event",
+      "title": "살아 있는 고기",
+      "summary": "고기 가게의 고기가 꿈틀거린다.",
+      "tags": ["horror", "body_horror"],
+      "requires_time": ["morning", "afternoon"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 52,
+      "weight": 5,
+      "hook": "고기 가게의 고기들이 꿈틀거리고 있다. 아직도 살아있는 것처럼.",
+      "outcome": {
+        "summary": "blink하면 정지. 상인: '…오늘은 안 팔겠소.' 연기 냄새가 고기에서 난다.",
+        "tension_delta": 14,
+        "flags_set": {"living_meat_seen": true}
+      }
+    },
+    {
+      "id": "confession_under_skin",
+      "seed_type": "horror_event",
+      "title": "피부 아래 고백",
+      "summary": "사내가 배를 가르고 종이를 꺼낸다.",
+      "tags": ["horror", "extreme", "guilt"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "rest"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 60,
+      "weight": 3,
+      "hook": "한 사내가 자신의 배를 칼로 가르고 안에서 종이 한 장을 꺼낸다. 자신의 죄가 적혀있다.",
+      "outcome": {
+        "summary": "종이: '나는 봉인을 팔았다.' 사내는 쓰러지고, 종이는 재가 된다. 장로만 고개를 떨군다.",
+        "tension_delta": 18,
+        "flags_set": {"confession_under_skin": true},
+        "reputation": {"ashpoint": -6}
+      }
+    },
+    {
+      "id": "replaced_family",
+      "seed_type": "horror_event",
+      "title": "바뀐 가족",
+      "summary": "돌아온 가족의 얼굴과 말투가 미세하게 다르다.",
+      "tags": ["horror", "doppelganger", "psychological"],
+      "requires_action": ["talk", "explore"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 54,
+      "weight": 5,
+      "hook": "집에 돌아온 가족의 얼굴이 미세하게 다르다. 말투도, 습관도 조금씩 어긋난다.",
+      "outcome": {
+        "summary": "민병대원 가족. '…원래 이랬나?' 다음 날 전부 정상. 기록만 어긋난다.",
+        "tension_delta": 16,
+        "flags_set": {"replaced_family_rumor": true}
+      }
+    },
+    {
+      "id": "nail_growth",
+      "seed_type": "horror_event",
+      "title": "자라는 손톱",
+      "summary": "남자의 손톱이 하루 만에 30cm 이상 자랐다.",
+      "tags": ["horror", "body_horror"],
+      "requires_time": ["morning"],
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 48,
+      "weight": 6,
+      "hook": "한 남자의 손톱이 하루 만에 30cm 이상 자라났다. 그리고 계속 자라고 있다.",
+      "outcome": {
+        "summary": "토렌이 손톱을 쳐낸다. '…실버우드 저주.' 손톱 아래 룬 흔적.",
+        "tension_delta": 13,
+        "flags_set": {"nail_growth_event": true},
+        "reputation": {"torren": 3}
+      }
+    },
+    {
+      "id": "screaming_trees",
+      "seed_type": "horror_event",
+      "title": "비명 나무",
+      "summary": "숲의 나무들이 사람의 비명을 지른다.",
+      "tags": ["horror", "supernatural", "forest"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest", "tower"],
+      "requires_quest_stage_min": 2,
+      "requires_tension_min": 45,
+      "weight": 8,
+      "hook": "숲에 들어가자 나무들이 사람의 비명을 지르기 시작한다. 가까이 갈수록 더 크게.",
+      "outcome": {
+        "summary": "나무 껍질을 긁으면 실버우드 룬. '봉인·지키·잠들' — '잠들'만 비명처럼 울린다.",
+        "tension_delta": 15,
+        "flags_set": {"screaming_trees_heard": true},
+        "location": "북쪽 숲"
+      }
+    },
+    {
+      "id": "forced_birth",
+      "seed_type": "horror_event",
+      "title": "죽은 배",
+      "summary": "죽은 여자의 배에서 무언가가 꿈틀거린다.",
+      "tags": ["horror", "extreme", "body_horror"],
+      "requires_time": ["night"],
+      "requires_action": ["investigate", "explore"],
+      "location_zones": ["forest", "tower"],
+      "requires_tension_min": 68,
+      "weight": 2,
+      "hook": "죽은 여자의 배에서 무언가가 꿈틀거리며 빠져나오려 한다. 아직 살아있다.",
+      "outcome": {
+        "summary": "환영. 바닥에는 검은 기름만. 회색 망토: '…봉인이 스스로 낳으려 한다.'",
+        "tension_delta": 23,
+        "flags_set": {"forced_birth_vision": true}
+      }
+    },
+    {
+      "id": "memory_theft",
+      "seed_type": "horror_event",
+      "title": "훔친 기억",
+      "summary": "아는 사람들이 플레이어를 모른다.",
+      "tags": ["horror", "existential", "psychological"],
+      "requires_action": ["talk", "explore"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 56,
+      "weight": 5,
+      "hook": "플레이어가 아는 사람들의 기억이 점점 사라지고 있다. 그들은 플레이어를 모른다고 한다.",
+      "outcome": {
+        "summary": "토렌: '…처음 보는 얼굴인데.' 잠시 후 기억 복귀. 우물가에서만 증상.",
+        "tension_delta": 14,
+        "flags_set": {"memory_theft_event": true}
+      }
+    },
+    {
+      "id": "butcher_shop_customer",
+      "seed_type": "horror_event",
+      "title": "정육점 손님",
+      "summary": "정육점 주인이 '신선한 고기'라며 부른다.",
+      "tags": ["horror", "suspicious", "cannibalism"],
+      "requires_time": ["evening", "night"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 50,
+      "weight": 6,
+      "hook": "고기 가게 주인이 '오늘은 신선한 고기가 들어왔다'며 플레이어를 안으로 부른다.",
+      "outcome": {
+        "summary": "안은 비었다. 주인만 웃는다. '…아직 준비 중이야.' 문 밖에서 연기 냄새.",
+        "tension_delta": 12,
+        "flags_set": {"butcher_shop_invite": true}
+      }
+    },
+    {
+      "id": "endless_screaming",
+      "seed_type": "horror_event",
+      "title": "끝없는 비명",
+      "summary": "빈 집에서 비명만 계속된다.",
+      "tags": ["horror", "supernatural", "dread"],
+      "requires_time": ["night"],
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["ashpoint"],
+      "requires_tension_min": 57,
+      "weight": 4,
+      "hook": "마을 한 채에서 비명이 멈추지 않는다. 문을 열자 안에 아무도 없다. 비명만 계속된다.",
+      "outcome": {
+        "summary": "벽 너머 우물 방향. 비명은 새벽까지. 이후 집은 허물어져 봉인한다.",
+        "tension_delta": 17,
+        "flags_set": {"endless_screaming_house": true},
+        "rumor_add": "비명만 나는 빈집이 있다."
+      }
+    },
+    {
+      "id": "wearing_others_skin",
+      "seed_type": "horror_event",
+      "title": "남의 피부",
+      "summary": "남자가 다른 사람의 피부로 만든 옷을 입고 있다.",
+      "tags": ["horror", "extreme", "body_horror"],
+      "requires_time": ["night"],
+      "requires_action": ["explore"],
+      "location_zones": ["ashpoint", "forest"],
+      "requires_tension_min": 63,
+      "weight": 3,
+      "hook": "한 남자가 다른 사람의 피부로 만든 옷을 입고 있다. 아직 따뜻하다.",
+      "outcome": {
+        "summary": "회색 망토? 아니다. 낯선 자가 숲으로 사라진다. 옷감에 실버우드 룬.",
+        "tension_delta": 21,
+        "flags_set": {"wearing_others_skin_seen": true},
+        "reputation": {"grey_cloak": -5}
+      }
+    }
+  ]
+}
