@@ -255,6 +255,15 @@ class MainStoryEngine:
         elif int(ms.get("phase", 1)) == 2:
             self._advance_phase2_from_flag(state, story, ms, "story_phase2_chosen")
             ms["phase2_subphase"] = "late"
+            if choice_id == "path_alliance":
+                faction = state.get("flags", {}).get("alliance_faction")
+                if faction:
+                    ms["alliance_faction"] = faction
+                p1 = self._primary_phase1_choice(ms)
+                if p1:
+                    route = story.get("phase2_alliance_routes", {}).get(p1, {})
+                    if route.get("label"):
+                        lines.append(f"[동맹] {route['label']} 깃발 아래")
             amount = story.get("progress_sources", {}).get("flags", {}).get("story_phase2_chosen")
             if amount and "story_phase2_chosen" in (choice.get("flags_set") or {}):
                 lines.extend(self.add_progress(state, int(amount), reason="2단계 분기"))
@@ -549,6 +558,24 @@ class MainStoryEngine:
             self._begin_phase2(state, story, ms)
         self._maybe_queue_phase_events(state, story, ms, phase1_needed - 1)
         return [f"[1단계 완료] 균열의 전조 — {reason}"]
+
+    def _primary_phase1_choice(self, ms: dict[str, Any]) -> str | None:
+        for cid in (
+            "ally_village",
+            "seek_truth",
+            "pursue_power",
+            "exploit_chaos",
+            "stay_neutral",
+        ):
+            if cid in ms.get("choices_made", []):
+                return cid
+        return None
+
+    def _alliance_route_spec(self, story: dict[str, Any], ms: dict[str, Any]) -> dict[str, Any]:
+        p1 = self._primary_phase1_choice(ms)
+        if not p1:
+            return {}
+        return story.get("phase2_alliance_routes", {}).get(p1, {})
 
     def _phase2_flow(self, story: dict[str, Any]) -> dict[str, Any]:
         return story.get("phase2_flow", {})
@@ -980,8 +1007,10 @@ class MainStoryEngine:
             return None
         if flags.get("phase2_climax_ready"):
             choice = next((c for c in reversed(ms.get("choices_made", [])) if c.startswith("path_")), None)
+            if choice == "path_alliance":
+                label = self._alliance_route_spec(story, ms).get("label", "동맹")
+                return f"숲·탑 — {label} 깃발 아래 균열을 막아라"
             route = {
-                "path_alliance": "숲·마을 — 동맹 깃발 아래 균열을 막아라",
                 "path_neutral": "마을·숲 — 어느 편도 아닌 채 판을 견제하라",
                 "path_betrayal": "숲·탑 — 약속을 깨고 판을 뒤집어라",
             }.get(choice or "", "숲·탑 — 2단계 클라이맥스를 완료하라")
@@ -1306,9 +1335,11 @@ class MainStoryEngine:
             sections = self._phase2_flow(story).get("sections", {})
             section_name = sections.get(sub, {}).get("name", sub)
             esc = self._phase2_escalation_count(state)
+            alliance = self._alliance_route_spec(story, ms).get("label")
+            alliance_bit = f" · 동맹 {alliance}" if alliance and "path_alliance" in ms.get("choices_made", []) else ""
             parts.append(
                 f"2단계 [{section_name}] {self._phase2_step_label(story, step)} | "
-                f"견제 이벤트 {esc}"
+                f"견제 이벤트 {esc}{alliance_bit}"
             )
             met = ms.get("phase2_climax_conditions_met", [])
             if met and not state.get("flags", {}).get("phase2_climax_done"):
@@ -1400,6 +1431,11 @@ class MainStoryEngine:
         req_choice = seed.get("requires_main_story_choice")
         if req_choice and req_choice not in ms.get("choices_made", []):
             return False
+        req_choices = seed.get("requires_main_story_choices")
+        if req_choices:
+            made = set(ms.get("choices_made", []))
+            if not all(c in made for c in req_choices):
+                return False
         not_choice = seed.get("requires_not_main_story_choice")
         if not_choice and not_choice in ms.get("choices_made", []):
             return False

@@ -19,7 +19,7 @@ class ContentLoaderTests(unittest.TestCase):
 
     def test_load_all_event_seeds(self) -> None:
         seeds = self.loader.load_event_seeds()
-        self.assertEqual(len(seeds), 139)
+        self.assertEqual(len(seeds), 152)
         self.assertIn("plaza_song", seeds)
 
     def test_ashpoint_location_lore(self) -> None:

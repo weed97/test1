@@ -139,24 +139,124 @@
       }
     },
     {
-      "id": "phase3_climax_alliance",
-      "title": "결말의 문 — 동맹의 맹세",
-      "summary": "맺은 동맹 아래, 봉인 앞에서 마지막 선택을 실행한다.",
+      "id": "phase3_climax_alliance_council",
+      "title": "결말의 문 — 자치회 동맹",
+      "summary": "자치회 깃발 아래, 최후 선택을 봉인에 새긴다.",
       "seed_type": "main_story",
       "main_plot_link": "ashen_seal_cracking",
       "requires_action": ["explore", "investigate"],
       "location_zones": ["tower", "forest"],
       "requires_flags": ["phase3_climax_ready"],
-      "requires_main_story_choice": "path_alliance",
+      "requires_main_story_choices": ["ally_village", "path_alliance"],
       "requires_not_flags": ["phase3_climax_done"],
       "weight": 40,
       "tension_tags": ["crisis", "horror"],
       "outcome": {
-        "summary": "동맹의 깃발 아래, 당신의 최후 선택이 봉인에 새겨진다.",
+        "summary": "자치회의 깃발 아래, 봉인에 마지막 각인이 새겨진다.",
         "lines": [
-          "세력들이 함께 주문을 외친다 — 강화든, 파괴든, 이름은 하나다.",
+          "민병대와 장로가 함께 주문을 외친다.",
           "봉인석이 빛나거나, 갈라지거나, 침묵한다. 3단계는 끝났다.",
-          "변경의 하늘이… 당신이 고른 색으로 물든다."
+          "변경의 하늘이… 마을의 색으로 물든다."
+        ],
+        "tension_delta": 10,
+        "flags_set": {"phase3_climax_done": true},
+        "main_story_phase3_flag": "phase3_climax_done"
+      }
+    },
+    {
+      "id": "phase3_climax_alliance_wardens",
+      "title": "결말의 문 — 감시자 동맹",
+      "summary": "감시자와 함께 봉인 기록 위에 결말을 새긴다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_flags": ["phase3_climax_ready"],
+      "requires_main_story_choices": ["seek_truth", "path_alliance"],
+      "requires_not_flags": ["phase3_climax_done"],
+      "weight": 40,
+      "tension_tags": ["crisis", "horror"],
+      "outcome": {
+        "summary": "진실의 깃발 아래, 당신의 최후 선택이 기록된다.",
+        "lines": [
+          "회색 망토가 비석을 짚는다. 주문은 인간의 것이 아니다.",
+          "봉인은 변하지만, 기록은 남는다. 3단계는 끝났다.",
+          "하늘이 잿빛으로 물든다."
+        ],
+        "tension_delta": 9,
+        "flags_set": {"phase3_climax_done": true},
+        "main_story_phase3_flag": "phase3_climax_done"
+      }
+    },
+    {
+      "id": "phase3_climax_alliance_covenant",
+      "title": "결말의 문 — 서약 동맹",
+      "summary": "칠흑의 깃발 아래, 봉인에 힘의 각인을 새긴다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_flags": ["phase3_climax_ready"],
+      "requires_main_story_choices": ["pursue_power", "path_alliance"],
+      "requires_not_flags": ["phase3_climax_done"],
+      "weight": 40,
+      "tension_tags": ["crisis", "horror"],
+      "outcome": {
+        "summary": "검은 깃발 아래, 봉인이 당신의 선택에 반응한다.",
+        "lines": [
+          "칠흑의 속삭임과 함께 균열이 벌어진다.",
+          "힘은 당신에게, 대가는 세계에. 3단계는 끝났다.",
+          "하늘이 어둡게 갈라진다."
+        ],
+        "tension_delta": 11,
+        "flags_set": {"phase3_climax_done": true},
+        "main_story_phase3_flag": "phase3_climax_done"
+      }
+    },
+    {
+      "id": "phase3_climax_alliance_merchants",
+      "title": "결말의 문 — 상인 동맹",
+      "summary": "상인 연합 깃발 아래, 이득과 봉인 사이에서 결말을 맞는다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_flags": ["phase3_climax_ready"],
+      "requires_main_story_choices": ["exploit_chaos", "path_alliance"],
+      "requires_not_flags": ["phase3_climax_done"],
+      "weight": 40,
+      "tension_tags": ["crisis", "horror"],
+      "outcome": {
+        "summary": "실버우드 깃발 아래, 최후 거래가 봉인에 각인된다.",
+        "lines": [
+          "계약서가 바람에 펄럭인다. 봉인은 조용히 벌어진다.",
+          "이득과 파멸 사이 — 3단계는 끝났다.",
+          "하늘이 은빛과 잿빛으로 물든다."
+        ],
+        "tension_delta": 10,
+        "flags_set": {"phase3_climax_done": true},
+        "main_story_phase3_flag": "phase3_climax_done"
+      }
+    },
+    {
+      "id": "phase3_climax_alliance_knights",
+      "title": "결말의 문 — 십자 동맹",
+      "summary": "은빛 십자 깃발 아래, 질서의 이름으로 결말을 맞는다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["tower", "forest"],
+      "requires_flags": ["phase3_climax_ready"],
+      "requires_main_story_choices": ["stay_neutral", "path_alliance"],
+      "requires_not_flags": ["phase3_climax_done"],
+      "weight": 40,
+      "tension_tags": ["crisis", "horror"],
+      "outcome": {
+        "summary": "십자의 깃발 아래, 최후 선택이 봉인에 새겨진다.",
+        "lines": [
+          "기사단이 창을 세우고, 주문을 외친다.",
+          "봉인석이 질서의 빛으로 반응한다. 3단계는 끝났다.",
+          "변경의 하늘이 은빛으로 물든다."
         ],
         "tension_delta": 10,
         "flags_set": {"phase3_climax_done": true},

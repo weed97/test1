@@ -118,26 +118,218 @@
       }
     },
     {
-      "id": "phase2_climax_alliance",
-      "title": "판의 균열 — 동맹의 대가",
-      "summary": "맺은 동맹의 깃발 아래, 세력들이 봉인 균열 앞에서 맞선다.",
+      "id": "story_alliance_council",
+      "title": "자치회와의 동맹",
+      "summary": "애쉬포인트 자치회 깃발 아래 서기로 맹세한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore"],
+      "related_npc": "elder_maren",
+      "requires_main_story_phase": 2,
+      "requires_main_story_choice": "ally_village",
+      "requires_not_flags": ["story_phase2_chosen"],
+      "weight": 28,
+      "outcome": {
+        "summary": "장로 마렌: \"자치회의 이름으로 맹세하세. 마을과 봉인, 우리가 함께 지킨다.\"",
+        "faction_reputation": {"ashpoint_council": 12, "silver_cross_order": 4},
+        "flags_set": {"alliance_faction": "ashpoint_council", "alliance_with_council": true},
+        "main_story_choice": "path_alliance"
+      }
+    },
+    {
+      "id": "story_alliance_wardens",
+      "title": "감시자와의 동맹",
+      "summary": "잿빛 감시자의 깃발 아래, 봉인의 진실을 지키기로 한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore"],
+      "related_npc": "grey_cloak",
+      "requires_main_story_phase": 2,
+      "requires_main_story_choice": "seek_truth",
+      "requires_not_flags": ["story_phase2_chosen"],
+      "weight": 28,
+      "outcome": {
+        "summary": "회색 망토: \"인간의 편을 버렸군. 이제 봉인 기록과 함께 서라.\"",
+        "faction_reputation": {"ashen_wardens": 14},
+        "flags_set": {"alliance_faction": "ashen_wardens", "alliance_with_wardens": true},
+        "main_story_choice": "path_alliance"
+      }
+    },
+    {
+      "id": "story_alliance_covenant",
+      "title": "서약과의 동맹",
+      "summary": "칠흑의 서약과 손을 잡는다. 힘의 대가는 나중에 치른다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "requires_time": ["night"],
+      "location_zones": ["ashpoint", "forest"],
+      "requires_main_story_phase": 2,
+      "requires_main_story_choice": "pursue_power",
+      "requires_not_flags": ["story_phase2_chosen"],
+      "weight": 26,
+      "outcome": {
+        "summary": "칠흑의 서약: \"약한 자는 동맹도 지키지 못한다. 내 깃발 아래 서라.\"",
+        "faction_reputation": {"black_covenant": 15, "ashpoint_council": -8},
+        "flags_set": {"alliance_faction": "black_covenant", "alliance_with_covenant": true},
+        "main_story_choice": "path_alliance"
+      }
+    },
+    {
+      "id": "story_alliance_merchants",
+      "title": "상인 연합과의 동맹",
+      "summary": "실버우드 상인 연합과 계약한다. 승자 편에 서는 대가로 이득을 나눈다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["talk", "explore"],
+      "related_npc": "lilian_innkeeper",
+      "requires_main_story_phase": 2,
+      "requires_main_story_choice": "exploit_chaos",
+      "requires_not_flags": ["story_phase2_chosen"],
+      "weight": 26,
+      "outcome": {
+        "summary": "릴리안: \"계약서는 이미 준비됐어요. 승자 쪽에 서면, 보급로를 열어줄게요.\"",
+        "faction_reputation": {"silverwood_trade_union": 14, "blackfang_marauders": 6},
+        "flags_set": {"alliance_faction": "silverwood_trade_union", "alliance_with_merchants": true},
+        "main_story_choice": "path_alliance"
+      }
+    },
+    {
+      "id": "story_alliance_knights",
+      "title": "기사단과의 동맹",
+      "summary": "은빛 십자 기사단의 깃발 아래 선다. 질서가 곧 방패다.",
       "seed_type": "main_story",
       "main_plot_link": "ashen_seal_cracking",
       "requires_action": ["explore", "talk"],
-      "location_zones": ["forest", "ashpoint", "tower"],
+      "location_zones": ["ashpoint"],
+      "requires_main_story_phase": 2,
+      "requires_main_story_choice": "stay_neutral",
+      "requires_not_flags": ["story_phase2_chosen"],
+      "weight": 24,
+      "outcome": {
+        "summary": "은빛 기사: \"중립은 끝났군요. 십자의 이름으로, 봉인 앞에 서십시오.\"",
+        "faction_reputation": {"silver_cross_order": 14, "ashpoint_council": 4},
+        "flags_set": {"alliance_faction": "silver_cross_order", "alliance_with_knights": true},
+        "main_story_choice": "path_alliance"
+      }
+    },
+    {
+      "id": "phase2_climax_alliance_council",
+      "title": "판의 균열 — 자치회 동맹",
+      "summary": "민병대와 장로가 이끄는 깃발 아래 봉인 균열을 누른다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["forest", "ashpoint"],
       "requires_flags": ["phase2_climax_ready"],
-      "requires_main_story_choice": "path_alliance",
+      "requires_main_story_choices": ["ally_village", "path_alliance"],
       "requires_not_flags": ["phase2_climax_done"],
       "weight": 40,
       "tension_tags": ["crisis"],
       "outcome": {
-        "summary": "동맹의 대가 — 한 깃발 아래 세력이 봉인을 누르지만, 적도 분명해졌다.",
+        "summary": "자치회 동맹 — 마을의 깃발이 산비탈에 꽂힌다. 균열은 잠시 멈춘 듯하다.",
         "lines": [
-          "동맹 세력이 산비탈에 진을 친다. 봉인석의 균열에서 검은 연기가 솟구친다.",
-          "기사단장: \"우리 편이 아니면 적이다.\" — 그 말이 숲을 가른다.",
-          "균열은 잠시 멈춘 듯하나, 봉인은 여전히 위태롭다. 2단계는 여기서 끝난다."
+          "민병대가 방패를 세우고, 장로가 주문을 외친다.",
+          "봉인석의 금이 번쩍이며, 검은 연기가 한순간 멈춘다.",
+          "2단계는 끝났다. 이제 결말만이 남았다."
+        ],
+        "tension_delta": 6,
+        "flags_set": {"phase2_climax_done": true, "phase2_alliance_climax": true},
+        "main_story_phase2_flag": "phase2_climax_done"
+      }
+    },
+    {
+      "id": "phase2_climax_alliance_wardens",
+      "title": "판의 균열 — 감시자 동맹",
+      "summary": "잿빛 감시자와 함께 봉인 기록을 밝히며 균열을 견제한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest", "tower"],
+      "requires_flags": ["phase2_climax_ready"],
+      "requires_main_story_choices": ["seek_truth", "path_alliance"],
+      "requires_not_flags": ["phase2_climax_done"],
+      "weight": 40,
+      "outcome": {
+        "summary": "감시자 동맹 — 진실의 깃발 아래, 균열이 조용히 벌어진다.",
+        "lines": [
+          "회색 망토가 비석을 가리킨다. 글자는 인간의 것이 아니다.",
+          "봉인은 약해지지만, 기록은 남는다.",
+          "2단계는 끝났다."
+        ],
+        "tension_delta": 5,
+        "flags_set": {"phase2_climax_done": true, "phase2_alliance_climax": true},
+        "main_story_phase2_flag": "phase2_climax_done"
+      }
+    },
+    {
+      "id": "phase2_climax_alliance_covenant",
+      "title": "판의 균열 — 서약 동맹",
+      "summary": "칠흑의 깃발 아래, 봉인에서 힘을 끌어온다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "investigate"],
+      "location_zones": ["forest", "tower"],
+      "requires_flags": ["phase2_climax_ready"],
+      "requires_main_story_choices": ["pursue_power", "path_alliance"],
+      "requires_not_flags": ["phase2_climax_done"],
+      "weight": 40,
+      "outcome": {
+        "summary": "서약 동맹 — 검은 기운이 손끝으로 스며든다. 균열은 넓어진다.",
+        "lines": [
+          "칠흑의 속삭임: \"잘했다. 이제 힘을 받아라.\"",
+          "봉인석이 울리며, 금이 벌어진다.",
+          "2단계는 끝났다."
+        ],
+        "tension_delta": 10,
+        "flags_set": {"phase2_climax_done": true, "phase2_alliance_climax": true},
+        "main_story_phase2_flag": "phase2_climax_done"
+      }
+    },
+    {
+      "id": "phase2_climax_alliance_merchants",
+      "title": "판의 균열 — 상인 동맹",
+      "summary": "상인 연합의 깃발 아래, 혼란 속 균열을 이용한다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore"],
+      "location_zones": ["forest", "ashpoint"],
+      "requires_flags": ["phase2_climax_ready"],
+      "requires_main_story_choices": ["exploit_chaos", "path_alliance"],
+      "requires_not_flags": ["phase2_climax_done"],
+      "weight": 40,
+      "outcome": {
+        "summary": "상인 동맹 — 이득과 공포 사이, 균열이 벌어진다.",
+        "lines": [
+          "실버우드 깃발이 바람에 펄럭인다. 산적단이 비웃으며 물러난다.",
+          "당신이 챙긴 것과 잃은 것 — 균열만은 분명히 남는다.",
+          "2단계는 끝났다."
         ],
         "tension_delta": 8,
+        "flags_set": {"phase2_climax_done": true, "phase2_alliance_climax": true},
+        "main_story_phase2_flag": "phase2_climax_done"
+      }
+    },
+    {
+      "id": "phase2_climax_alliance_knights",
+      "title": "판의 균열 — 십자 동맹",
+      "summary": "은빛 십자 깃발 아래, 질서로 균열을 누른다.",
+      "seed_type": "main_story",
+      "main_plot_link": "ashen_seal_cracking",
+      "requires_action": ["explore", "talk"],
+      "location_zones": ["ashpoint", "forest"],
+      "requires_flags": ["phase2_climax_ready"],
+      "requires_main_story_choices": ["stay_neutral", "path_alliance"],
+      "requires_not_flags": ["phase2_climax_done"],
+      "weight": 40,
+      "outcome": {
+        "summary": "십자 동맹 — 질서의 깃발이 숲을 가른다.",
+        "lines": [
+          "기사단이 창을 세우고, 마을 사람들이 숨을 고른다.",
+          "균열 너머의 속삭임이 잠시 멈춘다.",
+          "2단계는 끝났다."
+        ],
+        "tension_delta": 7,
         "flags_set": {"phase2_climax_done": true, "phase2_alliance_climax": true},
         "main_story_phase2_flag": "phase2_climax_done"
       }

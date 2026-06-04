@@ -22,14 +22,19 @@ class EventEngineZoneTests(unittest.TestCase):
             engine = EventEngine(content, random.Random(0))
             state = {
                 "flags": {
-                    "pending_events": ["story_choice_alliance"],
-                    "main_story": {"id": "ashen_seal_cracking", "phase": 2, "progress": 45},
+                    "pending_events": ["story_alliance_council"],
+                    "main_story": {
+                        "id": "ashen_seal_cracking",
+                        "phase": 2,
+                        "progress": 45,
+                        "choices_made": ["ally_village"],
+                    },
                 },
                 "world": {"location": "북쪽 숲 — 연기가 보이는 외곽", "time_of_day": "afternoon"},
             }
             eligible = engine._eligible_seeds(state, "talk", related_npc="elder_maren")
             ids = [s["id"] for s in eligible]
-            self.assertIn("story_choice_alliance", ids)
+            self.assertIn("story_alliance_council", ids)
 
     def test_main_story_seed_without_zones_allows_forest(self) -> None:
         with isolated_game_root() as root:

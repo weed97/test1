@@ -44,7 +44,7 @@ class MainStoryPhase2Tests(unittest.TestCase):
             assert story
             engine._advance_phase2_from_flag(state, story, ms, "story_faction_clash_seen")
             self.assertFalse(state["flags"].get("phase2_escalation_done"))
-            self.assertNotIn("story_choice_alliance", state["flags"].get("pending_events", []))
+            self.assertNotIn("story_alliance_council", state["flags"].get("pending_events", []))
 
     def test_phase2_exit_on_climax(self) -> None:
         with isolated_game_root() as root:

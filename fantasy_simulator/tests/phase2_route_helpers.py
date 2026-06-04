@@ -10,6 +10,10 @@ from tests.phase1_route_helpers import (
     run_phase1_route_clear,
     setup_phase1_session,
 )
+from tests.phase2_alliance_specs import (  # noqa: E402
+    ALLIANCE_BRANCH_SEEDS,
+    ALLIANCE_ROUTE_BY_PHASE1,
+)
 from utils.game_session import GameSession
 from utils.main_story_engine import MainStoryEngine
 from utils.world_tension import set_tension
@@ -22,13 +26,8 @@ PHASE2_COMMON_PREFIX: list[str] = [
 
 PHASE2_ROUTE_SPECS: dict[str, dict[str, Any]] = {
     "path_alliance": {
+        **ALLIANCE_ROUTE_BY_PHASE1["ally_village"],
         "choice_id": "path_alliance",
-        "phase1_choice": "ally_village",
-        "branch_seed": "story_choice_alliance",
-        "branch_action": "talk elder maren",
-        "climax_seed": "phase2_climax_alliance",
-        "climax_actions": ["explore forest"],
-        "climax_location": "ashpoint",
     },
     "path_neutral": {
         "choice_id": "path_neutral",
@@ -50,6 +49,20 @@ PHASE2_ROUTE_SPECS: dict[str, dict[str, Any]] = {
     },
 }
 
+
+def phase2_spec_for(phase1_choice: str, phase2_choice: str) -> dict[str, Any]:
+    """Build Phase 2 run spec; alliance branch/climax follow Phase 1 choice."""
+    if phase2_choice == "path_alliance":
+        return {
+            **ALLIANCE_ROUTE_BY_PHASE1[phase1_choice],
+            "choice_id": "path_alliance",
+            "phase1_choice": phase1_choice,
+        }
+    spec = dict(PHASE2_ROUTE_SPECS[phase2_choice])
+    spec["phase1_choice"] = phase1_choice
+    return spec
+
+
 PHASE2_MILESTONE_FLAGS = (
     "phase2_opening_done",
     "phase2_escalation_done",
@@ -59,7 +72,7 @@ PHASE2_MILESTONE_FLAGS = (
 )
 
 STORY_CHOICE_SEEDS = (
-    "story_choice_alliance",
+    *ALLIANCE_BRANCH_SEEDS,
     "story_choice_neutral",
     "story_choice_betrayal",
 )
@@ -94,12 +107,7 @@ def _set_location(session: GameSession, action: str, *, default: str = "ashpoint
 
 
 def _isolate_branch_seed(session: GameSession, branch_seed: str) -> None:
-    pending = session.state["flags"].setdefault("pending_events", [])
-    for sid in STORY_CHOICE_SEEDS:
-        while sid in pending:
-            pending.remove(sid)
-    if branch_seed not in pending:
-        pending.append(branch_seed)
+    session.state["flags"]["pending_events"] = [branch_seed]
     session.manager.save(session.state)
 
 
@@ -149,6 +157,9 @@ def run_phase2_route_clear(
                 on_step(turn, "explore", flags, ms)
             _record_milestones(milestones, turn, flags)
 
+    if spec.get("branch_time"):
+        session.state["world"]["time_of_day"] = spec["branch_time"]
+        session.manager.save(session.state)
     _isolate_branch_seed(session, spec["branch_seed"])
     if spec["branch_action"].startswith("talk"):
         _set_location(session, spec["branch_action"])
@@ -163,12 +174,12 @@ def run_phase2_route_clear(
         on_step(turn, spec["branch_action"], flags, ms)
     _record_milestones(milestones, turn, flags)
 
-    if not flags.get("phase2_climax_ready"):
+    if not session.state["flags"].get("phase2_climax_ready"):
         set_tension(session.state, 50)
         session.manager.save(session.state)
         _set_location(session, "explore forest")
         for _ in range(3):
-            if flags.get("phase2_climax_ready"):
+            if session.state["flags"].get("phase2_climax_ready"):
                 break
             turn += 1
             session.run_turn("explore")

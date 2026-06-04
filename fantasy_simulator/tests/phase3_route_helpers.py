@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 
+from tests.phase2_alliance_specs import ALLIANCE_ROUTE_BY_PHASE1
 from tests.phase2_route_helpers import (
     PHASE2_ROUTE_SPECS,
     run_phase2_route_clear,
@@ -20,6 +21,14 @@ PHASE3_COMMON_PREFIX: list[str] = [
     "explore forest",
 ]
 
+PHASE3_ALLIANCE_CLIMAX: dict[str, str] = {
+    "ally_village": "phase3_climax_alliance_council",
+    "seek_truth": "phase3_climax_alliance_wardens",
+    "pursue_power": "phase3_climax_alliance_covenant",
+    "exploit_chaos": "phase3_climax_alliance_merchants",
+    "stay_neutral": "phase3_climax_alliance_knights",
+}
+
 PHASE3_ROUTE_SPECS: dict[str, dict[str, Any]] = {
     "path_alliance": {
         "phase2_choice": "path_alliance",
@@ -27,7 +36,7 @@ PHASE3_ROUTE_SPECS: dict[str, dict[str, Any]] = {
         "final_choice_id": "final_reinforce",
         "branch_seed": "story_choice_final_reinforce",
         "branch_action": "talk elder maren",
-        "climax_seed": "phase3_climax_alliance",
+        "climax_seed": PHASE3_ALLIANCE_CLIMAX["ally_village"],
         "climax_actions": ["investigate forest"],
         "climax_location": "관측탑",
     },
@@ -68,16 +77,42 @@ FINAL_CHOICE_SEEDS = (
 )
 
 
+def phase3_spec_for(
+    phase2_choice: str,
+    *,
+    phase1_choice: str | None = None,
+) -> dict[str, Any]:
+    """Build Phase 3 run spec; alliance climax follows Phase 1 branch."""
+    spec = dict(PHASE3_ROUTE_SPECS[phase2_choice])
+    p1 = phase1_choice or spec.get("phase1_choice")
+    if p1:
+        spec["phase1_choice"] = p1
+    if phase2_choice == "path_alliance" and p1:
+        spec["climax_seed"] = PHASE3_ALLIANCE_CLIMAX[p1]
+        p2 = ALLIANCE_ROUTE_BY_PHASE1[p1]
+        spec["final_choice_id"] = "final_reinforce" if p1 == "ally_village" else spec.get(
+            "final_choice_id", "final_chaos"
+        )
+        if p1 == "pursue_power":
+            spec["final_choice_id"] = "final_break"
+    return spec
+
+
 def setup_phase3_session(
     root: Path,
     *,
     phase2_choice: str = "path_alliance",
+    phase1_choice: str | None = None,
     seed: int = 42,
 ) -> tuple[GameSession, MainStoryEngine]:
     """Complete Phases 1–2, then return session in Phase 3."""
     p2_spec = PHASE2_ROUTE_SPECS[phase2_choice]
-    session, engine = setup_phase2_session(root, phase1_choice=p2_spec["phase1_choice"], seed=seed)
-    run_phase2_route_clear(session, p2_spec)
+    p1 = phase1_choice or p2_spec["phase1_choice"]
+    session, engine = setup_phase2_session(root, phase1_choice=p1, seed=seed)
+    if phase2_choice == "path_alliance":
+        run_phase2_route_clear(session, {**ALLIANCE_ROUTE_BY_PHASE1[p1], "choice_id": "path_alliance"})
+    else:
+        run_phase2_route_clear(session, p2_spec)
     ms = session.state["flags"]["main_story"]
     if int(ms.get("phase", 1)) < 3:
         story = engine.story_def(ms["id"])

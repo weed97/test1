@@ -13,6 +13,7 @@ from tests.fixtures import isolated_game_root  # noqa: E402
 from tests.phase1_route_helpers import PHASE1_ROUTE_SPECS  # noqa: E402
 from tests.phase2_route_helpers import (  # noqa: E402
     PHASE2_ROUTE_SPECS,
+    phase2_spec_for,
     run_phase2_route_clear,
     setup_phase2_session,
 )
@@ -35,7 +36,7 @@ class Phase2CrossRouteTests(unittest.TestCase):
                 self.assertIn(p2_id, PHASE2_ROUTE_SPECS)
                 with isolated_game_root() as root:
                     session, _ = setup_phase2_session(root, phase1_choice=p1_id)
-                    p2_spec = {**PHASE2_ROUTE_SPECS[p2_id], "phase1_choice": p1_id}
+                    p2_spec = phase2_spec_for(p1_id, p2_id)
                     _milestones, flags, ms = run_phase2_route_clear(session, p2_spec)
                     self.assertTrue(flags.get("phase2_climax_done"), f"{p1_id}+{p2_id}")
                     self.assertEqual(ms.get("phase"), 3)

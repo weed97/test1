@@ -180,15 +180,67 @@
             "story_trade_union_opportunist",
             "story_blackfang_chaos"
           ],
-          "3": ["story_choice_alliance", "story_choice_neutral", "story_choice_betrayal"],
-          "4": ["phase2_climax_alliance", "phase2_climax_neutral", "phase2_climax_betrayal"]
+          "3": [
+            "story_alliance_council",
+            "story_alliance_wardens",
+            "story_alliance_covenant",
+            "story_alliance_merchants",
+            "story_alliance_knights",
+            "story_choice_neutral",
+            "story_choice_betrayal"
+          ],
+          "4": [
+            "phase2_climax_alliance_council",
+            "phase2_climax_alliance_wardens",
+            "phase2_climax_alliance_covenant",
+            "phase2_climax_alliance_merchants",
+            "phase2_climax_alliance_knights",
+            "phase2_climax_neutral",
+            "phase2_climax_betrayal"
+          ]
         },
         "climax_seeds": [
-          "phase2_climax_alliance",
+          "phase2_climax_alliance_council",
+          "phase2_climax_alliance_wardens",
+          "phase2_climax_alliance_covenant",
+          "phase2_climax_alliance_merchants",
+          "phase2_climax_alliance_knights",
           "phase2_climax_neutral",
           "phase2_climax_betrayal"
         ],
         "branch_queue_min_escalation": 1
+      },
+      "phase2_alliance_routes": {
+        "ally_village": {
+          "faction_id": "ashpoint_council",
+          "choice_seed": "story_alliance_council",
+          "climax_seed": "phase2_climax_alliance_council",
+          "label": "애쉬포인트 자치회"
+        },
+        "seek_truth": {
+          "faction_id": "ashen_wardens",
+          "choice_seed": "story_alliance_wardens",
+          "climax_seed": "phase2_climax_alliance_wardens",
+          "label": "잿빛 감시자"
+        },
+        "pursue_power": {
+          "faction_id": "black_covenant",
+          "choice_seed": "story_alliance_covenant",
+          "climax_seed": "phase2_climax_alliance_covenant",
+          "label": "칠흑의 서약"
+        },
+        "exploit_chaos": {
+          "faction_id": "silverwood_trade_union",
+          "choice_seed": "story_alliance_merchants",
+          "climax_seed": "phase2_climax_alliance_merchants",
+          "label": "실버우드 상인 연합"
+        },
+        "stay_neutral": {
+          "faction_id": "silver_cross_order",
+          "choice_seed": "story_alliance_knights",
+          "climax_seed": "phase2_climax_alliance_knights",
+          "label": "은빛 십자 기사단"
+        }
       },
       "phase2_climax_gate": {
         "required_count": 2,
@@ -229,13 +281,21 @@
             "story_choice_final_chaos"
           ],
           "4": [
-            "phase3_climax_alliance",
+            "phase3_climax_alliance_council",
+            "phase3_climax_alliance_wardens",
+            "phase3_climax_alliance_covenant",
+            "phase3_climax_alliance_merchants",
+            "phase3_climax_alliance_knights",
             "phase3_climax_neutral",
             "phase3_climax_betrayal"
           ]
         },
         "climax_seeds": [
-          "phase3_climax_alliance",
+          "phase3_climax_alliance_council",
+          "phase3_climax_alliance_wardens",
+          "phase3_climax_alliance_covenant",
+          "phase3_climax_alliance_merchants",
+          "phase3_climax_alliance_knights",
           "phase3_climax_neutral",
           "phase3_climax_betrayal"
         ],
@@ -366,9 +426,18 @@
           "phase2_council_summons": 5,
           "phase2_seal_tremor": 4,
           "phase2_faction_raid": 6,
-          "phase2_climax_alliance": 10,
+          "phase2_climax_alliance_council": 10,
+          "phase2_climax_alliance_wardens": 10,
+          "phase2_climax_alliance_covenant": 10,
+          "phase2_climax_alliance_merchants": 10,
+          "phase2_climax_alliance_knights": 10,
           "phase2_climax_neutral": 10,
           "phase2_climax_betrayal": 10,
+          "phase3_climax_alliance_council": 12,
+          "phase3_climax_alliance_wardens": 12,
+          "phase3_climax_alliance_covenant": 12,
+          "phase3_climax_alliance_merchants": 12,
+          "phase3_climax_alliance_knights": 12,
           "story_faction_clash": 10,
           "story_seal_near_break": 12,
           "phase3_tower_alarm": 5,
