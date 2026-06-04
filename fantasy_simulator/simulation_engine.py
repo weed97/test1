@@ -104,7 +104,7 @@ def call_gpt_quick_event(
     return client.call_gpt(PROMPT_QUICK_EVENT, snapshot, action, role="quick_event", metadata=metadata)
 
 
-def process_player_action(
+def handle_player_action(
     state: dict[str, Any],
     action: str,
     *,
@@ -114,85 +114,94 @@ def process_player_action(
     rules: RuleEngine,
     client: LLMClient | None,
 ) -> dict[str, Any]:
-    """Minimal routing: classify needs → sequential model calls → sync world_state.json."""
-    snapshot = manager.snapshot()
-    needs = classify_action_needs(action, state)
+    """Minimal routing: decide_model_and_prompt → single model or rule engine."""
     decision = decide_model_and_prompt(action, state, mode=mode, base_dir=manager.base_dir)
+    snapshot = manager.snapshot()
     outcome_lines: list[str] = [
-        f"needs: narrative={needs['narrative']} mechanics={needs['mechanics']} quick={needs['quick_ideas']}",
+        f"routing: model={decision['model']} priority={decision.get('priority')} "
+        f"prompt={decision.get('prompt_file')}",
     ]
-    outcome_lines.extend(describe_routes(decision["pipeline"]))
     results: list[dict[str, Any]] = []
-    mechanical: dict[str, Any] | None = None
-    narrative_hint = ""
-    quick_event: dict[str, Any] | None = None
     rules_text: dict[str, str] | None = None
 
-    for step in decision["pipeline"]:
-        model = step["model"]
-        metadata: dict[str, Any] = {
-            "mechanical_result": mechanical or {},
-            "mechanical_summary": narrative_hint,
-            "narrative_hint": narrative_hint,
-            "quick_event": quick_event,
+    # Hybrid: run rule engine first, then optional LLM step
+    if mode == "hybrid":
+        mechanical = run_existing_rule_logic(rules, manager.loader, state, action, turn)
+        rule_result: dict[str, Any] = {
+            "model": "rule",
+            "role": "rule_engine",
+            "mechanical": mechanical,
+            "parsed": None,
+            "text": "",
         }
+        apply_changes_to_state(manager, state, rule_result, turn=turn)
+        results.append(rule_result)
+        outcome_lines.extend(mechanical.get("lines", []))
+        if mechanical.get("summary") and not mechanical.get("lines"):
+            outcome_lines.append(mechanical["summary"])
 
-        if model == "rule":
+    if not decision["use_llm"] or client is None:
+        if mode != "hybrid":
             mechanical = run_existing_rule_logic(rules, manager.loader, state, action, turn)
-            result: dict[str, Any] = {
+            rule_result = {
                 "model": "rule",
                 "role": "rule_engine",
                 "mechanical": mechanical,
                 "parsed": None,
                 "text": "",
             }
-            apply_changes_to_state(manager, state, result, turn=turn)
-            narrative_hint = mechanical.get("summary", narrative_hint)
-            if mode == "rule":
-                outcome_lines.extend(mechanical.get("lines", []))
-                if mechanical.get("summary") and not mechanical.get("lines"):
-                    outcome_lines.append(mechanical["summary"])
-        elif client is None:
-            continue
-        elif model == "claude":
-            result = call_claude_narrator(client, snapshot, action, metadata=metadata)
+            apply_changes_to_state(manager, state, rule_result, turn=turn)
+            results.append(rule_result)
+            outcome_lines.extend(mechanical.get("lines", []))
+            if mechanical.get("summary") and not mechanical.get("lines"):
+                outcome_lines.append(mechanical["summary"])
+        manager.save(state)
+        return {"decision": decision, "results": results, "lines": outcome_lines}
+
+    # Multi-step pipeline (when config defines more than one LLM step)
+    pipeline = decision.get("pipeline") or []
+    llm_steps = [s for s in pipeline if s.get("model") != "rule"]
+    if not llm_steps:
+        llm_steps = [{"model": decision["model"], "role": decision.get("role"), "prompt_file": decision.get("prompt_file")}]
+
+    narrative_hint = ""
+    for step in llm_steps:
+        metadata: dict[str, Any] = {"narrative_hint": narrative_hint}
+        model = step.get("model") or decision["model"]
+        prompt_file = step.get("prompt_file") or decision.get("prompt_file")
+
+        if model == "claude":
+            pf = prompt_file.replace("prompts/", "") if prompt_file else PROMPT_NARRATOR
+            result = client.call_claude(pf, snapshot, action, role="narrator", metadata=metadata)
         elif model == "codex":
             if rules_text is None:
                 rules_text = {
                     "combat": manager.loader.load_rule("combat"),
                     "magic_system": manager.loader.load_rule("magic_system"),
                 }
-            result = call_codex_mechanics(
-                client, snapshot, action, rules=rules_text, metadata=metadata
-            )
+            pf = prompt_file.replace("prompts/", "") if prompt_file else PROMPT_MECHANICS
+            result = client.call_codex(pf, snapshot, action, role="mechanics", rules=rules_text, metadata=metadata)
         elif model == "gpt":
-            result = call_gpt_quick_event(client, snapshot, action, metadata=metadata)
+            pf = prompt_file.replace("prompts/", "") if prompt_file else PROMPT_QUICK_EVENT
+            result = client.call_gpt(pf, snapshot, action, role="quick_event", metadata=metadata)
         else:
             mechanical = run_existing_rule_logic(rules, manager.loader, state, action, turn)
             result = {"model": "rule", "role": "rule_engine", "mechanical": mechanical, "parsed": None, "text": ""}
-            apply_changes_to_state(manager, state, result, turn=turn)
-            results.append(result)
-            continue
 
         apply_changes_to_state(manager, state, result, turn=turn)
         results.append(result)
 
         if result.get("parsed"):
             parsed = result["parsed"]
-            if step["role"] == "quick_event":
-                quick_event = parsed
-                narrative_hint = parsed.get("description", narrative_hint)
-            elif step["role"] == "mechanics":
-                narrative_hint = parsed.get("description", narrative_hint)
+            narrative_hint = parsed.get("description", narrative_hint)
+            if step.get("role") == "mechanics":
                 outcome_lines.append(parsed.get("description", ""))
                 outcome_lines.extend(parsed.get("consequences", []))
 
-        if result.get("text") and step["role"] == "narrator":
+        if result.get("text") and step.get("role") == "narrator":
             outcome_lines.append(result["text"])
 
-        outcome_lines.append(
-            f"{step['role']} [{step['model']}/{result.get('provider', '?')}]"
-        )
+        outcome_lines.append(f"{step.get('role', model)} [{model}/{result.get('provider', '?')}]")
 
     # Consistency check every N turns
     if mode in ("llm", "hybrid") and client is not None:
@@ -215,6 +224,22 @@ def process_player_action(
 
     manager.save(state)
     return {"decision": decision, "results": results, "lines": outcome_lines}
+
+
+def process_player_action(
+    state: dict[str, Any],
+    action: str,
+    *,
+    mode: Mode,
+    turn: int,
+    manager: StateManager,
+    rules: RuleEngine,
+    client: LLMClient | None,
+) -> dict[str, Any]:
+    """Delegates to handle_player_action() — keyword routing entry point."""
+    return handle_player_action(
+        state, action, mode=mode, turn=turn, manager=manager, rules=rules, client=client
+    )
 
 
 def process_turn(
@@ -356,6 +381,11 @@ class SimulationEngine:
             "  빠른 아이디어 → GPT-5.5 High      (quick_event_gpt.md)",
             "  일관성 검사  → Claude Opus 4.8  (world_arbiter.md, every 5 turns)",
             "",
+            "=== Keyword routing (decide_model_and_prompt) ===",
+            "  attack/cast/combat → Codex 5.3 (mechanics_codex.md)",
+            "  explore/talk/look  → Claude Opus (narrator_claude.md)",
+            "  rest / unknown     → rule_based",
+            "",
             "=== Action needs (current: explore) ===",
         ]
         needs = classify_action_needs("explore", self.state)
@@ -363,11 +393,23 @@ class SimulationEngine:
             lines.append(f"  {k}: {v}")
         lines.extend([
             "",
+            "=== handle_player_action API ===",
+            "  handle_player_action() → decide_model_and_prompt() → call_claude/codex or rule",
+            "",
             "=== Minimal routing API ===",
             "  classify_action_needs / decide_model_and_prompt",
             "  call_claude_narrator / call_codex_mechanics / call_gpt_quick_event",
             "",
-            "=== LLM explore pipeline (Codex → Opus) ===",
+            "=== Keyword samples ===",
+        ])
+        for sample_action in ("attack goblin", "explore forest", "rest"):
+            d = decide_model_and_prompt(sample_action, self.state, mode="llm", base_dir=self.loader.base_dir)
+            lines.append(
+                f"  '{sample_action}' → model={d['model']} use_llm={d['use_llm']} priority={d.get('priority')}"
+            )
+        lines.extend([
+            "",
+            "=== Config pipeline (explore, fallback) ===",
         ])
         from utils.llm_router import route_action
 

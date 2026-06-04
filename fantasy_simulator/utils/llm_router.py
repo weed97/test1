@@ -1,4 +1,4 @@
-"""Decide which model/prompt pipeline to use for each action."""
+"""Decide which model/prompt to use for each player action."""
 
 from __future__ import annotations
 
@@ -21,6 +21,9 @@ ROLE_PROMPTS: dict[str, str] = {
     "world_arbiter": "world_arbiter.md",
     "quick_event": "quick_event_gpt.md",
 }
+
+MECHANICS_KEYWORDS = ("fight", "attack", "cast", "magic", "combat", "damage")
+NARRATIVE_KEYWORDS = ("talk", "look", "explore", "describe", "check", "investigate")
 
 
 def _load_routing(base_dir: Path | None = None) -> dict[str, Any]:
@@ -52,6 +55,82 @@ def _role_to_step(role: str, routing: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def decide_model_and_prompt(
+    action: str,
+    state: dict[str, Any],
+    *,
+    mode: str = "llm",
+    base_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Minimal keyword router for handle_player_action().
+
+    Returns:
+        {
+            "use_llm": bool,
+            "model": "claude" | "codex" | "rule_based",
+            "prompt_file": str | None,
+            "priority": "strict_rules" | "immersion" | "simple",
+            "pipeline": list[dict],  # single-step or multi-step for advanced modes
+        }
+    """
+    if mode == "rule":
+        return {
+            "use_llm": False,
+            "model": "rule_based",
+            "prompt_file": None,
+            "priority": "simple",
+            "pipeline": [{"model": "rule", "role": "rule_engine", "prompt_file": None}],
+        }
+
+    action_lower = action.lower()
+    in_combat = bool(state.get("combat"))
+
+    # Active combat or rules-heavy keywords → Codex
+    if in_combat or any(kw in action_lower for kw in MECHANICS_KEYWORDS):
+        return _mechanics_decision(base_dir)
+
+    # Narrative / immersion keywords → Claude
+    if any(kw in action_lower for kw in NARRATIVE_KEYWORDS):
+        return _narrator_decision(base_dir)
+
+    # Default: rule-based
+    return {
+        "use_llm": False,
+        "model": "rule_based",
+        "prompt_file": None,
+        "priority": "simple",
+        "pipeline": [{"model": "rule", "role": "rule_engine", "prompt_file": None}],
+    }
+
+
+def _mechanics_decision(base_dir: Path | None) -> dict[str, Any]:
+    step = _role_to_step("mechanics", _load_routing(base_dir))
+    return {
+        "use_llm": True,
+        "model": "codex",
+        "prompt_file": "prompts/mechanics_codex.md",
+        "priority": "strict_rules",
+        "role": "mechanics",
+        "structured": True,
+        "schema": "mechanics_codex",
+        "pipeline": [step],
+    }
+
+
+def _narrator_decision(base_dir: Path | None) -> dict[str, Any]:
+    step = _role_to_step("narrator", _load_routing(base_dir))
+    return {
+        "use_llm": True,
+        "model": "claude",
+        "prompt_file": "prompts/narrator_claude.md",
+        "priority": "immersion",
+        "role": "narrator",
+        "structured": False,
+        "schema": None,
+        "pipeline": [step],
+    }
+
+
 def route_action(
     action: str,
     state: dict[str, Any],
@@ -60,15 +139,7 @@ def route_action(
     turn: int = 1,
     base_dir: Path | None = None,
 ) -> list[dict[str, Any]]:
-    """Return ordered LLM/rule steps for one turn action.
-
-    Example return value:
-        [
-            {"model": "gpt", "role": "quick_event", "prompt_file": "quick_event_gpt.md", ...},
-            {"model": "codex", "role": "mechanics", "prompt_file": "mechanics_codex.md", ...},
-            {"model": "claude", "role": "narrator", "prompt_file": "narrator_claude.md", ...},
-        ]
-    """
+    """Return ordered LLM/rule steps for one turn action (config pipeline)."""
     routing = _load_routing(base_dir)
     in_combat = bool(state.get("combat"))
     pipeline_key = _resolve_pipeline_action(action, in_combat=in_combat)
@@ -83,7 +154,6 @@ def route_action(
             steps.extend(_role_to_step(r, routing) for r in roles)
         return steps
 
-    # llm mode
     roles = routing.get("pipelines", {}).get(pipeline_key, ["narrator"])
     return [_role_to_step(r, routing) for r in roles]
 
@@ -107,73 +177,14 @@ def classify_action_needs(
     action: str,
     state: dict[str, Any],
 ) -> dict[str, bool]:
-    """What model capabilities does this action require?
-
-    Used by simulation_engine to document branching:
-      narrative   → Claude Opus  (narrator_claude.md)
-      mechanics   → Codex 5.3    (mechanics_codex.md, JSON)
-      quick_ideas → GPT-5.5      (quick_event_gpt.md)
-    """
+    """What model capabilities does this action require?"""
+    decision = decide_model_and_prompt(action, state, mode="llm")
     in_combat = bool(state.get("combat"))
-    needs_mechanics = action in ("combat", "rest", "explore") or in_combat
-    needs_narrative = action in ("explore", "rest", "combat", "combat_start") or in_combat
-    needs_quick = action in ("explore", "rest") and not in_combat
     return {
-        "narrative": needs_narrative,
-        "mechanics": needs_mechanics,
-        "quick_ideas": needs_quick,
-        "consistency_check": False,  # set by turn interval in engine
-    }
-
-
-def decide_model_and_prompt(
-    action: str,
-    state: dict[str, Any],
-    *,
-    mode: str = "llm",
-    base_dir: Path | None = None,
-) -> dict[str, Any]:
-    """Minimal routing decision for process_player_action().
-
-    Returns:
-        {
-            "use_llm": bool,
-            "model": "claude" | "codex" | "gpt" | "rule",
-            "role": str,
-            "prompt_file": str | None,
-            "pipeline": list[dict],  # full multi-step pipeline for process_turn
-        }
-    """
-    pipeline = route_action(action, state, mode=mode, base_dir=base_dir)
-    primary = pipeline[0] if pipeline else {"model": "rule", "role": "rule_engine", "prompt_file": None}
-
-    if mode == "rule":
-        return {
-            "use_llm": False,
-            "model": "rule",
-            "role": "rule_engine",
-            "prompt_file": None,
-            "pipeline": pipeline,
-        }
-
-    if primary["model"] == "rule":
-        # hybrid: rule engine first, then LLM steps follow in pipeline[1:]
-        return {
-            "use_llm": False,
-            "model": "rule",
-            "role": "rule_engine",
-            "prompt_file": None,
-            "pipeline": pipeline,
-        }
-
-    return {
-        "use_llm": True,
-        "model": primary["model"],
-        "role": primary["role"],
-        "prompt_file": primary.get("prompt_file"),
-        "structured": primary.get("structured", False),
-        "schema": primary.get("schema"),
-        "pipeline": pipeline,
+        "narrative": decision["model"] == "claude" or action in ("explore", "rest", "combat_start") or in_combat,
+        "mechanics": decision["model"] == "codex" or in_combat,
+        "quick_ideas": False,
+        "consistency_check": False,
     }
 
 
