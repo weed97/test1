@@ -1,0 +1,709 @@
+{
+  "meta": {
+    "name": "Aldermere",
+    "seed": "6726899839338871914",
+    "schema": 1,
+    "engine": "aetheria",
+    "version": 1
+  },
+  "time": {
+    "tick": 0,
+    "total_hours": 6,
+    "hour": 6,
+    "day": 1,
+    "season": "Spring",
+    "time_of_day": "Dawn",
+    "weekday": "Sunday"
+  },
+  "locations": {
+    "brackenford_square": {
+      "id": "brackenford_square",
+      "name": "Brackenford Square",
+      "region": "vale",
+      "terrain": "town",
+      "description": "The cobbled heart of Brackenford. A well stands at its centre, ringed by shops and the comings and goings of townsfolk.",
+      "exits": {
+        "tavern": "gilded_stag",
+        "inn": "the_rest",
+        "smithy": "smithy",
+        "market": "market",
+        "temple": "temple",
+        "north": "north_gate"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "notice_board",
+        "well"
+      ],
+      "spawn_table": []
+    },
+    "gilded_stag": {
+      "id": "gilded_stag",
+      "name": "The Gilded Stag",
+      "region": "vale",
+      "terrain": "town",
+      "description": "A warm, smoky tavern loud with laughter and the clink of tankards.",
+      "exits": {
+        "out": "brackenford_square",
+        "cellar": "stag_cellar"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "cookfire",
+        "hearth"
+      ],
+      "spawn_table": []
+    },
+    "stag_cellar": {
+      "id": "stag_cellar",
+      "name": "The Stag's Cellar",
+      "region": "vale",
+      "terrain": "cave",
+      "description": "A dank cellar of ale barrels and crates — and the scrabble of vermin.",
+      "exits": {
+        "up": "gilded_stag"
+      },
+      "is_safe": false,
+      "points_of_interest": [],
+      "spawn_table": [
+        [
+          "giant_rat",
+          2.0
+        ]
+      ]
+    },
+    "the_rest": {
+      "id": "the_rest",
+      "name": "The Weary Rest",
+      "region": "vale",
+      "terrain": "town",
+      "description": "A modest inn with creaking beds and a sleepy cat by the door.",
+      "exits": {
+        "out": "brackenford_square"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "beds"
+      ],
+      "spawn_table": []
+    },
+    "smithy": {
+      "id": "smithy",
+      "name": "Brackenford Smithy",
+      "region": "vale",
+      "terrain": "town",
+      "description": "Heat rolls from the forge. Tools and half-finished blades line the walls.",
+      "exits": {
+        "out": "brackenford_square"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "forge",
+        "anvil"
+      ],
+      "spawn_table": []
+    },
+    "market": {
+      "id": "market",
+      "name": "Brackenford Market",
+      "region": "vale",
+      "terrain": "town",
+      "description": "Stalls crowd together, hawking everything from turnips to trinkets.",
+      "exits": {
+        "out": "brackenford_square"
+      },
+      "is_safe": true,
+      "points_of_interest": [],
+      "spawn_table": []
+    },
+    "temple": {
+      "id": "temple",
+      "name": "Temple of the Dawn",
+      "region": "vale",
+      "terrain": "town",
+      "description": "Sunlight streams through stained glass onto a quiet stone altar.",
+      "exits": {
+        "out": "brackenford_square"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "altar"
+      ],
+      "spawn_table": []
+    },
+    "north_gate": {
+      "id": "north_gate",
+      "name": "Brackenford North Gate",
+      "region": "vale",
+      "terrain": "town",
+      "description": "The town's timber gate, guarded and opening onto the King's Road.",
+      "exits": {
+        "square": "brackenford_square",
+        "road": "kings_road"
+      },
+      "is_safe": true,
+      "points_of_interest": [],
+      "spawn_table": []
+    },
+    "kings_road": {
+      "id": "kings_road",
+      "name": "The King's Road",
+      "region": "vale",
+      "terrain": "road",
+      "description": "A broad dirt road winding between the realm's regions.",
+      "exits": {
+        "brackenford": "north_gate",
+        "thornwood": "thornwood_edge",
+        "mountains": "mountain_foot",
+        "fen": "fen_road",
+        "capital": "capital_gate",
+        "fields": "millfield"
+      },
+      "is_safe": false,
+      "points_of_interest": [],
+      "spawn_table": [
+        [
+          "wolf",
+          1.0
+        ],
+        [
+          "bandit",
+          1.2
+        ]
+      ]
+    },
+    "millfield": {
+      "id": "millfield",
+      "name": "Millfield",
+      "region": "vale",
+      "terrain": "plains",
+      "description": "Golden fields of grain ripple in the wind around an old mill.",
+      "exits": {
+        "road": "kings_road"
+      },
+      "is_safe": false,
+      "points_of_interest": [],
+      "spawn_table": [
+        [
+          "wolf",
+          1.0
+        ]
+      ]
+    },
+    "thornwood_edge": {
+      "id": "thornwood_edge",
+      "name": "Thornwood Edge",
+      "region": "wilds",
+      "terrain": "forest",
+      "description": "The treeline looms dark and close. The road dwindles to a path.",
+      "exits": {
+        "road": "kings_road",
+        "deeper": "deep_thornwood"
+      },
+      "is_safe": false,
+      "points_of_interest": [],
+      "spawn_table": [
+        [
+          "wolf",
+          1.5
+        ],
+        [
+          "bandit",
+          1.0
+        ]
+      ]
+    },
+    "deep_thornwood": {
+      "id": "deep_thornwood",
+      "name": "Deep Thornwood",
+      "region": "wilds",
+      "terrain": "forest",
+      "description": "Ancient trees blot out the sky. It is easy to lose one's way here.",
+      "exits": {
+        "edge": "thornwood_edge",
+        "shrine": "old_shrine",
+        "camp": "bandit_camp"
+      },
+      "is_safe": false,
+      "points_of_interest": [],
+      "spawn_table": [
+        [
+          "wolf",
+          1.5
+        ],
+        [
+          "giant_spider",
+          1.2
+        ],
+        [
+          "bandit",
+          0.8
+        ]
+      ]
+    },
+    "old_shrine": {
+      "id": "old_shrine",
+      "name": "The Forgotten Shrine",
+      "region": "wilds",
+      "terrain": "ruins",
+      "description": "A crumbling shrine reclaimed by moss and root. Bones litter the ground.",
+      "exits": {
+        "forest": "deep_thornwood"
+      },
+      "is_safe": false,
+      "points_of_interest": [
+        "altar"
+      ],
+      "spawn_table": [
+        [
+          "skeleton",
+          1.5
+        ],
+        [
+          "giant_spider",
+          0.6
+        ]
+      ]
+    },
+    "bandit_camp": {
+      "id": "bandit_camp",
+      "name": "Redhand Camp",
+      "region": "wilds",
+      "terrain": "ruins",
+      "description": "A squalid camp of lean-tos and cookfires, marked by red-painted handprints.",
+      "exits": {
+        "forest": "deep_thornwood"
+      },
+      "is_safe": false,
+      "points_of_interest": [],
+      "spawn_table": [
+        [
+          "bandit",
+          2.0
+        ],
+        [
+          "bandit_chief",
+          0.4
+        ]
+      ]
+    },
+    "mountain_foot": {
+      "id": "mountain_foot",
+      "name": "Foot of the Frostpeaks",
+      "region": "mountains",
+      "terrain": "mountain",
+      "description": "The road gives way to rocky switchbacks climbing into the heights.",
+      "exits": {
+        "road": "kings_road",
+        "mine": "mine_entrance",
+        "pass": "frostpeak_pass"
+      },
+      "is_safe": false,
+      "points_of_interest": [],
+      "spawn_table": [
+        [
+          "wolf",
+          1.2
+        ],
+        [
+          "kobold",
+          1.0
+        ]
+      ]
+    },
+    "mine_entrance": {
+      "id": "mine_entrance",
+      "name": "Old Mine Entrance",
+      "region": "mountains",
+      "terrain": "cave",
+      "description": "A timber-framed shaft descends into darkness. Rusted carts lie abandoned.",
+      "exits": {
+        "out": "mountain_foot",
+        "deeper": "deep_mine"
+      },
+      "is_safe": false,
+      "points_of_interest": [
+        "ore_vein"
+      ],
+      "spawn_table": [
+        [
+          "kobold",
+          1.5
+        ],
+        [
+          "giant_spider",
+          1.0
+        ]
+      ]
+    },
+    "deep_mine": {
+      "id": "deep_mine",
+      "name": "The Deep Mine",
+      "region": "mountains",
+      "terrain": "dungeon",
+      "description": "Black tunnels twist down into the mountain's roots. Something stirs.",
+      "exits": {
+        "up": "mine_entrance"
+      },
+      "is_safe": false,
+      "points_of_interest": [
+        "ore_vein",
+        "gem_vein"
+      ],
+      "spawn_table": [
+        [
+          "kobold",
+          1.0
+        ],
+        [
+          "stone_golem",
+          0.8
+        ]
+      ]
+    },
+    "frostpeak_pass": {
+      "id": "frostpeak_pass",
+      "name": "Frostpeak Pass",
+      "region": "mountains",
+      "terrain": "mountain",
+      "description": "A knife-edge pass through wind-scoured ice and bare grey rock.",
+      "exits": {
+        "down": "mountain_foot",
+        "summit": "dragon_lair"
+      },
+      "is_safe": false,
+      "points_of_interest": [],
+      "spawn_table": [
+        [
+          "frost_wolf",
+          1.5
+        ]
+      ]
+    },
+    "dragon_lair": {
+      "id": "dragon_lair",
+      "name": "The Wyrm's Roost",
+      "region": "mountains",
+      "terrain": "dungeon",
+      "description": "A vast cavern of scorched stone and gleaming hoarded gold. Heat shimmers.",
+      "exits": {
+        "pass": "frostpeak_pass"
+      },
+      "is_safe": false,
+      "points_of_interest": [
+        "hoard"
+      ],
+      "spawn_table": [
+        [
+          "dragon",
+          1.0
+        ]
+      ]
+    },
+    "fen_road": {
+      "id": "fen_road",
+      "name": "Mirewater Causeway",
+      "region": "marsh",
+      "terrain": "swamp",
+      "description": "A rotting boardwalk threads across black, reed-choked water.",
+      "exits": {
+        "road": "kings_road",
+        "hut": "witch_hut",
+        "ruins": "sunken_ruins"
+      },
+      "is_safe": false,
+      "points_of_interest": [],
+      "spawn_table": [
+        [
+          "bog_lurker",
+          1.2
+        ],
+        [
+          "giant_spider",
+          0.6
+        ]
+      ]
+    },
+    "witch_hut": {
+      "id": "witch_hut",
+      "name": "The Hedge-Witch's Hut",
+      "region": "marsh",
+      "terrain": "swamp",
+      "description": "A stilted shack hung with drying herbs, charms and stranger things.",
+      "exits": {
+        "out": "fen_road"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "alchemy_table",
+        "cauldron"
+      ],
+      "spawn_table": []
+    },
+    "sunken_ruins": {
+      "id": "sunken_ruins",
+      "name": "The Sunken Ruins",
+      "region": "marsh",
+      "terrain": "dungeon",
+      "description": "Drowned halls of a forgotten people, half-swallowed by the fen.",
+      "exits": {
+        "out": "fen_road"
+      },
+      "is_safe": false,
+      "points_of_interest": [
+        "relic_pedestal"
+      ],
+      "spawn_table": [
+        [
+          "skeleton",
+          1.2
+        ],
+        [
+          "wraith",
+          0.8
+        ],
+        [
+          "bog_lurker",
+          0.6
+        ]
+      ]
+    },
+    "capital_gate": {
+      "id": "capital_gate",
+      "name": "Highcrown Gates",
+      "region": "capital",
+      "terrain": "castle",
+      "description": "Towering white walls and a portcullis flanked by the Crown's knights.",
+      "exits": {
+        "road": "kings_road",
+        "market": "grand_market",
+        "cathedral": "cathedral",
+        "conclave": "conclave_tower",
+        "castle": "castle_keep"
+      },
+      "is_safe": true,
+      "points_of_interest": [],
+      "spawn_table": []
+    },
+    "grand_market": {
+      "id": "grand_market",
+      "name": "The Grand Bazaar",
+      "region": "capital",
+      "terrain": "castle",
+      "description": "A sprawling covered market where fortunes change hands hourly.",
+      "exits": {
+        "gate": "capital_gate"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "loom"
+      ],
+      "spawn_table": []
+    },
+    "cathedral": {
+      "id": "cathedral",
+      "name": "Cathedral of the Dawn",
+      "region": "capital",
+      "terrain": "castle",
+      "description": "A soaring nave of white stone and gold, hymns echoing from the choir.",
+      "exits": {
+        "out": "capital_gate"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "altar",
+        "reliquary"
+      ],
+      "spawn_table": []
+    },
+    "conclave_tower": {
+      "id": "conclave_tower",
+      "name": "The Conclave Spire",
+      "region": "capital",
+      "terrain": "castle",
+      "description": "A slender tower crackling with contained magic and quiet scholarship.",
+      "exits": {
+        "out": "capital_gate"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "arcane_font",
+        "library"
+      ],
+      "spawn_table": []
+    },
+    "castle_keep": {
+      "id": "castle_keep",
+      "name": "Highcrown Keep",
+      "region": "capital",
+      "terrain": "castle",
+      "description": "The throne room of Aldermere, all banners, marble and cold authority.",
+      "exits": {
+        "out": "capital_gate"
+      },
+      "is_safe": true,
+      "points_of_interest": [
+        "throne"
+      ],
+      "spawn_table": []
+    }
+  },
+  "regions": {
+    "vale": {
+      "id": "vale",
+      "name": "The Verdant Vale",
+      "description": "Rolling farmland and the bustling town of Brackenford.",
+      "controlling_faction": "crown",
+      "danger_level": 1,
+      "lore": "The Vale has known peace for thirty years, since the last war."
+    },
+    "wilds": {
+      "id": "wilds",
+      "name": "Thornwood",
+      "description": "A dark and tangled forest where bandits and beasts roam.",
+      "controlling_faction": "redhand",
+      "danger_level": 2,
+      "lore": "They say the Thornwood swallows those who wander from the path."
+    },
+    "mountains": {
+      "id": "mountains",
+      "name": "The Frostpeak Range",
+      "description": "Jagged peaks, old mines, and colder things in the high passes.",
+      "controlling_faction": "",
+      "danger_level": 4,
+      "lore": "A wyrm is said to slumber atop the highest peak."
+    },
+    "marsh": {
+      "id": "marsh",
+      "name": "Mirewater Fen",
+      "description": "A brooding wetland of black water and creeping mist.",
+      "controlling_faction": "fenfolk",
+      "danger_level": 3,
+      "lore": "The Fen keeps its secrets, and its dead, close."
+    },
+    "capital": {
+      "id": "capital",
+      "name": "Highcrown",
+      "description": "The grand capital, seat of the Crown and the Conclave.",
+      "controlling_faction": "crown",
+      "danger_level": 0,
+      "lore": "Highcrown's white walls have never been breached."
+    }
+  },
+  "factions": {
+    "crown": {
+      "id": "crown",
+      "name": "The Crown of Aldermere",
+      "description": "The royal house and its knights, sworn to law and order.",
+      "rivals": [
+        "redhand",
+        "shadowhand"
+      ],
+      "allies": [
+        "dawn"
+      ],
+      "standing": "neutral"
+    },
+    "merchants": {
+      "id": "merchants",
+      "name": "The Merchant Coalition",
+      "description": "A wealthy guild that controls trade across the realm.",
+      "rivals": [
+        "redhand"
+      ],
+      "allies": [
+        "crown"
+      ],
+      "standing": "neutral"
+    },
+    "conclave": {
+      "id": "conclave",
+      "name": "The Arcane Conclave",
+      "description": "Keepers of magical lore who guard dangerous secrets.",
+      "rivals": [],
+      "allies": [
+        "crown"
+      ],
+      "standing": "neutral"
+    },
+    "dawn": {
+      "id": "dawn",
+      "name": "The Order of the Dawn",
+      "description": "A faith devoted to light, healing and the smiting of evil.",
+      "rivals": [
+        "redhand"
+      ],
+      "allies": [
+        "crown"
+      ],
+      "standing": "neutral"
+    },
+    "shadowhand": {
+      "id": "shadowhand",
+      "name": "The Shadow Hand",
+      "description": "A secretive thieves' guild that thrives in the cracks of society.",
+      "rivals": [
+        "crown"
+      ],
+      "allies": [],
+      "standing": "neutral"
+    },
+    "redhand": {
+      "id": "redhand",
+      "name": "The Redhand Brigands",
+      "description": "Cutthroats and raiders who prey on the roads and the weak.",
+      "rivals": [
+        "crown",
+        "merchants",
+        "dawn"
+      ],
+      "allies": [],
+      "standing": "neutral"
+    },
+    "fenfolk": {
+      "id": "fenfolk",
+      "name": "The Fenfolk",
+      "description": "Reclusive marsh-dwellers and their inscrutable hedge-witch.",
+      "rivals": [],
+      "allies": [],
+      "standing": "neutral"
+    }
+  },
+  "global_flags": {
+    "dragon_awake": false,
+    "war_footing": false
+  },
+  "recent_events": [],
+  "rumor_pool": [
+    "they say a dragon has woken atop the Frostpeaks after three hundred years",
+    "the Redhand bandits grow bolder every week on the King's Road",
+    "the dead don't rest easy in the Mirewater Fen, or so the fenfolk whisper",
+    "the Conclave in Highcrown is buying up old books at any price",
+    "an old shrine in the Thornwood has gone strange — bones, and a cold that bites",
+    "Master Coyne would sell his own grandmother if the price was right",
+    "the Crown will make a lord of whoever ends the realm's troubles",
+    "moonpetal fetches a good coin from the temple healers",
+    "miners struck something in the deep mine they wish they hadn't",
+    "the eastern lords sharpen their swords while Aldermere looks the other way"
+  ],
+  "market": {
+    "pressure": {}
+  },
+  "player": "player",
+  "active_characters": [
+    "aldous",
+    "bartholomew",
+    "bram",
+    "coyne",
+    "doran",
+    "elin",
+    "halric",
+    "lysa",
+    "mira",
+    "morwenna",
+    "pip",
+    "tilda",
+    "velian",
+    "wat"
+  ]
+}

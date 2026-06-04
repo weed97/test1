@@ -1,0 +1,69 @@
+{
+  "id": "wat",
+  "name": "Wat the Hunter",
+  "role": "hunter",
+  "faction": "",
+  "species": "human",
+  "alive": true,
+  "home_location": "thornwood_edge",
+  "current_location": "thornwood_edge",
+  "personality": {
+    "warmth": 50,
+    "bravery": 65,
+    "honesty": 75,
+    "greed": 40,
+    "curiosity": 45,
+    "traits": [
+      "watchful",
+      "laconic"
+    ]
+  },
+  "traits": [
+    "watchful",
+    "laconic"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 3,
+    "strength": 10,
+    "dexterity": 15,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 13,
+    "charisma": 10,
+    "max_health": 44
+  },
+  "schedule": {
+    "Dawn": "thornwood_edge",
+    "Morning": "deep_thornwood",
+    "Noon": "thornwood_edge",
+    "Afternoon": "kings_road",
+    "Dusk": "gilded_stag",
+    "Night": "gilded_stag",
+    "Midnight": "the_rest"
+  },
+  "voice": "quiet, watchful, sparing with words",
+  "goals": [
+    "read the wood's moods",
+    "keep the packs in check"
+  ],
+  "knowledge": [
+    "wolves are running in bigger packs than they ought",
+    "saw spider-silk strung thick near the old shrine"
+  ],
+  "is_merchant": true,
+  "shop": [
+    "hunting_bow",
+    "venison",
+    "wolf_pelt",
+    "leather_armor"
+  ],
+  "quests_offered": [],
+  "model_role": "npc_minor",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "lysa",
+  "name": "Lysa Quill",
+  "role": "merchant",
+  "faction": "shadowhand",
+  "species": "human",
+  "alive": true,
+  "home_location": "grand_market",
+  "current_location": "grand_market",
+  "personality": {
+    "warmth": 50,
+    "bravery": 55,
+    "honesty": 30,
+    "greed": 65,
+    "curiosity": 70,
+    "traits": [
+      "sly",
+      "charming"
+    ]
+  },
+  "traits": [
+    "sly",
+    "charming"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 4,
+    "strength": 10,
+    "dexterity": 15,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 15,
+    "max_health": 52
+  },
+  "schedule": {
+    "Dawn": "the_rest",
+    "Morning": "grand_market",
+    "Noon": "gilded_stag",
+    "Afternoon": "grand_market",
+    "Dusk": "grand_market",
+    "Night": "gilded_stag",
+    "Midnight": "grand_market"
+  },
+  "voice": "shrewd, smooth, always selling",
+  "goals": [
+    "turn a tidy profit",
+    "corner a lucrative market"
+  ],
+  "knowledge": [
+    "the Shadow Hand pays better than the Crown, and asks fewer questions",
+    "a certain locket went missing on the Thornwood road"
+  ],
+  "is_merchant": true,
+  "shop": [
+    "dagger",
+    "leather_armor",
+    "minor_health_potion",
+    "antidote",
+    "ancient_coin"
+  ],
+  "quests_offered": [
+    "q_locket"
+  ],
+  "model_role": "npc_minor",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

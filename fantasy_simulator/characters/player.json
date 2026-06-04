@@ -1,0 +1,48 @@
+{
+  "id": "player",
+  "name": "Aria",
+  "role": "adventurer",
+  "faction": "",
+  "species": "human",
+  "alive": true,
+  "is_player": true,
+  "home_location": "brackenford_square",
+  "current_location": "brackenford_square",
+  "personality": {
+    "warmth": 55,
+    "bravery": 60,
+    "honesty": 60,
+    "greed": 45,
+    "curiosity": 70,
+    "traits": []
+  },
+  "traits": [],
+  "mood": "content",
+  "stats": {
+    "level": 1,
+    "strength": 12,
+    "dexterity": 12,
+    "constitution": 12,
+    "intelligence": 12,
+    "wisdom": 12,
+    "charisma": 12,
+    "max_health": 40
+  },
+  "inventory": [
+    "iron_sword",
+    "minor_health_potion",
+    "bread"
+  ],
+  "gold": 75,
+  "voice": "the player's own",
+  "goals": [
+    "make a name in Aldermere"
+  ],
+  "reputation": {},
+  "active_quests": [],
+  "completed_quests": [],
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

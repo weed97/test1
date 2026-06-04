@@ -1,0 +1,66 @@
+{
+  "id": "halric",
+  "name": "Steward Halric",
+  "role": "noble",
+  "faction": "crown",
+  "species": "human",
+  "alive": true,
+  "home_location": "castle_keep",
+  "current_location": "castle_keep",
+  "personality": {
+    "warmth": 45,
+    "bravery": 60,
+    "honesty": 75,
+    "greed": 35,
+    "curiosity": 55,
+    "traits": [
+      "formal",
+      "burdened"
+    ]
+  },
+  "traits": [
+    "formal",
+    "burdened"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 6,
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 14,
+    "charisma": 15,
+    "max_health": 68
+  },
+  "schedule": {
+    "Dawn": "castle_keep",
+    "Morning": "castle_keep",
+    "Noon": "castle_keep",
+    "Afternoon": "castle_keep",
+    "Dusk": "castle_keep",
+    "Night": "castle_keep",
+    "Midnight": "castle_keep"
+  },
+  "voice": "formal, measured, faintly weary",
+  "goals": [
+    "protect the realm",
+    "manage the Crown's many burdens"
+  ],
+  "knowledge": [
+    "the Crown will richly reward whoever ends the Wyrm's threat",
+    "the eastern lords watch our troubles with hungry eyes"
+  ],
+  "is_merchant": false,
+  "shop": [],
+  "quests_offered": [
+    "q_dragon"
+  ],
+  "model_role": "npc_major",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "id": "mira",
+  "name": "Mira Emberhand",
+  "role": "blacksmith",
+  "faction": "merchants",
+  "species": "human",
+  "alive": true,
+  "home_location": "smithy",
+  "current_location": "smithy",
+  "personality": {
+    "warmth": 55,
+    "bravery": 70,
+    "honesty": 80,
+    "greed": 50,
+    "curiosity": 40,
+    "traits": [
+      "blunt",
+      "proud"
+    ]
+  },
+  "traits": [
+    "blunt",
+    "proud"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 4,
+    "strength": 15,
+    "dexterity": 10,
+    "constitution": 14,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 10,
+    "max_health": 64
+  },
+  "schedule": {
+    "Dawn": "smithy",
+    "Morning": "smithy",
+    "Noon": "gilded_stag",
+    "Afternoon": "smithy",
+    "Dusk": "smithy",
+    "Night": "the_rest",
+    "Midnight": "the_rest"
+  },
+  "voice": "blunt, proud, economical with words",
+  "goals": [
+    "forge the finest steel in the Vale",
+    "secure a steady ore supply"
+  ],
+  "knowledge": [
+    "good steel needs good ore, and the mine's gone quiet",
+    "they're paying well in Highcrown for dragon scale"
+  ],
+  "is_merchant": true,
+  "shop": [
+    "rusty_sword",
+    "iron_sword",
+    "steel_longsword",
+    "war_axe",
+    "wooden_shield",
+    "iron_shield",
+    "leather_armor",
+    "chain_mail",
+    "iron_helm",
+    "iron_ingot"
+  ],
+  "quests_offered": [
+    "q_ore"
+  ],
+  "model_role": "npc_major",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

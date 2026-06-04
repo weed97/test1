@@ -1,0 +1,59 @@
+{
+  "_comment": "Role -> model routing. This is where each model's strengths are used: a strong model voices the narrator and major NPCs; a fast/cheap model handles ambient NPCs, world events, the referee and summaries; the director is free/local. With no API keys, every role transparently falls back to the deterministic 'mock' provider so the simulation always runs. Set OPENAI_API_KEY / ANTHROPIC_API_KEY to enable real models, and edit the models below to taste.",
+  "default": {
+    "provider": "mock",
+    "model": "mock-1",
+    "temperature": 0.8,
+    "max_tokens": 400
+  },
+  "roles": {
+    "narrator": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-latest",
+      "temperature": 0.9,
+      "max_tokens": 500
+    },
+    "npc_major": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-latest",
+      "temperature": 0.9,
+      "max_tokens": 300
+    },
+    "npc": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "temperature": 0.9,
+      "max_tokens": 260
+    },
+    "npc_minor": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "temperature": 0.85,
+      "max_tokens": 180
+    },
+    "world_event": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "temperature": 1.0,
+      "max_tokens": 220
+    },
+    "referee": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "temperature": 0.3,
+      "max_tokens": 200
+    },
+    "memory_summarizer": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "temperature": 0.2,
+      "max_tokens": 200
+    },
+    "director": {
+      "provider": "mock",
+      "model": "mock-1",
+      "temperature": 0.4,
+      "max_tokens": 16
+    }
+  }
+}

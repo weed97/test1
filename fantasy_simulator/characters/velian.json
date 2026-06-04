@@ -1,0 +1,72 @@
+{
+  "id": "velian",
+  "name": "Archmagus Velian",
+  "role": "mage",
+  "faction": "conclave",
+  "species": "human",
+  "alive": true,
+  "home_location": "conclave_tower",
+  "current_location": "conclave_tower",
+  "personality": {
+    "warmth": 40,
+    "bravery": 70,
+    "honesty": 70,
+    "greed": 30,
+    "curiosity": 95,
+    "traits": [
+      "brilliant",
+      "aloof"
+    ]
+  },
+  "traits": [
+    "brilliant",
+    "aloof"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 9,
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 18,
+    "wisdom": 16,
+    "charisma": 10,
+    "max_health": 92
+  },
+  "schedule": {
+    "Dawn": "conclave_tower",
+    "Morning": "conclave_tower",
+    "Noon": "conclave_tower",
+    "Afternoon": "castle_keep",
+    "Dusk": "conclave_tower",
+    "Night": "conclave_tower",
+    "Midnight": "conclave_tower"
+  },
+  "voice": "precise, aloof, fond of arcane metaphor",
+  "goals": [
+    "unravel the Wyrm's secret",
+    "advance the Conclave's knowledge"
+  ],
+  "knowledge": [
+    "the Wyrm of Frostpeak is no legend; the Conclave has proof",
+    "an artefact sleeps in the fen that could wake far worse things"
+  ],
+  "is_merchant": true,
+  "shop": [
+    "mana_potion",
+    "mana_crystal",
+    "amulet_focus",
+    "ancient_tome",
+    "oak_staff"
+  ],
+  "quests_offered": [
+    "q_tome"
+  ],
+  "model_role": "npc_major",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

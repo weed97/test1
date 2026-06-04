@@ -1,0 +1,63 @@
+{
+  "id": "pip",
+  "name": "Pip",
+  "role": "villager",
+  "faction": "",
+  "species": "human",
+  "alive": true,
+  "home_location": "brackenford_square",
+  "current_location": "brackenford_square",
+  "personality": {
+    "warmth": 75,
+    "bravery": 25,
+    "honesty": 60,
+    "greed": 40,
+    "curiosity": 95,
+    "traits": [
+      "curious",
+      "underfoot"
+    ]
+  },
+  "traits": [
+    "curious",
+    "underfoot"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 1,
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 10,
+    "max_health": 28
+  },
+  "schedule": {
+    "Dawn": "the_rest",
+    "Morning": "brackenford_square",
+    "Noon": "market",
+    "Afternoon": "brackenford_square",
+    "Dusk": "gilded_stag",
+    "Night": "the_rest",
+    "Midnight": "the_rest"
+  },
+  "voice": "earnest, easily excited",
+  "goals": [
+    "see real adventure one day"
+  ],
+  "knowledge": [
+    "I saw lights in the marsh at night, all green and floaty",
+    "the witch in the fen turns folk into toads, my cousin says"
+  ],
+  "is_merchant": false,
+  "shop": [],
+  "quests_offered": [],
+  "model_role": "npc_minor",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

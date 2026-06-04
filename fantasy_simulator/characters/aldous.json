@@ -1,0 +1,68 @@
+{
+  "id": "aldous",
+  "name": "High Priest Aldous",
+  "role": "priest",
+  "faction": "dawn",
+  "species": "human",
+  "alive": true,
+  "home_location": "cathedral",
+  "current_location": "cathedral",
+  "personality": {
+    "warmth": 70,
+    "bravery": 75,
+    "honesty": 95,
+    "greed": 15,
+    "curiosity": 50,
+    "traits": [
+      "serene",
+      "righteous"
+    ]
+  },
+  "traits": [
+    "serene",
+    "righteous"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 8,
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 17,
+    "charisma": 15,
+    "max_health": 84
+  },
+  "schedule": {
+    "Dawn": "cathedral",
+    "Morning": "cathedral",
+    "Noon": "cathedral",
+    "Afternoon": "cathedral",
+    "Dusk": "cathedral",
+    "Night": "cathedral",
+    "Midnight": "cathedral"
+  },
+  "voice": "gentle, devout, speaks in blessings",
+  "goals": [
+    "tend the faithful",
+    "see the restless dead laid to rest"
+  ],
+  "knowledge": [
+    "undeath festers in the fen; the Order would see it cleansed",
+    "a blessed blade can lay the restless dead to rest for good"
+  ],
+  "is_merchant": true,
+  "shop": [
+    "health_potion",
+    "antidote",
+    "mace_of_dawn"
+  ],
+  "quests_offered": [],
+  "model_role": "npc_major",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

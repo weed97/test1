@@ -1,0 +1,64 @@
+{
+  "id": "bartholomew",
+  "name": "Bartholomew the Scribe",
+  "role": "scholar",
+  "faction": "conclave",
+  "species": "human",
+  "alive": true,
+  "home_location": "conclave_tower",
+  "current_location": "conclave_tower",
+  "personality": {
+    "warmth": 60,
+    "bravery": 20,
+    "honesty": 85,
+    "greed": 25,
+    "curiosity": 98,
+    "traits": [
+      "bookish",
+      "tangent-prone"
+    ]
+  },
+  "traits": [
+    "bookish",
+    "tangent-prone"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 1,
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 15,
+    "wisdom": 14,
+    "charisma": 10,
+    "max_health": 28
+  },
+  "schedule": {
+    "Dawn": "conclave_tower",
+    "Morning": "conclave_tower",
+    "Noon": "grand_market",
+    "Afternoon": "conclave_tower",
+    "Dusk": "conclave_tower",
+    "Night": "the_rest",
+    "Midnight": "the_rest"
+  },
+  "voice": "verbose, tangential, delighted by detail",
+  "goals": [
+    "decode the old runes",
+    "finish just one more treatise"
+  ],
+  "knowledge": [
+    "the runes in the sunken ruins predate the Kingdom itself",
+    "Skorvaxis the Wyrm has slept three hundred years — and may be waking"
+  ],
+  "is_merchant": false,
+  "shop": [],
+  "quests_offered": [],
+  "model_role": "npc_minor",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

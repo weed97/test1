@@ -1,0 +1,76 @@
+{
+  "id": "coyne",
+  "name": "Master Coyne",
+  "role": "merchant",
+  "faction": "merchants",
+  "species": "human",
+  "alive": true,
+  "home_location": "grand_market",
+  "current_location": "grand_market",
+  "personality": {
+    "warmth": 55,
+    "bravery": 35,
+    "honesty": 40,
+    "greed": 85,
+    "curiosity": 60,
+    "traits": [
+      "smooth",
+      "avaricious"
+    ]
+  },
+  "traits": [
+    "smooth",
+    "avaricious"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 1,
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 16,
+    "max_health": 28
+  },
+  "schedule": {
+    "Dawn": "grand_market",
+    "Morning": "grand_market",
+    "Noon": "grand_market",
+    "Afternoon": "grand_market",
+    "Dusk": "grand_market",
+    "Night": "castle_keep",
+    "Midnight": "grand_market"
+  },
+  "voice": "shrewd, smooth, always selling",
+  "goals": [
+    "turn a tidy profit",
+    "corner a lucrative market"
+  ],
+  "knowledge": [
+    "everything has a price; even kings, given enough of it",
+    "dragon scale fetches a small fortune, if one could get it"
+  ],
+  "is_merchant": true,
+  "shop": [
+    "steel_longsword",
+    "war_axe",
+    "plate_armor",
+    "iron_shield",
+    "ring_vigor",
+    "amulet_focus",
+    "health_potion",
+    "mana_potion",
+    "elixir_might",
+    "gold_idol",
+    "ruby"
+  ],
+  "quests_offered": [],
+  "model_role": "npc_minor",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

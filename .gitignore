@@ -19,6 +19,10 @@ htmlcov/
 .aetheria/
 *.save.json
 
+# fantasy_simulator runtime logs (world_state.json & characters/ ARE committed as seed data)
+fantasy_simulator/logs/
+*.tmp
+
 # OS / editor
 .DS_Store
 *.swp

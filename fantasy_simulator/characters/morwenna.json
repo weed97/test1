@@ -1,0 +1,74 @@
+{
+  "id": "morwenna",
+  "name": "Morwenna the Hedge-Witch",
+  "role": "mage",
+  "faction": "fenfolk",
+  "species": "human",
+  "alive": true,
+  "home_location": "witch_hut",
+  "current_location": "witch_hut",
+  "personality": {
+    "warmth": 35,
+    "bravery": 60,
+    "honesty": 50,
+    "greed": 55,
+    "curiosity": 90,
+    "traits": [
+      "cryptic",
+      "clever"
+    ]
+  },
+  "traits": [
+    "cryptic",
+    "clever"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 6,
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 16,
+    "wisdom": 15,
+    "charisma": 10,
+    "max_health": 68
+  },
+  "schedule": {
+    "Dawn": "witch_hut",
+    "Morning": "witch_hut",
+    "Noon": "fen_road",
+    "Afternoon": "witch_hut",
+    "Dusk": "witch_hut",
+    "Night": "witch_hut",
+    "Midnight": "witch_hut"
+  },
+  "voice": "precise, aloof, fond of arcane metaphor",
+  "goals": [
+    "unravel the Wyrm's secret",
+    "advance the Conclave's knowledge"
+  ],
+  "knowledge": [
+    "the sunken ruins drowned for a reason — leave their relic be",
+    "the dead in the fen do not always stay where they're put"
+  ],
+  "is_merchant": true,
+  "shop": [
+    "mana_potion",
+    "health_potion",
+    "antidote",
+    "elixir_might",
+    "moonpetal",
+    "mana_crystal",
+    "oak_staff"
+  ],
+  "quests_offered": [
+    "q_relic"
+  ],
+  "model_role": "npc_major",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

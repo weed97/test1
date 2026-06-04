@@ -1,0 +1,66 @@
+{
+  "id": "doran",
+  "name": "Captain Doran",
+  "role": "guard",
+  "faction": "crown",
+  "species": "human",
+  "alive": true,
+  "home_location": "north_gate",
+  "current_location": "north_gate",
+  "personality": {
+    "warmth": 45,
+    "bravery": 85,
+    "honesty": 85,
+    "greed": 30,
+    "curiosity": 35,
+    "traits": [
+      "dutiful",
+      "stern"
+    ]
+  },
+  "traits": [
+    "dutiful",
+    "stern"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 5,
+    "strength": 15,
+    "dexterity": 10,
+    "constitution": 15,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 10,
+    "max_health": 72
+  },
+  "schedule": {
+    "Dawn": "north_gate",
+    "Morning": "north_gate",
+    "Noon": "north_gate",
+    "Afternoon": "kings_road",
+    "Dusk": "north_gate",
+    "Night": "gilded_stag",
+    "Midnight": "the_rest"
+  },
+  "voice": "stern, dutiful, clipped sentences",
+  "goals": [
+    "keep the roads safe",
+    "earn the Crown's favour"
+  ],
+  "knowledge": [
+    "the Redhand have a camp deep in the Thornwood",
+    "lose enough good men and a captain stops sleeping"
+  ],
+  "is_merchant": false,
+  "shop": [],
+  "quests_offered": [
+    "q_bandits"
+  ],
+  "model_role": "npc_major",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

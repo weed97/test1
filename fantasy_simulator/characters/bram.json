@@ -1,0 +1,73 @@
+{
+  "id": "bram",
+  "name": "Bram Tunnel",
+  "role": "innkeeper",
+  "faction": "merchants",
+  "species": "human",
+  "alive": true,
+  "home_location": "gilded_stag",
+  "current_location": "gilded_stag",
+  "personality": {
+    "warmth": 85,
+    "bravery": 40,
+    "honesty": 70,
+    "greed": 45,
+    "curiosity": 60,
+    "traits": [
+      "jovial",
+      "gossip"
+    ]
+  },
+  "traits": [
+    "jovial",
+    "gossip"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 1,
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 13,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 14,
+    "max_health": 34
+  },
+  "schedule": {
+    "Dawn": "gilded_stag",
+    "Morning": "gilded_stag",
+    "Noon": "gilded_stag",
+    "Afternoon": "gilded_stag",
+    "Dusk": "gilded_stag",
+    "Night": "gilded_stag",
+    "Midnight": "the_rest"
+  },
+  "voice": "warm, talkative, fond of a good rumour",
+  "goals": [
+    "keep the Stag prosperous and lively",
+    "hear every rumour first"
+  ],
+  "knowledge": [
+    "the cellar's overrun with rats the size of cats",
+    "Captain Doran's been losing sleep over the road bandits"
+  ],
+  "is_merchant": true,
+  "shop": [
+    "ale",
+    "bread",
+    "cheese",
+    "venison",
+    "minor_health_potion",
+    "stamina_draught"
+  ],
+  "quests_offered": [
+    "q_rats"
+  ],
+  "model_role": "npc_major",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}

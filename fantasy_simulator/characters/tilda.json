@@ -1,0 +1,75 @@
+{
+  "id": "tilda",
+  "name": "Goodwife Tilda",
+  "role": "merchant",
+  "faction": "merchants",
+  "species": "human",
+  "alive": true,
+  "home_location": "market",
+  "current_location": "market",
+  "personality": {
+    "warmth": 65,
+    "bravery": 30,
+    "honesty": 55,
+    "greed": 70,
+    "curiosity": 55,
+    "traits": [
+      "shrewd",
+      "chatty"
+    ]
+  },
+  "traits": [
+    "shrewd",
+    "chatty"
+  ],
+  "mood": "content",
+  "disposition": "neutral",
+  "relationship_to_player": 0,
+  "stats": {
+    "level": 1,
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 13,
+    "max_health": 28
+  },
+  "schedule": {
+    "Dawn": "the_rest",
+    "Morning": "market",
+    "Noon": "market",
+    "Afternoon": "market",
+    "Dusk": "market",
+    "Night": "gilded_stag",
+    "Midnight": "the_rest"
+  },
+  "voice": "shrewd, smooth, always selling",
+  "goals": [
+    "turn a tidy profit",
+    "corner a lucrative market"
+  ],
+  "knowledge": [
+    "prices on weapons climb every time war's mentioned",
+    "a hooded woman in the market asks odd questions"
+  ],
+  "is_merchant": true,
+  "shop": [
+    "bread",
+    "cheese",
+    "linen",
+    "oak_wood",
+    "coal",
+    "redroot",
+    "leather_scrap",
+    "leather_boots",
+    "minor_health_potion",
+    "silver_goblet"
+  ],
+  "quests_offered": [],
+  "model_role": "npc_minor",
+  "memory": {
+    "summary": "",
+    "recent": []
+  }
+}
