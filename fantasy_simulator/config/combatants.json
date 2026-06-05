@@ -14,7 +14,14 @@
     "equipment": { "weapon": "excalibur_sovereign_blade", "armor": "mythic_plate_core" },
     "str_override": 2000,
     "armor_pierce": true,
-    "excalibur_bound": true
+    "excalibur_bound": true,
+    "skills": [
+      "sovereign_blade_combo",
+      "sovereign_broad_cleave",
+      "kings_aegis",
+      "excalibur_sovereign_judgment",
+      "sovereign_wish_rite"
+    ]
   },
   "coalition_blade_sovereign": {
     "label": "연합 검주 · 세계 2위",

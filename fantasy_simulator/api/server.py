@@ -133,6 +133,12 @@ class ArthurAoeRequest(BaseModel):
     ultimate: bool = False
 
 
+class ArthurSkillRequest(BaseModel):
+    skill_id: str
+    target_presets: Optional[list[str]] = None
+    distance_pixels: Optional[list[int]] = None
+
+
 class TurnRequest(BaseModel):
     session_id: str
     action: str = Field(..., min_length=1, max_length=512)
@@ -342,6 +348,29 @@ def combat_arthur_aoe(body: ArthurAoeRequest | None = None) -> dict[str, Any]:
         targets.append(snap)
     result = resolve_excalibur_aoe(arthur, targets, bundle=bundle, ultimate=req.ultimate)
     return {"api_version": API_VERSION, "arthur_aoe": result}
+
+
+@app.post("/v1/combat/arthur_skill")
+def combat_arthur_skill(body: ArthurSkillRequest) -> dict[str, Any]:
+    import random
+
+    from utils.combat_stats import build_combatant_snapshot, resolve_arthur_skill
+
+    root = package_root()
+    arthur = build_combatant_snapshot(base_dir=root, preset_id="npc_arthur_pendragon")
+    presets = body.target_presets or ["world_rank_02"]
+    targets: list[dict[str, Any]] = []
+    for i, preset_id in enumerate(presets):
+        snap = build_combatant_snapshot(base_dir=root, preset_id=preset_id)
+        if body.distance_pixels and i < len(body.distance_pixels):
+            snap["distance_pixels"] = int(body.distance_pixels[i])
+        else:
+            snap.setdefault("distance_pixels", 0)
+        targets.append(snap)
+    result = resolve_arthur_skill(
+        body.skill_id, arthur, targets, base_dir=root, rng=random.Random(0)
+    )
+    return {"api_version": API_VERSION, "arthur_skill": result}
 
 
 @app.get("/v1/combat/elite_coalition")

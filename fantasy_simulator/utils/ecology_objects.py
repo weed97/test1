@@ -25,10 +25,13 @@ def load_intelligence_config(base_dir: str | Path) -> dict[str, Any]:
 def skill_definition(skill_id: str, *, base_dir: str | Path) -> dict[str, Any]:
     eco = load_ecology_config(base_dir)
     if skill_id in eco.get("skills", {}):
-        return dict(eco["skills"][skill_id])
+        sdef = dict(eco["skills"][skill_id])
+        sdef.setdefault("skill_id", skill_id)
+        return sdef
     prog = load_progression_config(base_dir)
     sk = prog.get("skills", {}).get(skill_id, {})
     return {
+        "skill_id": skill_id,
         "power": int(sk.get("power", 5)),
         "mana_cost": int(sk.get("mana", 0)),
         "range_tiles": 1,
@@ -36,6 +39,11 @@ def skill_definition(skill_id: str, *, base_dir: str | Path) -> dict[str, Any]:
         "element": sk.get("element", ""),
         "tags": list(sk.get("tags", [])),
     }
+
+
+def is_sovereign_skill(sdef: dict[str, Any]) -> bool:
+    pipeline = str(sdef.get("combat_pipeline", ""))
+    return pipeline.startswith("sovereign_") or pipeline == "world_edict"
 
 
 def _default_intelligence(

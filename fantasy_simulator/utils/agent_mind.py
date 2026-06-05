@@ -146,9 +146,32 @@ def preview_skill_damage(
     base_dir: str | Path,
     rng: random.Random,
 ) -> int:
+    from utils.ecology_objects import is_sovereign_skill
+
     sdef = skill_definition(skill_id, base_dir=base_dir)
     if "build_progress" in sdef.get("tags", []):
         return 0
+    if is_sovereign_skill(sdef) or attacker.get("world_sovereign_holder") or attacker.get(
+        "archetype_id"
+    ) == "npc_arthur_pendragon":
+        try:
+            from utils.combat_precision import from_milli, load_combat_precision_config
+            from utils.combat_stats import agent_to_combatant, preview_arthur_skill_damage
+
+            atk = agent_to_combatant(attacker, base_dir=base_dir)
+            defn = agent_to_combatant(target, base_dir=base_dir)
+            preview = preview_arthur_skill_damage(
+                atk, defn, skill_id, base_dir=base_dir, rng=rng
+            )
+            cfg = load_combat_precision_config(base_dir)
+            dmg_hp = int(
+                round(from_milli(int(preview.get("damage_milli", 0)), cfg=cfg))
+            )
+            if preview.get("pipeline") != "world_edict":
+                return max(0, dmg_hp)
+            return 0
+        except (OSError, KeyError, json.JSONDecodeError):
+            pass
     try:
         from utils.combat_stats import agent_to_combatant, strike_damage_hp
 

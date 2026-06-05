@@ -162,6 +162,25 @@ def _weapon_template(equipment_cfg: dict[str, Any], weapon_id: str | None) -> di
     return equipment_cfg.get("weapons", {}).get(weapon_id, {})
 
 
+def _combatant_skill_ids(data: dict[str, Any], *, bundle: dict[str, Any]) -> list[str]:
+    """Preset skills + weapon-granted skills (deduped, preset order first)."""
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for sk in data.get("skills") or []:
+        sid = str(sk)
+        if sid not in seen:
+            seen.add(sid)
+            ordered.append(sid)
+    equip = data.get("equipment") or {}
+    wpn = _weapon_template(bundle["equipment"], equip.get("weapon"))
+    for sk in wpn.get("skills") or []:
+        sid = str(sk)
+        if sid not in seen:
+            seen.add(sid)
+            ordered.append(sid)
+    return ordered
+
+
 def _armor_template(equipment_cfg: dict[str, Any], armor_id: str | None) -> dict[str, Any]:
     if not armor_id:
         return {}
@@ -323,6 +342,9 @@ def build_combatant_snapshot(
         snap["hp_milli"] = int(data["hp_override_milli"])
     elif tier == "demigod" and bundle["coalition"].get("world_sovereign", {}).get("hp_milli"):
         snap["hp_milli"] = int(bundle["coalition"]["world_sovereign"]["hp_milli"])
+    skills = _combatant_skill_ids(data, bundle=bundle)
+    if skills:
+        snap["skills"] = skills
     _apply_arthur_sovereign_fields(snap, bundle=bundle)
     _apply_elite_pierce_fields(snap, bundle=bundle, wpn=wpn)
     return snap
@@ -345,6 +367,170 @@ def _in_ultimate_blast(
 ) -> bool:
     """시전 후 바깥으로 vital_dodge_px만큼 이동해도 반경 밖이 안 되면 적중."""
     return int(distance_pixels) + int(vital_dodge_pixels) <= int(radius_pixels)
+
+
+def _sovereign_skill_multiplier(sdef: dict[str, Any]) -> float:
+    mode = str(sdef.get("sovereign_strike_mode", "skill"))
+    if mode == "basic":
+        return 1.0
+    power = float(sdef.get("power", 10))
+    return max(1.0, power / 10.0)
+
+
+def preview_arthur_skill_damage(
+    attacker: dict[str, Any],
+    target: dict[str, Any],
+    skill_id: str,
+    *,
+    base_dir: str | Path,
+    rng: Any,
+) -> dict[str, Any]:
+    """Single-target preview for Arthur sovereign skills (agent_mind / parallel_beat)."""
+    from utils.ecology_objects import skill_definition
+
+    sdef = skill_definition(skill_id, base_dir=base_dir)
+    pipeline = str(sdef.get("combat_pipeline", ""))
+    bundle = load_combat_bundle(base_dir)
+
+    if pipeline == "sovereign_strike":
+        mult = _sovereign_skill_multiplier(sdef)
+        strike = _sovereign_strike_damage_milli(attacker, skill_multiplier=mult)
+        return {
+            "skill_id": skill_id,
+            "pipeline": pipeline,
+            "damage_milli": int(strike["damage_milli"]),
+            "sovereign_capped": True,
+        }
+
+    if pipeline == "sovereign_aoe":
+        ultimate = bool(sdef.get("aoe_ultimate", False))
+        t = dict(target)
+        t.setdefault("distance_pixels", 0)
+        aoe = resolve_excalibur_aoe(attacker, [t], bundle=bundle, ultimate=ultimate)
+        hit = aoe["results"][0] if aoe.get("results") else {}
+        return {
+            "skill_id": skill_id,
+            "pipeline": pipeline,
+            "ultimate": ultimate,
+            "damage_milli": int(hit.get("damage_milli", 0)),
+            "killed": bool(hit.get("killed", False)),
+            "aoe": aoe,
+        }
+
+    if pipeline == "sovereign_buff":
+        return {
+            "skill_id": skill_id,
+            "pipeline": pipeline,
+            "damage_milli": 0,
+            "buff": dict(sdef.get("effects", {})),
+        }
+
+    if pipeline == "world_edict":
+        return {
+            "skill_id": skill_id,
+            "pipeline": pipeline,
+            "damage_milli": 0,
+            "wish_interval_years": int(sdef.get("wish_interval_years", 4)),
+            "power_id": str(sdef.get("power_id", "sovereign_wish")),
+            "config_ref": str(sdef.get("config_ref", "config/demigod_sovereign.json")),
+        }
+
+    mult = _sovereign_skill_multiplier(sdef)
+    strike = _sovereign_strike_damage_milli(attacker, skill_multiplier=mult)
+    return {
+        "skill_id": skill_id,
+        "pipeline": pipeline or "sovereign_strike",
+        "damage_milli": int(strike["damage_milli"]),
+    }
+
+
+def resolve_arthur_skill(
+    skill_id: str,
+    attacker: dict[str, Any],
+    targets: list[dict[str, Any]],
+    *,
+    base_dir: str | Path,
+    rng: Any | None = None,
+) -> dict[str, Any]:
+    """Resolve one Arthur core skill through the sovereign combat pipeline."""
+    from utils.ecology_objects import skill_definition
+
+    sdef = skill_definition(skill_id, base_dir=base_dir)
+    pipeline = str(sdef.get("combat_pipeline", ""))
+    bundle = load_combat_bundle(base_dir)
+
+    if pipeline == "sovereign_strike":
+        mult = _sovereign_skill_multiplier(sdef)
+        hits = int(sdef.get("hits_per_cast", 1))
+        per_target: list[dict[str, Any]] = []
+        for t in targets:
+            strike = _sovereign_strike_damage_milli(attacker, skill_multiplier=mult)
+            total = int(strike["damage_milli"]) * hits
+            per_target.append(
+                {
+                    "target_id": t.get("id"),
+                    "hits": hits,
+                    "damage_milli": total,
+                    "per_hit_milli": int(strike["damage_milli"]),
+                    "sovereign_capped": True,
+                }
+            )
+        return {
+            "skill_id": skill_id,
+            "label": sdef.get("label", skill_id),
+            "pipeline": pipeline,
+            "results": per_target,
+        }
+
+    if pipeline == "sovereign_aoe":
+        ultimate = bool(sdef.get("aoe_ultimate", False))
+        aoe = resolve_excalibur_aoe(attacker, targets, bundle=bundle, ultimate=ultimate)
+        return {
+            "skill_id": skill_id,
+            "label": sdef.get("label", skill_id),
+            "pipeline": pipeline,
+            "aoe": aoe,
+        }
+
+    if pipeline == "sovereign_buff":
+        return {
+            "skill_id": skill_id,
+            "label": sdef.get("label", skill_id),
+            "pipeline": pipeline,
+            "buff": dict(sdef.get("effects", {})),
+            "duration_beats": int(sdef.get("effects", {}).get("duration_beats", 8)),
+            "targets": [t.get("id") for t in targets],
+        }
+
+    if pipeline == "world_edict":
+        demigod = _read_json(base_dir, "config/demigod_sovereign.json")
+        return {
+            "skill_id": skill_id,
+            "label": sdef.get("label", skill_id),
+            "pipeline": pipeline,
+            "power_id": str(sdef.get("power_id", demigod.get("excalibur", {}).get("power_id", "sovereign_wish"))),
+            "wish_interval_years": int(
+                sdef.get("wish_interval_years", demigod.get("excalibur", {}).get("wish_interval_years", 4))
+            ),
+            "forbidden_edicts": list(demigod.get("forbidden_edicts", [])),
+            "wish_edict_types": list(demigod.get("wish_edict_types", [])),
+            "combat_damage": False,
+        }
+
+    mult = _sovereign_skill_multiplier(sdef)
+    strike = _sovereign_strike_damage_milli(attacker, skill_multiplier=mult)
+    return {
+        "skill_id": skill_id,
+        "label": sdef.get("label", skill_id),
+        "pipeline": pipeline or "sovereign_strike",
+        "results": [
+            {
+                "target_id": t.get("id"),
+                "damage_milli": int(strike["damage_milli"]),
+            }
+            for t in targets
+        ],
+    }
 
 
 def resolve_excalibur_aoe(

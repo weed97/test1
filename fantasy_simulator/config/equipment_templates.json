@@ -33,7 +33,13 @@
       "base_damage_min": 400,
       "base_damage_max": 520,
       "mastery_bonus_curve": "two_handed_sword",
-      "skills": ["sovereign_wish_rite", "kings_aegis", "excalibur_sovereign_judgment"],
+      "skills": [
+        "sovereign_blade_combo",
+        "sovereign_broad_cleave",
+        "kings_aegis",
+        "excalibur_sovereign_judgment",
+        "sovereign_wish_rite"
+      ],
       "sovereign_power_id": "sovereign_wish",
       "pierce_fraction": 1.0
     },

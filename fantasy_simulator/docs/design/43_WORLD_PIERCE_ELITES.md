@@ -81,3 +81,5 @@
 - `GET /v1/combat/elite_coalition` — 합산 방무 DPS
 - `GET /v1/combat/combatant/world_rank_02` … `world_rank_11`
 - `POST /v1/combat/arthur_aoe` — 일반 광역 vs 궁극기 시뮬
+- `POST /v1/combat/arthur_skill` — 아서 핵심 스킬 5종 (`resolve_arthur_skill`)
+- 스킬 정의: [44_ARTHUR_SKILLS.md](44_ARTHUR_SKILLS.md)
