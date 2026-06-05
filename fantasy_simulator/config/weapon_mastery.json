@@ -1,63 +1,74 @@
 {
-  "version": 1,
-  "note": "무기 클래스별 직업·레벨 — 들고 있다고 인정되지 않음. rank/level로 착용 자격 판정.",
+  "version": 2,
+  "max_level": 999,
+  "note": "캐릭터 레벨과 무기 클래스 레벨은 완전 분리. 각 축 만렙 999. 직업 변경 가능, 무기 레벨은 유지.",
+  "rank_thresholds": {
+    "novice": 1,
+    "adept": 100,
+    "expert": 300,
+    "master": 600,
+    "grandmaster": 900
+  },
+  "rank_labels": {
+    "novice": "견습",
+    "adept": "숙련",
+    "expert": "달인",
+    "master": "마스터",
+    "grandmaster": "최고 경지"
+  },
+  "xp_formula": {
+    "type": "power",
+    "base": 80,
+    "exponent": 1.82,
+    "comment": "xp_to_level(n) ≈ floor(base * n^exponent); 구현 시 utils에서 계산"
+  },
   "classes": {
     "two_handed_sword": {
       "label": "투핸드 소드",
       "hands": 2,
-      "ranks": [
-        { "id": "novice", "min_level": 1, "label": "견습" },
-        { "id": "adept", "min_level": 3, "label": "숙련" },
-        { "id": "expert", "min_level": 6, "label": "달인" },
-        { "id": "master", "min_level": 8, "label": "마스터" },
-        { "id": "grandmaster", "min_level": 10, "label": "최고 경지" }
-      ],
-      "max_level": 10,
-      "level_xp": [0, 120, 320, 600, 950, 1400, 2000, 2800, 3900, 5500]
+      "max_level": 999
     },
     "one_handed_sword": {
       "label": "원핸드 소드",
       "hands": 1,
-      "ranks": [
-        { "id": "novice", "min_level": 1, "label": "견습" },
-        { "id": "adept", "min_level": 3, "label": "숙련" },
-        { "id": "expert", "min_level": 6, "label": "달인" },
-        { "id": "master", "min_level": 8, "label": "마스터" },
-        { "id": "grandmaster", "min_level": 10, "label": "최고 경지" }
-      ],
-      "max_level": 10,
-      "level_xp": [0, 100, 280, 520, 820, 1200, 1700, 2400, 3300, 4800]
+      "max_level": 999
     },
     "bow": {
       "label": "활",
       "hands": 2,
-      "ranks": [
-        { "id": "novice", "min_level": 1, "label": "견습" },
-        { "id": "adept", "min_level": 3, "label": "숙련" },
-        { "id": "expert", "min_level": 6, "label": "달인" },
-        { "id": "master", "min_level": 8, "label": "마스터" },
-        { "id": "grandmaster", "min_level": 10, "label": "최고 경지" }
-      ],
-      "max_level": 10,
-      "level_xp": [0, 100, 280, 520, 820, 1200, 1700, 2400, 3300, 4800]
+      "max_level": 999
     },
     "staff": {
       "label": "지팡이·술기",
       "hands": 2,
-      "ranks": [
-        { "id": "novice", "min_level": 1, "label": "견습" },
-        { "id": "adept", "min_level": 3, "label": "숙련" },
-        { "id": "expert", "min_level": 6, "label": "달인" },
-        { "id": "master", "min_level": 8, "label": "마스터" },
-        { "id": "grandmaster", "min_level": 10, "label": "최고 경지" }
-      ],
-      "max_level": 10,
-      "level_xp": [0, 110, 300, 560, 880, 1280, 1800, 2500, 3500, 5000]
+      "max_level": 999
+    },
+    "dagger": {
+      "label": "단검",
+      "hands": 1,
+      "max_level": 999
+    },
+    "spear": {
+      "label": "창",
+      "hands": 2,
+      "max_level": 999
     }
   },
+  "power_scaling": {
+    "comment": "실전 위력은 캐릭터 Lv × 활성 직업 Lv × 사용 무기 클래스 Lv 가 곱해져 체감이 완전히 달라짐",
+    "weapon_level_weight": 1.0,
+    "character_level_weight": 0.35,
+    "job_level_weight": 0.45
+  },
   "hero_state_shape": {
+    "character_level": 1,
+    "character_xp": 0,
+    "active_job_id": "knight",
+    "jobs": {
+      "knight": { "level": 1, "xp": 0 }
+    },
     "weapon_masteries": {
-      "two_handed_sword": { "level": 10, "rank": "grandmaster", "xp": 5500 }
+      "two_handed_sword": { "level": 1, "rank": "novice", "xp": 0 }
     }
   },
   "equip_rules": {

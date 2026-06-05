@@ -90,7 +90,7 @@ T1~T3 일반 → 전설 L1~L6 → 신화 M1~M3 (active ~30)
 | 조건 | 규칙 |
 |------|------|
 | **무기 종류** | `two_handed_sword` (투핸드 소드 클래스) |
-| **필수** | `weapon_masteries.two_handed_sword.rank` = **`grandmaster`** + **클래스 만렙** |
+| **필수** | `weapon_masteries.two_handed_sword.level` = **999** + `rank` = **`grandmaster`** |
 | **불가** | 인벤 소지·임시 장착·한손 들기만 — **결속(bind) 실패** |
 | **금지 클래스** | `staff` · `bow` · `one_handed_sword` 만렉 — 마법사·활·한손검 주력 |
 | **주직업** | `job_id`/`job_level` 과 **별도** (기사 Lv5여도 투핸드 Lv3면 불가) |

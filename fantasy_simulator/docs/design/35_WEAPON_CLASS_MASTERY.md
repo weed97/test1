@@ -1,34 +1,59 @@
-# 35 — 무기 클래스별 직업 · 레벨 · 경지
+# 35 — 캐릭터 레벨 · 직업 · 무기 클래스 레벨 (각 만렙 999)
 
-## 원칙
+## 세 축 분리
 
-| 잘못된 이해 | 올바른 규칙 |
-|-------------|-------------|
-| 인벤에 투핸드검을 **들고** 있으면 엑스칼리버 OK | **투핸드 소드 클래스 최고 경지** 만 **인정(착용·결속)** |
-| 주직업 `knight`면 무기 무관 | **무기 클래스마다** 별도 **레벨·랭크** |
-| 장비 슬롯에 끼움 = 착용 | **마스터리 검사 + 결속(bind)** 통과 시에만 준신급 인정 |
+```text
+캐릭터 레벨 (1~999)     — 생명력·기초 능력·성장 총량
+직업 레벨 (1~999/직업)  — 선택 직업별 스킬·역할 (직업 변경 가능, 직업별 레벨 유지)
+무기 클래스 레벨 (1~999) — 투핸드/원핸드/활/지팡이… 각각 독립
+```
 
-설정: `config/weapon_mastery.json`  
-상태: `heroes[id].weapon_masteries[<class_id>]`
+| 축 | 만렙 | 바꿀 수 있나 | 비고 |
+|----|------|--------------|------|
+| **캐릭터** | 999 | — (캐릭터 고유) | `character_level` |
+| **직업** | 999 | **직업 변경 OK** | `active_job_id` + `jobs[job_id].level` |
+| **무기 클래스** | 999 | 클래스마다 따로 | `weapon_masteries[class_id].level` |
+
+**위력은 완전히 다름** — 같은 캐릭터 Lv200이라도 투핸드 Lv800 vs 활 Lv20이면 전투·제작·결속 자격이 전혀 다르다.
+
+설정: `config/weapon_mastery.json` · `config/progression.json` (`character`, `job_progression`)  
+상태: `heroes[id]`
 
 ---
 
-## 무기 클래스 (예)
+## 직업 변경
 
-| `class_id` | 라벨 | 주직업과 관계 |
-|------------|------|----------------|
-| `two_handed_sword` | 투핸드 소드 | 기사도 **별도** 레벨 필요 |
-| `one_handed_sword` | 원핸드 소드 | 쌍수·방패 빌드 |
-| `bow` | 활 | 레인저 |
-| `staff` | 지팡이·술기 | 마법 견습 |
+- `job_change_allowed: true`
+- `persist_levels_per_job: true` — 기사 Lv400 키우다 레인저로 바꿔도 `jobs.knight.level` 은 **그대로**, 레인저는 `jobs.ranger.level` 별도.
+- 스킬·전투 스타일은 **활성 직업** + **지금 쓰는 무기 클래스** 조합.
+- 무기 클래스 레벨은 직업 변경과 **무관하게 유지**.
 
-각 클래스:
+---
 
-- `level` 1~10 (설정별 `max_level`)
-- `rank`: novice → adept → expert → master → **grandmaster** (최고 경지)
-- `xp` — 전투·훈련·제작으로 **해당 클래스만** 오름
+## 무기 클래스
 
-**주직업 `job_id` / `job_level`** 과 **무기 클래스** 는 **분리**. 둘 다 레벨이 붙는다.
+| `class_id` | 라벨 |
+|------------|------|
+| `two_handed_sword` | 투핸드 소드 |
+| `one_handed_sword` | 원핸드 소드 |
+| `bow` | 활 |
+| `staff` | 지팡이·술기 |
+| `dagger` | 단검 |
+| `spear` | 창 |
+
+각 클래스 **만렙 999**.  
+**경지(rank)** 는 레벨 구간으로 자동 (전역 `rank_thresholds`):
+
+| rank | 최소 레벨 |
+|------|-----------|
+| novice | 1 |
+| adept | 100 |
+| expert | 300 |
+| master | 600 |
+| grandmaster | 900 |
+| **만렙 경지** | **999** (엑스칼리버 결속은 **Lv999 + grandmaster**) |
+
+XP는 레벨별 **공식** (`xp_formula`) — 999칸 테이블을 JSON에 두지 않음.
 
 ---
 
@@ -36,58 +61,60 @@
 
 ```json
 {
-  "job_id": "knight",
-  "job_level": 4,
+  "character_level": 220,
+  "character_xp": 1840000,
+  "active_job_id": "knight",
+  "jobs": {
+    "knight": { "level": 180, "xp": 920000 },
+    "ranger": { "level": 45, "xp": 38000 }
+  },
   "weapon_masteries": {
-    "two_handed_sword": { "level": 10, "rank": "grandmaster", "xp": 6120 },
-    "one_handed_sword": { "level": 3, "rank": "adept", "xp": 400 }
+    "two_handed_sword": { "level": 999, "rank": "grandmaster", "xp": 0 },
+    "bow": { "level": 12, "rank": "novice", "xp": 1100 }
   }
 }
 ```
 
-- 투핸드 Lv10 grandmaster → **엑스칼리버 자격 후보**
-- 원핸드 Lv3 → 한손검 전설 제작만 가능 (등급 상한 낮음)
+- 투핸드 999 → 엑스칼리버 **결속 자격** (들기만으로는 불가)
+- 같은 캐릭터가 활 Lv12 → 활 전투는 **초보 수준**
 
 ---
 
-## 착용 판정 (`can_bind_artifact`)
+## 위력 합성 (체감)
+
+구현 시 대략:
 
 ```text
-1. artifact.required_mastery_class == "two_handed_sword"
-2. hero.weapon_masteries[class].rank == "grandmaster"
-3. hero.weapon_masteries[class].level >= class.max_level
-4. ritual bind 성공 (들기만·인벤 장착만으로는 실패)
+effective_power ∝ f(character_level) × g(active_job_level) × h(weapon_class_level_used)
 ```
+
+무기를 바꾸면 `h`가 바뀌어 **같은 캐릭터도 체감이 완전히 달라짐**.  
+직업만 바꿔도 `g`가 바뀜. **세 축이 곱**으로 작용.
+
+---
+
+## 착용 · 결속 (`can_bind_artifact`)
+
+1. `required_mastery_class` (예: `two_handed_sword`)
+2. 해당 클래스 `level == 999`
+3. `rank == grandmaster` (Lv ≥ 900이면 grandmaster, **결속은 999 요구**)
+4. **bind ritual** — 인벤·임시 장착만으로는 준신 권한 없음
 
 | 시도 | 결과 |
 |------|------|
-| 인벤에 넣기만 | OK (소지) |
-| 장착 슬롯에 끼기 (마스터리 부족) | 훈련용·스탯 미적용 또는 거부 |
-| **엑스칼리버 결속** | grandmaster **만** + 승계 의식 |
+| 소지·운반 | 가능 (권한 없음) |
+| 마스터리 부족 장착 | 훈련용 / 스탯 미적용 |
+| **엑스칼리버 결속** | 투핸드 **Lv999** 만 |
 
 ---
 
-## 엑스칼리버 연동
+## 엑스칼리버
 
-[34_DEMIGOD_SOVEREIGN_EXCALIBUR.md](34_DEMIGOD_SOVEREIGN_EXCALIBUR.md)
-
-- `weapon_kind: two_handed_sword`
-- `requires_mastery_rank: grandmaster` + `level == max_level`
-- 연합이 검을 뺏어도 **grandmaster 투핸드** 가 **결속**해야 `world_sovereign` 활성
-
----
-
-## XP 획득 (후속 구현)
-
-| 활동 | 클래스 XP |
-|------|-----------|
-| 해당 무기로 전투 승리 | 주 사용 무기 클래스 |
-| 훈련 POI / 대장간 연습 | 지정 클래스 |
-| 다른 클래스 사용 | 그 클래스로 분배 (주직업과 무관) |
+[34_DEMIGOD_SOVEREIGN_EXCALIBUR.md](34_DEMIGOD_SOVEREIGN_EXCALIBUR.md) — `requires_mastery_level_at_max: true` → **999**.
 
 ---
 
 ## 관련
 
-- [22_CHARACTER_PROGRESSION.md](22_CHARACTER_PROGRESSION.md) — 주직업·스킬
-- [34_DEMIGOD_SOVEREIGN_EXCALIBUR.md](34_DEMIGOD_SOVEREIGN_EXCALIBUR.md) — 준신 결속
+- [22_CHARACTER_PROGRESSION.md](22_CHARACTER_PROGRESSION.md)
+- [34_DEMIGOD_SOVEREIGN_EXCALIBUR.md](34_DEMIGOD_SOVEREIGN_EXCALIBUR.md)

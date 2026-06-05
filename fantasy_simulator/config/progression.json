@@ -1,5 +1,16 @@
 {
-  "version": 1,
+  "version": 2,
+  "character": {
+    "max_level": 999,
+    "xp_formula": { "type": "power", "base": 90, "exponent": 1.8 }
+  },
+  "job_progression": {
+    "max_level": 999,
+    "job_change_allowed": true,
+    "persist_levels_per_job": true,
+    "xp_formula": { "type": "power", "base": 70, "exponent": 1.78 },
+    "note": "active_job_id 변경 가능; jobs[knight].level 등 직업별 레벨은 유지"
+  },
   "godot_recommended_max_sprites_per_map": 32,
   "explore_xp": 8,
   "combat_win_xp": 25,
