@@ -2,10 +2,10 @@
 
 ## 대륙 개요
 
-**에르도리아 전체**는 약 `100_000 × 100_000` 월드 좌표로 설계한다 (상세·10대륙 표: [23_WORLD_SCALE_AND_TEN_CONTINENTS.md](23_WORLD_SCALE_AND_TEN_CONTINENTS.md), 데이터: `config/world_atlas.json`).
+**에르도리아**는 **단일 월드** (`100_000 × 100_000` 좌표)이며, 안에 **인간·드워프·엘프·다크엘프·수인** 다섯 **종족 영역(realm)** 이 있다 (상세: [23_WORLD_SCALE_AND_TEN_CONTINENTS.md](23_WORLD_SCALE_AND_TEN_CONTINENTS.md), `config/world_atlas.json`).
 
-**실버우드(Silverwood)** — 10대륙 중 1번. 고대 숲과 봉인이 겹친 대륙.  
-현재 플레이 가능 영역은 **변경(Frontier)** — 실버우드 동쪽 가장자리. **첫 왕국**은 이 구역에서 건설·확장한다.
+**실버우드(Silverwood)** — **엘프 영역** 고대 숲 이름이며, **인간 영역**의 잿빛 변경과 접경한다.  
+현재 플레이: 인간 영역 → 왕국 `frontier_ash` → 마을 **애쉬포인트** (+ 숲·관측탑 맵). **첫 왕국**은 여기서 건설·확장.
 
 ```mermaid
 flowchart TB

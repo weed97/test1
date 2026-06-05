@@ -28,7 +28,7 @@
 | [20_LIVING_FIELD_ECOLOGY.md](20_LIVING_FIELD_ECOLOGY.md) | **살아 있는 필드**·NPC/몬스터 스킬·탐험 중심 생태계 |
 | [21_PLAYER_SETTLEMENT_BUILDING.md](21_PLAYER_SETTLEMENT_BUILDING.md) | **플레이어 건설**·건축 Lv·고용·대장간·왕국 |
 | [22_CHARACTER_PROGRESSION.md](22_CHARACTER_PROGRESSION.md) | **성장**·직업/스킬/장비·몬스터 진화·맵 스폰 한도 |
-| [23_WORLD_SCALE_AND_TEN_CONTINENTS.md](23_WORLD_SCALE_AND_TEN_CONTINENTS.md) | **10만² 월드**·10대륙·첫 왕국·계층 좌표 |
+| [23_WORLD_SCALE_AND_TEN_CONTINENTS.md](23_WORLD_SCALE_AND_TEN_CONTINENTS.md) | **10만² 단일 월드**·5종족 영역·왕국·마을 |
 
 ## 현재 구현과의 관계
 

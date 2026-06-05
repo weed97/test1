@@ -1,156 +1,269 @@
 {
-  "version": 1,
+  "version": 2,
+  "world_id": "eldoria",
+  "world_label": "에르도리아",
   "world_size": { "width": 100000, "height": 100000 },
   "units": {
     "world_coord": "meter_like",
     "godot_pixel_per_world_unit": 1,
-    "note": "Playable walk uses map_id local tiles; world_x/y for travel and atlas only."
+    "note": "Single world; five racial realms; walk/play on map_id local tiles only."
   },
   "starter": {
-    "continent_id": "silverwood",
-    "region_id": "frontier_ash",
+    "world_id": "eldoria",
+    "realm_id": "human",
+    "kingdom_id": "frontier_ash",
+    "settlement_id": "ashpoint",
     "map_id": "ashpoint_01",
-    "world_x": 84200,
-    "world_y": 52100,
-    "kingdom_label": "변경 첫 왕국"
+    "world_x": 72000,
+    "world_y": 58000,
+    "kingdom_label": "잿빛 변경 — 첫 왕국"
   },
-  "continents": [
+  "realms": [
     {
-      "id": "silverwood",
-      "label": "실버우드",
-      "role": "starter_seal_main_story",
-      "aabb": { "x0": 80000, "y0": 40000, "x1": 98000, "y1": 62000 },
-      "landmass": "wide_forest_east_plains",
-      "area_share": 0.14,
-      "regions": [
+      "id": "human",
+      "label": "인간의 땅",
+      "primary_races": ["human"],
+      "aabb": { "x0": 55000, "y0": 45000, "x1": 95000, "y1": 85000 },
+      "landmass": "plains_frontier_rivers_coast",
+      "theme": "왕국·자치·봉인 변경 전선",
+      "kingdoms": [
         {
           "id": "frontier_ash",
           "label": "잿빛 변경",
           "playable": true,
-          "maps": ["ashpoint_01", "forest_01", "tower_01"],
-          "faction_hub": "ashpoint_council"
+          "role": "starter_player_kingdom",
+          "settlements": [
+            {
+              "id": "ashpoint",
+              "label": "애쉬포인트",
+              "type": "village_hub",
+              "maps": ["ashpoint_01"],
+              "faction_hub": "ashpoint_council"
+            },
+            {
+              "id": "north_forest_outskirts",
+              "label": "북쪽 숲 외곽",
+              "type": "wilderness",
+              "maps": ["forest_01"]
+            },
+            {
+              "id": "observation_tower",
+              "label": "관측 탑",
+              "type": "dungeon_climax",
+              "maps": ["tower_01"]
+            }
+          ]
         },
         {
-          "id": "deep_silver",
-          "label": "고대 실버 숲",
+          "id": "aurelia",
+          "label": "오렐리아 왕국",
           "playable": false,
-          "maps": [],
-          "notes": "봉인선 서쪽 — 시즌 확장"
-        }
-      ]
-    },
-    {
-      "id": "aurelia",
-      "label": "오렐리아 왕국령",
-      "role": "politics_capital_knights",
-      "aabb": { "x0": 62000, "y0": 35000, "x1": 78000, "y1": 50000 },
-      "landmass": "temperate_plains_rivers",
-      "area_share": 0.11,
-      "regions": [
+          "role": "capital_politics",
+          "settlements": [
+            {
+              "id": "silverhaven",
+              "label": "실버헤이븐",
+              "type": "capital",
+              "maps": [],
+              "faction_hub": "silver_cross_order"
+            }
+          ]
+        },
         {
-          "id": "silverhaven",
-          "label": "실버헤이븐",
+          "id": "coast_march",
+          "label": "해안 변경령",
           "playable": false,
-          "maps": [],
-          "faction_hub": "silver_cross_order"
+          "role": "trade_naval",
+          "settlements": [
+            {
+              "id": "salt_quay",
+              "label": "소금 부두",
+              "type": "port",
+              "maps": [],
+              "faction_hub": "silverwood_trade_union"
+            }
+          ]
         }
       ]
     },
     {
-      "id": "ironhold",
-      "label": "철요새 연맹",
-      "role": "crafting_fortress_dungeons",
-      "aabb": { "x0": 55000, "y0": 12000, "x1": 65000, "y1": 28000 },
-      "landmass": "compact_mountain_highlands",
-      "area_share": 0.06,
-      "regions": []
-    },
-    {
-      "id": "sunscar",
-      "label": "태양상흔 사막",
-      "role": "ruins_relics_sparse",
-      "aabb": { "x0": 20000, "y0": 55000, "x1": 52000, "y1": 90000 },
-      "landmass": "vast_desert_oasis_dots",
-      "area_share": 0.18,
-      "regions": []
-    },
-    {
-      "id": "frostveil",
-      "label": "서리장막 군도",
-      "role": "naval_boss_winter",
-      "aabb": { "x0": 70000, "y0": 8000, "x1": 92000, "y1": 22000 },
-      "landmass": "fragmented_islands",
-      "area_share": 0.09,
-      "regions": []
-    },
-    {
-      "id": "emerald_coast",
-      "label": "에메랄드 해안",
-      "role": "trade_pirates_fleets",
-      "aabb": { "x0": 10000, "y0": 20000, "x1": 28000, "y1": 75000 },
-      "landmass": "long_coastline",
-      "area_share": 0.08,
-      "regions": []
-    },
-    {
-      "id": "umbral_rift",
-      "label": "심연 균열지",
-      "role": "covenant_high_risk",
-      "aabb": { "x0": 45000, "y0": 62000, "x1": 52000, "y1": 72000 },
-      "landmass": "small_deep_canyon",
-      "area_share": 0.05,
-      "regions": [
+      "id": "dwarf",
+      "label": "드워프의 땅",
+      "primary_races": ["dwarf"],
+      "aabb": { "x0": 15000, "y0": 55000, "x1": 45000, "y1": 82000 },
+      "landmass": "mountains_underhalls",
+      "theme": "대장간·요새·광산",
+      "kingdoms": [
         {
-          "id": "black_covenant_keep",
-          "label": "칠흑 성채",
+          "id": "deepforge_union",
+          "label": "심로 대장간 연합",
           "playable": false,
-          "maps": [],
-          "faction_hub": "black_covenant"
+          "settlements": [
+            {
+              "id": "ironheart_citadel",
+              "label": "철심 요새",
+              "type": "fortress_city",
+              "maps": []
+            }
+          ]
+        },
+        {
+          "id": "stonegate_clans",
+          "label": "석문 부족연",
+          "playable": false,
+          "settlements": [
+            {
+              "id": "arena_gorge",
+              "label": "투기장 협곡",
+              "type": "clan_hold",
+              "maps": []
+            }
+          ]
         }
       ]
     },
     {
-      "id": "skyreach",
-      "label": "천공 능선",
-      "role": "wardens_archives_floating",
-      "aabb": { "x0": 58000, "y0": 62000, "x1": 72000, "y1": 78000 },
-      "landmass": "vertical_peaks_sky_isles",
-      "area_share": 0.07,
-      "regions": []
+      "id": "elf",
+      "label": "엘프의 땅",
+      "primary_races": ["elf"],
+      "aabb": { "x0": 45000, "y0": 50000, "x1": 75000, "y1": 78000 },
+      "landmass": "ancient_silver_forest",
+      "theme": "봉인·고목·관측·감시자",
+      "kingdoms": [
+        {
+          "id": "silver_court",
+          "label": "실버 궁정",
+          "playable": false,
+          "role": "seal_lore_main",
+          "settlements": [
+            {
+              "id": "silver_heart_grove",
+              "label": "실버 심장림",
+              "type": "sacred_grove",
+              "maps": [],
+              "notes": "봉인선 서쪽 — 엘프 메인 확장"
+            }
+          ]
+        },
+        {
+          "id": "moonveil_enclave",
+          "label": "달장막 공동체",
+          "playable": false,
+          "settlements": [
+            {
+              "id": "moonveil_temple",
+              "label": "달빛 신전",
+              "type": "arcane_enclave",
+              "maps": []
+            }
+          ]
+        }
+      ]
     },
     {
-      "id": "verdant_maw",
-      "label": "비취 야생",
-      "role": "ecology_evolution_beasts",
-      "aabb": { "x0": 25000, "y0": 10000, "x1": 55000, "y1": 45000 },
-      "landmass": "mixed_jungle_swamp_savanna",
-      "area_share": 0.16,
-      "regions": []
+      "id": "dark_elf",
+      "label": "다크엘프의 땅",
+      "primary_races": ["dark_elf"],
+      "aabb": { "x0": 20000, "y0": 25000, "x1": 48000, "y1": 52000 },
+      "landmass": "underdark_rift_cities",
+      "theme": "야간·서약·금단 마법",
+      "kingdoms": [
+        {
+          "id": "umbral_houses",
+          "label": "심연 귀족가",
+          "playable": false,
+          "settlements": [
+            {
+              "id": "covenant_keep",
+              "label": "칠흑 성채",
+              "type": "fortress",
+              "maps": [],
+              "faction_hub": "black_covenant"
+            }
+          ]
+        },
+        {
+          "id": "night_market",
+          "label": "암시장 연합",
+          "playable": false,
+          "settlements": [
+            {
+              "id": "veil_bazaar",
+              "label": "장막 바자르",
+              "type": "underground_trade",
+              "maps": []
+            }
+          ]
+        }
+      ]
     },
     {
-      "id": "cradle_sea",
-      "label": "요람 해",
-      "role": "intercontinental_routes_season",
-      "aabb": { "x0": 30000, "y0": 30000, "x1": 70000, "y1": 70000 },
-      "landmass": "ocean_trade_lanes",
-      "area_share": 0.06,
-      "regions": []
+      "id": "beastkin",
+      "label": "수인의 땅",
+      "primary_races": ["beastkin"],
+      "aabb": { "x0": 60000, "y0": 15000, "x1": 92000, "y1": 48000 },
+      "landmass": "savanna_marsh_tribal",
+      "theme": "부족·사냥·몬스터 진화",
+      "kingdoms": [
+        {
+          "id": "pride_lands",
+          "label": "맹수 영지",
+          "playable": false,
+          "role": "ecology_evolution_hub",
+          "settlements": [
+            {
+              "id": "sunmane_camp",
+              "label": "태양갈기 영지",
+              "type": "tribal_camp",
+              "maps": []
+            }
+          ]
+        },
+        {
+          "id": "mistfen_pack",
+          "label": "안개늪 무리연",
+          "playable": false,
+          "settlements": [
+            {
+              "id": "reed_totem_village",
+              "label": "갈대 토템 마을",
+              "type": "village",
+              "maps": []
+            }
+          ]
+        }
+      ]
     }
   ],
-  "sea_routes": [
+  "neutral_waters": {
+    "id": "confluence_sea",
+    "label": "합류의 해",
+    "aabb": { "x0": 40000, "y0": 40000, "x1": 60000, "y1": 60000 },
+    "role": "cross_realm_trade_routes"
+  },
+  "realm_routes": [
     {
-      "id": "route_silverwood_aurelia",
-      "from_continent": "silverwood",
-      "to_continent": "aurelia",
-      "travel_days": 4,
-      "unlock": "flag:frontier_harbor_built"
+      "id": "human_elf_border",
+      "from": { "realm": "human", "settlement": "ashpoint" },
+      "to": { "realm": "elf", "settlement": "silver_heart_grove" },
+      "via": "forest_01",
+      "travel_days": 1,
+      "unlock": "story:smoke_on_the_mountain"
     },
     {
-      "id": "route_emerald_cradle",
-      "from_continent": "emerald_coast",
-      "to_continent": "cradle_sea",
-      "travel_days": 2,
-      "unlock": "reputation:silverwood_trade_union:20"
+      "id": "human_dwarf_pass",
+      "from": { "realm": "human", "kingdom": "frontier_ash" },
+      "to": { "realm": "dwarf", "settlement": "ironheart_citadel" },
+      "travel_days": 5,
+      "unlock": "flag:mountain_pass_open"
+    },
+    {
+      "id": "coast_beastkin_ferry",
+      "from": { "realm": "human", "settlement": "salt_quay" },
+      "to": { "realm": "beastkin", "settlement": "sunmane_camp" },
+      "travel_days": 3,
+      "unlock": "building:harbor"
     }
-  ]
+  ],
+  "_deprecated_continents_v1": "Replaced by realms in version 2; see git history."
 }
