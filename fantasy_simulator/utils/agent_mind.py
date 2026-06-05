@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import random
 from pathlib import Path
 from typing import Any
@@ -148,6 +149,19 @@ def preview_skill_damage(
     sdef = skill_definition(skill_id, base_dir=base_dir)
     if "build_progress" in sdef.get("tags", []):
         return 0
+    try:
+        from utils.combat_stats import agent_to_combatant, strike_damage_hp
+
+        atk = agent_to_combatant(attacker, base_dir=base_dir)
+        defn = agent_to_combatant(target, base_dir=base_dir)
+        plunder = int(attacker.get("plunder", {}).get("power_bonus", 0))
+        mult = float(sdef.get("power", 8)) / 10.0 + plunder * 0.02
+        mult *= 0.9 + rng.uniform(0, 0.2) + _iq(attacker) / 500.0
+        dmg = strike_damage_hp(atk, defn, base_dir=base_dir, rng=rng, skill_multiplier=mult)
+        if dmg > 0:
+            return dmg
+    except (OSError, KeyError, json.JSONDecodeError):
+        pass
     iq_bonus = 1.0 + (_iq(attacker) / 100.0) * 0.15
     plunder = int(attacker.get("plunder", {}).get("power_bonus", 0))
     base_pwr = float(sdef.get("power", 8)) + plunder * 0.5

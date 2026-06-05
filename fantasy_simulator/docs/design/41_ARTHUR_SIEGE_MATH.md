@@ -1,6 +1,6 @@
 # 41 — 아서 공성 수학 · 연합 병렬 타격
 
-설정: `config/arthur_siege_math.json` · `config/arthur_coalition.json`  
+설정: `config/arthur_coalition.json` (`siege` 블록) · `config/combatants.json`  
 코드: `utils/sovereign_siege.py` · `utils/parallel_beat.py` (주권 홀더 무제한 동시 타격)
 
 ---

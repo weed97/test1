@@ -87,6 +87,7 @@
     "apex_mortal_cap_label": "99999.000 (만렙 999 + 신화 + VIT 극치, 준신의 1/100)",
     "apex_requires": ["character_level_999", "vit_mythic_threshold", "mythic_grade_gear"],
     "ratio_demigod_to_apex_approx": 10,
+    "default_mortal_cap_milli": 50000000,
     "note": "1,000,000 vs 99,999 — 필멸은 준신의 ~1/10 HP"
   },
   "armor_pierce": {

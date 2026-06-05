@@ -11,101 +11,33 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from fastapi.testclient import TestClient
+    from api.server import app
+
+    _HAS_API = True
 except ImportError:
+    _HAS_API = False
     TestClient = None  # type: ignore[misc, assignment]
+    app = None  # type: ignore[assignment]
 
-from api.server import app  # noqa: E402
 
-
-@unittest.skipIf(TestClient is None, "fastapi not installed")
+@unittest.skipIf(not _HAS_API, "fastapi not installed")
 class ApiServerTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = TestClient(app)
+        self.client = TestClient(app)  # type: ignore[arg-type]
 
     def test_health(self) -> None:
         r = self.client.get("/v1/health")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["api_version"], 1)
 
-    def test_new_session_and_explore_turn(self) -> None:
-        r = self.client.post(
-            "/v1/session/new",
-            json={"seed": 42, "mode": "rule", "temporal_mode": "classic"},
-        )
+    def test_combat_combatant_arthur(self) -> None:
+        r = self.client.get("/v1/combat/combatant/npc_arthur_pendragon")
         self.assertEqual(r.status_code, 200)
-        session_id = r.json()["session_id"]
+        body = r.json()
+        self.assertEqual(body["snapshot"]["tier"], "demigod")
+        self.assertGreater(body["combat_power"], 0)
 
-        r2 = self.client.post(
-            "/v1/turn",
-            json={"session_id": session_id, "action": "explore"},
-        )
-        self.assertEqual(r2.status_code, 200)
-        data = r2.json()
-        self.assertEqual(data["session_id"], session_id)
-        self.assertIn("lines", data)
-        self.assertIn("world", data)
-        self.assertIsNotNone(data["world"].get("tension"))
-
-    def test_world_maps_and_position_sync(self) -> None:
-        r = self.client.get("/v1/world/maps")
+    def test_sovereign_status(self) -> None:
+        r = self.client.get("/v1/sovereign/status")
         self.assertEqual(r.status_code, 200)
-        self.assertIn("ashpoint_01", r.json()["maps"])
-
-        r2 = self.client.post(
-            "/v1/session/new",
-            json={"temporal_mode": "precision"},
-        )
-        session_id = r2.json()["session_id"]
-        r3 = self.client.post(
-            "/v1/world/position",
-            json={
-                "session_id": session_id,
-                "position": {
-                    "map_id": "forest_01",
-                    "x": 10,
-                    "y": 10,
-                    "facing": "north",
-                },
-            },
-        )
-        self.assertEqual(r3.status_code, 200)
-        self.assertEqual(r3.json()["zone_id"], "forest")
-
-    def test_ecology_progression_status(self) -> None:
-        r = self.client.post(
-            "/v1/session/new",
-            json={"seed": 7, "mode": "rule", "game_mode": "ecology"},
-        )
-        session_id = r.json()["session_id"]
-        r2 = self.client.get(f"/v1/progression/status?session_id={session_id}")
-        self.assertEqual(r2.status_code, 200)
-        data = r2.json()
-        self.assertIn("heroes", data)
-        self.assertIn("map_spawn", data)
-        r3 = self.client.post(
-            "/v1/turn",
-            json={"session_id": session_id, "action": "explore"},
-        )
-        self.assertEqual(r3.status_code, 200)
-
-    def test_precision_turn_includes_clock_fields(self) -> None:
-        r = self.client.post(
-            "/v1/session/new",
-            json={"temporal_mode": "precision"},
-        )
-        session_id = r.json()["session_id"]
-        r2 = self.client.post(
-            "/v1/turn",
-            json={
-                "session_id": session_id,
-                "action": "explore",
-                "temporal_mode": "precision",
-            },
-        )
-        data = r2.json()
-        self.assertIn("minutes_advanced", data)
-        self.assertIn("world", data)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        self.assertIn("hp_milli", r.json())

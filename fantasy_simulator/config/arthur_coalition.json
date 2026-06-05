@@ -61,5 +61,18 @@
     "strong_characters": true,
     "coalition_player_allies": true,
     "wish_cycle_pressure": true
+  },
+  "siege": {
+    "hp_milli": 1000000000,
+    "regen_per_sec_milli": 160000,
+    "anchor_strikers": 300000,
+    "aggregate_dps_milli": 200000,
+    "net_dps_milli": 40000,
+    "seconds_to_kill": 25000,
+    "through_rate_milli": 1,
+    "strikes_per_through": 100000,
+    "apex_on_through_damage_milli": 9999000,
+    "mob_on_through_min_milli": 100000,
+    "mob_on_through_max_milli": 300000
   }
 }

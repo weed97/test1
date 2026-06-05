@@ -298,7 +298,19 @@ def resolve_and_commit_field_beat(
                 )
                 total += dmg
             else:
-                dmg = int(pl.get("base_damage", 5))
+                try:
+                    from utils.combat_stats import agent_to_combatant, strike_damage_hp
+
+                    dmg = strike_damage_hp(
+                        agent_to_combatant(actor, base_dir=base_dir),
+                        agent_to_combatant(target, base_dir=base_dir),
+                        base_dir=base_dir,
+                        rng=rng,
+                    )
+                except (OSError, KeyError, ValueError):
+                    dmg = int(pl.get("base_damage", 5))
+                if dmg <= 0:
+                    dmg = int(pl.get("base_damage", 5))
                 total += dmg
                 strike_lines.append(f"[전투] {alabel} → {tgt_label} : 타격 ({dmg})")
             mp_regen = 1 + _iq(actor) // 25

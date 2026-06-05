@@ -120,6 +120,13 @@ class ProgressionEquipRequest(BaseModel):
     item_id: str
 
 
+class CombatPreviewRequest(BaseModel):
+    session_id: Optional[str] = None
+    attacker_preset: Optional[str] = None
+    defender_preset: Optional[str] = None
+    force_sovereign_through: Optional[bool] = None
+
+
 class TurnRequest(BaseModel):
     session_id: str
     action: str = Field(..., min_length=1, max_length=512)
@@ -282,6 +289,62 @@ def progression_equip(body: ProgressionEquipRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=result.get("error", "equip failed"))
     session.manager.save(session.state)
     return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/combat/preview_strike")
+def combat_preview_strike(body: CombatPreviewRequest) -> dict[str, Any]:
+    import random
+
+    from utils.combat_stats import build_combatant_snapshot, strike_damage_milli
+
+    root = package_root()
+    atk_id = body.attacker_preset or "apex_knight_lv999"
+    def_id = body.defender_preset or "npc_arthur_pendragon"
+    rng = random.Random(0)
+    attacker = build_combatant_snapshot(base_dir=root, preset_id=atk_id)
+    defender = build_combatant_snapshot(base_dir=root, preset_id=def_id)
+    result = strike_damage_milli(
+        attacker,
+        defender,
+        base_dir=root,
+        rng=rng,
+        force_hit=True,
+        force_sovereign_through=body.force_sovereign_through,
+    )
+    return {
+        "api_version": API_VERSION,
+        "attacker": atk_id,
+        "defender": def_id,
+        "strike": result,
+    }
+
+
+@app.get("/v1/combat/combatant/{preset_id}")
+def combat_combatant(preset_id: str) -> dict[str, Any]:
+    from utils.combat_stats import build_combatant_snapshot, combat_power_estimate
+
+    root = package_root()
+    snap = build_combatant_snapshot(base_dir=root, preset_id=preset_id)
+    return {
+        "api_version": API_VERSION,
+        "preset_id": preset_id,
+        "snapshot": snap,
+        "combat_power": combat_power_estimate(snap, base_dir=root),
+    }
+
+
+@app.get("/v1/sovereign/status")
+def sovereign_status_route(session_id: Optional[str] = None) -> dict[str, Any]:
+    from utils.combat_stats import sovereign_status
+
+    root = package_root()
+    state: dict[str, Any] = {"flags": {}}
+    if session_id:
+        session = _store.get(session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="session not found")
+        state = session.state
+    return {"api_version": API_VERSION, **sovereign_status(state, base_dir=root)}
 
 
 @app.get("/v1/ecology/wars")
