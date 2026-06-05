@@ -83,6 +83,8 @@ Event seeds may gate on `requires_faction_min/max`, `requires_tension_min/max`, 
 
 Long-term arc: **잿빛 봉인의 균열** — Phase 1 **균열의 전조** (`main_story_phase1.json`). Phase 2 **세력의 대립** (`main_story_phase2.json`). Phase 3 **최후의 선택** (reinforce/break/chaos final choice, path-based climax, ending resolution; `main_story_phase3.json`, `phase3_flow` in `events/main_stories.json`). Progress 100 resolves ending only after `phase3_climax_done`.
 
+**World product framing:** Eldoria is designed as a **full-dive isekai VR** setting (Link OS meta layer, transfer contract, faction “guild flags”). See [design/README.md](design/README.md). Optional state: `flags.vr_meta` — schema in `config/vr_meta.schema.json`.
+
 **Event zones:** `seed_type: main_story` (or `main_plot_link`) seeds without `location_zones` may trigger in `ashpoint`, `forest`, or `tower`. NPC-targeted `talk` no longer blocks main-story seeds that also allow `explore`.
 
 Player rep mirrors to `state.factions.player_reputation` for `world_state.json` readability.

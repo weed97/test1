@@ -3,7 +3,8 @@
 Cursor 멀티 모델 운영을 위한 판타지 시뮬레이터.  
 **`world_state.json`은 최소 상태 hub**이며, 상세 서사는 `lore/`·`events/`에 분리됩니다.
 
-> 운영: [docs/CURSOR_MULTI_MODEL.md](docs/CURSOR_MULTI_MODEL.md) · 콘텐츠: [docs/LORE_AND_EVENTS.md](docs/LORE_AND_EVENTS.md)
+> 운영: [docs/CURSOR_MULTI_MODEL.md](docs/CURSOR_MULTI_MODEL.md) · 콘텐츠: [docs/LORE_AND_EVENTS.md](docs/LORE_AND_EVENTS.md)  
+> **이세계 풀다이브 VR 세계 설계:** [docs/design/README.md](docs/design/README.md)
 
 ## 프로젝트 구조
 

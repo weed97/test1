@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "eldoria/vr_meta",
+  "title": "Eldoria VR Meta Layer",
+  "description": "Optional flags.vr_meta — full-dive session and isekai contract. Engine ignores unknown fields until wired.",
+  "type": "object",
+  "properties": {
+    "player_id": { "type": "string", "format": "uuid" },
+    "display_name": { "type": "string", "maxLength": 24 },
+    "pain_cap": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.7 },
+    "horror_filter": { "type": "boolean", "default": true },
+    "session_start_utc": { "type": "string", "format": "date-time" },
+    "total_playtime_hours": { "type": "number", "minimum": 0 },
+    "forced_disconnect": { "type": "boolean", "default": false },
+    "hardcore": { "type": "boolean", "default": false },
+    "legacy_season": { "type": ["string", "null"] },
+    "subscription_tier": {
+      "type": "string",
+      "enum": ["trial", "standard", "founder"]
+    },
+    "isekai_contract_accepted": { "type": "boolean" },
+    "soul_affinity": {
+      "type": "string",
+      "description": "Mirrors phase1 choice flavor for UI",
+      "enum": [
+        "ally_village",
+        "seek_truth",
+        "pursue_power",
+        "exploit_chaos",
+        "stay_neutral",
+        null
+      ]
+    }
+  },
+  "additionalProperties": true
+}
