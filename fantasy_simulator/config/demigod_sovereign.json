@@ -28,11 +28,47 @@
     "found_civilization",
     "reshape_rule"
   ],
+  "authority_tiers": {
+    "god": {
+      "label": "신 · 이세계 창조자",
+      "who": "운영·패치·시즌·Mnemosyne — 디제틱으로는 봉인 창조자",
+      "not_grantable_to": ["demigod", "mythic_holder", "player"]
+    },
+    "demigod": {
+      "label": "준신 · 엑스칼리버 홀더",
+      "who": "world_sovereign — 4년 소원, 세계 내 규칙만 국소·가역적으로"
+    }
+  },
   "forbidden_edicts": [
     "erase_world",
+    "instant_win",
+    "extinct_race",
     "wipe_realm",
-    "instant_win"
+    "erase_realm_species",
+    "mass_create_legendary",
+    "mass_create_mythic",
+    "raise_legendary_cap",
+    "raise_mythic_active_cap",
+    "spawn_artifact_tier_bulk",
+    "true_immortality",
+    "eternal_life",
+    "remove_death",
+    "god_patch",
+    "rewrite_world_atlas",
+    "create_new_race",
+    "ascend_to_god"
   ],
+  "forbidden_edict_notes": {
+    "extinct_race": "종족 전체 소멸 — weaken_realm(약화)만 허용",
+    "mass_create_mythic": "신화·전설 active/canon 대량 증가 금지",
+    "true_immortality": "영원 불사 — 연장·부활 쿨은 별도 상한",
+    "god_patch": "신만 가능: 시즌·엔진·이세계 생성 권한"
+  },
+  "capped_edicts": {
+    "weaken_realm": { "max_tier_penalty": 2, "cannot_extinct": true },
+    "empower_kingdom": { "max_power_shift": 0.25 },
+    "reshape_rule": { "must_be_reversible": true, "expires_after_years": 8 }
+  },
   "succession": {
     "holder_must_equip_excalibur_for_wish": true,
     "on_holder_death": "excalibur_drops_contested"
