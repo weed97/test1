@@ -10,7 +10,9 @@
   "archetypes": {
     "shadow_predator": {
       "kind": "monster",
+      "label": "그림자 포식자",
       "character_ref": "silver_stalker",
+      "stats": { "str": 14, "agi": 13, "int": 8, "vit": 11 },
       "skills": ["shadow_lash", "ambush"],
       "ai": "predator_patrol",
       "traits": ["plunder_growth"],
@@ -19,7 +21,9 @@
     },
     "village_elder_builder": {
       "kind": "npc",
+      "label": "장로 마렌",
       "character_ref": "elder_maren",
+      "stats": { "str": 7, "agi": 6, "int": 14, "vit": 9 },
       "skills": ["lay_stone", "rally"],
       "ai": "builder",
       "traits": ["settlement"],
@@ -27,7 +31,9 @@
     },
     "innkeeper_civilian": {
       "kind": "npc",
+      "label": "릴리안",
       "character_ref": "lilian_innkeeper",
+      "stats": { "str": 6, "agi": 10, "int": 11, "vit": 8 },
       "skills": ["call_help"],
       "ai": "flee_predator",
       "traits": ["civilian"],

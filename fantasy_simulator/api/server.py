@@ -311,17 +311,26 @@ def ecology_civilizations(session_id: str) -> dict[str, Any]:
 
 
 @app.get("/v1/world/agents")
-def world_agents(session_id: str, map_id: str | None = None) -> dict[str, Any]:
+def world_agents(
+    session_id: str,
+    map_id: str | None = None,
+    instance_id: str | None = None,
+) -> dict[str, Any]:
     session = _store.get(session_id)
     if session is None:
         raise HTTPException(status_code=404, detail="session not found")
     mid = map_id or session.state.get("world", {}).get("map_id", "ashpoint_01")
+    root = package_root()
+    agents = agents_manifest(
+        session.state, mid, base_dir=root, instance_id=instance_id
+    )
     return {
         "api_version": API_VERSION,
         "session_id": session_id,
         "map_id": mid,
         "ecology_enabled": ecology_enabled(session.state),
-        "agents": agents_manifest(session.state, mid),
+        "agents": agents,
+        "schema": "ecology_agent",
     }
 
 

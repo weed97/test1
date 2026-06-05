@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "strategies": {
+    "predator_pack": {
+      "label": "무리 포식",
+      "preferred_tags": ["first_strike", "ranged"],
+      "target_priority": ["npc", "low_hp"],
+      "flee_below_hp_ratio": 0.15
+    },
+    "ambush_stalker": {
+      "label": "매복",
+      "preferred_tags": ["first_strike", "ambush"],
+      "target_priority": ["npc", "monster_rival"],
+      "flee_below_hp_ratio": 0.2
+    },
+    "builder_focus": {
+      "label": "건설 집중",
+      "preferred_tags": ["build_progress", "buff_ally"],
+      "target_priority": [],
+      "flee_below_hp_ratio": 0.25
+    },
+    "defensive_flee": {
+      "label": "생존 도주",
+      "preferred_tags": ["alert_player"],
+      "target_priority": [],
+      "flee_below_hp_ratio": 0.5
+    },
+    "rival_hunter": {
+      "label": "라이벌 사냥",
+      "preferred_tags": ["ranged", "stun"],
+      "target_priority": ["monster_rival", "npc"],
+      "flee_below_hp_ratio": 0.18
+    }
+  },
+  "default_by_ai": {
+    "predator_patrol": { "strategy": "predator_pack", "iq": 55 },
+    "builder": { "strategy": "builder_focus", "iq": 70 },
+    "flee_predator": { "strategy": "defensive_flee", "iq": 50 }
+  },
+  "default_monster": { "strategy": "rival_hunter", "iq": 48 },
+  "default_npc": { "strategy": "defensive_flee", "iq": 58 },
+  "iq_bonuses": {
+    "skill_accuracy_per_10_iq": 0.03,
+    "ally_buff_range_per_20_iq": 1,
+    "relation_update_quality_per_10_iq": 0.05
+  },
+  "civilization_relations": {
+    "ally_same_civ": "ally",
+    "rival_civ_pair": "hostile",
+    "rivals": [
+      ["goblin_tribe", "shadow_clan"],
+      ["ashpoint_commons", "goblin_tribe"]
+    ]
+  }
+}

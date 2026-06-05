@@ -1,13 +1,20 @@
-"""Field ecology — living NPCs/monsters on the spatial grid (ecology game mode)."""
+"""Field ecology — ecology_agent objects, intelligence, skills (Godot = sprites)."""
 
 from __future__ import annotations
 
-import copy
 import random
 import uuid
 from pathlib import Path
 from typing import Any
 
+from utils.agent_mind import tick_agent_mind
+from utils.ecology_objects import (
+    agent_object_manifest,
+    build_ecology_agent,
+    enrich_evolved_agent,
+    load_ecology_config,
+    normalize_agent,
+)
 from utils.progression import (
     can_spawn_agent,
     grant_evolution_xp,
@@ -15,15 +22,7 @@ from utils.progression import (
     spawn_evolved_monster,
 )
 from utils.agent_competition import attach_society, tick_agent_competition
-from utils.spatial import load_world_maps, pois_at_tile, resolve_zone_from_world
-
-
-def load_ecology_config(base_dir: str | Path) -> dict[str, Any]:
-    import json
-
-    path = Path(base_dir) / "config" / "field_ecology.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+from utils.spatial import load_world_maps, resolve_zone_from_world
 
 
 def ecology_enabled(state: dict[str, Any]) -> bool:
@@ -39,6 +38,13 @@ def get_agents(state: dict[str, Any]) -> list[dict[str, Any]]:
 
 def agents_on_map(state: dict[str, Any], map_id: str) -> list[dict[str, Any]]:
     return [a for a in get_agents(state) if a.get("map_id") == map_id]
+
+
+def get_agent_by_id(state: dict[str, Any], instance_id: str) -> dict[str, Any] | None:
+    for a in get_agents(state):
+        if a.get("instance_id") == instance_id:
+            return a
+    return None
 
 
 def spawn_archetype(
@@ -63,44 +69,35 @@ def spawn_archetype(
     )
     if not ok:
         return None
-    instance = {
-        "instance_id": f"{archetype_id}_{uuid.uuid4().hex[:8]}",
-        "archetype_id": archetype_id,
-        "kind": arch.get("kind", "monster"),
-        "map_id": map_id,
-        "x": int(x),
-        "y": int(y),
-        "hp": 40,
-        "max_hp": 40,
-        "goal": "patrol",
-        "skills": list(arch.get("skills", [])),
-        "skill_cooldowns": {},
-        "traits": list(arch.get("traits", [])),
-        "ai": arch.get("ai", "patrol"),
-        "plunder": {"npc_victims": 0, "power_bonus": 0, "absorbed_skills": []},
-    }
-    if arch.get("kind") == "monster" and "plunder_growth" in arch.get("traits", []):
-        instance["goal"] = "hunt_prey"
+    agent = build_ecology_agent(
+        archetype_id=archetype_id,
+        kind=str(arch.get("kind", "monster")),
+        map_id=map_id,
+        x=x,
+        y=y,
+        base_dir=base_dir,
+        label=arch.get("label"),
+        ai=arch.get("ai"),
+        traits=list(arch.get("traits", [])),
+    )
     if arch.get("kind") == "npc" and "settlement" in arch.get("traits", []):
-        instance["goal"] = "build_hamlet"
-        instance["settlement"] = {
+        agent["goal"] = "build_hamlet"
+        agent["settlement"] = {
             "site_x": x,
             "site_y": y,
             "stage": 0,
             "build_points": 0,
             "stage_id": "camp",
         }
-    get_agents(state).append(instance)
-    attach_society(instance, base_dir=base_dir)
-    return instance
+    get_agents(state).append(agent)
+    attach_society(agent, base_dir=base_dir)
+    return agent
 
 
 def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None:
-    """Spawn starter agents once per session in ecology mode."""
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     if eco.get("initialized"):
         return
-    cfg = load_ecology_config(base_dir)
     maps_cfg = load_world_maps(str(base_dir)).get("maps", {})
     if "forest_01" in maps_cfg:
         for gx, gy in ((28, 22), (35, 18), (22, 25)):
@@ -113,7 +110,7 @@ def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None
                 tier=1,
                 base_dir=base_dir,
             )
-        agent, _ = spawn_evolved_monster(
+        spawn_evolved_monster(
             state,
             "shadow_beast",
             map_id="forest_01",
@@ -122,10 +119,8 @@ def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None
             tier=1,
             base_dir=base_dir,
         )
-        if agent:
-            attach_society(agent, base_dir=base_dir)
         for a in agents_on_map(state, "forest_01"):
-            if a.get("evolution_chain") == "goblin":
+            if a.get("evolution_chain"):
                 attach_society(a, base_dir=base_dir)
     if "ashpoint_01" in maps_cfg:
         spawn_archetype(
@@ -137,98 +132,12 @@ def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None
     eco["initialized"] = True
 
 
-def _manhattan(a: dict[str, Any], b: dict[str, Any]) -> int:
-    return abs(int(a["x"]) - int(b["x"])) + abs(int(a["y"]) - int(b["y"]))
-
-
-def _move_toward(agent: dict[str, Any], tx: int, ty: int, maps: dict[str, Any]) -> None:
-    m = maps.get(agent["map_id"], {})
-    w, h = int(m.get("width", 1)), int(m.get("height", 1))
-    x, y = int(agent["x"]), int(agent["y"])
-    if x < tx:
-        x += 1
-    elif x > tx:
-        x -= 1
-    if y < ty:
-        y += 1
-    elif y > ty:
-        y -= 1
-    agent["x"] = max(0, min(w - 1, x))
-    agent["y"] = max(0, min(h - 1, y))
-
-
-def _tick_predator(
-    agent: dict[str, Any],
-    others: list[dict[str, Any]],
-    maps: dict[str, Any],
-    rng: random.Random,
-    *,
-    state: dict[str, Any],
-    base_dir: str | Path,
-) -> list[str]:
-    lines: list[str] = []
-    prey = [o for o in others if o["instance_id"] != agent["instance_id"] and o.get("kind") == "npc"]
-    if prey:
-        target = min(prey, key=lambda p: _manhattan(agent, p))
-        if _manhattan(agent, target) <= 1:
-            dmg = 12 + int(agent.get("plunder", {}).get("power_bonus", 0))
-            target["hp"] = int(target.get("hp", 30)) - dmg
-            atk = agent.get("label") or agent.get("archetype_id", "monster")
-            tgt = target.get("label") or target.get("archetype_id", "npc")
-            lines.append(f"[필드] {atk}이(가) {tgt}을(를) 습격했다.")
-            if int(target["hp"]) <= 0:
-                pl = agent.setdefault("plunder", {})
-                pl["npc_victims"] = int(pl.get("npc_victims", 0)) + 1
-                pl["power_bonus"] = int(pl.get("power_bonus", 0)) + 3
-                lines.append(f"[필드] {tgt}이(가) 쓰러졌다. 몬스터가 성장한다.")
-                prog_cfg = load_progression_config(base_dir)
-                xp = int(prog_cfg.get("evolution_xp_per_plunder", 15))
-                lines.extend(grant_evolution_xp(agent, xp, base_dir=base_dir))
-                from utils.agent_competition import get_civilization_state, load_civ_config
-
-                civ_id = agent.get("civilization_id")
-                if civ_id:
-                    ccfg = load_civ_config(base_dir)
-                    cdef = ccfg.get("civilizations", {}).get(civ_id, {})
-                    gain = int(cdef.get("prosperity_per_npc_plunder", 8))
-                    cs = get_civilization_state(state, civ_id)
-                    cs["prosperity"] = int(cs.get("prosperity", 0)) + gain
-                state.setdefault("flags", {}).setdefault("ecology", {})[
-                    "last_predator_npc_kill"
-                ] = True
-                others.remove(target)
-            return lines
-        _move_toward(agent, int(target["x"]), int(target["y"]), maps)
-        return lines
-    agent["x"] = int(agent["x"]) + rng.choice([-1, 0, 1])
-    agent["y"] = int(agent["y"]) + rng.choice([-1, 0, 1])
-    return lines
-
-
-def _tick_builder(agent: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
-    lines: list[str] = []
-    settle = agent.get("settlement")
-    if not settle:
-        return lines
-    settle["build_points"] = int(settle.get("build_points", 0)) + 5
-    stages = cfg.get("settlement_stages", [])
-    for st in stages:
-        if int(settle["build_points"]) >= int(st.get("build_points", 9999)):
-            settle["stage_id"] = st["id"]
-    lines.append(
-        f"[필드] 건설 진행: {settle.get('stage_id')} ({settle['build_points']}pt) "
-        f"@ ({settle.get('site_x')},{settle.get('site_y')})"
-    )
-    return lines
-
-
 def tick_field_ecology(
     state: dict[str, Any],
     *,
     base_dir: str | Path,
     rng: random.Random | None = None,
 ) -> list[str]:
-    """One ecology beat for current map zone — agents act, world may change."""
     if not ecology_enabled(state):
         return []
     r = rng or random.Random()
@@ -237,28 +146,24 @@ def tick_field_ecology(
     maps = load_world_maps(str(base_dir)).get("maps", {})
     world = state.get("world", {})
     map_id = world.get("map_id", "ashpoint_01")
-    agents = [a for a in get_agents(state) if a.get("map_id") == map_id]
+    all_agents = get_agents(state)
     lines: list[str] = []
 
-    for agent in list(agents):
-        ai = agent.get("ai", "")
-        if ai == "predator_patrol":
-            lines.extend(
-                _tick_predator(
-                    agent, get_agents(state), maps, r, state=state, base_dir=base_dir
-                )
+    for agent in list(a for a in all_agents if a.get("map_id") == map_id):
+        normalize_agent(agent, base_dir=base_dir)
+        lines.extend(
+            tick_agent_mind(
+                agent,
+                all_agents,
+                maps,
+                state=state,
+                base_dir=base_dir,
+                rng=r,
+                eco_cfg=cfg,
             )
-        elif ai == "builder":
-            lines.extend(_tick_builder(agent, cfg))
-        elif ai == "flee_predator":
-            preds = [a for a in get_agents(state) if a.get("ai") == "predator_patrol"]
-            if preds:
-                p = preds[0]
-                _move_toward(agent, int(agent["x"]) - (int(p["x"]) - int(agent["x"])), int(agent["y"]), maps)
+        )
 
-    lines.extend(
-        tick_agent_competition(state, map_id, base_dir=base_dir, rng=r)
-    )
+    lines.extend(tick_agent_competition(state, map_id, base_dir=base_dir, rng=r))
 
     zone = resolve_zone_from_world(world)
     if lines:
@@ -266,31 +171,18 @@ def tick_field_ecology(
     return lines
 
 
-def agents_manifest(state: dict[str, Any], map_id: str) -> list[dict[str, Any]]:
-    """Godot spawn list — positions in tiles + godot pixel hint."""
+def agents_manifest(
+    state: dict[str, Any],
+    map_id: str,
+    *,
+    base_dir: str | Path | None = None,
+    instance_id: str | None = None,
+) -> list[dict[str, Any]]:
+    root = base_dir or Path(__file__).resolve().parent.parent
     out: list[dict[str, Any]] = []
     for a in agents_on_map(state, map_id):
-        out.append(
-            {
-                "instance_id": a.get("instance_id"),
-                "archetype_id": a.get("archetype_id"),
-                "species_id": a.get("species_id"),
-                "evolution_chain": a.get("evolution_chain"),
-                "evolution_tier": a.get("evolution_tier"),
-                "evolution_id": a.get("evolution_id"),
-                "label": a.get("label"),
-                "kind": a.get("kind"),
-                "x": int(a.get("x", 0)),
-                "y": int(a.get("y", 0)),
-                "hp": int(a.get("hp", 1)),
-                "max_hp": int(a.get("max_hp", 1)),
-                "goal": a.get("goal"),
-                "skills": a.get("skills", []),
-                "settlement": a.get("settlement"),
-                "plunder": a.get("plunder"),
-                "civilization_id": a.get("civilization_id"),
-                "culture_tags": a.get("culture_tags"),
-                "prosperity": a.get("prosperity"),
-            }
-        )
+        if instance_id and a.get("instance_id") != instance_id:
+            continue
+        normalize_agent(a, base_dir=root)
+        out.append(agent_object_manifest(a))
     return out

@@ -32,6 +32,7 @@
 | [24_ELDORIA_UNIVERSE_AND_POWER_ECOLOGY.md](24_ELDORIA_UNIVERSE_AND_POWER_ECOLOGY.md) | **에르도리아=시스템·행성**·MMO 독점 억제·전력 분산 |
 | [25_AGENT_COMPETITION_AND_MONSTER_CIVILIZATIONS.md](25_AGENT_COMPETITION_AND_MONSTER_CIVILIZATIONS.md) | **몬스터 문명**·라이벌 경쟁·NPC 번영 |
 | [26_WORLD_WARS_AND_APEX_THREATS.md](26_WORLD_WARS_AND_APEX_THREATS.md) | **월드 전쟁**·침입 목적·최상위 위협·연합 방어 |
+| [27_ECOLOGY_AGENT_OBJECTS.md](27_ECOLOGY_AGENT_OBJECTS.md) | **ecology_agent 객체**·HP/MP/스킬·지성·Godot 스프라이트 |
 
 ## 현재 구현과의 관계
 

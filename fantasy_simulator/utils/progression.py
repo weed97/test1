@@ -165,6 +165,9 @@ def spawn_evolved_monster(
         "skill_cooldowns": {},
     }
     apply_evolution_tier_to_agent(agent, tdef)
+    from utils.ecology_objects import enrich_evolved_agent
+
+    agent = enrich_evolved_agent(agent, base_dir=base_dir)
     _get_agents(state).append(agent)
     from utils.agent_competition import attach_society
 
