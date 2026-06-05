@@ -11,11 +11,22 @@
   },
   "mitigation_anchor": {
     "raw_soft_cap_milli": 100000000,
-    "raw_soft_cap_label": "100000.000",
-    "hp_per_hit_at_raw_cap_milli": 1000,
-    "hp_per_hit_label": "1.000 (최소 관통 0.001%)",
-    "hits_to_kill_at_min_hp_damage": 1000000,
-    "comment": "필멸 맥스뎀→1.000칩 — 100만타; 백만 mob raw/s는 회복보다 약함"
+    "strikes_per_sovereign_damage_event": 100000,
+    "through_rate_label": "0.001% — 10만번 때려야 1번 데미지",
+    "apex_lv999_on_proc_damage_milli": 9999000,
+    "mob_on_proc_damage_range_milli": [100000, 300000],
+    "comment": "명중률이 아님 — 관통 확률. Lv999 맥스뎀 관통 시 9999"
+  },
+  "coalition_siege_anchor": {
+    "strikers": 300000,
+    "aggregate_dps_milli": 200000,
+    "aggregate_dps_label": "200.000 HP/s (수십만 연합 합산)",
+    "wounded_regen_per_sec_milli": 160000,
+    "net_dps_milli": 40000,
+    "net_dps_label": "40.000 HP/s",
+    "hp_milli": 1000000000,
+    "seconds_to_kill": 25000,
+    "seconds_label": "2만5000초 (~6.9시간) — HP만 깎을 때"
   },
   "world_apex_attackers": {
     "count_at_raw_cap": 10,
@@ -47,13 +58,6 @@
       "hp_damage_per_striker_milli": 9999000,
       "comment": "방무 정예 120×9999 ≈ 120만 — 연합·검주 루트"
     }
-  },
-  "mob_army_cannot_solo_kill": {
-    "attackers": 1000000,
-    "raw_per_striker_per_sec_milli": 10000,
-    "net_hp_per_sec_vs_arthur_milli": 100000,
-    "wounded_regen_per_sec_milli": 160000,
-    "comment": "100만×10 raw/s — 순피해 음수, break·방무 정예 필요"
   },
   "parallel_beat": {
     "sum_damage_before_regen": true,

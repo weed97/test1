@@ -54,10 +54,43 @@ def compute_pierce_damage_milli(attacker: dict[str, Any], *, cfg: dict[str, Any]
     return min(cap, max(0, raw))
 
 
-def cap_mitigated_vs_demigod(mitigated_milli: int, *, cfg: dict[str, Any]) -> int:
-    """Non-pierce attackers chip at most 1.000 HP vs demigod per strike."""
-    chip = int(cfg.get("armor_pierce", {}).get("apex_mortal_chip_vs_demigod_milli", 1000))
-    return min(chip, max(0, mitigated_milli))
+def is_apex_max_striker(attacker: dict[str, Any], *, cfg: dict[str, Any]) -> bool:
+    st = cfg.get("sovereign_through", {})
+    if str(attacker.get("tier", "")) == "apex_mortal":
+        return int(attacker.get("character_level", 0)) >= 999
+    floor = int(st.get("apex_attack_floor_milli", 90_000_000))
+    return int(attacker.get("character_level", 0)) >= 999 and int(attacker.get("attack_milli", 0)) >= floor
+
+
+def roll_sovereign_through(
+    rng: random.Random,
+    *,
+    cfg: dict[str, Any],
+    force: bool | None = None,
+) -> bool:
+    """0.001% — ~100k strikes per damage event (not hit accuracy)."""
+    if force is not None:
+        return bool(force)
+    st = cfg.get("sovereign_through", {})
+    rate = int(st.get("through_rate_milli", 1))
+    return rng.randint(1, rate_scale(cfg)) <= rate
+
+
+def sovereign_proc_damage_milli(
+    attacker: dict[str, Any],
+    *,
+    cfg: dict[str, Any],
+    rng: random.Random,
+) -> int:
+    """HP damage when sovereign through procs — apex 9999, mob 100~300."""
+    st = cfg.get("sovereign_through", {})
+    if is_apex_max_striker(attacker, cfg=cfg):
+        return int(st.get("apex_lv999_max_proc_damage_milli", 9_999_000))
+    lo = int(st.get("mob_proc_damage_min_milli", 100_000))
+    hi = int(st.get("mob_proc_damage_max_milli", 300_000))
+    if hi <= lo:
+        return lo
+    return rng.randint(lo, hi)
 
 
 def fixed_scale(cfg: dict[str, Any] | None = None) -> int:
@@ -196,6 +229,7 @@ def resolve_strike_damage_milli(
     rng: random.Random,
     force_hit: bool | None = None,
     force_crit: bool | None = None,
+    force_sovereign_through: bool | None = None,
 ) -> dict[str, Any]:
     """Full pipeline; returns milli damage and audit trail for balance tuning."""
     hit_rate = compute_hit_rate_milli(attacker, defender, cfg=cfg)
@@ -213,30 +247,57 @@ def resolve_strike_damage_milli(
     after_level = (raw * level_supremacy_multiplier(attacker, defender, cfg=cfg)) // _FIXED_SCALE
     def_m = int(defender.get("defense_milli", 0))
     after_armor = apply_mitigation_milli(after_level, def_m, cfg=cfg)
-    if defender_is_demigod(defender) and not attacker_has_armor_pierce(attacker, cfg=cfg):
-        after_armor = cap_mitigated_vs_demigod(after_armor, cfg=cfg)
     mit = mitigation_multiplier(def_m, cfg=cfg)
     pierce = compute_pierce_damage_milli(attacker, cfg=cfg)
+    sovereign_through = False
 
     crit_rate = compute_crit_rate_milli(attacker, cfg=cfg)
     crit = force_crit if force_crit is not None else rng.randint(1, _RATE_SCALE) <= crit_rate
     crit_mult = int(cfg.get("critical", {}).get("damage_multiplier_milli", 2000))
-    mitigated_final = after_armor
-    if crit and pierce <= 0:
-        mitigated_final = (after_armor * crit_mult) // _FIXED_SCALE
-    elif crit and pierce > 0:
-        mitigated_final = (after_armor * crit_mult) // _FIXED_SCALE
-
     hit_cap = int(cfg.get("hp_damage_per_hit_cap_milli", 10_000_000))
-    mitigated_final = min(hit_cap, mitigated_final)
     min_d = int(cfg.get("min_final_damage_milli", 1000))
-    if pierce <= 0:
-        mitigated_final = max(min_d, mitigated_final)
-    final = min(hit_cap, mitigated_final + pierce)
+
+    if defender_is_demigod(defender) and not attacker_has_armor_pierce(attacker, cfg=cfg):
+        sovereign_through = roll_sovereign_through(
+            rng, cfg=cfg, force=force_sovereign_through
+        )
+        if not sovereign_through:
+            return {
+                "hit": True,
+                "crit": False,
+                "sovereign_through": False,
+                "damage_milli": 0,
+                "damage": 0.0,
+                "hit_rate_milli": hit_rate,
+                "crit_rate_milli": crit_rate,
+                "armor_pierce_milli": 0,
+                "audit": {
+                    "raw_attack_milli": int(attacker.get("attack_milli", 0)),
+                    "after_level_supremacy_milli": after_level,
+                    "mitigation_mult_milli": mit,
+                    "sovereign_through_rolled": False,
+                },
+            }
+        mitigated_final = min(
+            hit_cap,
+            sovereign_proc_damage_milli(attacker, cfg=cfg, rng=rng),
+        )
+        final = mitigated_final
+    else:
+        mitigated_final = after_armor
+        if crit and pierce <= 0:
+            mitigated_final = (after_armor * crit_mult) // _FIXED_SCALE
+        elif crit and pierce > 0:
+            mitigated_final = (after_armor * crit_mult) // _FIXED_SCALE
+        mitigated_final = min(hit_cap, mitigated_final)
+        if pierce <= 0:
+            mitigated_final = max(min_d, mitigated_final)
+        final = min(hit_cap, mitigated_final + pierce)
 
     return {
         "hit": True,
         "crit": crit,
+        "sovereign_through": sovereign_through,
         "damage_milli": final,
         "damage": from_milli(final, cfg=cfg),
         "hit_rate_milli": hit_rate,
@@ -249,6 +310,7 @@ def resolve_strike_damage_milli(
             "after_armor_milli": after_armor,
             "mitigated_final_milli": mitigated_final,
             "pierce_milli": pierce,
+            "sovereign_through": sovereign_through,
             "final_milli": final,
         },
     }

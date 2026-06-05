@@ -97,7 +97,9 @@
     "demigod_attacks_per_sec": 10,
     "apex_mortal_vs_demigod": {
       "armor_pierce": false,
-      "chip_per_max_hit_milli": 1000,
+      "through_rate_milli": 1,
+      "on_through_damage_milli": 9999000,
+      "strikes_per_through_event": 100000,
       "max_multiplier_per_sec_milli": 3000
     }
   },

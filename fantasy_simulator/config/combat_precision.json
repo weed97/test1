@@ -57,9 +57,21 @@
     "enabled_tiers": ["demigod", "excalibur_bound"],
     "max_pierce_per_hit_milli": 9999000,
     "demigod_attacks_per_sec": 10,
-    "apex_mortal_chip_vs_demigod_milli": 1000,
-    "apex_mortal_max_mult_per_sec_milli": 3000,
-    "comment": "필멸 맥스뎀→아서 1.000; 준신 방무→9999×10/s"
+    "comment": "준신·엑스칼리버만 방무 — 필멸은 sovereign_through 확률 롤"
+  },
+  "sovereign_through": {
+    "model": "probabilistic_not_hit_rate",
+    "strikes_per_damage_event": 100000,
+    "through_rate_milli": 1,
+    "through_rate_label": "0.001% — 10만 타당 1회 관통 (명중과 별개)",
+    "apex_lv999_max_proc_damage_milli": 9999000,
+    "apex_lv999_max_proc_label": "9999.000 — 관통 시에만",
+    "apex_world_count_estimate": 0,
+    "mob_proc_damage_min_milli": 100000,
+    "mob_proc_damage_max_milli": 300000,
+    "mob_proc_label": "일반 연합 — 관통 시 100~300",
+    "expected_apex_damage_per_strike_milli": 99,
+    "comment": "9999×0.001% ≈ 0.099 HP/타 기대값 — 정예가 없어서 문제"
   },
   "balance_guards": {
     "max_damage_per_strike_milli": 100000000,

@@ -72,15 +72,15 @@ class SovereignSiegeTests(unittest.TestCase):
         )
         self.assertTrue(r["instant_kill"])
 
-    def test_coalition_batch_elite_fraction(self) -> None:
+    def test_coalition_batch_aggregate_dps(self) -> None:
         strikes = coalition_strike_batch(
-            striker_count=2000,
-            elite_count=100,
+            striker_count=300_000,
+            elite_count=0,
             siege_cfg=self.siege,
             combat_cfg=self.combat,
         )
-        self.assertEqual(len(strikes), 2000)
-        self.assertEqual(strikes.count(1_000_000), 100)
+        self.assertEqual(len(strikes), 1)
+        self.assertEqual(strikes[0], 200_000)
 
     def test_tick_updates_state(self) -> None:
         with isolated_game_root() as root:

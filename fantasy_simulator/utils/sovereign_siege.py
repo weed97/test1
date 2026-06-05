@@ -164,26 +164,48 @@ def resolve_parallel_strikes_milli(
     }
 
 
+def coalition_aggregate_dps_milli(
+    striker_count: int,
+    *,
+    siege_cfg: dict[str, Any],
+) -> int:
+    """Scale anchor aggregate DPS (200/s @ 300k) by army size."""
+    anchor = siege_cfg.get("coalition_siege_anchor", {})
+    base_n = max(1, int(anchor.get("strikers", 300_000)))
+    base_dps = int(anchor.get("aggregate_dps_milli", 200_000))
+    return (int(striker_count) * base_dps) // base_n
+
+
+def coalition_net_dps_milli(*, siege_cfg: dict[str, Any]) -> int:
+    anchor = siege_cfg.get("coalition_siege_anchor", {})
+    agg = int(anchor.get("aggregate_dps_milli", 200_000))
+    regen = int(anchor.get("wounded_regen_per_sec_milli", 160_000))
+    return max(0, agg - regen)
+
+
+def estimate_coalition_siege_seconds(*, siege_cfg: dict[str, Any]) -> int:
+    anchor = siege_cfg.get("coalition_siege_anchor", {})
+    if "seconds_to_kill" in anchor:
+        return int(anchor["seconds_to_kill"])
+    net = coalition_net_dps_milli(siege_cfg=siege_cfg)
+    if net <= 0:
+        return 0
+    hp = int(anchor.get("hp_milli", 1_000_000_000))
+    return hp // net
+
+
 def coalition_strike_batch(
     *,
     striker_count: int,
     elite_count: int,
     siege_cfg: dict[str, Any],
     combat_cfg: dict[str, Any],
+    beat_seconds: float = 1.0,
 ) -> list[int]:
-    """Build per-striker HP damage list for one parallel beat."""
-    cp = siege_cfg.get("coalition_pressure", {})
-    elite_dmg = int(cp.get("elite_hp_damage_per_striker_milli", 1_000_000))
-    mob_raw = int(cp.get("mob_raw_attack_per_striker_milli", 5_000_000))
-    strikes: list[int] = []
-    elites = min(int(elite_count), int(striker_count))
-    mobs = int(striker_count) - elites
-    for _ in range(elites):
-        strikes.append(elite_dmg)
-    mob_hp = hp_damage_from_raw_milli(mob_raw, combat_cfg=combat_cfg, siege_cfg=siege_cfg)
-    for _ in range(mobs):
-        strikes.append(mob_hp)
-    return strikes
+    """Macro beat: aggregate coalition DPS for one second (probabilistic swarm EV)."""
+    del elite_count, combat_cfg
+    dmg = int(coalition_aggregate_dps_milli(striker_count, siege_cfg=siege_cfg) * beat_seconds)
+    return [dmg] if dmg > 0 else []
 
 
 def tick_sovereign_coalition_siege(
@@ -219,6 +241,7 @@ def tick_sovereign_coalition_siege(
         elite_count=elites,
         siege_cfg=siege_cfg,
         combat_cfg=combat_cfg,
+        beat_seconds=beat_seconds,
     )
 
     hp_before = int(sov.get("hp_milli", siege_cfg["arthur"]["hp_milli"]))
@@ -267,14 +290,11 @@ def tick_sovereign_coalition_siege(
 def estimate_mob_army_net_hp_per_sec_milli(
     *,
     siege_cfg: dict[str, Any],
-    combat_cfg: dict[str, Any],
+    combat_cfg: dict[str, Any] | None = None,
 ) -> int:
-    """Net HP/s from mob anchor (1M × 10 raw/s) vs Arthur mitigation."""
-    mob = siege_cfg.get("mob_army_cannot_solo_kill", {})
-    n = int(mob.get("attackers", 1_000_000))
-    raw = int(mob.get("raw_per_striker_per_sec_milli", 10_000))
-    per = hp_damage_from_raw_milli(raw, combat_cfg=combat_cfg, siege_cfg=siege_cfg)
-    return n * per
+    """Net HP/s at coalition siege anchor (200 aggregate − 160 regen = 40)."""
+    del combat_cfg
+    return coalition_net_dps_milli(siege_cfg=siege_cfg)
 
 
 def sovereign_siege_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
@@ -298,8 +318,7 @@ def sovereign_siege_status(state: dict[str, Any], *, base_dir: str | Path) -> di
         "regen_per_sec_milli": regen,
         "sovereign_break_meter": int(sov.get("sovereign_break_meter", 0)),
         "hits_to_kill_at_min_damage": int(anchor.get("hits_to_kill_at_min_hp_damage", 1_000_000)),
-        "mob_army_net_hp_per_sec_milli": estimate_mob_army_net_hp_per_sec_milli(
-            siege_cfg=siege_cfg, combat_cfg=load_combat_precision_config(base_dir)
-        ),
+        "coalition_net_dps_milli": coalition_net_dps_milli(siege_cfg=siege_cfg),
+        "seconds_to_kill_at_anchor": estimate_coalition_siege_seconds(siege_cfg=siege_cfg),
         "world_apex_at_raw_cap": int(siege_cfg.get("world_apex_attackers", {}).get("count_at_raw_cap", 10)),
     }

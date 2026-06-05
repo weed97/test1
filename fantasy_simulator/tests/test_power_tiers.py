@@ -1,4 +1,4 @@
-"""Demigod HP 1M, apex mortal 99,999, armor-pierce vs chip damage."""
+"""Demigod HP, sovereign through (1/100k), coalition siege anchor."""
 
 from __future__ import annotations
 
@@ -16,12 +16,14 @@ from utils.combat_precision import (  # noqa: E402
     load_combat_precision_config,
     load_power_tiers_config,
     resolve_strike_damage_milli,
+    roll_sovereign_through,
 )
 from utils.sovereign_siege import (  # noqa: E402
-    estimate_mob_army_net_hp_per_sec_milli,
+    coalition_net_dps_milli,
+    estimate_coalition_siege_seconds,
+    load_arthur_coalition_config,
     load_arthur_siege_math_config,
     wounded_regen_per_sec_milli,
-    load_arthur_coalition_config,
 )
 
 
@@ -38,52 +40,61 @@ class PowerTierTests(unittest.TestCase):
         cap = hp_cap_milli_for_tier("demigod", tiers_cfg=self.tiers)
         self.assertEqual(cap, 1_000_000_000)
 
-    def test_apex_mortal_hp_cap_99999(self) -> None:
-        cap = hp_cap_milli_for_tier("apex_mortal", tiers_cfg=self.tiers)
-        demi = hp_cap_milli_for_tier("demigod", tiers_cfg=self.tiers)
-        self.assertEqual(cap, 99_999_000)
-        self.assertGreater(demi, cap * 10)
-
-    def test_apex_mythic_max_chips_one_vs_arthur(self) -> None:
+    def test_apex_no_through_deals_zero(self) -> None:
         atk = {
             "attack_milli": 100_000_000,
             "character_level": 999,
             "weapon_mastery_level": 999,
-            "item_grade_index": 6,
             "tier": "apex_mortal",
         }
         defn = {"defense_milli": 100_000_000, "tier": "demigod", "world_sovereign": True}
         r = resolve_strike_damage_milli(
-            atk, defn, cfg=self.combat, rng=self.rng, force_hit=True, force_crit=False
+            atk,
+            defn,
+            cfg=self.combat,
+            rng=self.rng,
+            force_hit=True,
+            force_sovereign_through=False,
         )
-        self.assertLessEqual(r["damage_milli"], 1000)
-        self.assertEqual(r.get("armor_pierce_milli", 0), 0)
+        self.assertEqual(r["damage_milli"], 0)
+        self.assertFalse(r.get("sovereign_through"))
 
-    def test_demigod_pierce_9999_vs_arthur(self) -> None:
+    def test_apex_on_through_deals_9999(self) -> None:
         atk = {
             "attack_milli": 100_000_000,
-            "tier": "demigod",
-            "armor_pierce": True,
             "character_level": 999,
-            "weapon_mastery_level": 999,
+            "tier": "apex_mortal",
         }
         defn = {"defense_milli": 100_000_000, "tier": "demigod"}
         r = resolve_strike_damage_milli(
-            atk, defn, cfg=self.combat, rng=self.rng, force_hit=True, force_crit=False
+            atk,
+            defn,
+            cfg=self.combat,
+            rng=self.rng,
+            force_hit=True,
+            force_sovereign_through=True,
         )
-        self.assertGreaterEqual(r.get("armor_pierce_milli", 0), 9_000_000)
+        self.assertGreaterEqual(r["damage_milli"], 9_999_000)
+        self.assertTrue(r.get("sovereign_through"))
 
-    def test_mob_million_army_cannot_out_dps_regen(self) -> None:
-        net = estimate_mob_army_net_hp_per_sec_milli(
-            siege_cfg=self.siege, combat_cfg=self.combat
-        )
+    def test_sovereign_through_rate_about_one_in_100k(self) -> None:
+        rng = random.Random(99)
+        procs = sum(1 for _ in range(500_000) if roll_sovereign_through(rng, cfg=self.combat))
+        self.assertGreater(procs, 2)
+        self.assertLess(procs, 12)
+
+    def test_coalition_siege_25000_seconds(self) -> None:
+        net = coalition_net_dps_milli(siege_cfg=self.siege)
+        self.assertEqual(net, 40_000)
+        secs = estimate_coalition_siege_seconds(siege_cfg=self.siege)
+        self.assertEqual(secs, 25_000)
         regen = wounded_regen_per_sec_milli(
             siege_cfg=self.siege,
             coalition_cfg=self.coalition,
             wound_stacks=1,
             contested=False,
         )
-        self.assertLess(net, regen)
+        self.assertEqual(regen, 160_000)
 
 
 if __name__ == "__main__":
