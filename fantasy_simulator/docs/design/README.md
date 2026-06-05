@@ -22,6 +22,7 @@
 | [12_MICRO_TIME_AND_COCREATION.md](12_MICRO_TIME_AND_COCREATION.md) | **분 단위 시계**·공동 창조 루프 |
 | [13_ISEKAI_AFFORDANCES.md](13_ISEKAI_AFFORDANCES.md) | 현실 불가 행위·이세계 계약 |
 | [14_CONTRIBUTION_PERMISSIONS.md](14_CONTRIBUTION_PERMISSIONS.md) | **기여도→권한**·성장 목표·디테일 게이트 |
+| [15_GODOT_RELEASE_ARCHITECTURE.md](15_GODOT_RELEASE_ARCHITECTURE.md) | **Godot 클라이언트**·API·출시 구조 |
 
 ## 현재 구현과의 관계
 
