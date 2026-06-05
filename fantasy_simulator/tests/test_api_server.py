@@ -71,6 +71,23 @@ class ApiServerTests(unittest.TestCase):
         self.assertEqual(r3.status_code, 200)
         self.assertEqual(r3.json()["zone_id"], "forest")
 
+    def test_ecology_progression_status(self) -> None:
+        r = self.client.post(
+            "/v1/session/new",
+            json={"seed": 7, "mode": "rule", "game_mode": "ecology"},
+        )
+        session_id = r.json()["session_id"]
+        r2 = self.client.get(f"/v1/progression/status?session_id={session_id}")
+        self.assertEqual(r2.status_code, 200)
+        data = r2.json()
+        self.assertIn("heroes", data)
+        self.assertIn("map_spawn", data)
+        r3 = self.client.post(
+            "/v1/turn",
+            json={"session_id": session_id, "action": "explore"},
+        )
+        self.assertEqual(r3.status_code, 200)
+
     def test_precision_turn_includes_clock_fields(self) -> None:
         r = self.client.post(
             "/v1/session/new",

@@ -27,6 +27,7 @@
 | [19_SPATIAL_SIMULATION.md](19_SPATIAL_SIMULATION.md) | **Godot 타일 ↔ 시뮬 좌표**·존·맵 전환 |
 | [20_LIVING_FIELD_ECOLOGY.md](20_LIVING_FIELD_ECOLOGY.md) | **살아 있는 필드**·NPC/몬스터 스킬·탐험 중심 생태계 |
 | [21_PLAYER_SETTLEMENT_BUILDING.md](21_PLAYER_SETTLEMENT_BUILDING.md) | **플레이어 건설**·건축 Lv·고용·대장간·왕국 |
+| [22_CHARACTER_PROGRESSION.md](22_CHARACTER_PROGRESSION.md) | **성장**·직업/스킬/장비·몬스터 진화·맵 스폰 한도 |
 
 ## 현재 구현과의 관계
 

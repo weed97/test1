@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "godot_recommended_max_sprites_per_map": 32,
+  "explore_xp": 8,
+  "combat_win_xp": 25,
+  "evolution_xp_per_plunder": 15,
+  "jobs": {
+    "wanderer": {
+      "label": "방랑자",
+      "starter_skills": ["scout"],
+      "level_xp": [0, 40, 100, 200, 350],
+      "skills_by_level": {
+        "2": ["quick_step"],
+        "3": ["trap_sense"],
+        "4": ["pathfinder"]
+      }
+    },
+    "knight": {
+      "label": "기사",
+      "starter_skills": ["shield_bash"],
+      "level_xp": [0, 50, 120, 220, 400],
+      "skills_by_level": {
+        "2": ["iron_wall"],
+        "3": ["charge"],
+        "4": ["rally_cry"]
+      }
+    },
+    "ranger": {
+      "label": "레인저",
+      "starter_skills": ["aimed_shot"],
+      "level_xp": [0, 45, 110, 210, 380],
+      "skills_by_level": {
+        "2": ["volley"],
+        "3": ["snare"],
+        "4": ["beast_sense"]
+      }
+    },
+    "arcane_apprentice": {
+      "label": "마법 견습",
+      "starter_skills": ["spark"],
+      "level_xp": [0, 55, 130, 240, 420],
+      "skills_by_level": {
+        "2": ["frost_pin"],
+        "3": ["mana_shield"],
+        "4": ["arcane_burst"]
+      }
+    }
+  },
+  "skills": {
+    "scout": { "type": "passive", "tags": ["explore_bonus"] },
+    "quick_step": { "type": "active", "mana": 5, "tags": ["move"] },
+    "shield_bash": { "type": "active", "mana": 8, "power": 12, "tags": ["stun"] },
+    "iron_wall": { "type": "buff", "mana": 10, "tags": ["defense"] },
+    "aimed_shot": { "type": "active", "mana": 6, "power": 14, "tags": ["ranged"] },
+    "spark": { "type": "active", "mana": 10, "power": 11, "element": "fire" },
+    "scratch": { "type": "active", "mana": 0, "power": 5 },
+    "goblin_rush": { "type": "active", "mana": 4, "power": 9 },
+    "champion_cleave": { "type": "active", "mana": 8, "power": 16 },
+    "king_smash": { "type": "active", "mana": 12, "power": 28 }
+  },
+  "equipment_slots": ["weapon", "armor", "accessory", "trinket"],
+  "items": {
+    "rusty_dagger": {
+      "slot": "weapon",
+      "label": "녹슨 단검",
+      "attack": 3,
+      "min_job_level": 1
+    },
+    "iron_sword": {
+      "slot": "weapon",
+      "label": "철검",
+      "attack": 8,
+      "min_job_level": 2,
+      "jobs": ["knight", "wanderer"]
+    },
+    "leather_vest": {
+      "slot": "armor",
+      "label": "가죽 조끼",
+      "defense": 2
+    },
+    "scout_cloak": {
+      "slot": "accessory",
+      "label": "정찰 망토",
+      "agility": 2,
+      "jobs": ["ranger", "wanderer"]
+    }
+  },
+  "evolution_chains": {
+    "goblin": {
+      "label": "고블린 계열",
+      "tiers": [
+        {
+          "id": "goblin",
+          "tier": 1,
+          "label": "고블린",
+          "hp": 28,
+          "max_hp": 28,
+          "skills": ["scratch"],
+          "evolve_xp": 35,
+          "power_bonus": 0
+        },
+        {
+          "id": "goblin_champion",
+          "tier": 2,
+          "label": "고블린 챔피언",
+          "hp": 52,
+          "max_hp": 52,
+          "skills": ["scratch", "goblin_rush"],
+          "evolve_xp": 90,
+          "power_bonus": 4
+        },
+        {
+          "id": "goblin_king",
+          "tier": 3,
+          "label": "고블린 킹",
+          "hp": 95,
+          "max_hp": 95,
+          "skills": ["goblin_rush", "champion_cleave", "king_smash"],
+          "evolve_xp": null,
+          "power_bonus": 10
+        }
+      ]
+    },
+    "shadow_beast": {
+      "label": "그림자 야수",
+      "tiers": [
+        {
+          "id": "shadow_whelp",
+          "tier": 1,
+          "label": "그림자 새끼",
+          "hp": 40,
+          "skills": ["shadow_lash"],
+          "evolve_xp": 50,
+          "power_bonus": 0
+        },
+        {
+          "id": "shadow_predator",
+          "tier": 2,
+          "label": "그림자 포식자",
+          "hp": 75,
+          "skills": ["shadow_lash", "ambush"],
+          "evolve_xp": 120,
+          "power_bonus": 6
+        },
+        {
+          "id": "shadow_alpha",
+          "tier": 3,
+          "label": "그림자 우두머리",
+          "hp": 120,
+          "skills": ["shadow_lash", "ambush"],
+          "evolve_xp": null,
+          "power_bonus": 14
+        }
+      ]
+    }
+  },
+  "map_spawn_limits": {
+    "ashpoint_01": {
+      "max_total": 14,
+      "max_monsters": 4,
+      "max_npcs": 10,
+      "species_caps": { "goblin": 0 }
+    },
+    "forest_01": {
+      "max_total": 12,
+      "max_monsters": 8,
+      "max_npcs": 3,
+      "species_caps": { "goblin": 5, "shadow_beast": 3 }
+    },
+    "tower_01": {
+      "max_total": 8,
+      "max_monsters": 6,
+      "max_npcs": 2,
+      "species_caps": { "shadow_beast": 4 }
+    }
+  }
+}

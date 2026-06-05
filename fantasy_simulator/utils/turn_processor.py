@@ -323,6 +323,14 @@ def execute_turn(
     proc = process_player_action(ctx)
     lines.extend(proc["lines"])
 
+    action_lower = action.lower().strip()
+    if "explore" in action_lower or "탐험" in action:
+        from utils.field_agents import ecology_enabled
+        from utils.progression import on_explore_progression
+
+        if ecology_enabled(ctx.state):
+            lines.extend(on_explore_progression(ctx.state, base_dir=loader.base_dir))
+
     from utils.world_systems import tick_world_systems
 
     world_lines = tick_world_systems(

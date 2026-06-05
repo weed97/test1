@@ -33,7 +33,13 @@ class FieldEcologyTests(unittest.TestCase):
             session.state.setdefault("flags", {})["game_mode"] = "ecology"
             ensure_ecology_seeds(session.state, base_dir=root)
             agents = agents_on_map(session.state, "forest_01")
-            self.assertTrue(any(a.get("archetype_id") == "shadow_predator" for a in agents))
+            self.assertTrue(
+                any(
+                    a.get("evolution_chain") == "goblin"
+                    or a.get("evolution_chain") == "shadow_beast"
+                    for a in agents
+                )
+            )
 
     def test_predator_tick_can_produce_lines(self) -> None:
         with isolated_game_root() as root:

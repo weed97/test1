@@ -24,6 +24,12 @@ from utils.settlement_build import (
     start_build,
     try_start_kingdom,
 )
+from utils.progression import (
+    equip_item,
+    init_heroes_from_party,
+    progression_status,
+    unlock_skill,
+)
 from utils.spatial import maps_manifest
 from utils.temporal import TemporalMode
 
@@ -93,6 +99,18 @@ class KingdomRequest(BaseModel):
     y: int
 
 
+class ProgressionUnlockRequest(BaseModel):
+    session_id: str
+    character_id: str
+    skill_id: str
+
+
+class ProgressionEquipRequest(BaseModel):
+    session_id: str
+    character_id: str
+    item_id: str
+
+
 class TurnRequest(BaseModel):
     session_id: str
     action: str = Field(..., min_length=1, max_length=512)
@@ -127,7 +145,9 @@ def new_session(body: NewSessionRequest) -> NewSessionResponse:
     )
     session.state.setdefault("flags", {})["game_mode"] = body.game_mode
     if body.game_mode in ("ecology", "hybrid"):
-        ensure_ecology_seeds(session.state, base_dir=package_root())
+        root = package_root()
+        ensure_ecology_seeds(session.state, base_dir=root)
+        init_heroes_from_party(session.state, base_dir=root)
         get_player_settlement(session.state)
     session.manager.save(session.state)
     return NewSessionResponse(
@@ -197,6 +217,56 @@ def settlement_kingdom(body: KingdomRequest) -> dict[str, Any]:
     )
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail=result.get("error", "kingdom failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.get("/v1/progression/status")
+def progression_status_route(session_id: str) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        **progression_status(session.state, base_dir=package_root()),
+    }
+
+
+@app.post("/v1/progression/unlock_skill")
+def progression_unlock(body: ProgressionUnlockRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    if not ecology_enabled(session.state):
+        raise HTTPException(status_code=400, detail="ecology or hybrid mode required")
+    result = unlock_skill(
+        session.state,
+        body.character_id,
+        body.skill_id,
+        base_dir=package_root(),
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "unlock failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/progression/equip")
+def progression_equip(body: ProgressionEquipRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    if not ecology_enabled(session.state):
+        raise HTTPException(status_code=400, detail="ecology or hybrid mode required")
+    result = equip_item(
+        session.state,
+        body.character_id,
+        body.item_id,
+        base_dir=package_root(),
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "equip failed"))
     session.manager.save(session.state)
     return {"api_version": API_VERSION, "session_id": body.session_id, **result}
 

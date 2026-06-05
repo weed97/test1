@@ -8,6 +8,12 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from utils.progression import (
+    can_spawn_agent,
+    grant_evolution_xp,
+    load_progression_config,
+    spawn_evolved_monster,
+)
 from utils.spatial import load_world_maps, pois_at_tile, resolve_zone_from_world
 
 
@@ -46,6 +52,15 @@ def spawn_archetype(
     cfg = load_ecology_config(base_dir)
     arch = cfg.get("archetypes", {}).get(archetype_id)
     if not arch:
+        return None
+    ok, _reason = can_spawn_agent(
+        state,
+        map_id=map_id,
+        kind=str(arch.get("kind", "monster")),
+        species_id=archetype_id,
+        base_dir=base_dir,
+    )
+    if not ok:
         return None
     instance = {
         "instance_id": f"{archetype_id}_{uuid.uuid4().hex[:8]}",
@@ -86,9 +101,24 @@ def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None
     cfg = load_ecology_config(base_dir)
     maps_cfg = load_world_maps(str(base_dir)).get("maps", {})
     if "forest_01" in maps_cfg:
-        m = maps_cfg["forest_01"]
-        spawn_archetype(
-            state, "shadow_predator", map_id="forest_01", x=30, y=20, base_dir=base_dir
+        for gx, gy in ((28, 22), (35, 18), (22, 25)):
+            spawn_evolved_monster(
+                state,
+                "goblin",
+                map_id="forest_01",
+                x=gx,
+                y=gy,
+                tier=1,
+                base_dir=base_dir,
+            )
+        spawn_evolved_monster(
+            state,
+            "shadow_beast",
+            map_id="forest_01",
+            x=30,
+            y=20,
+            tier=1,
+            base_dir=base_dir,
         )
     if "ashpoint_01" in maps_cfg:
         spawn_archetype(
@@ -125,6 +155,8 @@ def _tick_predator(
     others: list[dict[str, Any]],
     maps: dict[str, Any],
     rng: random.Random,
+    *,
+    base_dir: str | Path,
 ) -> list[str]:
     lines: list[str] = []
     prey = [o for o in others if o["instance_id"] != agent["instance_id"] and o.get("kind") == "npc"]
@@ -133,14 +165,17 @@ def _tick_predator(
         if _manhattan(agent, target) <= 1:
             dmg = 12 + int(agent.get("plunder", {}).get("power_bonus", 0))
             target["hp"] = int(target.get("hp", 30)) - dmg
-            lines.append(
-                f"[필드] {agent['archetype_id']}이(가) {target['archetype_id']}을(를) 습격했다."
-            )
+            atk = agent.get("label") or agent.get("archetype_id", "monster")
+            tgt = target.get("label") or target.get("archetype_id", "npc")
+            lines.append(f"[필드] {atk}이(가) {tgt}을(를) 습격했다.")
             if int(target["hp"]) <= 0:
                 pl = agent.setdefault("plunder", {})
                 pl["npc_victims"] = int(pl.get("npc_victims", 0)) + 1
                 pl["power_bonus"] = int(pl.get("power_bonus", 0)) + 3
-                lines.append(f"[필드] {target['archetype_id']}이(가) 쓰러졌다. 몬스터가 성장한다.")
+                lines.append(f"[필드] {tgt}이(가) 쓰러졌다. 몬스터가 성장한다.")
+                prog_cfg = load_progression_config(base_dir)
+                xp = int(prog_cfg.get("evolution_xp_per_plunder", 15))
+                lines.extend(grant_evolution_xp(agent, xp, base_dir=base_dir))
                 others.remove(target)
             return lines
         _move_toward(agent, int(target["x"]), int(target["y"]), maps)
@@ -188,7 +223,7 @@ def tick_field_ecology(
     for agent in list(agents):
         ai = agent.get("ai", "")
         if ai == "predator_patrol":
-            lines.extend(_tick_predator(agent, get_agents(state), maps, r))
+            lines.extend(_tick_predator(agent, get_agents(state), maps, r, base_dir=base_dir))
         elif ai == "builder":
             lines.extend(_tick_builder(agent, cfg))
         elif ai == "flee_predator":
@@ -211,6 +246,11 @@ def agents_manifest(state: dict[str, Any], map_id: str) -> list[dict[str, Any]]:
             {
                 "instance_id": a.get("instance_id"),
                 "archetype_id": a.get("archetype_id"),
+                "species_id": a.get("species_id"),
+                "evolution_chain": a.get("evolution_chain"),
+                "evolution_tier": a.get("evolution_tier"),
+                "evolution_id": a.get("evolution_id"),
+                "label": a.get("label"),
                 "kind": a.get("kind"),
                 "x": int(a.get("x", 0)),
                 "y": int(a.get("y", 0)),
