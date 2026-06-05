@@ -24,6 +24,7 @@
 | [14_CONTRIBUTION_PERMISSIONS.md](14_CONTRIBUTION_PERMISSIONS.md) | **기여도→권한**·성장 목표·디테일 게이트 |
 | [15_GODOT_RELEASE_ARCHITECTURE.md](15_GODOT_RELEASE_ARCHITECTURE.md) | **Godot 클라이언트**·API·출시 구조 |
 | [16_CUSTOM_ENGINE_VS_GODOT_CLIENT.md](16_CUSTOM_ENGINE_VS_GODOT_CLIENT.md) | **우리 엔진 vs Godot**·몰입·비용 (무료/유료 구분) |
+| [19_SPATIAL_SIMULATION.md](19_SPATIAL_SIMULATION.md) | **Godot 타일 ↔ 시뮬 좌표**·존·맵 전환 |
 
 ## 현재 구현과의 관계
 

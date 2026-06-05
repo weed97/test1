@@ -32,6 +32,14 @@ func _on_explore_pressed() -> void:
 func _on_session_created(payload: Dictionary) -> void:
 	$VBox/Narrative.text += "session_id: %s\n" % payload.get("session_id", "?")
 	$VBox/ExploreButton.disabled = false
+	$VBox/Explore2DButton.disabled = false
+	await ApiClient.fetch_world_maps()
+
+
+func _on_explore_2d_pressed() -> void:
+	if ApiClient.session_id.is_empty():
+		return
+	get_tree().change_scene_to_file("res://scenes/exploration.tscn")
 
 
 func _on_turn_completed(payload: Dictionary) -> void:

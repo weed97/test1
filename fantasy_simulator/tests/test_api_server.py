@@ -46,6 +46,31 @@ class ApiServerTests(unittest.TestCase):
         self.assertIn("world", data)
         self.assertIsNotNone(data["world"].get("tension"))
 
+    def test_world_maps_and_position_sync(self) -> None:
+        r = self.client.get("/v1/world/maps")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("ashpoint_01", r.json()["maps"])
+
+        r2 = self.client.post(
+            "/v1/session/new",
+            json={"temporal_mode": "precision"},
+        )
+        session_id = r2.json()["session_id"]
+        r3 = self.client.post(
+            "/v1/world/position",
+            json={
+                "session_id": session_id,
+                "position": {
+                    "map_id": "forest_01",
+                    "x": 10,
+                    "y": 10,
+                    "facing": "north",
+                },
+            },
+        )
+        self.assertEqual(r3.status_code, 200)
+        self.assertEqual(r3.json()["zone_id"], "forest")
+
     def test_precision_turn_includes_clock_fields(self) -> None:
         r = self.client.post(
             "/v1/session/new",

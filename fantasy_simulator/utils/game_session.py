@@ -16,6 +16,7 @@ from utils.state_manager import StateManager
 from utils.main_story_engine import _advance_turn_counter, _current_turn
 from utils.turn_context import Mode, TurnContext, TurnResult
 from utils.temporal import TemporalMode
+from utils.spatial import ensure_world_position, sync_position
 from utils.turn_processor import execute_turn
 
 
@@ -42,6 +43,7 @@ class GameSession:
         self.content = ContentLoader(manager.base_dir)
         self.event_engine = EventEngine(self.content, self.rng)
         self.rules = RuleEngine(self.state, self.rng, event_engine=self.event_engine)
+        ensure_world_position(self.state["world"], base_dir=self.manager.base_dir)
         self.turn = _current_turn(self.state) - 1
         if client is not None:
             self.client = client
@@ -105,6 +107,30 @@ class GameSession:
             include_presence=presence,
         )
 
+    def apply_position(
+        self,
+        *,
+        map_id: str,
+        x: int,
+        y: int,
+        facing: str = "south",
+        allow_map_transition: bool = True,
+    ) -> dict[str, Any]:
+        """Sync Godot tile coords into world state (no turn advance)."""
+        ensure_world_position(self.state["world"], base_dir=self.manager.base_dir)
+        meta = sync_position(
+            self.state,
+            map_id=map_id,
+            x=x,
+            y=y,
+            facing=facing,
+            base_dir=self.manager.base_dir,
+            allow_map_transition=allow_map_transition,
+        )
+        if meta.get("ok"):
+            self.manager.save(self.state)
+        return meta
+
     def run_turn(
         self,
         action: str = "explore",
@@ -113,8 +139,17 @@ class GameSession:
         temporal_mode: TemporalMode | None = None,
         time_scale: float = 1.0,
         include_presence: bool | None = None,
+        position: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Advance one simulation beat (Classic turn or Nex moment)."""
+        if position:
+            self.apply_position(
+                map_id=str(position["map_id"]),
+                x=int(position["x"]),
+                y=int(position["y"]),
+                facing=str(position.get("facing", "south")),
+                allow_map_transition=position.get("allow_map_transition", True),
+            )
         if temporal_mode is None:
             temporal_mode = self.default_temporal_mode
         self._temporal_mode = temporal_mode

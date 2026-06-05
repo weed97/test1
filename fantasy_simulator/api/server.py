@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from api.session_store import SessionStore, package_root, turn_payload
+from utils.spatial import maps_manifest
 from utils.temporal import TemporalMode
 
 API_VERSION = 1
@@ -49,6 +50,19 @@ class NewSessionResponse(BaseModel):
     mode: str
 
 
+class PositionBody(BaseModel):
+    map_id: str
+    x: int
+    y: int
+    facing: str = "south"
+    allow_map_transition: bool = True
+
+
+class PositionRequest(BaseModel):
+    session_id: str
+    position: PositionBody
+
+
 class TurnRequest(BaseModel):
     session_id: str
     action: str = Field(..., min_length=1, max_length=512)
@@ -56,6 +70,7 @@ class TurnRequest(BaseModel):
     time_scale: float = Field(1.0, ge=0.0, le=10.0)
     mode: Optional[Mode] = None
     enemy_id: Optional[str] = None
+    position: Optional[PositionBody] = None
 
 
 class HealthResponse(BaseModel):
@@ -87,6 +102,39 @@ def new_session(body: NewSessionRequest) -> NewSessionResponse:
     )
 
 
+@app.get("/v1/world/maps")
+def world_maps() -> dict[str, Any]:
+    return {"api_version": API_VERSION, **maps_manifest(package_root())}
+
+
+@app.post("/v1/world/position")
+def world_position(body: PositionRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    pos = body.position
+    meta = session.apply_position(
+        map_id=pos.map_id,
+        x=pos.x,
+        y=pos.y,
+        facing=pos.facing,
+        allow_map_transition=pos.allow_map_transition,
+    )
+    if not meta.get("ok"):
+        raise HTTPException(status_code=400, detail=meta.get("error", "sync failed"))
+    world = session.state.get("world", {})
+    return {
+        "api_version": API_VERSION,
+        "session_id": body.session_id,
+        **meta,
+        "world": {
+            "location": world.get("location"),
+            "zone_id": world.get("zone_id"),
+            "tension": world.get("tension"),
+        },
+    }
+
+
 @app.get("/v1/session/{session_id}/status")
 def session_status(session_id: str) -> dict[str, Any]:
     session = _store.get(session_id)
@@ -114,11 +162,16 @@ def run_turn(body: TurnRequest) -> dict[str, Any]:
     if body.mode is not None:
         session.mode = body.mode
 
+    pos_dict = None
+    if body.position is not None:
+        pos_dict = body.position.model_dump()
+
     result = session.run_turn(
         action=body.action,
         enemy_id=body.enemy_id,
         temporal_mode=temporal,
         time_scale=body.time_scale,
+        position=pos_dict,
     )
     payload = turn_payload(session, result)
     payload["session_id"] = body.session_id

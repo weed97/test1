@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from utils.game_session import GameSession
+from utils.spatial import godot_pixel_position, position_snapshot
 from utils.state_manager import StateManager
 
 _PACKAGE_ROOT = Path(__file__).resolve().parent.parent
@@ -96,7 +97,11 @@ def turn_payload(session: GameSession, result: dict[str, Any]) -> dict[str, Any]
             "location": world.get("location"),
             "tension": world.get("tension"),
             "weather": world.get("weather"),
+            "zone_id": world.get("zone_id"),
+            "map_id": world.get("map_id"),
         },
+        "position": position_snapshot(world),
+        "godot_position": godot_pixel_position(world),
         "party": list(session.state.get("party", [])),
         "gold": session.state.get("inventory", {}).get("party_gold", 0),
         "combat_active": bool(session.state.get("combat")),

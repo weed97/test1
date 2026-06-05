@@ -6,6 +6,11 @@
   "season": "가을",
   "weather": "clear",
   "location": "실버우드 변경 마을 '애쉬포인트'",
+  "map_id": "ashpoint_01",
+  "zone_id": "ashpoint",
+  "x": 40,
+  "y": 48,
+  "facing": "south",
   "tension": 51,
   "rumors": [
     "최근 산에서 검은 연기가 피어오른다.",

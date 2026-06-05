@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "tile_size": 16,
+  "godot_pixel_per_tile": 16,
+  "maps": {
+    "ashpoint_01": {
+      "zone_id": "ashpoint",
+      "display_name": "애쉬포인트",
+      "location_label": "실버우드 변경 마을 '애쉬포인트'",
+      "width": 80,
+      "height": 60,
+      "godot_scene": "res://scenes/maps/ashpoint_01.tscn",
+      "spawn": { "x": 40, "y": 48, "facing": "south" },
+      "exits": [
+        {
+          "id": "to_forest",
+          "rect": { "x": 70, "y": 25, "w": 8, "h": 10 },
+          "target_map": "forest_01",
+          "target_spawn": { "x": 4, "y": 30, "facing": "east" }
+        }
+      ]
+    },
+    "forest_01": {
+      "zone_id": "forest",
+      "display_name": "실버우드 숲",
+      "location_label": "실버우드 변경 북쪽 숲",
+      "width": 96,
+      "height": 72,
+      "godot_scene": "res://scenes/maps/forest_01.tscn",
+      "spawn": { "x": 4, "y": 30, "facing": "east" },
+      "exits": [
+        {
+          "id": "to_ashpoint",
+          "rect": { "x": 0, "y": 25, "w": 6, "h": 10 },
+          "target_map": "ashpoint_01",
+          "target_spawn": { "x": 68, "y": 30, "facing": "west" }
+        },
+        {
+          "id": "to_tower",
+          "rect": { "x": 85, "y": 10, "w": 10, "h": 12 },
+          "target_map": "tower_01",
+          "target_spawn": { "x": 8, "y": 50, "facing": "north" }
+        }
+      ]
+    },
+    "tower_01": {
+      "zone_id": "tower",
+      "display_name": "관측 탑",
+      "location_label": "북쪽 언덕 관측 탑",
+      "width": 48,
+      "height": 64,
+      "godot_scene": "res://scenes/maps/tower_01.tscn",
+      "spawn": { "x": 8, "y": 50, "facing": "north" },
+      "exits": [
+        {
+          "id": "to_forest",
+          "rect": { "x": 0, "y": 45, "w": 8, "h": 10 },
+          "target_map": "forest_01",
+          "target_spawn": { "x": 82, "y": 18, "facing": "west" }
+        }
+      ]
+    }
+  },
+  "pois": [
+    {
+      "id": "ashpoint_well",
+      "map_id": "ashpoint_01",
+      "x": 38,
+      "y": 32,
+      "radius": 3,
+      "label": "우물 광장",
+      "explore_action": "investigate well"
+    },
+    {
+      "id": "forest_smoke_trail",
+      "map_id": "forest_01",
+      "x": 60,
+      "y": 20,
+      "radius": 4,
+      "label": "검은 연기 자국",
+      "explore_action": "explore"
+    },
+    {
+      "id": "tower_observatory",
+      "map_id": "tower_01",
+      "x": 24,
+      "y": 12,
+      "radius": 3,
+      "label": "관측대",
+      "explore_action": "explore"
+    }
+  ]
+}

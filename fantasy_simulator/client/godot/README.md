@@ -20,12 +20,15 @@ uvicorn api.server:app --reload --port 8765
 
 ```
 client/godot/
-  project.godot          # config/features 4.6
-  scenes/main_menu.tscn  # MVP UI + API 테스트
-  scripts/net/
-    api_config.gd        # Autoload
-    api_client.gd        # Autoload — /v1/turn
+  project.godot
+  scenes/main_menu.tscn      # 새 게임 → 2D 탐험
+  scenes/exploration.tscn   # WASD + 타일 ↔ 시뮬 좌표
+  scripts/net/api_client.gd # sync_position, run_turn
+  scripts/player/player_controller.gd
 ```
+
+**좌표 연동:** 이동 시 `POST /v1/world/position` · 탐험 시 `POST /v1/turn` + position.  
+설계: `docs/design/19_SPATIAL_SIMULATION.md`
 
 ## Cursor 연동
 

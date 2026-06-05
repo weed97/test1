@@ -3,9 +3,16 @@ extends Node
 
 signal turn_completed(payload: Dictionary)
 signal session_created(payload: Dictionary)
+signal position_synced(payload: Dictionary)
+signal maps_loaded(payload: Dictionary)
 signal api_error(message: String)
 
 var session_id: String = ""
+var world_maps: Dictionary = {}
+var sim_map_id: String = "ashpoint_01"
+var sim_tile: Vector2i = Vector2i(40, 48)
+var sim_facing: String = "south"
+var tile_pixels: int = 16
 
 
 func new_game(seed: int = -1, temporal_mode: String = "precision") -> void:
@@ -19,7 +26,50 @@ func new_game(seed: int = -1, temporal_mode: String = "precision") -> void:
 	session_created.emit(parsed)
 
 
-func run_turn(action: String, temporal_mode: String = "precision") -> void:
+func fetch_world_maps() -> void:
+	var parsed := await _post_json("/v1/world/maps", {}, HTTPClient.METHOD_GET)
+	if parsed == null:
+		return
+	world_maps = parsed.get("maps", {})
+	tile_pixels = int(parsed.get("godot_pixel_per_tile", 16))
+	maps_loaded.emit(parsed)
+
+
+func sync_position(
+	map_id: String,
+	x: int,
+	y: int,
+	facing: String = "south",
+	allow_transition: bool = true,
+) -> void:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return
+	var body := {
+		"session_id": session_id,
+		"position": {
+			"map_id": map_id,
+			"x": x,
+			"y": y,
+			"facing": facing,
+			"allow_map_transition": allow_transition,
+		},
+	}
+	var parsed := await _post_json("/v1/world/position", body)
+	if parsed == null:
+		return
+	var pos: Dictionary = parsed.get("position", {})
+	sim_map_id = str(pos.get("map_id", map_id))
+	sim_tile = Vector2i(int(pos.get("x", x)), int(pos.get("y", y)))
+	sim_facing = str(pos.get("facing", facing))
+	position_synced.emit(parsed)
+
+
+func run_turn(
+	action: String,
+	temporal_mode: String = "precision",
+	at_position: bool = true,
+) -> void:
 	if session_id.is_empty():
 		api_error.emit("no session — call new_game() first")
 		return
@@ -28,10 +78,28 @@ func run_turn(action: String, temporal_mode: String = "precision") -> void:
 		"action": action,
 		"temporal_mode": temporal_mode,
 	}
+	if at_position:
+		body["position"] = {
+			"map_id": sim_map_id,
+			"x": sim_tile.x,
+			"y": sim_tile.y,
+			"facing": sim_facing,
+			"allow_map_transition": false,
+		}
 	var parsed := await _post_json("/v1/turn", body)
 	if parsed == null:
 		return
+	_apply_position_from_payload(parsed)
 	turn_completed.emit(parsed)
+
+
+func _apply_position_from_payload(parsed: Dictionary) -> void:
+	var pos: Dictionary = parsed.get("position", {})
+	if pos.is_empty():
+		return
+	sim_map_id = str(pos.get("map_id", sim_map_id))
+	sim_tile = Vector2i(int(pos.get("x", sim_tile.x)), int(pos.get("y", sim_tile.y)))
+	sim_facing = str(pos.get("facing", sim_facing))
 
 
 func health_check() -> bool:

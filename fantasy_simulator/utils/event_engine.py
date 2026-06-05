@@ -80,12 +80,9 @@ class EventEngine:
         self.main_story = MainStoryEngine(content.base_dir)
 
     def _location_zone(self, state: dict[str, Any]) -> str:
-        loc = state.get("world", {}).get("location", "").lower()
-        if any(x in loc for x in ("관측", "tower", "석탑")):
-            return "tower"
-        if any(x in loc for x in ("숲", "forest")):
-            return "forest"
-        return "ashpoint"
+        from utils.spatial import resolve_zone_from_world
+
+        return resolve_zone_from_world(state.get("world", {}))
 
     def _side_quests(self, state: dict[str, Any]) -> dict[str, Any]:
         return state.setdefault("flags", {}).setdefault("side_quests", {})
