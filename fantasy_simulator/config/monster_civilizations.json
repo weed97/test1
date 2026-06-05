@@ -49,5 +49,154 @@
     "rivalry_range_tiles": 2,
     "monster_vs_monster_damage_base": 10,
     "prosperity_decay_if_predator_wins": 5
+  },
+  "player_races": {
+    "human": {
+      "label": "인간",
+      "realm_id": "human",
+      "kingdom_id": "frontier_ash",
+      "player_civilization_id": "player_frontier_kingdom",
+      "default_map_id": "ashpoint_01",
+      "world_x": 72000,
+      "world_y": 58000,
+      "linked_civs": ["goblin_tribe", "shadow_clan", "ashpoint_commons"]
+    },
+    "dwarf": {
+      "label": "드워프",
+      "realm_id": "dwarf",
+      "kingdom_id": "deepforge_union",
+      "player_civilization_id": "player_deepforge_hold",
+      "default_map_id": "ashpoint_01",
+      "linked_civs": ["goblin_tribe", "dwarf_deepforge", "ashpoint_commons"]
+    },
+    "elf": {
+      "label": "엘프",
+      "realm_id": "elf",
+      "kingdom_id": "silver_court",
+      "player_civilization_id": "player_silver_enclave",
+      "default_map_id": "forest_01",
+      "linked_civs": ["shadow_clan", "elf_silver_court", "goblin_tribe"]
+    },
+    "dark_elf": {
+      "label": "다크엘프",
+      "realm_id": "dark_elf",
+      "kingdom_id": "umbral_houses",
+      "player_civilization_id": "player_umbral_court",
+      "default_map_id": "forest_01",
+      "linked_civs": ["shadow_clan", "dark_elf_umbral", "goblin_tribe"]
+    },
+    "beastkin": {
+      "label": "수인",
+      "realm_id": "beastkin",
+      "kingdom_id": "pride_lands",
+      "player_civilization_id": "player_pridelands_band",
+      "default_map_id": "forest_01",
+      "linked_civs": ["goblin_tribe", "beastkin_prides", "shadow_clan"]
+    }
+  },
+  "player_civilizations": {
+    "player_frontier_kingdom": {
+      "label": "플레이어 변경 왕국",
+      "kind": "player",
+      "stages": [
+        { "id": "adventurer", "prosperity": 0, "label": "모험가" },
+        { "id": "settler", "prosperity": 12, "label": "개척자" },
+        { "id": "citizen", "prosperity": 40, "label": "왕국 시민" },
+        { "id": "kingdom", "prosperity": 95, "label": "왕국" }
+      ]
+    },
+    "player_deepforge_hold": {
+      "label": "플레이어 철심 거점",
+      "kind": "player",
+      "stages": [
+        { "id": "adventurer", "prosperity": 0, "label": "방랑 대장장이" },
+        { "id": "settler", "prosperity": 12, "label": "광부 개척" },
+        { "id": "citizen", "prosperity": 40, "label": "연합 시민" },
+        { "id": "kingdom", "prosperity": 95, "label": "요새 왕국" }
+      ]
+    },
+    "player_silver_enclave": {
+      "label": "플레이어 은빛 공동체",
+      "kind": "player",
+      "stages": [
+        { "id": "adventurer", "prosperity": 0, "label": "숲의 방랑자" },
+        { "id": "settler", "prosperity": 12, "label": "신전 개척" },
+        { "id": "citizen", "prosperity": 40, "label": "궁정 시민" },
+        { "id": "kingdom", "prosperity": 95, "label": "수호 왕국" }
+      ]
+    },
+    "player_umbral_court": {
+      "label": "플레이어 심연 궁",
+      "kind": "player",
+      "stages": [
+        { "id": "adventurer", "prosperity": 0, "label": "균열 방랑자" },
+        { "id": "settler", "prosperity": 12, "label": "지하 개척" },
+        { "id": "citizen", "prosperity": 40, "label": "가문 시민" },
+        { "id": "kingdom", "prosperity": 95, "label": "야간 왕국" }
+      ]
+    },
+    "player_pridelands_band": {
+      "label": "플레이어 무리 영지",
+      "kind": "player",
+      "stages": [
+        { "id": "adventurer", "prosperity": 0, "label": "들판 방랑" },
+        { "id": "settler", "prosperity": 12, "label": "부족 개척" },
+        { "id": "citizen", "prosperity": 40, "label": "무리 시민" },
+        { "id": "kingdom", "prosperity": 95, "label": "영지 왕국" }
+      ]
+    }
+  },
+  "off_map_civilizations": {
+    "dwarf_deepforge": {
+      "label": "심로 대장간 연맹",
+      "kind": "npc",
+      "realm_id": "dwarf",
+      "stages": [
+        { "id": "mining", "prosperity": 0, "label": "채굴 중" },
+        { "id": "forge", "prosperity": 45, "label": "대장간 번영" },
+        { "id": "empire", "prosperity": 110, "label": "철의 연맹" }
+      ]
+    },
+    "elf_silver_court": {
+      "label": "실버 궁정",
+      "kind": "npc",
+      "realm_id": "elf",
+      "stages": [
+        { "id": "seal_watch", "prosperity": 0, "label": "봉인 감시" },
+        { "id": "awakening", "prosperity": 50, "label": "각성의 숲" },
+        { "id": "high_court", "prosperity": 120, "label": "고위 궁정" }
+      ]
+    },
+    "dark_elf_umbral": {
+      "label": "심연 귀족가",
+      "kind": "npc",
+      "realm_id": "dark_elf",
+      "stages": [
+        { "id": "whisper", "prosperity": 0, "label": "속삭임" },
+        { "id": "pact", "prosperity": 48, "label": "맹약 확장" },
+        { "id": "dominion", "prosperity": 115, "label": "지하 지배" }
+      ]
+    },
+    "beastkin_prides": {
+      "label": "수인 연합",
+      "kind": "monster",
+      "realm_id": "beastkin",
+      "stages": [
+        { "id": "hunt", "prosperity": 0, "label": "사냥의 계절" },
+        { "id": "gathering", "prosperity": 42, "label": "대모임" },
+        { "id": "pride_rule", "prosperity": 105, "label": "영지 지배" }
+      ]
+    }
+  },
+  "coupling": {
+    "ripple_ratio": 0.38,
+    "base_pulse_per_beat": 2,
+    "pulse_per_construction_level": 6,
+    "pulse_building_complete": 18,
+    "pulse_kingdom_founded": 70,
+    "off_map_tick_min": 1,
+    "off_map_tick_max": 4,
+    "off_map_ripple_ratio": 0.22,
+    "max_recent_events": 24
   }
 }

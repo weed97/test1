@@ -8,6 +8,7 @@ from typing import Any
 from utils.faction_engine import FactionEngine
 from utils.main_story_engine import MainStoryEngine
 from utils.field_agents import ecology_enabled, tick_field_ecology
+from utils.civilization_coupling import tick_civilization_coupling
 from utils.settlement_build import tick_player_build_projects
 from utils.world_tension import passive_drift
 
@@ -32,4 +33,7 @@ def tick_world_systems(
     lines.extend(tick_field_ecology(state, base_dir=base_dir, rng=rng))
     if ecology_enabled(state):
         lines.extend(tick_player_build_projects(state, base_dir=base_dir))
+        lines.extend(
+            tick_civilization_coupling(state, base_dir=base_dir, rng=rng)
+        )
     return lines

@@ -37,10 +37,23 @@
 1. 개별 AI (포식·건설·도주)  
 2. `tick_agent_competition` — 라이벌 전투 → NPC 경쟁 → 문명 단계 갱신  
 
+## 플레이어 종족 · 연동 번영 (coupling)
+
+세션 생성 시 `player_race` (`human` | `dwarf` | `elf` | `dark_elf` | `beastkin`):
+
+- 해당 **realm·왕국·플레이어 문명** 에서 시작 (`init_player_civilization`)
+- 여정 단계: **모험가 → 개척자 → 왕국 시민 → 왕국** (건설·왕국 선포와 연동)
+- 플레이어가 건설/레벨업/왕국 선포 → **펄스** → 같은 맵 문명 + **연결 문명** + **오프맵 대륙 문명** 동시 성장
+
+관찰용: `GET /v1/ecology/civilizations` — `player_profile`, `civilizations`, `recent_events`, `world_pulse`
+
+로그 예: `[여정] 인간 — 왕국 시민`, `[세계] 심로 대장간 연맹 — 「대장간 번영」 (연동(건축 Lv3))`
+
 ## API / Godot
 
 `GET /v1/world/agents` 에 `civilization_id`, `culture_tags`, `prosperity` 포함.  
-추후: `GET /v1/ecology/civilizations?session_id=` (문명 요약).
+`GET /v1/ecology/civilizations?session_id=` — 실시간 문명 요약·이벤트 피드.  
+`POST /v1/session/new` body: `"player_race": "human"`.
 
 ## MMO 확장
 

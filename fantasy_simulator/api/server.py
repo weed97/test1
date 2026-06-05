@@ -24,6 +24,10 @@ from utils.settlement_build import (
     start_build,
     try_start_kingdom,
 )
+from utils.civilization_coupling import (
+    civilization_world_status,
+    init_player_civilization,
+)
 from utils.progression import (
     equip_item,
     init_heroes_from_party,
@@ -56,6 +60,10 @@ class NewSessionRequest(BaseModel):
     mode: Mode = "rule"
     temporal_mode: Temporal = "classic"
     game_mode: str = Field("story", pattern="^(story|ecology|hybrid)$")
+    player_race: str = Field(
+        "human",
+        pattern="^(human|dwarf|elf|dark_elf|beastkin)$",
+    )
 
 
 class NewSessionResponse(BaseModel):
@@ -146,6 +154,9 @@ def new_session(body: NewSessionRequest) -> NewSessionResponse:
     session.state.setdefault("flags", {})["game_mode"] = body.game_mode
     if body.game_mode in ("ecology", "hybrid"):
         root = package_root()
+        init_player_civilization(
+            session.state, player_race=body.player_race, base_dir=root
+        )
         ensure_ecology_seeds(session.state, base_dir=root)
         init_heroes_from_party(session.state, base_dir=root)
         get_player_settlement(session.state)
@@ -276,12 +287,11 @@ def ecology_civilizations(session_id: str) -> dict[str, Any]:
     session = _store.get(session_id)
     if session is None:
         raise HTTPException(status_code=404, detail="session not found")
-    eco = session.state.get("flags", {}).get("ecology", {})
     return {
         "api_version": API_VERSION,
         "session_id": session_id,
         "ecology_enabled": ecology_enabled(session.state),
-        "civilizations": eco.get("civilizations", {}),
+        **civilization_world_status(session.state, base_dir=package_root()),
     }
 
 

@@ -49,8 +49,17 @@ def attach_society(agent: dict[str, Any], *, base_dir: str | Path) -> None:
 
 
 def _civ_stage(cfg: dict[str, Any], civ_id: str, prosperity: int) -> str:
-    defs = cfg.get("civilizations", {}).get(civ_id) or cfg.get("npc_societies", {}).get(civ_id, {})
-    stage_id = "scattered"
+    defs: dict[str, Any] = {}
+    for key in (
+        "civilizations",
+        "npc_societies",
+        "player_civilizations",
+        "off_map_civilizations",
+    ):
+        defs = cfg.get(key, {}).get(civ_id) or defs
+        if defs:
+            break
+    stage_id = "unknown"
     for st in defs.get("stages", []):
         if prosperity >= int(st.get("prosperity", 0)):
             stage_id = st["id"]
