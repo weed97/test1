@@ -135,8 +135,8 @@ Nex:
 
 | 단계 | API | 비고 |
 |------|-----|------|
-| T0 (현재) | `run_turn(action)` | Classic |
-| T1 | `run_turn(action, time_scale=...)` | 점프 폭 조절 |
+| T0 | `run_turn(action)` | Classic |
+| **T1 (구현됨)** | `run_turn(action, temporal_mode="nex", time_scale=1.0)` | `utils/temporal.py`, `--nex` CLI |
 | T2 | `session.stream(duration_s)` | presence 루프 + 중첩 moment |
 | T3 | `session.bind_bci(read_callback)` | 의도→moment 자동 |
 | T4 | RTwP `combat.tick(dt)` | 전투만 실시간 |

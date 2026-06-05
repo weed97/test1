@@ -103,6 +103,17 @@ Active combat always routes to Codex.
 
 - `utils/llm/pipeline.py` — deprecated legacy pipeline
 
+## Temporal model (Classic vs Nex)
+
+`utils/temporal.py` classifies each action into a **moment** and resolves how many day-cycle steps to advance.
+
+| Mode | Behavior |
+|------|----------|
+| `classic` (default) | One cycle step per `run_turn` — tests & batch |
+| `nex` | Intent-based steps (`look` = 0, `talk`/`explore` = 1, `rest` = jump to morning) + optional `[체감]` line |
+
+`GameSession.run_turn(..., temporal_mode=..., time_scale=...)`. CLI: `--nex`. See [design/11_TEMPORAL_MODEL.md](design/11_TEMPORAL_MODEL.md).
+
 ## Testing
 
 Unit tests use `tests/fixtures.isolated_game_root()` to copy game data into a temp directory so turns do not mutate the repo's `state/` shards.

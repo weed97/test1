@@ -15,6 +15,7 @@ from utils.state_loader import StateLoader
 from utils.state_manager import StateManager
 from utils.main_story_engine import _advance_turn_counter, _current_turn
 from utils.turn_context import Mode, TurnContext, TurnResult
+from utils.temporal import TemporalMode
 from utils.turn_processor import execute_turn
 
 
@@ -30,12 +31,14 @@ class GameSession:
         rng: random.Random | None = None,
         seed: int | None = None,
         client: LLMClient | None = None,
+        temporal_mode: TemporalMode = "classic",
     ) -> None:
         self.manager = manager
         self.loader = manager.loader
         self.mode = mode
         self.state = state
         self.rng = rng or random.Random(seed)
+        self.default_temporal_mode: TemporalMode = temporal_mode
         self.content = ContentLoader(manager.base_dir)
         self.event_engine = EventEngine(self.content, self.rng)
         self.rules = RuleEngine(self.state, self.rng, event_engine=self.event_engine)
@@ -54,11 +57,12 @@ class GameSession:
         *,
         mode: Mode = "rule",
         seed: int | None = None,
+        temporal_mode: TemporalMode = "classic",
     ) -> GameSession:
         loader = StateLoader.from_package_root(root)
         manager = StateManager(loader.base_dir, store=loader.store)
         state = manager.load()
-        return cls(manager, state, mode=mode, seed=seed)
+        return cls(manager, state, mode=mode, seed=seed, temporal_mode=temporal_mode)
 
     @classmethod
     def from_loader(
@@ -72,7 +76,22 @@ class GameSession:
         state = manager.load()
         return cls(manager, state, mode=mode, seed=seed)
 
-    def ctx(self, action: str, turn: int | None = None) -> TurnContext:
+    def ctx(
+        self,
+        action: str,
+        turn: int | None = None,
+        *,
+        temporal_mode: TemporalMode | None = None,
+        time_scale: float | None = None,
+        include_presence: bool | None = None,
+    ) -> TurnContext:
+        mode = temporal_mode if temporal_mode is not None else getattr(
+            self, "_temporal_mode", "classic"
+        )
+        scale = time_scale if time_scale is not None else getattr(self, "_time_scale", 1.0)
+        presence = include_presence if include_presence is not None else getattr(
+            self, "_include_presence", mode == "nex"
+        )
         return TurnContext(
             state=self.state,
             action=action,
@@ -81,13 +100,37 @@ class GameSession:
             manager=self.manager,
             rules=self.rules,
             client=self.client,
+            temporal_mode=mode,
+            time_scale=scale,
+            include_presence=presence,
         )
 
-    def run_turn(self, action: str = "explore", *, enemy_id: str | None = None) -> dict[str, Any]:
-        """Advance one turn. Delegates to turn_processor.execute_turn()."""
+    def run_turn(
+        self,
+        action: str = "explore",
+        *,
+        enemy_id: str | None = None,
+        temporal_mode: TemporalMode | None = None,
+        time_scale: float = 1.0,
+        include_presence: bool | None = None,
+    ) -> dict[str, Any]:
+        """Advance one simulation beat (Classic turn or Nex moment)."""
+        if temporal_mode is None:
+            temporal_mode = self.default_temporal_mode
+        self._temporal_mode = temporal_mode
+        self._time_scale = time_scale
+        self._include_presence = include_presence if include_presence is not None else (
+            temporal_mode == "nex"
+        )
         turn = _current_turn(self.state)
         result = execute_turn(
-            self.ctx(action, turn=turn),
+            self.ctx(
+                action,
+                turn=turn,
+                temporal_mode=temporal_mode,
+                time_scale=time_scale,
+                include_presence=self._include_presence,
+            ),
             loader=self.loader,
             enemy_id=enemy_id,
         )

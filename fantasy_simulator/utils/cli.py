@@ -166,8 +166,11 @@ def print_turn_result(result: dict[str, Any]) -> None:
 
 def run_interactive_loop(session: GameSession) -> int:
     """Interactive while-True REPL."""
+    temporal = getattr(session, "default_temporal_mode", "classic")
     print("=== Eldoria 시뮬레이터 시작 ===")
-    print(f"모드: {session.mode}")
+    print(f"모드: {session.mode} · 시간: {temporal}")
+    if temporal == "nex":
+        print("Nex: look/listen은 시간 정지 + [체감], rest는 아침까지 휴식")
     print("명령어: explore · talk <npc> · investigate · quest · help · quit")
     if setup_readline_completer(session.manager.base_dir):
         print("Tab: 명령어 자동완성")
@@ -200,6 +203,7 @@ def run_interactive_loop(session: GameSession) -> int:
             result = session.run_turn(
                 action=parsed["action"],
                 enemy_id=parsed.get("enemy_id"),
+                temporal_mode=getattr(session, "default_temporal_mode", "classic"),
             )
         except Exception as exc:
             print(format_user_error(exc))

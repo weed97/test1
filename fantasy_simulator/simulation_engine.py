@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--combat", metavar="ENEMY_ID")
     p.add_argument("--batch", action="store_true", help="비대화형 배치 모드")
     p.add_argument("--interactive", "-i", action="store_true")
+    p.add_argument(
+        "--nex",
+        action="store_true",
+        help="Nex 시간 모델 (의도별 시간·[체감] presence; 기본은 Classic 턴)",
+    )
     return p
 
 
@@ -73,7 +78,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("Exported world_state.json from state/ shards.")
         return 0
 
-    session = GameSession.from_root(args.root, mode=args.mode, seed=args.seed)
+    temporal_mode = "nex" if args.nex else "classic"
+    session = GameSession.from_root(
+        args.root, mode=args.mode, seed=args.seed, temporal_mode=temporal_mode
+    )
 
     if args.show_routing:
         print(format_routing_report(session.state, session.manager.base_dir, mode=args.mode))
@@ -104,7 +112,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         session.start_combat(args.combat)
 
     for _ in range(args.turns):
-        result = session.run_turn(action=action)
+        result = session.run_turn(action=action, temporal_mode=temporal_mode)
         print(f"\n[Turn {result['turn']}] Day {result['day']} — {result['time']} ({result['mode']})")
         for line in result["lines"]:
             print(f"  {line}")

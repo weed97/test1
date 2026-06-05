@@ -8,6 +8,7 @@ from typing import Any, Literal, Optional
 from utils.llm_client import LLMClient
 from utils.rule_engine import RuleEngine
 from utils.state_manager import StateManager
+from utils.temporal import TemporalMode
 
 Mode = Literal["rule", "llm", "hybrid"]
 
@@ -23,6 +24,9 @@ class TurnContext:
     manager: StateManager
     rules: RuleEngine
     client: LLMClient | None = None
+    temporal_mode: TemporalMode = "classic"
+    time_scale: float = 1.0
+    include_presence: bool = False
 
 
 @dataclass
@@ -35,6 +39,8 @@ class TurnResult:
     mode: Mode
     lines: list[str]
     decision: dict[str, Any] | None = None
+    moment_kind: str | None = None
+    time_steps: int = 1
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -44,4 +50,6 @@ class TurnResult:
             "mode": self.mode,
             "lines": self.lines,
             "decision": self.decision,
+            "moment_kind": self.moment_kind,
+            "time_steps": self.time_steps,
         }

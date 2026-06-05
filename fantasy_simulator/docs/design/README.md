@@ -22,7 +22,7 @@
 
 ## 현재 구현과의 관계
 
-- **이미 플레이 가능:** 애쉬포인트 변경, `smoke_on_the_mountain` → `ashen_seal_cracking` 3단계 메인 스토리, 세력 평판, 긴장도, 150+ 이벤트 씨앗.
+- **이미 플레이 가능:** 애쉬포인트 변경, `smoke_on_the_mountain` → `ashen_seal_cracking` 3단계 메인 스토리, 세력 평판, 긴장도, 150+ 이벤트 씨앗. 플레이는 **Classic Turn** (`run_turn`) — Nex Live는 설계 단계.
 - **설계만 있는 레이어:** BCI 읽기/쓰기, Mnemosyne 샤드 AI, 육감·체화, R3 현실 동형 — `flags.bci_meta` + `09`·`10` 문서.
 - **스키마:** `config/vr_meta.schema.json`, `config/bci_meta.schema.json`
 

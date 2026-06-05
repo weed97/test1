@@ -62,17 +62,30 @@ class RuleEngine:
         self.rng = rng
         self.event_engine = event_engine
 
-    def advance_time(self) -> str:
+    def advance_time(self, *, steps: int = 1) -> str:
         world = self.state["world"]
-        raw = world.get("time_of_day", "morning")
-        current = TIME_TO_CYCLE.get(raw, raw if raw in TIME_CYCLE else "morning")
-        world["time_of_day"] = current
-        idx = TIME_CYCLE.index(current)
-        if idx >= len(TIME_CYCLE) - 1:
-            world["day"] = world.get("day", 1) + 1
-            world["time_of_day"] = TIME_CYCLE[0]
-        else:
-            world["time_of_day"] = TIME_CYCLE[idx + 1]
+        for _ in range(max(0, int(steps))):
+            raw = world.get("time_of_day", "morning")
+            current = TIME_TO_CYCLE.get(raw, raw if raw in TIME_CYCLE else "morning")
+            world["time_of_day"] = current
+            idx = TIME_CYCLE.index(current)
+            if idx >= len(TIME_CYCLE) - 1:
+                world["day"] = world.get("day", 1) + 1
+                world["time_of_day"] = TIME_CYCLE[0]
+            else:
+                world["time_of_day"] = TIME_CYCLE[idx + 1]
+        return world["time_of_day"]
+
+    def advance_time_to_morning(self) -> str:
+        """Advance cycles until morning (Nex rest / long sleep)."""
+        world = self.state["world"]
+        for _ in range(len(TIME_CYCLE) + 1):
+            raw = world.get("time_of_day", "morning")
+            current = TIME_TO_CYCLE.get(raw, raw if raw in TIME_CYCLE else "morning")
+            if current == "morning":
+                break
+            self.advance_time(steps=1)
+        world["time_of_day"] = "morning"
         return world["time_of_day"]
 
     def _tension(self) -> int:

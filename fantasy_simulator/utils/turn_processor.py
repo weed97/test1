@@ -7,6 +7,7 @@ from typing import Any
 
 from utils.llm_errors import LLMCallError
 from utils.llm_router import decide_model_and_prompt, route_consistency_check
+from utils.temporal import format_moment_label, resolve_time_steps, somatic_presence_line
 from utils.turn_context import TurnContext, TurnResult
 
 PROMPT_NARRATOR = "narrator_claude.md"
@@ -211,6 +212,23 @@ def process_player_action(ctx: TurnContext) -> dict[str, Any]:
     return {"decision": decision, "results": results, "lines": outcome_lines}
 
 
+def _advance_world_time(ctx: TurnContext) -> tuple[str, int, str]:
+    """Apply temporal model; return (time_label, steps_applied, moment_kind)."""
+    steps, kind, rest_until_morning = resolve_time_steps(
+        ctx.action,
+        temporal_mode=ctx.temporal_mode,
+        time_scale=ctx.time_scale,
+    )
+    if rest_until_morning:
+        label = ctx.rules.advance_time_to_morning()
+        return label, 0, kind
+    if steps > 0:
+        label = ctx.rules.advance_time(steps=steps)
+    else:
+        label = ctx.state["world"].get("time_of_day", "afternoon")
+    return label, steps, kind
+
+
 def execute_turn(
     ctx: TurnContext,
     *,
@@ -220,8 +238,15 @@ def execute_turn(
     """Full turn: advance time, optional combat start, then process_player_action."""
     from utils.cli import resolve_enemy_id
 
-    time_label = ctx.rules.advance_time()
+    time_label, time_steps, moment_kind = _advance_world_time(ctx)
     lines: list[str] = []
+    moment_note = format_moment_label(moment_kind, temporal_mode=ctx.temporal_mode)
+    if moment_note:
+        lines.append(moment_note)
+    if ctx.include_presence and ctx.temporal_mode == "nex":
+        somatic = somatic_presence_line(ctx.state, rng=getattr(ctx.rules, "rng", None))
+        if somatic:
+            lines.append(somatic)
     action = ctx.action
 
     is_combat_start = action.lower().strip().startswith("combat") or action == "combat"
@@ -260,6 +285,8 @@ def execute_turn(
             time=time_label,
             mode=ctx.mode,
             lines=lines,
+            moment_kind=moment_kind,
+            time_steps=time_steps,
         )
 
     proc = process_player_action(ctx)
@@ -282,4 +309,6 @@ def execute_turn(
         mode=ctx.mode,
         lines=lines,
         decision=proc.get("decision"),
+        moment_kind=moment_kind,
+        time_steps=time_steps,
     )
