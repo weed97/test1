@@ -1,13 +1,17 @@
 # 08 — 플레이어 루프
 
-## 마이크로 루프 (1턴)
+## 마이크로 루프
+
+**Classic (현재 코드):** 1 `run_turn` = Simulation Beat — [11_TEMPORAL_MODEL.md](11_TEMPORAL_MODEL.md) 참고.
 
 ```
 입력(action) → 시간 진행 → 이벤트 롤 → 평판/긴장/스토리
             → LLM 또는 rule 서술 → state 저장
 ```
 
-**VR 감각:** 매 턴 1–2문장 체감 묘사 + 선택의 여파 (`tension_delta`, rumor).
+**Nex Live (목표):** Presence Stream(연속) 위에 Action Moment(의도 확정 시만 위 파이프라인).
+
+**VR 감각:** Stream — 초당 체감 힌트; Moment — 선택의 여파 (`tension_delta`, rumor).
 
 ## 코어 루프 (1세션, 30–90분)
 

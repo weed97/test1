@@ -18,6 +18,7 @@
 | [08_PLAYER_LOOPS.md](08_PLAYER_LOOPS.md) | 일상·소셜·경제·엔드게임 루프 |
 | [09_BCI_DEEPMIND_FUSION.md](09_BCI_DEEPMIND_FUSION.md) | **VR×BCI×Mnemosyne 융합**, 육감, 샤드 AI |
 | [10_REALITY_PARITY.md](10_REALITY_PARITY.md) | 현실 동형성 R0–R4 규격·검증 |
+| [11_TEMPORAL_MODEL.md](11_TEMPORAL_MODEL.md) | **턴 vs 초몰입** — 3층 시간·RTwP·API 로드맵 |
 
 ## 현재 구현과의 관계
 
