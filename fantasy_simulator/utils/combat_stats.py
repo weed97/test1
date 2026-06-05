@@ -120,9 +120,12 @@ def compute_skill_damage(
     stat_mult = str_mult if "magic" in skill_kind else str_mult
     if "magic" in skill_kind:
         stat_mult = int_mult
-    lv_mult = 1.0 + int(snapshot.get("character_level", 1)) * float(
-        sc["stat_per_point"]["character_level_percent_per_level"]
-    ) / 100.0
+    if snapshot.get("suppress_character_level_scaling"):
+        lv_mult = 1.0
+    else:
+        lv_mult = 1.0 + int(snapshot.get("character_level", 1)) * float(
+            sc["stat_per_point"]["character_level_percent_per_level"]
+        ) / 100.0
     power = skill_power_percent / 100.0
     crit_k = float(sc["critical_multiplier"]) if crit else 1.0
     total = base * range_k * skill_k * power * stat_mult * lv_mult * crit_k
@@ -177,6 +180,15 @@ def hp_cap_milli_for(tier: str, *, bundle: dict[str, Any]) -> int:
     return int(pools.get("default_mortal_cap_milli", 50_000_000))
 
 
+def sovereign_melee_ttk_seconds(*, bundle: dict[str, Any]) -> float:
+    """정예 HP ÷ 아서 방무 DPS — 근접 유지 시 생존 초."""
+    elites = bundle["elites"]
+    sa = bundle["scaling"]["sovereign_arthur"]
+    hp = float(elites.get("elite_hp", sa.get("elite_hp_reference", 500_000)))
+    dps = float(sa.get("pierce_dps", 100_000))
+    return hp / max(1.0, dps)
+
+
 def _apply_arthur_sovereign_fields(snap: dict[str, Any], *, bundle: dict[str, Any]) -> None:
     if not snap.get("world_sovereign"):
         return
@@ -187,11 +199,19 @@ def _apply_arthur_sovereign_fields(snap: dict[str, Any], *, bundle: dict[str, An
     aps = int(sa.get("attacks_per_sec", 10))
     dps = int(sa.get("pierce_dps", 100_000))
     per_hit = int(sa.get("pierce_per_hit", dps // max(1, aps)))
+    max_basic = int(sa.get("max_damage_per_strike", per_hit))
+    max_skill = int(sa.get("max_skill_damage_per_strike", 50_000))
     snap["pierce_dps_milli"] = dps * 1000
     snap["pierce_per_hit_milli"] = per_hit * 1000
+    snap["max_damage_per_strike_milli"] = max_basic * 1000
+    snap["max_skill_damage_per_strike_milli"] = max_skill * 1000
+    snap["attack_milli"] = per_hit * 1000
     snap["attacks_per_sec_milli"] = aps * 1000
     snap["armor_pierce"] = True
     snap["pierce_fraction"] = float(sa.get("pierce_fraction", 1.0))
+    snap["suppress_character_level_scaling"] = bool(sa.get("suppress_character_level_scaling", True))
+    snap["sovereign_damage_capped"] = True
+    snap["elite_melee_ttk_seconds"] = sovereign_melee_ttk_seconds(bundle=bundle)
 
 
 def _apply_elite_pierce_fields(
@@ -260,6 +280,10 @@ def build_combatant_snapshot(
             "weapon_attack_base": wpn_base,
             "world_apex_rank": data.get("world_apex_rank"),
             "mythic_3t_weapon": weapon_is_mythic_3t(wpn),
+            "suppress_character_level_scaling": bool(
+                data.get("world_sovereign")
+                and bundle["scaling"]["sovereign_arthur"].get("suppress_character_level_scaling")
+            ),
         },
         bundle=bundle,
         skill_power_percent=float(data.get("skill_power_percent", 100)),
@@ -441,6 +465,35 @@ def agent_to_combatant(agent: dict[str, Any], *, base_dir: str | Path) -> dict[s
     return snap
 
 
+def _sovereign_strike_damage_milli(
+    attacker: dict[str, Any],
+    *,
+    skill_multiplier: float = 1.0,
+) -> dict[str, Any]:
+    """아서 — 맥스뎀 유지. 무한 방무이므로 Lv·스킬 무제한 스케일 금지."""
+    per_hit = int(attacker.get("pierce_per_hit_milli", 10_000_000))
+    max_basic = int(attacker.get("max_damage_per_strike_milli", per_hit))
+    max_skill = int(attacker.get("max_skill_damage_per_strike_milli", 50_000_000))
+    if skill_multiplier <= 1.0:
+        dmg = min(max_basic, per_hit)
+    else:
+        dmg = min(max_skill, int(per_hit * skill_multiplier))
+    return {
+        "hit": True,
+        "crit": False,
+        "sovereign_through": False,
+        "damage_milli": dmg,
+        "sovereign_capped": True,
+        "armor_pierce_milli": dmg,
+        "audit": {
+            "sovereign_pipeline": True,
+            "skill_multiplier": skill_multiplier,
+            "max_basic_milli": max_basic,
+            "max_skill_milli": max_skill,
+        },
+    }
+
+
 def strike_damage_milli(
     attacker: dict[str, Any],
     defender: dict[str, Any],
@@ -451,6 +504,8 @@ def strike_damage_milli(
     force_hit: bool | None = None,
     force_sovereign_through: bool | None = None,
 ) -> dict[str, Any]:
+    if attacker.get("world_sovereign"):
+        return _sovereign_strike_damage_milli(attacker, skill_multiplier=skill_multiplier)
     cfg = load_combat_precision_config(base_dir)
     atk = dict(attacker)
     if skill_multiplier != 1.0:
@@ -503,6 +558,10 @@ def sovereign_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str
         "hp_milli": arthur["hp_milli"],
         "pierce_dps_milli": arthur.get("pierce_dps_milli"),
         "pierce_per_hit_milli": arthur.get("pierce_per_hit_milli"),
+        "max_damage_per_strike_milli": arthur.get("max_damage_per_strike_milli"),
+        "max_skill_damage_per_strike_milli": arthur.get("max_skill_damage_per_strike_milli"),
+        "sovereign_damage_capped": arthur.get("sovereign_damage_capped"),
+        "elite_melee_ttk_seconds": arthur.get("elite_melee_ttk_seconds"),
         "combat_power": combat_power_estimate(arthur, base_dir=base_dir),
     }
     status["excalibur_ultimate"] = bundle["scaling"].get("excalibur_ultimate", {})

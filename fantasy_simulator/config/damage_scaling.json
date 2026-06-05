@@ -37,7 +37,12 @@
     "pierce_dps": 100000,
     "attacks_per_sec": 10,
     "pierce_per_hit": 10000,
-    "comment": "100% 방무 · 초당 10타 · DPS 10만 — 맥스뎀 강제 아님"
+    "suppress_character_level_scaling": true,
+    "max_damage_per_strike": 10000,
+    "max_skill_damage_per_strike": 50000,
+    "elite_hp_reference": 500000,
+    "elite_melee_ttk_seconds": 5,
+    "comment": "맥스뎀 유지 필수 — 무한방무+Lv999×0.1% 해제 시 스킬 즉사. 기본 10k×10/s=10만DPS → 50만HP 5초"
   },
   "excalibur_ultimate": {
     "skill_id": "excalibur_sovereign_judgment",

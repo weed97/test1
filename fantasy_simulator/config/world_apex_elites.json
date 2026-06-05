@@ -3,6 +3,11 @@
   "comment": "세계 2~11위 — 신화 3T 무기만 10% 방무. HP 50만. 아서 DPS 10만(100% 방무).",
   "elite_hp": 500000,
   "elite_hp_milli": 500000000,
+  "elite_engagement": {
+    "arthur_pierce_dps": 100000,
+    "seconds_in_melee_before_death": 5,
+    "comment": "근접 유지 시 5초컷 — 산개·거리 유지 강제"
+  },
   "mythic_weapon_tier_required": "3T",
   "world_pierce_cap": 10,
   "rank_1": {

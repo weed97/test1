@@ -19,6 +19,7 @@ from utils.combat_stats import (  # noqa: E402
     elite_pierce_dps,
     load_combat_bundle,
     resolve_excalibur_aoe,
+    sovereign_melee_ttk_seconds,
     strike_damage_milli,
 )
 from utils.sovereign_siege import (  # noqa: E402
@@ -35,7 +36,53 @@ class CombatStatsTests(unittest.TestCase):
             self.assertEqual(arthur["tier"], "demigod")
             self.assertEqual(arthur["hp_milli"], 1_000_000_000)
             self.assertTrue(arthur["armor_pierce"])
+            self.assertTrue(arthur["sovereign_damage_capped"])
+            self.assertEqual(arthur["attack_milli"], 10_000_000)
+            self.assertEqual(arthur["pierce_per_hit_milli"], 10_000_000)
+            self.assertAlmostEqual(arthur["elite_melee_ttk_seconds"], 5.0)
             self.assertGreater(combat_power_estimate(arthur, base_dir=root), 1000)
+
+    def test_arthur_lv999_skill_capped_not_instant(self) -> None:
+        with isolated_game_root() as root:
+            bundle = load_combat_bundle(root)
+            arthur = build_combatant_snapshot(base_dir=root, preset_id="npc_arthur_pendragon")
+            elite = build_combatant_snapshot(base_dir=root, preset_id="world_rank_02")
+            uncapped = compute_skill_damage(
+                {
+                    "primary": {"str": 2000},
+                    "character_level": 999,
+                    "weapon_grade": "demigod",
+                    "weapon_attack_base": 500,
+                },
+                bundle=bundle,
+                skill_power_percent=700,
+                skill_kind="melee_phys_single",
+                crit=True,
+            )
+            capped = compute_skill_damage(
+                {
+                    "primary": {"str": 2000},
+                    "character_level": 999,
+                    "weapon_grade": "demigod",
+                    "weapon_attack_base": 500,
+                    "suppress_character_level_scaling": True,
+                },
+                bundle=bundle,
+                skill_power_percent=700,
+                skill_kind="melee_phys_single",
+                crit=True,
+            )
+            self.assertGreater(uncapped["total_damage"], 100_000)
+            self.assertLess(capped["total_damage"], uncapped["total_damage"])
+            skill_hit = strike_damage_milli(arthur, elite, base_dir=root, rng=random.Random(1), skill_multiplier=7.0)
+            self.assertLessEqual(skill_hit["damage_milli"], 50_000_000)
+            basic = strike_damage_milli(arthur, elite, base_dir=root, rng=random.Random(1))
+            self.assertEqual(basic["damage_milli"], 10_000_000)
+
+    def test_elite_melee_ttk_five_seconds(self) -> None:
+        with isolated_game_root() as root:
+            bundle = load_combat_bundle(root)
+            self.assertAlmostEqual(sovereign_melee_ttk_seconds(bundle=bundle), 5.0)
 
     def test_apex_without_through_zero(self) -> None:
         with isolated_game_root() as root:
