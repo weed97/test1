@@ -217,7 +217,16 @@ def plan_agent_beat(
         plan["move_to"] = [int(target["x"]), int(target["y"])]
         return plan
 
-    sk = _pick_skill(agent, target, base_dir=base_dir, distance=dist)
+    enemies_near = sum(
+        1
+        for o in others
+        if o.get("instance_id") != agent.get("instance_id")
+        and _manhattan(agent, o) <= 3
+        and agent.get("relations", {}).get(o.get("instance_id"), "hostile") != "ally"
+    )
+    sk = _pick_skill(
+        agent, target, base_dir=base_dir, distance=dist, enemy_count=max(1, enemies_near), rng=rng
+    )
     if sk:
         plan["action"] = "skill"
         plan["skill_id"] = sk

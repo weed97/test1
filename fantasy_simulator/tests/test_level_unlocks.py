@@ -34,6 +34,7 @@ class LevelUnlockTests(unittest.TestCase):
         with isolated_game_root() as root:
             unlocks = load_progression_unlocks_config(root)
             target = int(unlocks["skill_catalog"]["skills_per_job"])
+            self.assertEqual(len(unlocks["jobs"]), 8)
             for job in unlocks["jobs"]:
                 self.assertEqual(catalog_skill_count_for_job(job, base_dir=root), target)
 

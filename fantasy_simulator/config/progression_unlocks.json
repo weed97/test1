@@ -2,7 +2,16 @@
   "version": 1,
   "max_level": 999,
   "comment": "직업당 300 스킬 + 무기클래스당 60 스킬 — 레벨축별 정밀 해금",
-  "jobs": ["knight", "ranger", "arcane_apprentice", "wanderer"],
+  "jobs": [
+    "knight",
+    "ranger",
+    "arcane_apprentice",
+    "wanderer",
+    "paladin",
+    "assassin",
+    "cleric",
+    "berserker"
+  ],
   "skill_catalog": {
     "skills_per_job": 300,
     "categories": {
@@ -75,7 +84,11 @@
         "buff": "magic_single",
         "debuff": "magic_aoe"
       },
-      "wanderer": { "attack": "melee_phys_single", "support": "utility" }
+      "wanderer": { "attack": "melee_phys_single", "support": "utility" },
+      "paladin": { "attack": "melee_phys_single", "buff": "buff", "support": "buff" },
+      "assassin": { "attack": "melee_phys_single", "move": "utility", "debuff": "debuff" },
+      "cleric": { "attack": "magic_single", "buff": "buff", "support": "buff" },
+      "berserker": { "attack": "melee_phys_aoe", "buff": "buff", "debuff": "debuff" }
     }
   },
   "weapon_skill_catalog": {

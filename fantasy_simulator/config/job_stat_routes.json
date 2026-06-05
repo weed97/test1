@@ -82,6 +82,86 @@
         "luck": 0.22
       },
       "preferred_weapon_classes": ["one_handed_sword", "bow", "dagger"]
+    },
+    "paladin": {
+      "label": "성기사",
+      "growth_per_job_level": {
+        "str": 1.8,
+        "vit": 2.4,
+        "agi": 0.4,
+        "int": 1.2,
+        "dex": 0.5,
+        "luck": 0.6
+      },
+      "growth_per_character_level": {
+        "str": 0.32,
+        "vit": 0.4,
+        "agi": 0.1,
+        "int": 0.2,
+        "dex": 0.1,
+        "luck": 0.12
+      },
+      "preferred_weapon_classes": ["two_handed_sword", "one_handed_sword"]
+    },
+    "assassin": {
+      "label": "암살자",
+      "growth_per_job_level": {
+        "str": 1.4,
+        "vit": 0.9,
+        "agi": 2.6,
+        "int": 0.6,
+        "dex": 2.5,
+        "luck": 1.1
+      },
+      "growth_per_character_level": {
+        "str": 0.2,
+        "vit": 0.15,
+        "agi": 0.42,
+        "int": 0.1,
+        "dex": 0.4,
+        "luck": 0.18
+      },
+      "preferred_weapon_classes": ["dagger", "bow"]
+    },
+    "cleric": {
+      "label": "성직자",
+      "growth_per_job_level": {
+        "str": 0.5,
+        "vit": 1.6,
+        "agi": 0.5,
+        "int": 2.6,
+        "dex": 0.4,
+        "luck": 1.0
+      },
+      "growth_per_character_level": {
+        "str": 0.08,
+        "vit": 0.28,
+        "agi": 0.1,
+        "int": 0.48,
+        "dex": 0.1,
+        "luck": 0.14
+      },
+      "preferred_weapon_classes": ["staff"]
+    },
+    "berserker": {
+      "label": "광전사",
+      "growth_per_job_level": {
+        "str": 2.8,
+        "vit": 1.8,
+        "agi": 1.0,
+        "int": 0.2,
+        "dex": 0.8,
+        "luck": 0.4
+      },
+      "growth_per_character_level": {
+        "str": 0.48,
+        "vit": 0.3,
+        "agi": 0.18,
+        "int": 0.06,
+        "dex": 0.14,
+        "luck": 0.08
+      },
+      "preferred_weapon_classes": ["two_handed_sword", "spear"]
     }
   }
 }

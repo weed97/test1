@@ -92,6 +92,26 @@ effective_power = base_power × (1 + job_lv/999×0.5 + char_lv/999×0.2 + (enhan
 
 ---
 
+## 직업 8종 · 고유 이름 · 전투 AI
+
+| 직업 | ID | 스킬 수 |
+|------|-----|---------|
+| 기사 | `knight` | 300 |
+| 레인저 | `ranger` | 300 |
+| 마법 견습 | `arcane_apprentice` | 300 |
+| 방랑자 | `wanderer` | 300 |
+| 성기사 | `paladin` | 300 |
+| 암살자 | `assassin` | 300 |
+| 성직자 | `cleric` | 300 |
+| 광전사 | `berserker` | 300 |
+
+- **고유 이름**: `utils/skill_names.py` — 마일스톤 tier(1·5·10…80) 한글명, 시그니처 스킬 VFX
+- **전투 AI**: `utils/combat_skill_ai.py` — 공격/버프/디버프/이동 상황별 `pick_combat_skill`
+- **아서**: HP 25% 이하 + 다수 적 → `excalibur_sovereign_judgment` 우선
+- **Godot**: `scenes/skill_tree.tscn` — `GET /v1/progression/skill_tree`
+
+---
+
 ## 관련
 
 - [22_CHARACTER_PROGRESSION.md](22_CHARACTER_PROGRESSION.md)

@@ -265,6 +265,23 @@ def progression_status_route(session_id: str) -> dict[str, Any]:
     }
 
 
+@app.get("/v1/progression/skill_tree")
+def progression_skill_tree_route(session_id: str, character_id: str) -> dict[str, Any]:
+    from utils.progression import get_hero_progress
+    from utils.skill_tree import build_skill_tree
+
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    root = package_root()
+    hero = get_hero_progress(session.state, character_id, base_dir=root)
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        "skill_tree": build_skill_tree(hero, base_dir=root, character_id=character_id),
+    }
+
+
 @app.post("/v1/progression/unlock_skill")
 def progression_unlock(body: ProgressionUnlockRequest) -> dict[str, Any]:
     session = _store.get(body.session_id)

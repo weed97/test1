@@ -111,31 +111,22 @@ def _pick_skill(
     *,
     base_dir: str | Path,
     distance: int,
+    enemy_count: int = 1,
+    rng: random.Random | None = None,
 ) -> str | None:
-    icfg = load_intelligence_config(base_dir)
-    strat = icfg.get("strategies", {}).get(_strategy_id(agent), {})
-    preferred = set(strat.get("preferred_tags", []))
-    iq = _iq(agent)
-    best: tuple[float, str] | None = None
+    from utils.combat_skill_ai import pick_combat_skill
 
-    for sk_id in agent.get("skills", []):
-        if int(agent.get("skill_cooldowns", {}).get(sk_id, 0)) > 0:
-            continue
-        sdef = skill_definition(sk_id, base_dir=base_dir)
-        cost = int(sdef.get("mana_cost", 0))
-        if int(agent.get("mp", 0)) < cost:
-            continue
-        rng = int(sdef.get("range_tiles", 1))
-        if distance > rng:
-            continue
-        power = float(sdef.get("power", 0))
-        tag_bonus = sum(2.0 for t in sdef.get("tags", []) if t in preferred)
-        score = power + tag_bonus + (iq / 100.0) * 3.0
-        if sdef.get("tags") and "build_progress" in sdef["tags"] and not target:
-            score *= 0.2
-        if best is None or score > best[0]:
-            best = (score, sk_id)
-    return best[1] if best else None
+    merged = list(dict.fromkeys((agent.get("unlocked_skills") or []) + list(agent.get("skills", []))))
+    agent = dict(agent)
+    agent["skills"] = merged
+    return pick_combat_skill(
+        agent,
+        target,
+        base_dir=base_dir,
+        distance=distance,
+        rng=rng,
+        enemy_count=enemy_count,
+    )
 
 
 def preview_skill_damage(
@@ -360,7 +351,21 @@ def tick_agent_mind(
         _move_toward(agent, int(target["x"]), int(target["y"]), maps)
         return lines
 
-    sk = _pick_skill(agent, target, base_dir=base_dir, distance=dist)
+    enemies_near = sum(
+        1
+        for o in others
+        if o["instance_id"] != agent["instance_id"]
+        and _manhattan(agent, o) <= 3
+        and agent.get("relations", {}).get(o["instance_id"], "neutral") == "hostile"
+    )
+    sk = _pick_skill(
+        agent,
+        target,
+        base_dir=base_dir,
+        distance=dist,
+        enemy_count=max(1, enemies_near),
+        rng=rng,
+    )
     if sk:
         dmg, sid = use_skill(agent, target, sk, base_dir=base_dir, rng=rng)
         lines.append(

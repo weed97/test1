@@ -102,6 +102,35 @@ func _apply_position_from_payload(parsed: Dictionary) -> void:
 	sim_facing = str(pos.get("facing", sim_facing))
 
 
+func fetch_progression_status() -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/progression/status?session_id=%s" % session_id.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	return parsed if parsed != null else {}
+
+
+func fetch_skill_tree(character_id: String) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/progression/skill_tree?session_id=%s&character_id=%s" % [
+			session_id.uri_encode(),
+			character_id.uri_encode(),
+		],
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	if parsed == null:
+		return {}
+	return parsed.get("skill_tree", {})
+
+
 func health_check() -> bool:
 	var parsed := await _post_json("/v1/health", {}, HTTPClient.METHOD_GET)
 	return parsed != null and parsed.get("status") == "ok"

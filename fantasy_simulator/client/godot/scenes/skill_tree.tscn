@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://eldoria_skill_tree"]
+
+[ext_resource type="Script" path="res://scenes/skill_tree.gd" id="1_st"]
+
+[node name="SkillTree" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_st")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="VBox"]
+layout_mode = 2
+text = "스킬 트리 (Lv999 해금)"
+horizontal_alignment = 1
+
+[node name="CharacterOption" type="OptionButton" parent="VBox"]
+layout_mode = 2
+
+[node name="TreeLabel" type="TextEdit" parent="VBox"]
+custom_minimum_size = Vector2(0, 520)
+layout_mode = 2
+size_flags_vertical = 3
+editable = false
+wrap_mode = 1
+
+[node name="BackButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "메인 메뉴"
+
+[connection signal="item_selected" from="VBox/CharacterOption" to="." method="_on_character_changed"]

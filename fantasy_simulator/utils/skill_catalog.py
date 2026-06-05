@@ -82,7 +82,7 @@ def _build_job_skills(job_id: str, unlocks: dict[str, Any], jobs_cfg: dict[str, 
             if cat_name == "passive":
                 reqs = {"character_level": unlock_level}
 
-            skills[skill_id] = {
+            entry = {
                 "skill_id": skill_id,
                 "label": f"{job_label} · {cat_cfg.get('label_ko', cat_name)} {tier}",
                 "category": cat_name,
@@ -102,6 +102,9 @@ def _build_job_skills(job_id: str, unlocks: dict[str, Any], jobs_cfg: dict[str, 
                 "unlock_requirements": reqs,
                 "combat_pipeline": "catalog",
             }
+            from utils.skill_names import apply_name_overrides
+
+            skills[skill_id] = apply_name_overrides(entry)
             global_index += 1
 
     return skills
@@ -129,7 +132,7 @@ def _build_weapon_class_skills(
                     + unlock_level * float(scaling.get("power_per_mastery_level", 0.018))
                 )
             )
-            skills[skill_id] = {
+            entry = {
                 "skill_id": skill_id,
                 "label": f"{wlabel} · {cat_name} {tier}",
                 "category": cat_name,
@@ -146,6 +149,9 @@ def _build_weapon_class_skills(
                 "unlock_requirements": {"weapon_mastery_level": unlock_level, "weapon_class": weapon_class},
                 "combat_pipeline": "catalog",
             }
+            from utils.skill_names import apply_name_overrides
+
+            skills[skill_id] = apply_name_overrides(entry)
             idx += 1
     return skills
 
