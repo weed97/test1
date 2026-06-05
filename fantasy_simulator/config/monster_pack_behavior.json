@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "design_note": "Monsters are greedier than humans — they fight each other more than they ally; packs grow under alphas but can self-destruct.",
+  "relations": {
+    "same_civ_monster_default": "rival",
+    "packmate_chance_same_civ": 0.07,
+    "different_civ_always_hostile": true,
+    "npc_always_prey": true
+  },
+  "greed": {
+    "default": 74,
+    "per_plunder_victim": 4,
+    "max": 98,
+    "target_weight_monster_rival": 38,
+    "target_weight_same_pack_rival": 32,
+    "target_weight_npc": 16,
+    "target_weight_other_monster": 28
+  },
+  "pack": {
+    "alpha_dominance_per_kill": 10,
+    "grunt_growth_on_alpha_kill": 4,
+    "alpha_growth_on_grunt_kill": 2,
+    "pack_plunder_share_radius": 3,
+    "overdominance_threshold": 85,
+    "civ_prosperity_penalty_on_collapse": 12
+  },
+  "internal_duels": {
+    "max_per_map_tick": 3,
+    "prefer_when_greed_above": 60
+  }
+}

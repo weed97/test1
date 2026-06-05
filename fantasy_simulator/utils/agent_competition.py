@@ -95,6 +95,16 @@ def tick_rivalries(
     rng_tiles = int(comp.get("rivalry_range_tiles", 2))
     dmg_base = int(comp.get("monster_vs_monster_damage_base", 10))
     lines: list[str] = []
+    import json as _json
+    from pathlib import Path as _Path
+
+    pack_path = _Path(base_dir) / "config" / "monster_pack_behavior.json"
+    pcfg: dict[str, Any] = {}
+    if pack_path.is_file():
+        with pack_path.open(encoding="utf-8") as f:
+            pcfg = _json.load(f)
+    max_internal = int(pcfg.get("internal_duels", {}).get("max_per_map_tick", 3))
+
     monsters = [a for a in agents if a.get("kind") == "monster" and a.get("civilization_id")]
     pairs: list[tuple[dict[str, Any], dict[str, Any]]] = []
     for i, a in enumerate(monsters):
@@ -102,14 +112,39 @@ def tick_rivalries(
             if _manhattan(a, b) > rng_tiles:
                 continue
             ca, cb = a.get("civilization_id"), b.get("civilization_id")
-            if not ca or ca == cb:
+            if not ca or not cb:
+                continue
+            if ca == cb:
+                pairs.append((a, b))
                 continue
             civ_a = cfg.get("civilizations", {}).get(ca, {})
             if cb in civ_a.get("rivals", []):
                 pairs.append((a, b))
 
+    internal_cap = max_internal
+
     rng.shuffle(pairs)
-    for a, b in pairs[:max_events]:
+
+    def _pair_sort_key(pair: tuple[dict[str, Any], dict[str, Any]]) -> float:
+        a, b = pair
+        same = a.get("civilization_id") == b.get("civilization_id")
+        return (0 if same else 1, -_agent_power(a) - _agent_power(b))
+
+    pairs.sort(key=_pair_sort_key)
+
+    selected: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    for pair in pairs:
+        if len(selected) >= max_events:
+            break
+        a, b = pair
+        same_civ = a.get("civilization_id") == b.get("civilization_id")
+        if same_civ and internal_cap <= 0:
+            continue
+        selected.append(pair)
+        if same_civ:
+            internal_cap -= 1
+
+    for a, b in selected:
         pa, pb = _agent_power(a), _agent_power(b)
         roll = rng.random() * (pa + pb)
         winner, loser = (a, b) if roll < pa else (b, a)
@@ -127,9 +162,22 @@ def tick_rivalries(
         ws["stage_id"] = _civ_stage(cfg, w_civ, int(ws["prosperity"]))
         w_lab = winner.get("label") or w_civ
         l_lab = loser.get("label") or l_civ
-        lines.append(f"[경쟁] {w_lab} 무리가 {l_lab} 무리와 영역 다툼에서 이겼다. (+번영 {gain})")
+        same_civ = a.get("civilization_id") == b.get("civilization_id")
+        if same_civ:
+            lines.append(
+                f"[내부전] {w_lab}이(가) 같은 무리의 {l_lab}을(를) 격파했다. (+지배, 번영 {gain})"
+            )
+        else:
+            lines.append(
+                f"[경쟁] {w_lab} 무리가 {l_lab} 무리와 영역 다툼에서 이겼다. (+번영 {gain})"
+            )
         if int(loser["hp"]) <= 0:
             lines.append(f"[경쟁] {l_lab} 개체가 쓰러져 무리가 물러난다.")
+            from utils.monster_pack import apply_monster_kill_growth
+
+            lines.extend(
+                apply_monster_kill_growth(winner, loser, agents, base_dir=base_dir, state=state)
+            )
             agents_ref = state.get("flags", {}).get("ecology", {}).get("agents", [])
             if loser in agents_ref:
                 agents_ref.remove(loser)

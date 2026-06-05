@@ -11,6 +11,12 @@ from utils.ecology_objects import (
     load_intelligence_config,
     skill_definition,
 )
+from utils.monster_pack import (
+    apply_monster_kill_growth,
+    ensure_pack_block,
+    load_pack_config,
+    refresh_pack_alphas,
+)
 from utils.progression import grant_evolution_xp, load_progression_config
 
 
@@ -46,21 +52,37 @@ def update_relations(
     others: list[dict[str, Any]],
     *,
     base_dir: str | Path,
+    rng: random.Random | None = None,
 ) -> None:
     icfg = load_intelligence_config(base_dir)
+    pcfg = load_pack_config(base_dir)
+    rel_cfg = pcfg.get("relations", {})
     rel = agent.setdefault("relations", {})
     my_civ = agent.get("civilization_id")
     rival_pairs = {
         tuple(sorted(p)) for p in icfg.get("civilization_relations", {}).get("rivals", [])
     }
+    r = rng or random.Random()
 
     for o in others:
         if o["instance_id"] == agent["instance_id"]:
             continue
         oid = o["instance_id"]
         o_civ = o.get("civilization_id")
+
+        if agent.get("kind") == "monster" and o.get("kind") == "monster":
+            if my_civ and o_civ and my_civ == o_civ:
+                mate_chance = float(rel_cfg.get("packmate_chance_same_civ", 0.07))
+                if r.random() < mate_chance:
+                    rel[oid] = "packmate"
+                else:
+                    rel[oid] = str(rel_cfg.get("same_civ_monster_default", "rival"))
+            else:
+                rel[oid] = "hostile"
+            continue
+
         if my_civ and o_civ:
-            if my_civ == o_civ:
+            if my_civ == o_civ and agent.get("kind") == "npc":
                 rel[oid] = "ally"
                 continue
             if tuple(sorted([my_civ, o_civ])) in rival_pairs:
@@ -148,6 +170,13 @@ def _should_flee(agent: dict[str, Any], *, base_dir: str | Path) -> bool:
     return int(agent.get("hp", 0)) / mhp <= ratio
 
 
+def _monster_greed(agent: dict[str, Any], *, base_dir: str | Path) -> int:
+    if agent.get("kind") != "monster":
+        return 0
+    pack = ensure_pack_block(agent, base_dir=base_dir)
+    return int(pack.get("greed", load_pack_config(base_dir)["greed"].get("default", 70)))
+
+
 def _pick_target(
     agent: dict[str, Any],
     others: list[dict[str, Any]],
@@ -155,26 +184,26 @@ def _pick_target(
     base_dir: str | Path,
 ) -> dict[str, Any] | None:
     icfg = load_intelligence_config(base_dir)
+    pcfg = load_pack_config(base_dir)
+    gr = pcfg.get("greed", {})
     strat = icfg.get("strategies", {}).get(_strategy_id(agent), {})
     priorities = strat.get("target_priority", ["npc"])
     rel = agent.get("relations", {})
     candidates: list[dict[str, Any]] = []
+    greed = _monster_greed(agent, base_dir=base_dir)
 
     for o in others:
         if o["instance_id"] == agent["instance_id"]:
             continue
         stance = rel.get(o["instance_id"], "neutral")
-        if stance == "ally":
+        if stance in ("ally", "packmate"):
             continue
-        if stance == "hostile" or (
-            agent.get("kind") == "monster" and o.get("kind") == "npc"
-        ):
-            candidates.append(o)
-        elif (
-            agent.get("kind") == "monster"
-            and o.get("kind") == "monster"
-            and o.get("civilization_id") != agent.get("civilization_id")
-        ):
+        if agent.get("kind") == "monster":
+            if o.get("kind") == "monster":
+                candidates.append(o)
+            elif o.get("kind") == "npc" and stance == "hostile":
+                candidates.append(o)
+        elif stance == "hostile":
             candidates.append(o)
 
     if not candidates:
@@ -182,12 +211,23 @@ def _pick_target(
 
     def score_target(t: dict[str, Any]) -> float:
         s = 100.0 - _manhattan(agent, t) * 5
-        if t.get("kind") == "npc" and "npc" in priorities:
-            s += 20
-        if t.get("kind") == "monster" and "monster_rival" in priorities:
-            s += 15
+        stance = rel.get(t["instance_id"], "neutral")
+        if t.get("kind") == "monster":
+            if t.get("civilization_id") != agent.get("civilization_id"):
+                s += float(gr.get("target_weight_monster_rival", 28))
+            elif stance in ("rival", "hostile"):
+                s += float(gr.get("target_weight_same_pack_rival", 32))
+            s += float(gr.get("target_weight_other_monster", 20))
+            if "monster_rival" in priorities:
+                s += 12
+            if "same_pack_rival" in priorities:
+                s += 14
+        if t.get("kind") == "npc":
+            s += float(gr.get("target_weight_npc", 16)) * max(0.3, 1.0 - greed / 120.0)
+        if t.get("pack", {}).get("role") == "alpha":
+            s += 8
         s += (100 - int(t.get("hp", 50))) * 0.2
-        s += _iq(agent) * 0.1
+        s += greed * 0.15 + _iq(agent) * 0.08
         return s
 
     return max(candidates, key=score_target)
@@ -205,7 +245,7 @@ def tick_agent_mind(
 ) -> list[str]:
     lines: list[str] = []
     decay_skill_cooldowns(agent)
-    update_relations(agent, others, base_dir=base_dir)
+    update_relations(agent, others, base_dir=base_dir, rng=rng)
 
     label = agent.get("label") or agent.get("archetype_id", "agent")
     ai = agent.get("ai", "")
@@ -272,7 +312,16 @@ def tick_agent_mind(
 
     if int(target.get("hp", 0)) <= 0:
         lines.append(f"[전투] {tgt_label} 쓰러짐.")
-        if agent.get("kind") == "monster" and target.get("kind") == "npc":
+        if agent.get("kind") == "monster" and target.get("kind") == "monster":
+            lines.extend(
+                apply_monster_kill_growth(
+                    agent, target, others, base_dir=base_dir, state=state
+                )
+            )
+            prog_cfg = load_progression_config(base_dir)
+            xp = int(prog_cfg.get("evolution_xp_per_plunder", 15))
+            lines.extend(grant_evolution_xp(agent, xp, base_dir=base_dir))
+        elif agent.get("kind") == "monster" and target.get("kind") == "npc":
             pl = agent.setdefault("plunder", {})
             pl["npc_victims"] = int(pl.get("npc_victims", 0)) + 1
             pl["power_bonus"] = int(pl.get("power_bonus", 0)) + 3

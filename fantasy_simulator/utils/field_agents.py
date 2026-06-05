@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from utils.agent_mind import tick_agent_mind
+from utils.monster_pack import refresh_pack_alphas
 from utils.ecology_objects import (
     agent_object_manifest,
     build_ecology_agent,
@@ -147,9 +148,11 @@ def tick_field_ecology(
     world = state.get("world", {})
     map_id = world.get("map_id", "ashpoint_01")
     all_agents = get_agents(state)
+    map_agents = [a for a in all_agents if a.get("map_id") == map_id]
+    refresh_pack_alphas(map_agents, base_dir=base_dir)
     lines: list[str] = []
 
-    for agent in list(a for a in all_agents if a.get("map_id") == map_id):
+    for agent in list(map_agents):
         normalize_agent(agent, base_dir=base_dir)
         lines.extend(
             tick_agent_mind(

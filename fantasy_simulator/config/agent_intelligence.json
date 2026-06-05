@@ -28,8 +28,14 @@
     "rival_hunter": {
       "label": "라이벌 사냥",
       "preferred_tags": ["ranged", "stun"],
-      "target_priority": ["monster_rival", "npc"],
+      "target_priority": ["monster_rival", "same_pack_rival", "npc"],
       "flee_below_hp_ratio": 0.18
+    },
+    "plunder_frenzy": {
+      "label": "약탈 광란",
+      "preferred_tags": ["first_strike", "ranged"],
+      "target_priority": ["same_pack_rival", "monster_rival", "npc"],
+      "flee_below_hp_ratio": 0.12
     }
   },
   "default_by_ai": {
@@ -37,7 +43,7 @@
     "builder": { "strategy": "builder_focus", "iq": 70 },
     "flee_predator": { "strategy": "defensive_flee", "iq": 50 }
   },
-  "default_monster": { "strategy": "rival_hunter", "iq": 48 },
+  "default_monster": { "strategy": "plunder_frenzy", "iq": 52, "disposition": "greedy" },
   "default_npc": { "strategy": "defensive_flee", "iq": 58 },
   "iq_bonuses": {
     "skill_accuracy_per_10_iq": 0.03,

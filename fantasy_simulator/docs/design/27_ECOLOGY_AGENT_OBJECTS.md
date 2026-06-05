@@ -36,14 +36,18 @@
 
 ## 지성 · 상호운영
 
-`config/agent_intelligence.json`
+`config/agent_intelligence.json` · `config/monster_pack_behavior.json`
 
-- **strategy** — `predator_pack`, `builder_focus`, `defensive_flee`, `rival_hunter` …
+- **strategy** — `plunder_frenzy`(몬스터 기본), `rival_hunter`, `builder_focus` …
 - **iq** (0–100) — 스킬 선택 점수·명중 보정·MP 회복
-- **relations** — 같은 문명 `ally`, 라이벌 `hostile`, 몬스터↔NPC `hostile`
-- **높은 iq** → 사거리·쿨다운·MP 고려한 스킬 선택 → 더 나은 전투 결과
+- **몬스터 relations** — 같은 문명도 **동맹 7%**만, 대부분 `rival` (내부 경쟁)
+- **greed** (탐욕) — NPC보다 **몬스터 라이벌** 우선 타겟
+- **pack** — `alpha` / `grunt`, `dominance`, 킬 시 무리 전체 `power_bonus` 성장
+- **과다 지배** — 문명 번영 하락 (`[무리·자멸]`) — 강하지만 스스로 망할 수 있음
 
-틱: `tick_agent_mind()` — 이동 · 스킬(`[스킬]`) · 기본 공격 · 도주(`[지성]`)
+틱: `tick_agent_mind()` + `tick_rivalries()` **내부전** (`[내부전]`, `[무리]`)
+
+인간 NPC는 여전히 연합·건설; **세계 운영은 강한 몬스터 객체**가 움직이는 쪽에 가깝다.
 
 ## 스킬
 

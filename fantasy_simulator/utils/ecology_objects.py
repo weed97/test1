@@ -133,6 +133,10 @@ def build_ecology_agent(
     agent["intelligence"] = _default_intelligence(agent, base_dir=base_dir)
     if extra and extra.get("intelligence"):
         agent["intelligence"].update(extra["intelligence"])
+    if kind == "monster":
+        from utils.monster_pack import ensure_pack_block
+
+        ensure_pack_block(agent, base_dir=base_dir)
     return agent
 
 
@@ -212,8 +216,12 @@ def enrich_evolved_agent(agent: dict[str, Any], *, base_dir: str | Path) -> dict
     )
     pb = int(built["plunder"].get("power_bonus", 0))
     if pb:
-        built["intelligence"]["strategy"] = "rival_hunter"
+        built["intelligence"]["strategy"] = "plunder_frenzy"
+        built["intelligence"]["disposition"] = "greedy"
         built["intelligence"]["iq"] = min(95, int(built["intelligence"]["iq"]) + pb)
+    from utils.monster_pack import ensure_pack_block as _ensure_pack
+
+    _ensure_pack(built, base_dir=base_dir)
     return built
 
 
@@ -248,4 +256,5 @@ def agent_object_manifest(agent: dict[str, Any]) -> dict[str, Any]:
         "godot_sprite_key": agent.get("evolution_id")
         or agent.get("archetype_id")
         or agent.get("species_id"),
+        "pack": agent.get("pack"),
     }
