@@ -7,7 +7,17 @@
     "weapon_masteries": {
       "two_handed_sword": { "level": 999, "rank": "grandmaster" }
     },
+    "hp_milli": 9999000,
+    "regen_hp_per_sec_milli": 1000000,
+    "regen_note": "비전투 1000/s; contested 전투 시 combat_stats.regeneration 규칙",
     "note": "현재 유일하게 투핸드 999 + 엑스칼리버 결속 가능"
+  },
+  "sovereign_contested": {
+    "active": false,
+    "regen_multiplier_milli": 50,
+    "combat_regen_cap_per_sec_milli": 200000,
+    "sovereign_break_meter": 0,
+    "sovereign_break_max": 100000
   },
   "apex_challenger": {
     "id": "coalition_blade_sovereign",

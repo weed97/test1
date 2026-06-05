@@ -41,13 +41,47 @@ def from_rate_milli(value: int, *, cfg: dict[str, Any] | None = None) -> float:
     return int(value) * 100.0 / rate_scale(cfg)
 
 
-def apply_mitigation_milli(attack_milli: int, defense_milli: int, *, cfg: dict[str, Any]) -> int:
-    """Post-mitigation damage milli: atk×K/(K+def) — avoids mult rounding loss."""
-    k = int(cfg.get("mitigation", {}).get("k_defense_milli", 8_500_000))
+def damage_through_rate_milli(defense_milli: int, *, cfg: dict[str, Any], magical: bool = False) -> int:
+    """Fraction of damage that passes defense; reduction capped at 99.999%."""
+    mit = cfg.get("mitigation", {})
+    k = int(mit.get("k_mag_defense_milli" if magical else "k_defense_milli", 8_500_000))
     d = max(0, int(defense_milli))
+    rs = rate_scale(cfg)
+    min_through = int(mit.get("min_through_rate_milli", 1))
+    max_red = int(mit.get("max_reduction_rate_milli", 99_999))
+    if d <= 0:
+        return rs
+    floor = int(mit.get("sovereign_defense_floor_milli", 0))
+    if floor > 0 and d >= floor:
+        return min_through
+    red = (max_red * d) // (d + k)
+    red = min(max_red, max(0, red))
+    through = rs - red
+    return max(min_through, min(rs, through))
+
+
+def defense_reduction_rate_milli(defense_milli: int, *, cfg: dict[str, Any], magical: bool = False) -> int:
+    """Reduction rate in rate_scale units (derived from through)."""
+    rs = rate_scale(cfg)
+    return rs - damage_through_rate_milli(defense_milli, cfg=cfg, magical=magical)
+
+
+def apply_mitigation_milli(
+    attack_milli: int,
+    defense_milli: int,
+    *,
+    cfg: dict[str, Any],
+    magical: bool = False,
+) -> int:
+    """Post-mitigation damage milli with 99.999% reduction cap; min 0.001% through."""
     a = max(0, int(attack_milli))
-    denom = k + d
-    return (a * k) // denom if denom > 0 else a
+    cap_raw = int(cfg.get("raw_damage_soft_cap_milli", 100_000_000))
+    a = min(a, cap_raw)
+    through = damage_through_rate_milli(defense_milli, cfg=cfg, magical=magical)
+    rs = rate_scale(cfg)
+    after = (a * through) // rs
+    hit_cap = int(cfg.get("hp_damage_per_hit_cap_milli", 10_000_000))
+    return min(hit_cap, after)
 
 
 def mitigation_multiplier(defense_milli: int, *, cfg: dict[str, Any]) -> int:
@@ -145,9 +179,10 @@ def resolve_strike_damage_milli(
     if crit:
         final = (after_armor * crit_mult) // _FIXED_SCALE
 
+    hit_cap = int(cfg.get("hp_damage_per_hit_cap_milli", 10_000_000))
+    final = min(hit_cap, final)
     min_d = int(cfg.get("min_final_damage_milli", 1000))
-    max_d = int(cfg.get("balance_guards", {}).get("max_damage_per_strike_milli", 500_000_000))
-    final = max(min_d, min(max_d, final))
+    final = max(min_d, final)
 
     return {
         "hit": True,

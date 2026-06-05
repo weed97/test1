@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "fixed_scale": 1000,
+  "rate_scale": 100000,
+  "stat_ids": {
+    "primary": ["str", "agi", "vit", "int", "dex", "luck"],
+    "offense": ["phys_attack_milli", "mag_attack_milli"],
+    "defense": ["phys_defense_milli", "mag_defense_milli", "evasion_milli"],
+    "resource": ["hp_milli", "mp_milli", "regen_hp_per_sec_milli", "regen_mp_per_sec_milli"]
+  },
+  "attack_channels": {
+    "physical": {
+      "label": "물리 공격력",
+      "stat_sources": ["str", "dex", "weapon_phys_constant"],
+      "melee_coeff_milli": 1000,
+      "ranged_coeff_milli": 820,
+      "comment": "근거리 1.000×, 원거리 0.820× (예시, 무기별 상수로 덮어씀)"
+    },
+    "magical": {
+      "label": "마법 공격력",
+      "stat_sources": ["int", "weapon_spell_constant"],
+      "melee_coeff_milli": 0,
+      "ranged_coeff_milli": 1000,
+      "staff_channel_milli": 1150,
+      "comment": "지팡이·술기 원거리 계수 별도"
+    }
+  },
+  "weapon_constants": {
+    "two_handed_sword": {
+      "phys_constant_milli": 1180,
+      "mag_constant_milli": 0,
+      "range": "melee",
+      "attack_speed_milli": 850
+    },
+    "one_handed_sword": {
+      "phys_constant_milli": 920,
+      "mag_constant_milli": 0,
+      "range": "melee",
+      "attack_speed_milli": 1050
+    },
+    "bow": {
+      "phys_constant_milli": 880,
+      "mag_constant_milli": 0,
+      "range": "ranged",
+      "attack_speed_milli": 1200
+    },
+    "staff": {
+      "phys_constant_milli": 120,
+      "mag_constant_milli": 1320,
+      "range": "ranged",
+      "attack_speed_milli": 900
+    },
+    "excalibur_sovereign_blade": {
+      "phys_constant_milli": 2450,
+      "mag_constant_milli": 180,
+      "range": "melee",
+      "attack_speed_milli": 780,
+      "grade": "demigod"
+    }
+  },
+  "raw_damage": {
+    "formula_comment": "raw = (phys or mag path) × weapon_constant × range_coeff × mastery × level_supremacy",
+    "soft_cap_milli": 100000000,
+    "soft_cap_label": "100000.000",
+    "comment": "스탯 올인해도 산출 raw 상한 — 10만 넘기기 매우 어려움"
+  },
+  "mitigation": {
+    "max_reduction_rate_milli": 99999,
+    "max_reduction_label": "99.999%",
+    "min_damage_through_rate_milli": 1,
+    "min_damage_through_label": "0.001%",
+    "defense_to_rate_curve": "rational",
+    "k_phys_milli": 8500000,
+    "k_mag_milli": 8200000,
+    "example": "raw 100000.000 × 0.001% = 1.000 HP 피해"
+  },
+  "hp_damage": {
+    "max_per_hit_milli": 10000000,
+    "max_per_hit_label": "10000.000",
+    "comment": "아무리 쌔도 한 타에 HP에 들어가는 최대치 — 준신도 동일",
+    "example_world_rank1_taken": 1000.0
+  },
+  "hp_pools": {
+    "example_demigod_full_build_milli": 9999000,
+    "example_demigod_label": "9999.000 (템·스탯·Lv 합산 극치 예시)"
+  },
+  "regeneration": {
+    "out_of_combat": {
+      "arthur_example_per_sec_milli": 1000000,
+      "arthur_example_label": "1000.000 HP/s (비전투·비쟁탈)"
+    },
+    "in_combat": {
+      "global_cap_per_sec_milli": 200000,
+      "global_cap_label": "200.000 HP/s 전투 중 상한",
+      "contested_sovereign_mult_milli": 50,
+      "contested_label": "주권 쟁탈 시 회복 ×0.050"
+    },
+    "wounds": {
+      "coaltion_wound_per_stack_regen_mult_milli": 800,
+      "max_stacks": 10,
+      "comment": "연합 전쟁 상처 스택 — 회복 20%씩 감소"
+    }
+  },
+  "sovereign_survival": {
+    "contested_flag": "flags.world_sovereign.contested",
+    "hp_alone_not_win_condition": true,
+    "break_meter_for_arthur_siege": true,
+    "comment": "아서는 HP+회복만으로 무적이 되지 않게 쟁탈·쇠약·타격상한 병행"
+  }
+}

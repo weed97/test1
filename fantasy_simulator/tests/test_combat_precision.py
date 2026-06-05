@@ -15,6 +15,7 @@ from utils.combat_precision import (  # noqa: E402
     apply_mitigation_milli,
     compute_crit_rate_milli,
     compute_hit_rate_milli,
+    defense_reduction_rate_milli,
     from_milli,
     load_combat_precision_config,
     resolve_strike_damage_milli,
@@ -101,6 +102,25 @@ class CombatPrecisionTests(unittest.TestCase):
         a1 = apply_mitigation_milli(200_000, 10_000, cfg=self.cfg)
         a2 = apply_mitigation_milli(200_000, 11_000, cfg=self.cfg)
         self.assertGreater(a1, a2)
+
+    def test_mitigation_cap_99999_percent(self) -> None:
+        rate = defense_reduction_rate_milli(999_999_999, cfg=self.cfg)
+        self.assertLessEqual(rate, int(self.cfg["mitigation"]["max_reduction_rate_milli"]))
+
+    def test_raw_100k_at_cap_becomes_1_hp(self) -> None:
+        raw = 100_000_000
+        def_m = 100_000_000
+        after = apply_mitigation_milli(raw, def_m, cfg=self.cfg)
+        self.assertLessEqual(after, 2000)
+        self.assertGreaterEqual(after, 500)
+
+    def test_per_hit_cap_10000(self) -> None:
+        atk = {"attack_milli": 100_000_000, "character_level": 999, "weapon_mastery_level": 999}
+        defn = {"defense_milli": 0, "character_level": 1, "weapon_mastery_level": 1}
+        r = resolve_strike_damage_milli(
+            atk, defn, cfg=self.cfg, rng=self.rng, force_hit=True, force_crit=False
+        )
+        self.assertLessEqual(r["damage_milli"], 10_000_000)
 
 
 if __name__ == "__main__":

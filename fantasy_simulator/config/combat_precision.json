@@ -8,9 +8,14 @@
   },
   "priority_order": ["character_level", "weapon_class_level", "item_grade"],
   "mitigation": {
-    "model": "rational",
+    "model": "rational_capped",
     "k_defense_milli": 8500000,
-    "comment": "mult = K/(K+def_milli). 방어 1.000↑마다 피해 곡선 하락 — 레벨 구간별 K는 tier 보간"
+    "k_mag_defense_milli": 8200000,
+    "max_reduction_rate_milli": 99999,
+    "max_reduction_label": "99.999%",
+    "min_through_rate_milli": 1,
+    "sovereign_defense_floor_milli": 100000000,
+    "comment": "red=max_red×def/(def+K); def≥floor → 99.999% 감쇠(through=0.001%)"
   },
   "evasion": {
     "model": "difference_clamp",
@@ -46,11 +51,14 @@
     "per_level_delta_milli": 1000,
     "comment": "가중 합×레벨차 — 캐릭터 Lv 1차, 무기 Lv 2차, 등급 3차. 1레벨차도 mult에 반영"
   },
+  "raw_damage_soft_cap_milli": 100000000,
+  "hp_damage_per_hit_cap_milli": 10000000,
   "balance_guards": {
-    "max_damage_per_strike_milli": 500000000,
-    "max_hp_milli": 2000000000,
+    "max_damage_per_strike_milli": 100000000,
+    "max_hp_milli": 99990000,
     "never_zero_if_hit": true,
-    "deterministic_seed_optional": true
+    "deterministic_seed_optional": true,
+    "combat_regen_cap_per_sec_milli": 200000
   },
   "sensitivity_targets": {
     "comment": "밸런스 검증 목표치 — 테스트가 참조",
