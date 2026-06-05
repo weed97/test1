@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "days_per_year": 360,
+  "initial_holder": {
+    "id": "npc_arthur_pendragon",
+    "kind": "npc",
+    "title": "아서왕",
+    "label": "반신 · 칼을 든 왕"
+  },
+  "excalibur": {
+    "artifact_id": "excalibur_sovereign_blade",
+    "label": "엑스칼리버",
+    "tier": "demigod",
+    "slot": "weapon",
+    "power_id": "sovereign_wish",
+    "wish_interval_years": 4,
+    "observable": {
+      "vfx": "sovereign_sky_rite",
+      "rumor_scope": "world",
+      "sound": "world_bell"
+    }
+  },
+  "wish_edict_types": [
+    "empower_self",
+    "empower_kingdom",
+    "weaken_realm",
+    "empower_monsters",
+    "found_civilization",
+    "reshape_rule"
+  ],
+  "forbidden_edicts": [
+    "erase_world",
+    "wipe_realm",
+    "instant_win"
+  ],
+  "succession": {
+    "holder_must_equip_excalibur_for_wish": true,
+    "on_holder_death": "excalibur_drops_contested"
+  }
+}
