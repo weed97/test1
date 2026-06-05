@@ -127,6 +127,12 @@ class CombatPreviewRequest(BaseModel):
     force_sovereign_through: Optional[bool] = None
 
 
+class ArthurAoeRequest(BaseModel):
+    target_presets: Optional[list[str]] = None
+    distance_pixels: Optional[list[int]] = None
+    ultimate: bool = False
+
+
 class TurnRequest(BaseModel):
     session_id: str
     action: str = Field(..., min_length=1, max_length=512)
@@ -320,18 +326,21 @@ def combat_preview_strike(body: CombatPreviewRequest) -> dict[str, Any]:
 
 
 @app.post("/v1/combat/arthur_aoe")
-def combat_arthur_aoe(
-    target_presets: list[str] | None = None,
-    ultimate: bool = False,
-) -> dict[str, Any]:
+def combat_arthur_aoe(body: ArthurAoeRequest | None = None) -> dict[str, Any]:
     from utils.combat_stats import build_combatant_snapshot, load_combat_bundle, resolve_excalibur_aoe
 
+    req = body or ArthurAoeRequest()
     root = package_root()
     bundle = load_combat_bundle(root)
     arthur = build_combatant_snapshot(base_dir=root, preset_id="npc_arthur_pendragon")
-    presets = target_presets or [f"world_rank_{r:02d}" for r in range(2, 6)]
-    targets = [build_combatant_snapshot(base_dir=root, preset_id=p) for p in presets]
-    result = resolve_excalibur_aoe(arthur, targets, bundle=bundle, ultimate=ultimate)
+    presets = req.target_presets or [f"world_rank_{r:02d}" for r in range(2, 6)]
+    targets: list[dict[str, Any]] = []
+    for i, preset_id in enumerate(presets):
+        snap = build_combatant_snapshot(base_dir=root, preset_id=preset_id)
+        if req.distance_pixels and i < len(req.distance_pixels):
+            snap["distance_pixels"] = int(req.distance_pixels[i])
+        targets.append(snap)
+    result = resolve_excalibur_aoe(arthur, targets, bundle=bundle, ultimate=req.ultimate)
     return {"api_version": API_VERSION, "arthur_aoe": result}
 
 
@@ -344,7 +353,7 @@ def combat_elite_coalition() -> dict[str, Any]:
     return {
         "api_version": API_VERSION,
         **elite_coalition_pierce_dps(bundle=bundle),
-        "note": "2~11위 전원 방무 정예 — 뭉치면 아서 광역 1초컷 위험",
+        "note": "2~11위 10명 전력 집결·산개 없으면 궁극기 전멸 — 마법사만 바이탈 10px 회피",
     }
 
 

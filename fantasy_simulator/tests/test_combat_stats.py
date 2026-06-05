@@ -106,11 +106,41 @@ class CombatStatsTests(unittest.TestCase):
             bundle = load_combat_bundle(root)
             arthur = build_combatant_snapshot(base_dir=root, preset_id="npc_arthur_pendragon")
             elite = build_combatant_snapshot(base_dir=root, preset_id="world_rank_02")
+            elite["distance_pixels"] = 30
             normal = resolve_excalibur_aoe(arthur, [elite], bundle=bundle, ultimate=False)
             ult = resolve_excalibur_aoe(arthur, [elite], bundle=bundle, ultimate=True)
             self.assertFalse(normal["results"][0]["killed"])
             self.assertLess(normal["results"][0]["damage_milli"], elite["hp_milli"])
             self.assertTrue(ult["results"][0]["killed"])
+            self.assertTrue(ult["casts_skill_lock"])
+
+    def test_ultimate_mage_only_vital_dodge_10px(self) -> None:
+        with isolated_game_root() as root:
+            bundle = load_combat_bundle(root)
+            arthur = build_combatant_snapshot(base_dir=root, preset_id="npc_arthur_pendragon")
+            mage = build_combatant_snapshot(base_dir=root, preset_id="world_rank_02")
+            knight = build_combatant_snapshot(base_dir=root, preset_id="world_rank_03")
+            mage["job_id"] = "mage"
+            mage["distance_pixels"] = 91
+            knight["distance_pixels"] = 91
+            ult = resolve_excalibur_aoe(arthur, [mage, knight], bundle=bundle, ultimate=True)
+            by_id = {r["target_id"]: r for r in ult["results"]}
+            self.assertFalse(by_id[mage["id"]]["killed"])
+            self.assertEqual(by_id[mage["id"]]["vital_dodge_pixels"], 10)
+            self.assertTrue(by_id[knight["id"]]["killed"])
+
+    def test_full_coalition_cluster_ultimate_wipe(self) -> None:
+        with isolated_game_root() as root:
+            bundle = load_combat_bundle(root)
+            arthur = build_combatant_snapshot(base_dir=root, preset_id="npc_arthur_pendragon")
+            targets = []
+            for r in range(2, 12):
+                t = build_combatant_snapshot(base_dir=root, preset_id=f"world_rank_{r:02d}")
+                t["distance_pixels"] = 25
+                targets.append(t)
+            ult = resolve_excalibur_aoe(arthur, targets, bundle=bundle, ultimate=True)
+            self.assertEqual(ult["kills"], 10)
+            self.assertTrue(ult["cluster_wipe"]["full_coalition_clustered"])
 
     def test_mythic_skill_scaling(self) -> None:
         with isolated_game_root() as root:

@@ -279,6 +279,7 @@ def build_combatant_snapshot(
     snap: dict[str, Any] = {
         "id": preset_id or data.get("id", "custom"),
         "label": data.get("label", preset_id or "combatant"),
+        "job_id": job_id,
         "tier": tier,
         "character_level": char_lv,
         "weapon_mastery_level": wpn_lv,
@@ -303,6 +304,25 @@ def build_combatant_snapshot(
     return snap
 
 
+def _ultimate_vital_dodge_pixels(target: dict[str, Any], ult_cfg: dict[str, Any]) -> int:
+    """궁극기 시전 중 스킬 불능 — 마법사만 순수 바이탈로 최대 N px 회피."""
+    dodge = ult_cfg.get("dodge", {})
+    job = str(target.get("job_id", ""))
+    if job not in dodge.get("eligible_job_ids", []):
+        return 0
+    return int(dodge.get("pure_vital_dodge_pixels", 10))
+
+
+def _in_ultimate_blast(
+    distance_pixels: int,
+    *,
+    radius_pixels: int,
+    vital_dodge_pixels: int,
+) -> bool:
+    """시전 후 바깥으로 vital_dodge_px만큼 이동해도 반경 밖이 안 되면 적중."""
+    return int(distance_pixels) + int(vital_dodge_pixels) <= int(radius_pixels)
+
+
 def resolve_excalibur_aoe(
     attacker: dict[str, Any],
     targets: list[dict[str, Any]],
@@ -310,30 +330,89 @@ def resolve_excalibur_aoe(
     bundle: dict[str, Any],
     ultimate: bool = False,
 ) -> dict[str, Any]:
-    """아서 광역 — 일반(×0.5) vs 성검 궁극기(원샷). 반경 100px 밀집 가정."""
+    """아서 광역 — 일반(×0.5) vs 성검 궁극기(원샷·100px·마법사 10px 바이탈 회피)."""
     ult_cfg = bundle["scaling"]["excalibur_ultimate"]
+    radius = int(ult_cfg.get("radius_pixels", 100))
     per_hit = int(attacker.get("pierce_per_hit_milli", 10_000_000))
     coeff = float(ult_cfg.get("aoe_coeff", 0.5))
-    aoe_hit = int(per_hit * coeff) if not ultimate else per_hit * 50
+    aoe_hit = int(per_hit * coeff)
+    cluster_cfg = ult_cfg.get("cluster_wipe", {})
+    cluster_max = int(cluster_cfg.get("clustered_max_distance_pixels", 50))
+    coalition_n = int(cluster_cfg.get("full_coalition_count", 10))
     results: list[dict[str, Any]] = []
     kills = 0
+    in_radius = 0
     for t in targets:
         hp = int(t.get("hp_milli", 0))
-        if ultimate or hp <= aoe_hit:
-            dmg = hp
-            kills += 1
-        else:
-            dmg = min(hp, aoe_hit)
-            if dmg >= hp:
+        dist = int(t.get("distance_pixels", 0))
+        dodge_px = _ultimate_vital_dodge_pixels(t, ult_cfg) if ultimate else 0
+        blasted = _in_ultimate_blast(dist, radius_pixels=radius, vital_dodge_pixels=dodge_px)
+        if ultimate:
+            if blasted:
+                dmg = hp
+                killed = True
                 kills += 1
-        results.append({"target_id": t.get("id"), "damage_milli": dmg, "killed": dmg >= hp})
+                in_radius += 1
+            else:
+                dmg = 0
+                killed = False
+            results.append(
+                {
+                    "target_id": t.get("id"),
+                    "distance_pixels": dist,
+                    "vital_dodge_pixels": dodge_px,
+                    "effective_distance_pixels": dist + dodge_px,
+                    "in_blast_radius": blasted,
+                    "damage_milli": dmg,
+                    "killed": killed,
+                    "dodge_eligible": dodge_px > 0,
+                }
+            )
+        else:
+            in_blast = dist <= radius
+            if in_blast:
+                in_radius += 1
+            if in_blast and hp <= aoe_hit:
+                dmg = hp
+                killed = True
+                kills += 1
+            elif in_blast:
+                dmg = min(hp, aoe_hit)
+                killed = dmg >= hp
+                if killed:
+                    kills += 1
+            else:
+                dmg = 0
+                killed = False
+            results.append(
+                {
+                    "target_id": t.get("id"),
+                    "distance_pixels": dist,
+                    "in_blast_radius": in_blast,
+                    "damage_milli": dmg,
+                    "killed": killed,
+                }
+            )
+    clustered = (
+        len(targets) >= coalition_n
+        and all(int(t.get("distance_pixels", 0)) <= cluster_max for t in targets)
+    )
     return {
         "skill_id": ult_cfg.get("skill_id"),
         "ultimate": ultimate,
-        "radius_pixels": int(ult_cfg.get("radius_pixels", 100)),
-        "targets_in_radius": len(targets),
+        "casts_skill_lock": bool(ult_cfg.get("casts_skill_lock", True)) if ultimate else False,
+        "radius_pixels": radius,
+        "pure_vital_dodge_pixels": int(ult_cfg.get("dodge", {}).get("pure_vital_dodge_pixels", 10)),
+        "dodge_eligible_job_ids": list(ult_cfg.get("dodge", {}).get("eligible_job_ids", [])),
+        "targets_in_radius": in_radius,
         "kills": kills,
         "mass_kill_threshold": int(ult_cfg.get("instant_kill_targets_in_radius_min", 10_000)),
+        "cluster_wipe": {
+            "full_coalition_clustered": clustered and ultimate,
+            "full_coalition_count": coalition_n,
+            "clustered_max_distance_pixels": cluster_max,
+            "note": "10명 전력 집결·산개 없으면 궁극기 전멸",
+        },
         "results": results,
     }
 

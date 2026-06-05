@@ -47,8 +47,19 @@
     "pierce_fraction": 1.0,
     "cooldown_sec": 7200,
     "only_when_danger_hp_ratio_below": 0.25,
+    "casts_skill_lock": true,
     "instant_kill_targets_in_radius_min": 10000,
     "one_shot_elite_hp": true,
-    "comment": "위기 시만 · 민첩 회피 불가 · 반경 100px 내 만 명 즉사 가능"
+    "dodge": {
+      "eligible_job_ids": ["arcane_apprentice", "mage", "archmage", "wizard"],
+      "pure_vital_dodge_pixels": 10,
+      "comment": "궁극기 우선 시전 시 스킬 불능 — 마법사만 순수 바이탈 10px. 반경 100px는 회피 불가"
+    },
+    "cluster_wipe": {
+      "full_coalition_count": 10,
+      "clustered_max_distance_pixels": 50,
+      "comment": "2~11위 10명 전력 참관·산개 없으면 궁극기 전멸"
+    },
+    "comment": "위기 시만 · 반경 100px · 만 명 즉사 가능 · 아서 뒤 산개만 생존 루트"
   }
 }

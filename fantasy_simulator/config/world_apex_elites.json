@@ -37,7 +37,10 @@
     "aoe_coeff": 0.5,
     "aoe_instant_kill_min_targets": 10000,
     "ultimate_cooldown_sec": 7200,
+    "ultimate_casts_skill_lock": true,
+    "ultimate_dodge_mages_only_pixels": 10,
     "elite_survives_single_hit_at_500k_hp": true,
-    "comment": "일반 광역은 정예 50만HP 한방 안 죽음 — 궁극기·뭉침 시 위험"
+    "full_coalition_cluster_wipe_without_scatter": true,
+    "comment": "일반 광역은 50만HP 한방 생존 — 10명 집결·궁극기 우선 시 전멸. 마법사만 바이탈 10px, 100px 반경은 회피 불가"
   }
 }
