@@ -12,17 +12,18 @@
     "label": "엑스칼리버",
     "tier": "demigod",
     "slot": "weapon",
-    "weapon_kind": "sword",
+    "weapon_kind": "two_handed_sword",
     "power_id": "sovereign_wish",
     "wish_interval_years": 4,
     "eligibility": {
-      "requires_weapon_kind": "sword",
-      "blocked_primary_jobs": ["arcane_apprentice"],
-      "blocked_tags": ["pure_caster", "staff_main"],
-      "min_sword_mastery_rank": "grandmaster",
+      "requires_weapon_kind": "two_handed_sword",
+      "blocked_primary_jobs": ["arcane_apprentice", "ranger"],
+      "blocked_tags": ["pure_caster", "staff_main", "dual_wield", "one_handed_main"],
+      "min_weapon_mastery_rank": "grandmaster",
+      "mastery_track": "two_handed_sword",
       "min_job_level": 5,
       "allowed_primary_jobs": ["knight", "wanderer"],
-      "note": "검(劍)의 최고 경지 — 마법사 직업·술사 주무기는 인정 안 함"
+      "note": "양손검(투핸드) 최고 경지 — 마법사·한손검·활 주무기는 인정 안 함"
     },
     "observable": {
       "vfx": "sovereign_sky_rite",
@@ -101,7 +102,7 @@
         "difficulty": "transcendent",
         "requires_eligibility": true,
         "requires_all": [
-          "sword_mastery_grandmaster",
+          "two_handed_sword_mastery_grandmaster",
           "realm_wide_oaths_fulfilled",
           "five_realms_legend_deeds",
           "refused_demigod_corruption",
@@ -113,8 +114,8 @@
     "on_ineligible_wield": "reject_equip",
     "monster_exception": {
       "allowed": true,
-      "requires_archetype_tags": ["blade_sovereign", "sword_wielder"],
-      "blocked_tags": ["pure_caster"]
+      "requires_archetype_tags": ["blade_sovereign", "two_handed_wielder"],
+      "blocked_tags": ["pure_caster", "one_handed"]
     }
   }
 }
