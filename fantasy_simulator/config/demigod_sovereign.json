@@ -12,8 +12,18 @@
     "label": "엑스칼리버",
     "tier": "demigod",
     "slot": "weapon",
+    "weapon_kind": "sword",
     "power_id": "sovereign_wish",
     "wish_interval_years": 4,
+    "eligibility": {
+      "requires_weapon_kind": "sword",
+      "blocked_primary_jobs": ["arcane_apprentice"],
+      "blocked_tags": ["pure_caster", "staff_main"],
+      "min_sword_mastery_rank": "grandmaster",
+      "min_job_level": 5,
+      "allowed_primary_jobs": ["knight", "wanderer"],
+      "note": "검(劍)의 최고 경지 — 마법사 직업·술사 주무기는 인정 안 함"
+    },
     "observable": {
       "vfx": "sovereign_sky_rite",
       "rumor_scope": "world",
@@ -71,6 +81,40 @@
   },
   "succession": {
     "holder_must_equip_excalibur_for_wish": true,
-    "on_holder_death": "excalibur_drops_contested"
+    "on_holder_death": "excalibur_drops_contested",
+    "paths": {
+      "duel_arthur": {
+        "label": "아서와 단독 결투 승리",
+        "difficulty": "near_impossible_solo",
+        "requires_eligibility": true,
+        "arthur_power_multiplier": 3.5
+      },
+      "coalition_war": {
+        "label": "연합 전쟁으로 뺏기",
+        "difficulty": "hard_but_realistic",
+        "requires_eligibility": true,
+        "min_factions": 2,
+        "note": "솔로 격파보다 사실상 정공 루트"
+      },
+      "arthur_voluntary_bequest": {
+        "label": "아서가 물려줌",
+        "difficulty": "transcendent",
+        "requires_eligibility": true,
+        "requires_all": [
+          "sword_mastery_grandmaster",
+          "realm_wide_oaths_fulfilled",
+          "five_realms_legend_deeds",
+          "refused_demigod_corruption",
+          "arthur_trust_max"
+        ],
+        "note": "매우매우매우 어려움 — 숨겨진 시즌급 조건"
+      }
+    },
+    "on_ineligible_wield": "reject_equip",
+    "monster_exception": {
+      "allowed": true,
+      "requires_archetype_tags": ["blade_sovereign", "sword_wielder"],
+      "blocked_tags": ["pure_caster"]
+    }
   }
 }
