@@ -35,21 +35,38 @@ def get_hero_progress(
     *,
     base_dir: str | Path | None = None,
 ) -> dict[str, Any]:
+    from utils.level_unlocks import normalize_hero_progress, sync_unlocked_skills
+
     prog = _eco_prog(state)
     heroes = prog.setdefault("heroes", {})
     if character_id not in heroes:
         slots: list[str] = []
+        cfg = load_progression_config(base_dir) if base_dir else {}
         if base_dir is not None:
-            slots = list(load_progression_config(base_dir).get("equipment_slots", []))
+            slots = list(cfg.get("equipment_slots", []))
+        job_id = "wanderer"
+        starter = list(cfg.get("jobs", {}).get(job_id, {}).get("starter_skills", ["scout"]))
         heroes[character_id] = {
-            "job_id": "wanderer",
+            "active_job_id": job_id,
+            "job_id": job_id,
+            "character_level": 1,
+            "character_xp": 0,
+            "jobs": {job_id: {"level": 1, "xp": 0}},
+            "weapon_masteries": {"one_handed_sword": {"level": 1, "xp": 0, "rank": "novice"}},
             "job_level": 1,
             "xp": 0,
             "skill_points": 0,
-            "unlocked_skills": ["scout"],
+            "unlocked_skills": starter,
             "equipment": {s: None for s in slots},
+            "equip_unlocks": {"milestones": [], "grades": ["common"]},
+            "passive_slots": 1,
+            "job_skill_enhance_tier": 1,
         }
-    return heroes[character_id]
+    hero = heroes[character_id]
+    if base_dir is not None:
+        normalize_hero_progress(hero, base_dir=base_dir)
+        sync_unlocked_skills(hero, base_dir=base_dir)
+    return hero
 
 
 def init_heroes_from_party(state: dict[str, Any], *, base_dir: str | Path) -> None:
@@ -59,9 +76,15 @@ def init_heroes_from_party(state: dict[str, Any], *, base_dir: str | Path) -> No
         h = get_hero_progress(state, cid, base_dir=base_dir)
         if cid == "gareth_ironshield" and h.get("job_id") == "wanderer":
             h["job_id"] = "knight"
+            h["active_job_id"] = "knight"
+            h["jobs"]["knight"] = dict(h["jobs"].get("knight") or {"level": 1, "xp": 0})
             h["unlocked_skills"] = list(cfg["jobs"]["knight"]["starter_skills"])
         if cid == "elara_moonwhisper" and h.get("job_id") == "wanderer":
             h["job_id"] = "arcane_apprentice"
+            h["active_job_id"] = "arcane_apprentice"
+            h["jobs"]["arcane_apprentice"] = dict(
+                h["jobs"].get("arcane_apprentice") or {"level": 1, "xp": 0}
+            )
             h["unlocked_skills"] = list(cfg["jobs"]["arcane_apprentice"]["starter_skills"])
 
 
@@ -216,23 +239,22 @@ def grant_hero_xp(
     base_dir: str | Path,
     reason: str = "explore",
 ) -> list[str]:
-    lines: list[str] = []
-    cfg = load_progression_config(base_dir)
+    from utils.level_unlocks import grant_axis_xp
+
     h = get_hero_progress(state, character_id, base_dir=base_dir)
-    old_lvl = int(h.get("job_level", 1))
-    h["xp"] = int(h.get("xp", 0)) + amount
-    new_lvl = _job_level_from_xp(cfg, h["job_id"], h["xp"])
-    h["job_level"] = new_lvl
-    if new_lvl > old_lvl:
-        h["skill_points"] = int(h.get("skill_points", 0)) + 1
-        job = cfg["jobs"].get(h["job_id"], {})
-        auto = job.get("skills_by_level", {}).get(str(new_lvl))
-        if auto:
-            for sk in auto:
-                if sk not in h["unlocked_skills"]:
-                    h["unlocked_skills"].append(sk)
-                    lines.append(f"[성장] {character_id} 스킬 해금: {sk}")
-        lines.append(f"[성장] {character_id} 직업 Lv{new_lvl} ({job.get('label', h['job_id'])})")
+    wclass = next(iter(h.get("weapon_masteries", {"one_handed_sword": {}})), "one_handed_sword")
+    char_part = max(1, amount // 3)
+    job_part = max(1, amount // 2)
+    wpn_part = max(1, amount // 4)
+    lines = grant_axis_xp(
+        h,
+        character_xp=char_part,
+        job_xp=job_part,
+        weapon_xp=wpn_part,
+        weapon_class=wclass,
+        base_dir=base_dir,
+    )
+    h["xp"] = int(h["jobs"].get(h["active_job_id"], {}).get("xp", h.get("xp", 0)))
     return lines
 
 
@@ -250,8 +272,10 @@ def on_explore_progression(state: dict[str, Any], *, base_dir: str | Path) -> li
 def unlock_skill(
     state: dict[str, Any], character_id: str, skill_id: str, *, base_dir: str | Path
 ) -> dict[str, Any]:
+    from utils.skill_catalog import catalog_skill
+
     cfg = load_progression_config(base_dir)
-    if skill_id not in cfg.get("skills", {}):
+    if skill_id not in cfg.get("skills", {}) and not catalog_skill(skill_id, base_dir=base_dir):
         return {"ok": False, "error": "unknown skill"}
     h = get_hero_progress(state, character_id, base_dir=base_dir)
     if int(h.get("skill_points", 0)) < 1:
@@ -266,6 +290,8 @@ def unlock_skill(
 def equip_item(
     state: dict[str, Any], character_id: str, item_id: str, *, base_dir: str | Path
 ) -> dict[str, Any]:
+    from utils.level_unlocks import can_wield_grade
+
     cfg = load_progression_config(base_dir)
     item = cfg.get("items", {}).get(item_id)
     if not item:
@@ -277,6 +303,11 @@ def equip_item(
     allowed = item.get("jobs")
     if allowed and h.get("job_id") not in allowed:
         return {"ok": False, "error": "직업 불일치"}
+    grade = str(item.get("grade", "common"))
+    wclass = str(item.get("weapon_class", h.get("weapon_class", "one_handed_sword")))
+    ok, reason = can_wield_grade(h, grade, weapon_class=wclass, base_dir=base_dir)
+    if not ok:
+        return {"ok": False, "error": reason}
     inv = state.setdefault("inventory", {})
     owned = inv.setdefault("equipment_owned", [])
     if item_id not in owned and item_id not in inv.get("shared_items", []):
@@ -286,14 +317,30 @@ def equip_item(
 
 
 def progression_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
+    from utils.level_unlocks import unlock_status_for_hero
+    from utils.skill_catalog import catalog_skill_count_for_job, load_progression_unlocks_config
+
     cfg = load_progression_config(base_dir)
+    unlock_cfg = load_progression_unlocks_config(base_dir)
     map_id = state.get("world", {}).get("map_id", "ashpoint_01")
     heroes = {
         cid: get_hero_progress(state, cid, base_dir=base_dir)
         for cid in state.get("party", [])
     }
+    unlock_views = {
+        cid: unlock_status_for_hero(heroes[cid], base_dir=base_dir) for cid in heroes
+    }
     return {
         "heroes": heroes,
+        "unlock_status": unlock_views,
+        "skill_catalog": {
+            "skills_per_job": int(unlock_cfg["skill_catalog"]["skills_per_job"]),
+            "skills_per_weapon_class": int(unlock_cfg["weapon_skill_catalog"]["skills_per_class"]),
+            "jobs": {
+                jid: catalog_skill_count_for_job(jid, base_dir=base_dir)
+                for jid in unlock_cfg.get("jobs", [])
+            },
+        },
         "jobs": {
             jid: {"label": j.get("label"), "skills_by_level": j.get("skills_by_level")}
             for jid, j in cfg.get("jobs", {}).items()

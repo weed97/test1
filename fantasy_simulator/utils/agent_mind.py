@@ -178,7 +178,15 @@ def preview_skill_damage(
         atk = agent_to_combatant(attacker, base_dir=base_dir)
         defn = agent_to_combatant(target, base_dir=base_dir)
         plunder = int(attacker.get("plunder", {}).get("power_bonus", 0))
-        mult = float(sdef.get("power", 8)) / 10.0 + plunder * 0.02
+        if sdef.get("combat_pipeline") == "catalog":
+            from utils.level_unlocks import hero_level_snapshot
+            from utils.skill_catalog import effective_skill_power
+
+            snap = hero_level_snapshot(attacker, base_dir=base_dir)
+            eff = effective_skill_power(sdef, hero_levels=snap)
+            mult = eff / 10.0 + plunder * 0.02
+        else:
+            mult = float(sdef.get("power", 8)) / 10.0 + plunder * 0.02
         mult *= 0.9 + rng.uniform(0, 0.2) + _iq(attacker) / 500.0
         dmg = strike_damage_hp(atk, defn, base_dir=base_dir, rng=rng, skill_multiplier=mult)
         if dmg > 0:
