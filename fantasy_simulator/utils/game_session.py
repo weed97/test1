@@ -90,7 +90,7 @@ class GameSession:
         )
         scale = time_scale if time_scale is not None else getattr(self, "_time_scale", 1.0)
         presence = include_presence if include_presence is not None else getattr(
-            self, "_include_presence", mode == "nex"
+            self, "_include_presence", mode in ("nex", "precision")
         )
         return TurnContext(
             state=self.state,
@@ -120,7 +120,7 @@ class GameSession:
         self._temporal_mode = temporal_mode
         self._time_scale = time_scale
         self._include_presence = include_presence if include_presence is not None else (
-            temporal_mode == "nex"
+            temporal_mode in ("nex", "precision")
         )
         turn = _current_turn(self.state)
         result = execute_turn(

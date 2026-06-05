@@ -19,10 +19,12 @@
 | [09_BCI_DEEPMIND_FUSION.md](09_BCI_DEEPMIND_FUSION.md) | **VR×BCI×Mnemosyne 융합**, 육감, 샤드 AI |
 | [10_REALITY_PARITY.md](10_REALITY_PARITY.md) | 현실 동형성 R0–R4 규격·검증 |
 | [11_TEMPORAL_MODEL.md](11_TEMPORAL_MODEL.md) | **턴 vs 초몰입** — 3층 시간·RTwP·API 로드맵 |
+| [12_MICRO_TIME_AND_COCREATION.md](12_MICRO_TIME_AND_COCREATION.md) | **분 단위 시계**·공동 창조 루프 |
+| [13_ISEKAI_AFFORDANCES.md](13_ISEKAI_AFFORDANCES.md) | 현실 불가 행위·이세계 계약 |
 
 ## 현재 구현과의 관계
 
-- **이미 플레이 가능:** 애쉬포인트 변경, `smoke_on_the_mountain` → `ashen_seal_cracking` 3단계 메인 스토리, 세력 평판, 긴장도, 150+ 이벤트 씨앗. 플레이는 **Classic Turn** (`run_turn`) — Nex Live는 설계 단계.
+- **이미 플레이 가능:** 애쉬포인트 변경, `smoke_on_the_mountain` → `ashen_seal_cracking` 3단계 메인 스토리, 세력 평판, 긴장도, 150+ 이벤트 씨앗. 플레이 시간: **Classic** (테스트·라우트), **Nex** (`--nex`), **Precision** (`--precision`, 분 시계).
 - **설계만 있는 레이어:** BCI 읽기/쓰기, Mnemosyne 샤드 AI, 육감·체화, R3 현실 동형 — `flags.bci_meta` + `09`·`10` 문서.
 - **스키마:** `config/vr_meta.schema.json`, `config/bci_meta.schema.json`
 

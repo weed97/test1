@@ -137,6 +137,7 @@ Nex:
 |------|-----|------|
 | T0 | `run_turn(action)` | Classic |
 | **T1 (구현됨)** | `run_turn(action, temporal_mode="nex", time_scale=1.0)` | `utils/temporal.py`, `--nex` CLI |
+| **T1.5 (구현됨)** | `temporal_mode="precision"`, `minute_of_day`, `[시각]` | `utils/world_clock.py`, `--precision` — [12](12_MICRO_TIME_AND_COCREATION.md) |
 | T2 | `session.stream(duration_s)` | presence 루프 + 중첩 moment |
 | T3 | `session.bind_bci(read_callback)` | 의도→moment 자동 |
 | T4 | RTwP `combat.tick(dt)` | 전투만 실시간 |

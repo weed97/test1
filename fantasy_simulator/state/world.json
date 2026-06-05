@@ -2,6 +2,7 @@
   "name": "에르도리아",
   "day": 2,
   "time_of_day": "afternoon",
+  "minute_of_day": 840,
   "season": "가을",
   "weather": "clear",
   "location": "실버우드 변경 마을 '애쉬포인트'",

@@ -11,7 +11,11 @@ sys.path.insert(0, str(ROOT))
 
 from tests.fixtures import isolated_game_root  # noqa: E402
 from utils.game_session import GameSession  # noqa: E402
-from utils.temporal import classify_moment, resolve_time_steps  # noqa: E402
+from utils.temporal import (  # noqa: E402
+    classify_moment,
+    resolve_time_minutes,
+    resolve_time_steps,
+)
 
 
 class TemporalClassificationTests(unittest.TestCase):
@@ -40,6 +44,21 @@ class TemporalClassificationTests(unittest.TestCase):
         )
         self.assertEqual(steps, 0)
         self.assertTrue(rest)
+
+    def test_resolve_precision_explore_five_minutes(self) -> None:
+        minutes, kind, rest = resolve_time_minutes(
+            "explore", temporal_mode="precision", time_scale=1.0
+        )
+        self.assertEqual(minutes, 5)
+        self.assertEqual(kind, "explore")
+        self.assertFalse(rest)
+
+    def test_resolve_precision_glance_zero(self) -> None:
+        minutes, kind, rest = resolve_time_minutes(
+            "look", temporal_mode="precision", time_scale=1.0
+        )
+        self.assertEqual(minutes, 0)
+        self.assertEqual(kind, "glance")
 
 
 class TemporalRunTurnTests(unittest.TestCase):
@@ -80,6 +99,26 @@ class TemporalRunTurnTests(unittest.TestCase):
             session.manager.save(session.state)
             session.run_turn("rest", temporal_mode="nex")
             self.assertEqual(session.state["world"]["time_of_day"], "morning")
+
+    def test_precision_explore_advances_minutes_not_period_only(self) -> None:
+        with isolated_game_root() as root:
+            session = GameSession.from_root(root, mode="rule", seed=42)
+            session.state["world"]["minute_of_day"] = 14 * 60
+            session.state["world"]["time_of_day"] = "afternoon"
+            session.manager.save(session.state)
+            result = session.run_turn("explore", temporal_mode="precision")
+            self.assertEqual(result.get("minutes_advanced"), 5)
+            self.assertEqual(session.state["world"]["minute_of_day"], 14 * 60 + 5)
+            self.assertTrue(any("[시각" in line for line in result["lines"]))
+
+    def test_precision_look_freezes_clock(self) -> None:
+        with isolated_game_root() as root:
+            session = GameSession.from_root(root, mode="rule", seed=42)
+            session.state["world"]["minute_of_day"] = 600
+            session.manager.save(session.state)
+            result = session.run_turn("look", temporal_mode="precision")
+            self.assertEqual(session.state["world"]["minute_of_day"], 600)
+            self.assertEqual(result.get("minutes_advanced"), 0)
 
 
 if __name__ == "__main__":

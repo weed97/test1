@@ -7,6 +7,7 @@ import random
 from typing import TYPE_CHECKING, Any, Optional
 
 from utils.dice import roll_d20
+from utils.world_clock import advance_to_morning, advance_world_minutes, ensure_world_clock
 
 if TYPE_CHECKING:
     from utils.event_engine import EventEngine
@@ -61,6 +62,19 @@ class RuleEngine:
         self.state = state
         self.rng = rng
         self.event_engine = event_engine
+        if "world" in self.state:
+            ensure_world_clock(self.state["world"])
+
+    def advance_time_minutes(self, *, minutes: int = 1) -> str:
+        """Precision mode — advance in-world clock by minutes."""
+        world = self.state["world"]
+        ensure_world_clock(world)
+        return advance_world_minutes(world, minutes)
+
+    def advance_time_to_morning_minutes(self) -> str:
+        world = self.state["world"]
+        ensure_world_clock(world)
+        return advance_to_morning(world)
 
     def advance_time(self, *, steps: int = 1) -> str:
         world = self.state["world"]

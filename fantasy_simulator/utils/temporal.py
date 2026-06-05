@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 from typing import Any, Literal
 
-TemporalMode = Literal["classic", "nex"]
+TemporalMode = Literal["classic", "nex", "precision"]
 
 MomentKind = Literal[
     "glance",
@@ -29,6 +29,19 @@ _NEX_BASE_STEPS: dict[MomentKind, int] = {
     "travel": 1,
     "rest": 0,
     "combat": 1,
+    "unknown": 1,
+}
+
+# Precision: in-world minutes per simulation beat (minimum 1 for physical acts).
+_PRECISION_MINUTES: dict[MomentKind, int] = {
+    "glance": 0,
+    "step": 1,
+    "talk": 5,
+    "investigate": 8,
+    "explore": 5,
+    "travel": 15,
+    "rest": 0,
+    "combat": 3,
     "unknown": 1,
 }
 
@@ -103,16 +116,38 @@ def resolve_time_steps(
 
     classic: always 1 cycle step (legacy turn feel).
     nex: intent-based steps scaled by time_scale.
+    precision: always 0 cycle steps (minutes via resolve_time_minutes).
     """
     kind = classify_moment(action)
     if temporal_mode == "classic":
         return 1, kind, False
+    if temporal_mode == "precision":
+        return 0, kind, kind == "rest"
 
     if kind == "rest":
         return 0, kind, True
 
     base = _NEX_BASE_STEPS.get(kind, 1)
     scaled = int(round(base * max(0.0, time_scale)))
+    return scaled, kind, False
+
+
+def resolve_time_minutes(
+    action: str,
+    *,
+    temporal_mode: TemporalMode = "classic",
+    time_scale: float = 1.0,
+) -> tuple[int, MomentKind, bool]:
+    """Return (minutes, kind, rest_until_morning) for precision mode."""
+    kind = classify_moment(action)
+    if temporal_mode != "precision":
+        return 0, kind, False
+    if kind == "rest":
+        return 0, kind, True
+    base = _PRECISION_MINUTES.get(kind, 1)
+    scaled = int(round(base * max(0.0, time_scale)))
+    if kind in ("step", "unknown") and scaled < 1:
+        scaled = 1
     return scaled, kind, False
 
 
@@ -149,9 +184,19 @@ def somatic_presence_line(
     return f"[체감] {r.choice(pool)}"
 
 
+def format_clock_line(world: dict[str, Any]) -> str | None:
+    """In-world clock for precision / Nex HUD."""
+    minute = world.get("minute_of_day")
+    if minute is None:
+        return None
+    from utils.world_clock import format_clock
+
+    return f"[시각 {format_clock(int(minute))}]"
+
+
 def format_moment_label(kind: MomentKind, *, temporal_mode: TemporalMode) -> str | None:
-    """Optional debug/meta label for Nex moments (not shown in classic)."""
-    if temporal_mode != "nex":
+    """Optional debug/meta label for Nex / precision moments (not classic)."""
+    if temporal_mode not in ("nex", "precision"):
         return None
     labels = {
         "glance": "주변을 살핀다",

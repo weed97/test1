@@ -52,6 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Nex 시간 모델 (의도별 시간·[체감] presence; 기본은 Classic 턴)",
     )
+    p.add_argument(
+        "--precision",
+        action="store_true",
+        help="초정밀 분 단위 시계 (비트당 약 1–15분·[시각 HH:MM]; Classic 테스트와 분리)",
+    )
     return p
 
 
@@ -78,7 +83,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("Exported world_state.json from state/ shards.")
         return 0
 
-    temporal_mode = "nex" if args.nex else "classic"
+    if args.precision and args.nex:
+        print("warning: --precision overrides --nex", file=sys.stderr)
+    temporal_mode = (
+        "precision" if args.precision else ("nex" if args.nex else "classic")
+    )
     session = GameSession.from_root(
         args.root, mode=args.mode, seed=args.seed, temporal_mode=temporal_mode
     )
@@ -113,7 +122,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     for _ in range(args.turns):
         result = session.run_turn(action=action, temporal_mode=temporal_mode)
-        print(f"\n[Turn {result['turn']}] Day {result['day']} — {result['time']} ({result['mode']})")
+        clock = result.get("clock") or ""
+        clock_bit = f" {clock}" if clock else ""
+        print(
+            f"\n[Turn {result['turn']}] Day {result['day']} — {result['time']}{clock_bit} ({result['mode']})"
+        )
         for line in result["lines"]:
             print(f"  {line}")
         if action == "combat" and not session.state.get("combat"):

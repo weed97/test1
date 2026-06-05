@@ -159,7 +159,11 @@ def format_user_error(exc: Exception) -> str:
 
 
 def print_turn_result(result: dict[str, Any]) -> None:
-    print(f"\n[Turn {result['turn']}] Day {result['day']} — {result['time']} ({result['mode']})")
+    clock = result.get("clock") or ""
+    clock_bit = f" {clock}" if clock else ""
+    print(
+        f"\n[Turn {result['turn']}] Day {result['day']} — {result['time']}{clock_bit} ({result['mode']})"
+    )
     for line in result["lines"]:
         print(f"  {line}")
 
@@ -171,6 +175,8 @@ def run_interactive_loop(session: GameSession) -> int:
     print(f"모드: {session.mode} · 시간: {temporal}")
     if temporal == "nex":
         print("Nex: look/listen은 시간 정지 + [체감], rest는 아침까지 휴식")
+    elif temporal == "precision":
+        print("Precision: 비트당 분 단위 진행 + [시각 HH:MM]·[체감], rest는 06:00까지")
     print("명령어: explore · talk <npc> · investigate · quest · help · quit")
     if setup_readline_completer(session.manager.base_dir):
         print("Tab: 명령어 자동완성")

@@ -41,9 +41,11 @@ class TurnResult:
     decision: dict[str, Any] | None = None
     moment_kind: str | None = None
     time_steps: int = 1
+    minutes_advanced: int = 0
+    clock: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "turn": self.turn,
             "day": self.day,
             "time": self.time,
@@ -52,4 +54,8 @@ class TurnResult:
             "decision": self.decision,
             "moment_kind": self.moment_kind,
             "time_steps": self.time_steps,
+            "minutes_advanced": self.minutes_advanced,
         }
+        if self.clock:
+            out["clock"] = self.clock
+        return out

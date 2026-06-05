@@ -11,8 +11,14 @@ from utils.world_tension import format_tension_line
 def format_summary(state: dict[str, Any]) -> str:
     """One-page status summary."""
     world = state.get("world", {})
+    clock = ""
+    if "minute_of_day" in world:
+        from utils.world_clock import format_clock
+
+        clock = f" · {format_clock(int(world['minute_of_day']))}"
     lines = [
-        f"{world.get('name', 'Eldoria')} — Day {world.get('day', '?')} ({world.get('time_of_day', '?')})",
+        f"{world.get('name', 'Eldoria')} — Day {world.get('day', '?')} "
+        f"({world.get('time_of_day', '?')}{clock})",
         f"Location: {world.get('location', '?')}",
         f"Weather: {world.get('weather', '?')} | {format_tension_line(state)}",
         f"Gold: {state.get('inventory', {}).get('party_gold', 0)}",

@@ -112,7 +112,7 @@ Active combat always routes to Codex.
 | `classic` (default) | One cycle step per `run_turn` — tests & batch |
 | `nex` | Intent-based steps (`look` = 0, `talk`/`explore` = 1, `rest` = jump to morning) + optional `[체감]` line |
 
-`GameSession.run_turn(..., temporal_mode=..., time_scale=...)`. CLI: `--nex`. See [design/11_TEMPORAL_MODEL.md](design/11_TEMPORAL_MODEL.md).
+`GameSession.run_turn(..., temporal_mode=..., time_scale=...)`. CLI: `--nex`, `--precision`. See [design/11_TEMPORAL_MODEL.md](design/11_TEMPORAL_MODEL.md), [design/12_MICRO_TIME_AND_COCREATION.md](design/12_MICRO_TIME_AND_COCREATION.md).
 
 ## Testing
 

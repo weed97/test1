@@ -70,5 +70,11 @@
   "quest_talked_npcs": [],
   "well_anomaly": true,
   "heard_plaza_song": true,
-  "child_warning_heard": true
+  "child_warning_heard": true,
+  "world_building": {
+    "contributor_tier": "player",
+    "pending_contributions": [],
+    "approved_seeds": [],
+    "workshop_unlocked": false
+  }
 }

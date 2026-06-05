@@ -7,7 +7,14 @@ from typing import Any
 
 from utils.llm_errors import LLMCallError
 from utils.llm_router import decide_model_and_prompt, route_consistency_check
-from utils.temporal import format_moment_label, resolve_time_steps, somatic_presence_line
+from utils.temporal import (
+    format_clock_line,
+    format_moment_label,
+    resolve_time_minutes,
+    resolve_time_steps,
+    somatic_presence_line,
+)
+from utils.world_clock import ensure_world_clock
 from utils.turn_context import TurnContext, TurnResult
 
 PROMPT_NARRATOR = "narrator_claude.md"
@@ -212,21 +219,39 @@ def process_player_action(ctx: TurnContext) -> dict[str, Any]:
     return {"decision": decision, "results": results, "lines": outcome_lines}
 
 
-def _advance_world_time(ctx: TurnContext) -> tuple[str, int, str]:
-    """Apply temporal model; return (time_label, steps_applied, moment_kind)."""
+def _advance_world_time(ctx: TurnContext) -> tuple[str, int, int, str]:
+    """Apply temporal model; return (time_label, cycle_steps, minutes, moment_kind)."""
     steps, kind, rest_until_morning = resolve_time_steps(
         ctx.action,
         temporal_mode=ctx.temporal_mode,
         time_scale=ctx.time_scale,
     )
+    minutes, _, rest_minutes = resolve_time_minutes(
+        ctx.action,
+        temporal_mode=ctx.temporal_mode,
+        time_scale=ctx.time_scale,
+    )
+    rest_until_morning = rest_until_morning or rest_minutes
+
+    if ctx.temporal_mode == "precision":
+        ensure_world_clock(ctx.state["world"])
+        if rest_until_morning:
+            label = ctx.rules.advance_time_to_morning_minutes()
+            return label, 0, 0, kind
+        if minutes > 0:
+            label = ctx.rules.advance_time_minutes(minutes=minutes)
+            return label, 0, minutes, kind
+        label = ctx.state["world"].get("time_of_day", "afternoon")
+        return label, 0, 0, kind
+
     if rest_until_morning:
         label = ctx.rules.advance_time_to_morning()
-        return label, 0, kind
+        return label, 0, 0, kind
     if steps > 0:
         label = ctx.rules.advance_time(steps=steps)
     else:
         label = ctx.state["world"].get("time_of_day", "afternoon")
-    return label, steps, kind
+    return label, steps, 0, kind
 
 
 def execute_turn(
@@ -238,12 +263,16 @@ def execute_turn(
     """Full turn: advance time, optional combat start, then process_player_action."""
     from utils.cli import resolve_enemy_id
 
-    time_label, time_steps, moment_kind = _advance_world_time(ctx)
+    time_label, time_steps, minutes_advanced, moment_kind = _advance_world_time(ctx)
     lines: list[str] = []
+    if ctx.temporal_mode == "precision":
+        clock = format_clock_line(ctx.state["world"])
+        if clock:
+            lines.append(clock)
     moment_note = format_moment_label(moment_kind, temporal_mode=ctx.temporal_mode)
     if moment_note:
         lines.append(moment_note)
-    if ctx.include_presence and ctx.temporal_mode == "nex":
+    if ctx.include_presence and ctx.temporal_mode in ("nex", "precision"):
         somatic = somatic_presence_line(ctx.state, rng=getattr(ctx.rules, "rng", None))
         if somatic:
             lines.append(somatic)
@@ -287,6 +316,8 @@ def execute_turn(
             lines=lines,
             moment_kind=moment_kind,
             time_steps=time_steps,
+            minutes_advanced=minutes_advanced,
+            clock=format_clock_line(ctx.state["world"]),
         )
 
     proc = process_player_action(ctx)
@@ -311,4 +342,6 @@ def execute_turn(
         decision=proc.get("decision"),
         moment_kind=moment_kind,
         time_steps=time_steps,
+        minutes_advanced=minutes_advanced,
+        clock=format_clock_line(ctx.state["world"]),
     )
