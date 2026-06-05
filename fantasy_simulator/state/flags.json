@@ -72,9 +72,19 @@
   "heard_plaza_song": true,
   "child_warning_heard": true,
   "world_building": {
-    "contributor_tier": "player",
+    "contributor_tier": "observer",
+    "contribution_score": 0,
+    "detail_level": 1,
+    "workshop_unlocked": false,
     "pending_contributions": [],
     "approved_seeds": [],
-    "workshop_unlocked": false
+    "completed_goals": [],
+    "permissions_override": [],
+    "stats": {
+      "submitted": 0,
+      "approved": 0,
+      "rejected": 0,
+      "endorsements_received": 0
+    }
   }
 }

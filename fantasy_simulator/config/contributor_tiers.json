@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "score_sources": {
+    "play_hour_precision": 2,
+    "main_story_phase_complete": 120,
+    "approved_rumor": 25,
+    "approved_dialogue": 40,
+    "approved_quest_hook": 80,
+    "approved_event_seed": 150,
+    "approved_branching_seed": 280,
+    "peer_endorsement": 15,
+    "arbiter_quality_bonus_max": 50
+  },
+  "tiers": [
+    {
+      "id": "observer",
+      "label": "관찰자",
+      "min_score": 0,
+      "detail_level": 1,
+      "permissions": [
+        "vote_rumor",
+        "flag_typo",
+        "view_workshop"
+      ],
+      "seed_limits": {
+        "max_fields": 3,
+        "max_dialogue_lines": 0,
+        "max_branches": 0,
+        "requires_arbiter": true
+      }
+    },
+    {
+      "id": "scribe",
+      "label": "필경사",
+      "min_score": 100,
+      "detail_level": 2,
+      "permissions": [
+        "vote_rumor",
+        "flag_typo",
+        "view_workshop",
+        "submit_rumor",
+        "submit_bark"
+      ],
+      "seed_limits": {
+        "max_fields": 8,
+        "max_dialogue_lines": 2,
+        "max_branches": 0,
+        "requires_arbiter": true
+      }
+    },
+    {
+      "id": "chronicler",
+      "label": "연대기가",
+      "min_score": 500,
+      "detail_level": 3,
+      "permissions": [
+        "vote_rumor",
+        "flag_typo",
+        "view_workshop",
+        "submit_rumor",
+        "submit_bark",
+        "submit_quest_hook",
+        "edit_own_submissions"
+      ],
+      "seed_limits": {
+        "max_fields": 16,
+        "max_dialogue_lines": 6,
+        "max_branches": 1,
+        "requires_arbiter": true
+      }
+    },
+    {
+      "id": "architect",
+      "label": "건축가",
+      "min_score": 2000,
+      "detail_level": 4,
+      "permissions": [
+        "vote_rumor",
+        "flag_typo",
+        "view_workshop",
+        "submit_rumor",
+        "submit_bark",
+        "submit_quest_hook",
+        "edit_own_submissions",
+        "submit_event_seed",
+        "attach_zone_flavor",
+        "mentor_scribe"
+      ],
+      "seed_limits": {
+        "max_fields": 32,
+        "max_dialogue_lines": 12,
+        "max_branches": 3,
+        "requires_arbiter": true
+      }
+    },
+    {
+      "id": "worldwright",
+      "label": "세계필자",
+      "min_score": 8000,
+      "detail_level": 5,
+      "permissions": [
+        "vote_rumor",
+        "flag_typo",
+        "view_workshop",
+        "submit_rumor",
+        "submit_bark",
+        "submit_quest_hook",
+        "edit_own_submissions",
+        "submit_event_seed",
+        "attach_zone_flavor",
+        "mentor_scribe",
+        "submit_branching_seed",
+        "propose_faction_rumor",
+        "fast_track_review"
+      ],
+      "seed_limits": {
+        "max_fields": 64,
+        "max_dialogue_lines": 24,
+        "max_branches": 8,
+        "requires_arbiter": false
+      }
+    }
+  ],
+  "growth_goals": [
+    {
+      "id": "first_workshop_visit",
+      "title": "기록 비석에 손을 댄다",
+      "min_tier": "observer",
+      "reward_score": 10,
+      "unlock_permission": "view_workshop",
+      "check": { "type": "flag", "path": "world_building.workshop_unlocked", "equals": true }
+    },
+    {
+      "id": "first_approved_rumor",
+      "title": "마을에 첫 소문을 심다",
+      "min_tier": "scribe",
+      "reward_score": 25,
+      "unlock_permission": "submit_rumor",
+      "check": { "type": "approved_count", "kind": "rumor", "min": 1 }
+    },
+    {
+      "id": "dialogue_craft_6",
+      "title": "여섯 줄의 대사로 장면을 채우다",
+      "min_tier": "chronicler",
+      "reward_score": 40,
+      "detail_gate": 3,
+      "check": { "type": "seed_detail", "min_dialogue_lines": 6 }
+    },
+    {
+      "id": "branching_seed",
+      "title": "갈래길이 있는 사건을 설계하다",
+      "min_tier": "architect",
+      "reward_score": 100,
+      "detail_gate": 4,
+      "check": { "type": "approved_count", "kind": "branching_seed", "min": 1 }
+    },
+    {
+      "id": "worldwright_path",
+      "title": "세계필자의 문을 연다",
+      "min_tier": "architect",
+      "reward_score": 200,
+      "detail_gate": 5,
+      "check": { "type": "score_at_least", "min_score": 8000 }
+    }
+  ]
+}

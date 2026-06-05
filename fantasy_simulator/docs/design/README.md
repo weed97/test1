@@ -21,12 +21,14 @@
 | [11_TEMPORAL_MODEL.md](11_TEMPORAL_MODEL.md) | **턴 vs 초몰입** — 3층 시간·RTwP·API 로드맵 |
 | [12_MICRO_TIME_AND_COCREATION.md](12_MICRO_TIME_AND_COCREATION.md) | **분 단위 시계**·공동 창조 루프 |
 | [13_ISEKAI_AFFORDANCES.md](13_ISEKAI_AFFORDANCES.md) | 현실 불가 행위·이세계 계약 |
+| [14_CONTRIBUTION_PERMISSIONS.md](14_CONTRIBUTION_PERMISSIONS.md) | **기여도→권한**·성장 목표·디테일 게이트 |
 
 ## 현재 구현과의 관계
 
 - **이미 플레이 가능:** 애쉬포인트 변경, `smoke_on_the_mountain` → `ashen_seal_cracking` 3단계 메인 스토리, 세력 평판, 긴장도, 150+ 이벤트 씨앗. 플레이 시간: **Classic** (테스트·라우트), **Nex** (`--nex`), **Precision** (`--precision`, 분 시계).
 - **설계만 있는 레이어:** BCI 읽기/쓰기, Mnemosyne 샤드 AI, 육감·체화, R3 현실 동형 — `flags.bci_meta` + `09`·`10` 문서.
-- **스키마:** `config/vr_meta.schema.json`, `config/bci_meta.schema.json`
+- **스키마:** `config/vr_meta.schema.json`, `config/bci_meta.schema.json`, `config/contributor_meta.schema.json`
+- **월드빌딩:** `utils/contrib_permissions.py` — 기여도·티어·`can()` (T1 훅)
 
 ## 관련 문서
 

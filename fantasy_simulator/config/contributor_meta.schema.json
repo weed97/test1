@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContributorMeta",
+  "description": "Per-player world-building contribution profile (flags.world_building)",
+  "type": "object",
+  "properties": {
+    "contributor_tier": {
+      "type": "string",
+      "enum": ["observer", "scribe", "chronicler", "architect", "worldwright"]
+    },
+    "contribution_score": { "type": "integer", "minimum": 0 },
+    "detail_level": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "workshop_unlocked": { "type": "boolean" },
+    "pending_contributions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/contribution_entry" }
+    },
+    "approved_seeds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/contribution_entry" }
+    },
+    "completed_goals": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "permissions_override": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "stats": {
+      "type": "object",
+      "properties": {
+        "submitted": { "type": "integer", "minimum": 0 },
+        "approved": { "type": "integer", "minimum": 0 },
+        "rejected": { "type": "integer", "minimum": 0 },
+        "endorsements_received": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "contribution_entry": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "rumor",
+            "bark",
+            "quest_hook",
+            "event_seed",
+            "branching_seed",
+            "zone_flavor"
+          ]
+        },
+        "detail_level": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "dialogue_lines": { "type": "integer", "minimum": 0 },
+        "branch_count": { "type": "integer", "minimum": 0 },
+        "field_count": { "type": "integer", "minimum": 0 },
+        "quality_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "score_awarded": { "type": "integer", "minimum": 0 },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected"]
+        }
+      }
+    }
+  }
+}
