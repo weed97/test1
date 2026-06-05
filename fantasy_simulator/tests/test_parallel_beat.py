@@ -14,6 +14,7 @@ from tests.fixtures import isolated_game_root  # noqa: E402
 from utils.ecology_objects import normalize_agent  # noqa: E402
 from utils.field_agents import get_agents  # noqa: E402
 from utils.parallel_beat import (  # noqa: E402
+    attach_presentation_schedule,
     parallel_beat_enabled,
     resolve_and_commit_field_beat,
     run_world_parallel_beat,
@@ -115,6 +116,30 @@ class ParallelBeatTests(unittest.TestCase):
             )
             self.assertEqual(int(target["hp"]), 30 - dmg_a - dmg_b)
 
+    def test_presentation_stagger_by_pack(self) -> None:
+        with isolated_game_root() as root:
+            rng = random.Random(3)
+            agents_by_id = {
+                "a1": {
+                    "instance_id": "a1",
+                    "pack": {"pack_id": "p1"},
+                },
+                "a2": {
+                    "instance_id": "a2",
+                    "pack": {"pack_id": "p2"},
+                },
+            }
+            plans = [
+                {"actor_id": "a1", "action": "wander"},
+                {"actor_id": "a2", "action": "wander"},
+            ]
+            sched = attach_presentation_schedule(
+                plans, agents_by_id, base_dir=root, rng=rng
+            )
+            self.assertEqual(len(sched), 2)
+            delays = {e["actor_id"]: e["delay_ms"] for e in sched}
+            self.assertNotEqual(delays["a1"], delays["a2"])
+
     def test_world_parallel_beat_sets_mode(self) -> None:
         with isolated_game_root() as root:
             session = GameSession.from_root(root, mode="rule", seed=11)
@@ -125,6 +150,8 @@ class ParallelBeatTests(unittest.TestCase):
             eco = flags.setdefault("ecology", {})
             self.assertEqual(eco.get("beat_mode"), "parallel")
             self.assertIn("last_parallel_beat", eco)
+            beat = eco["last_parallel_beat"]
+            self.assertIn("presentation_schedule", beat)
             self.assertTrue(lines or get_agents(session.state))
 
 

@@ -8,5 +8,14 @@
     "movement_conflict": "higher_priority_wins"
   },
   "macro_lanes": ["settlement", "civilization_coupling", "world_conflicts"],
-  "subticks_per_moment": 1
+  "subticks_per_moment": 1,
+  "presentation": {
+    "stagger_ms_min": 0,
+    "stagger_ms_max": 480,
+    "slot_ms": 72,
+    "group_by_pack": true,
+    "jitter_per_actor_ms": 40,
+    "combat_sync_window_ms": 90,
+    "shuffle_wave_order": true
+  }
 }

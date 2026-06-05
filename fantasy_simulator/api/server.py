@@ -324,6 +324,9 @@ def world_agents(
     agents = agents_manifest(
         session.state, mid, base_dir=root, instance_id=instance_id
     )
+    from utils.parallel_beat import ecology_beat_presentation
+
+    presentation = ecology_beat_presentation(session.state)
     return {
         "api_version": API_VERSION,
         "session_id": session_id,
@@ -331,6 +334,7 @@ def world_agents(
         "ecology_enabled": ecology_enabled(session.state),
         "agents": agents,
         "schema": "ecology_agent",
+        "beat_presentation": presentation,
     }
 
 

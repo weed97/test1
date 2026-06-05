@@ -43,6 +43,109 @@ def _plan_priority(agent: dict[str, Any], *, base_dir: str | Path) -> int:
     return _iq(agent) + int(pack.get("dominance", 0)) + int(agent.get("evolution_tier", 1)) * 5
 
 
+def _pack_group_key(agent: dict[str, Any] | None, actor_id: str) -> str:
+    if not agent:
+        return f"solo:{actor_id}"
+    pack = agent.get("pack") or {}
+    pid = pack.get("pack_id")
+    if pid:
+        return f"pack:{pid}"
+    return f"solo:{actor_id}"
+
+
+def attach_presentation_schedule(
+    plans: list[dict[str, Any]],
+    agents_by_id: dict[str, dict[str, Any]],
+    *,
+    base_dir: str | Path,
+    rng: random.Random,
+) -> list[dict[str, Any]]:
+    """Godot hints: same sim beat, staggered motion so agents do not feel lock-step."""
+    pres = load_parallel_config(base_dir).get("presentation", {})
+    min_ms = int(pres.get("stagger_ms_min", 0))
+    max_ms = int(pres.get("stagger_ms_max", 480))
+    slot_ms = int(pres.get("slot_ms", 72))
+    jitter = int(pres.get("jitter_per_actor_ms", 40))
+    combat_sync = int(pres.get("combat_sync_window_ms", 90))
+    group_by_pack = bool(pres.get("group_by_pack", True))
+    shuffle_waves = bool(pres.get("shuffle_wave_order", True))
+
+    group_to_wave: dict[str, int] = {}
+    wave_ids: list[int] = []
+    for pl in plans:
+        actor = agents_by_id.get(str(pl.get("actor_id", "")))
+        gkey = _pack_group_key(actor, str(pl.get("actor_id", ""))) if group_by_pack else str(pl["actor_id"])
+        if gkey not in group_to_wave:
+            group_to_wave[gkey] = len(wave_ids)
+            wave_ids.append(group_to_wave[gkey])
+
+    wave_order = list(wave_ids)
+    if shuffle_waves:
+        rng.shuffle(wave_order)
+    wave_slot = {w: i for i, w in enumerate(wave_order)}
+
+    # Shared target → narrow combat band (hits feel simultaneous, not wander timing).
+    target_band: dict[str, int] = {}
+    combat_idx = 0
+    for pl in plans:
+        if pl.get("action") in ("attack", "skill") and pl.get("target_id"):
+            tid = str(pl["target_id"])
+            if tid not in target_band:
+                target_band[tid] = combat_idx
+                combat_idx += 1
+
+    schedule: list[dict[str, Any]] = []
+    for pl in plans:
+        actor_id = str(pl["actor_id"])
+        actor = agents_by_id.get(actor_id)
+        gkey = _pack_group_key(actor, actor_id) if group_by_pack else actor_id
+        wave = group_to_wave.get(gkey, 0)
+        slot = wave_slot.get(wave, 0)
+        delay = min(max_ms, min_ms + slot * slot_ms + rng.randint(0, max(0, jitter)))
+
+        act = pl.get("action")
+        if act in ("attack", "skill") and pl.get("target_id"):
+            tid = str(pl["target_id"])
+            band = target_band.get(tid, 0)
+            delay = min(max_ms, min_ms + band * max(12, combat_sync // 4) + rng.randint(0, combat_sync))
+            pl["presentation_group"] = f"combat:{tid}"
+        else:
+            pl["presentation_group"] = gkey
+
+        pl["presentation_delay_ms"] = delay
+        pl["presentation_wave"] = wave
+        schedule.append(
+            {
+                "actor_id": actor_id,
+                "action": act,
+                "target_id": pl.get("target_id"),
+                "delay_ms": delay,
+                "wave": wave,
+                "group": pl["presentation_group"],
+            }
+        )
+
+    schedule.sort(key=lambda e: int(e.get("delay_ms", 0)))
+    return schedule
+
+
+def ecology_beat_presentation(state: dict[str, Any]) -> dict[str, Any] | None:
+    """Last beat presentation schedule for clients (Godot tween offsets)."""
+    eco = state.get("flags", {}).get("ecology", {})
+    beat = eco.get("last_parallel_beat")
+    if not isinstance(beat, dict):
+        return None
+    sched = beat.get("presentation_schedule")
+    if not sched:
+        return None
+    return {
+        "beat_mode": eco.get("beat_mode", "parallel"),
+        "map_id": beat.get("map_id"),
+        "duration_ms": beat.get("presentation_duration_ms"),
+        "schedule": sched,
+    }
+
+
 def plan_agent_beat(
     agent: dict[str, Any],
     agents_by_id: dict[str, dict[str, Any]],
@@ -312,6 +415,11 @@ def tick_field_ecology_parallel(
         if pl:
             plans.append(pl)
 
+    presentation = attach_presentation_schedule(
+        plans, agents_by_id, base_dir=base_dir, rng=r
+    )
+    duration_ms = max((int(e["delay_ms"]) for e in presentation), default=0)
+
     lines = resolve_and_commit_field_beat(
         plans,
         agents_by_id,
@@ -326,6 +434,8 @@ def tick_field_ecology_parallel(
         "map_id": map_id,
         "plans": len(plans),
         "survivors": len(agents_by_id),
+        "presentation_schedule": presentation,
+        "presentation_duration_ms": duration_ms,
     }
     return lines
 
