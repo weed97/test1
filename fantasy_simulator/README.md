@@ -4,12 +4,26 @@ Cursor 멀티 모델 운영을 위한 판타지 시뮬레이터.
 **`world_state.json`은 최소 상태 hub**이며, 상세 서사는 `lore/`·`events/`에 분리됩니다.
 
 > 운영: [docs/CURSOR_MULTI_MODEL.md](docs/CURSOR_MULTI_MODEL.md) · 콘텐츠: [docs/LORE_AND_EVENTS.md](docs/LORE_AND_EVENTS.md)  
-> **이세계 풀다이브 VR 세계 설계:** [docs/design/README.md](docs/design/README.md)
+> **이세계 풀다이브 VR 세계 설계:** [docs/design/README.md](docs/design/README.md)  
+> **Steam + Godot:** [docs/STEAM_GODOT.md](docs/STEAM_GODOT.md) · Godot 스텁: [client/godot/README.md](client/godot/README.md)
+
+## Steam / Godot API (G0)
+
+Godot는 그래픽만; 규칙·스토리는 이 서버가 처리합니다.
+
+```bash
+pip install -r requirements-api.txt
+uvicorn api.server:app --host 127.0.0.1 --port 8765
+```
+
+`POST /v1/session/new` → `POST /v1/turn` — 응답의 `lines`, `world`, `clock`을 UI에 바인딩.
 
 ## 프로젝트 구조
 
 ```
 fantasy_simulator/
+├── api/                      # FastAPI — Godot / Steam 클라이언트용
+├── client/godot/             # Godot 연동 가이드 + GDScript 예시
 ├── world_state.json          # ★ 최소 상태 hub (Cursor @ 참조)
 ├── state/                    # canonical shards
 ├── lore/                     # NPC·지역 상세 (on-demand)
