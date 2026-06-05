@@ -50,6 +50,45 @@ class MainStoryAllianceRouteTests(unittest.TestCase):
                 {"ally_village", "seek_truth", "pursue_power", "exploit_chaos", "stay_neutral"},
             )
 
+    def test_phase3_alliance_climax_requires_phase1_and_path2(self) -> None:
+        with isolated_game_root() as root:
+            engine = MainStoryEngine(root)
+            state = {
+                "flags": {
+                    "phase3_climax_ready": True,
+                    "main_story": {
+                        "id": "ashen_seal_cracking",
+                        "phase": 3,
+                        "choices_made": ["pursue_power", "path_alliance", "final_break"],
+                    },
+                },
+                "world": {"tension": 60, "location": "관측탑"},
+            }
+            seed = {
+                "requires_main_story_choices": ["pursue_power", "path_alliance"],
+                "requires_flags": ["phase3_climax_ready"],
+            }
+            self.assertTrue(engine.meets_story_requirements(state, seed))
+            state["flags"]["main_story"]["choices_made"] = [
+                "ally_village",
+                "path_alliance",
+                "final_reinforce",
+            ]
+            self.assertFalse(engine.meets_story_requirements(state, seed))
+
+    def test_phase3_alliance_routes_cover_all_phase1_branches(self) -> None:
+        with isolated_game_root() as root:
+            story = next(
+                s
+                for s in load_json(root / "events" / "main_stories.json")["stories"]
+                if s["id"] == "ashen_seal_cracking"
+            )
+            routes = story.get("phase3_alliance_routes", {})
+            self.assertEqual(
+                set(routes.keys()),
+                {"ally_village", "seek_truth", "pursue_power", "exploit_chaos", "stay_neutral"},
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

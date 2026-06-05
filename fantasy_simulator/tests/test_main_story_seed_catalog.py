@@ -32,6 +32,15 @@ class MainStorySeedCatalogTests(unittest.TestCase):
                         missing.append(f"{flow_key}:climax:{sid}")
             self.assertEqual(missing, [], f"unknown seed ids: {missing}")
 
+    def test_progress_sources_reference_known_seeds(self) -> None:
+        with isolated_game_root() as root:
+            catalog = ContentLoader(root).load_event_seeds()
+            stories = load_json(root / "events" / "main_stories.json").get("stories", [])
+            story = next(s for s in stories if s["id"] == "ashen_seal_cracking")
+            progress_ids = story.get("progress_sources", {}).get("seed_ids", {})
+            missing = [sid for sid in progress_ids if sid not in catalog]
+            self.assertEqual(missing, [], f"unknown progress seed ids: {missing}")
+
 
 if __name__ == "__main__":
     unittest.main()

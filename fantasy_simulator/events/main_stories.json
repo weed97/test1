@@ -242,6 +242,33 @@
           "label": "은빛 십자 기사단"
         }
       },
+      "phase3_alliance_routes": {
+        "ally_village": {
+          "final_choice": "final_reinforce",
+          "choice_seed": "story_choice_final_reinforce",
+          "climax_seed": "phase3_climax_alliance_council"
+        },
+        "seek_truth": {
+          "final_choice": "final_reinforce",
+          "choice_seed": "story_choice_final_reinforce",
+          "climax_seed": "phase3_climax_alliance_wardens"
+        },
+        "pursue_power": {
+          "final_choice": "final_break",
+          "choice_seed": "story_choice_final_break",
+          "climax_seed": "phase3_climax_alliance_covenant"
+        },
+        "exploit_chaos": {
+          "final_choice": "final_chaos",
+          "choice_seed": "story_choice_final_chaos",
+          "climax_seed": "phase3_climax_alliance_merchants"
+        },
+        "stay_neutral": {
+          "final_choice": "final_reinforce",
+          "choice_seed": "story_choice_final_reinforce",
+          "climax_seed": "phase3_climax_alliance_knights"
+        }
+      },
       "phase2_climax_gate": {
         "required_count": 2,
         "conditions": [
@@ -442,7 +469,6 @@
           "story_seal_near_break": 12,
           "phase3_tower_alarm": 5,
           "phase3_faction_ultimatum": 6,
-          "phase3_climax_alliance": 12,
           "phase3_climax_neutral": 12,
           "phase3_climax_betrayal": 12
         },

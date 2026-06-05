@@ -105,22 +105,6 @@
       }
     },
     {
-      "id": "story_choice_alliance",
-      "title": "동맹의 맹세",
-      "summary": "세력들이 각각 깃발을 들이민다. 이제 한쪽을 골라야 한다.",
-      "seed_type": "main_story",
-      "main_plot_link": "ashen_seal_cracking",
-      "requires_action": ["talk", "explore"],
-      "location_zones": ["ashpoint", "forest", "tower"],
-      "requires_main_story_phase": 2,
-      "requires_not_flags": ["story_phase2_chosen"],
-      "weight": 25,
-      "outcome": {
-        "summary": "당신은 한 세력의 이름으로 맹세한다. 변경의 지도가 서서히 기울기 시작한다.",
-        "main_story_choice": "path_alliance"
-      }
-    },
-    {
       "id": "story_choice_neutral",
       "title": "균형 잡기",
       "summary": "어느 깃발 아래에도 서지 않겠다고 선언할 기회.",

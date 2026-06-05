@@ -135,6 +135,7 @@ class MainStoryEngine:
         lines.extend(self._check_phase2_exit(state, story, ms))
         lines.extend(self._check_phase3_exit(state, story, ms))
         if int(ms.get("progress", 0)) >= 100 and not ms.get("resolved_ending"):
+            # Phase 3: ending only after phase3_climax_done (via _complete_phase3 / climax seed).
             if int(ms.get("phase", 1)) >= 3 and not state.get("flags", {}).get("phase3_climax_done"):
                 pass
             else:
@@ -292,7 +293,6 @@ class MainStoryEngine:
             "pursue_power": "story_choice_covenant",
             "exploit_chaos": "story_choice_opportunist",
             "stay_neutral": "story_choice_stay_neutral",
-            "path_alliance": "story_choice_alliance",
             "path_neutral": "story_choice_neutral",
             "path_betrayal": "story_choice_betrayal",
             "final_reinforce": "story_choice_final_reinforce",
@@ -313,6 +313,11 @@ class MainStoryEngine:
         seed_map = self._choice_seed_map()
         legacy = story.get("legacy_choice_ids", {})
         for cid in blocked:
+            if cid == "path_alliance":
+                for sid in self._alliance_branch_seed_ids(story):
+                    while sid in pending:
+                        pending.remove(sid)
+                continue
             resolved = legacy.get(cid, cid)
             sid = seed_map.get(resolved)
             if sid and sid in pending:
@@ -412,25 +417,7 @@ class MainStoryEngine:
         return lines
 
     def _climax_conditions_met(self, state: dict[str, Any], story: dict[str, Any], ms: dict[str, Any]) -> tuple[int, list[str]]:
-        gate = story.get("phase1_climax_gate", {})
-        conditions = gate.get("conditions", [])
-        flags = state.get("flags", {})
-        faction_rep = flags.get("faction_reputation", {})
-        met: list[str] = []
-        for cond in conditions:
-            cid = cond.get("id", "")
-            if cond.get("tension_min") is not None and get_tension(state) >= int(cond["tension_min"]):
-                met.append(cid)
-            elif cond.get("faction_rep_min") is not None:
-                if any(int(v) >= int(cond["faction_rep_min"]) for v in faction_rep.values()):
-                    met.append(cid)
-            elif cond.get("mountain_visits_min") is not None:
-                if int(ms.get("mountain_visits", 0)) >= int(cond["mountain_visits_min"]):
-                    met.append(cid)
-            elif cond.get("factions_contacted_min") is not None:
-                if len(ms.get("factions_contacted", [])) >= int(cond["factions_contacted_min"]):
-                    met.append(cid)
-        return len(met), met
+        return self._climax_gate_conditions_met(state, ms, story.get("phase1_climax_gate", {}))
 
     def _update_climax_readiness(
         self,
@@ -577,6 +564,71 @@ class MainStoryEngine:
             return {}
         return story.get("phase2_alliance_routes", {}).get(p1, {})
 
+    def _phase3_alliance_route_spec(self, story: dict[str, Any], ms: dict[str, Any]) -> dict[str, Any]:
+        p1 = self._primary_phase1_choice(ms)
+        if not p1:
+            return {}
+        return story.get("phase3_alliance_routes", {}).get(p1, {})
+
+    def _alliance_branch_seed_ids(self, story: dict[str, Any]) -> list[str]:
+        routes = story.get("phase2_alliance_routes", {})
+        return [spec["choice_seed"] for spec in routes.values() if spec.get("choice_seed")]
+
+    def _primary_phase2_choice(self, ms: dict[str, Any]) -> str | None:
+        for cid in ("path_alliance", "path_neutral", "path_betrayal"):
+            if cid in ms.get("choices_made", []):
+                return cid
+        return None
+
+    def _climax_gate_conditions_met(
+        self, state: dict[str, Any], ms: dict[str, Any], gate: dict[str, Any]
+    ) -> tuple[int, list[str]]:
+        conditions = gate.get("conditions", [])
+        flags = state.get("flags", {})
+        faction_rep = flags.get("faction_reputation", {})
+        met: list[str] = []
+        for cond in conditions:
+            cid = cond.get("id", "")
+            if cond.get("tension_min") is not None and get_tension(state) >= int(cond["tension_min"]):
+                met.append(cid)
+            elif cond.get("faction_rep_min") is not None:
+                if any(int(v) >= int(cond["faction_rep_min"]) for v in faction_rep.values()):
+                    met.append(cid)
+            elif cond.get("flag") and flags.get(cond["flag"]):
+                met.append(cid)
+            elif cond.get("mountain_visits_min") is not None:
+                if int(ms.get("mountain_visits", 0)) >= int(cond["mountain_visits_min"]):
+                    met.append(cid)
+            elif cond.get("factions_contacted_min") is not None:
+                if len(ms.get("factions_contacted", [])) >= int(cond["factions_contacted_min"]):
+                    met.append(cid)
+        return len(met), met
+
+    def _applicable_climax_seeds(self, story: dict[str, Any], ms: dict[str, Any], *, phase: int) -> list[str]:
+        flow = story.get(f"phase{phase}_flow", {})
+        all_ids = list(flow.get("climax_seeds", []))
+        p1 = self._primary_phase1_choice(ms)
+        p2 = self._primary_phase2_choice(ms)
+        if phase == 2:
+            if p2 == "path_alliance" and p1:
+                spec = story.get("phase2_alliance_routes", {}).get(p1, {})
+                sid = spec.get("climax_seed")
+                return [sid] if sid else []
+            if p2 == "path_neutral":
+                return ["phase2_climax_neutral"]
+            if p2 == "path_betrayal":
+                return ["phase2_climax_betrayal"]
+        if phase == 3:
+            if p2 == "path_alliance" and p1:
+                spec = story.get("phase3_alliance_routes", {}).get(p1, {})
+                sid = spec.get("climax_seed")
+                return [sid] if sid else []
+            if p2 == "path_neutral":
+                return ["phase3_climax_neutral"]
+            if p2 == "path_betrayal":
+                return ["phase3_climax_betrayal"]
+        return all_ids
+
     def _phase2_flow(self, story: dict[str, Any]) -> dict[str, Any]:
         return story.get("phase2_flow", {})
 
@@ -681,21 +733,7 @@ class MainStoryEngine:
     def _phase2_climax_conditions_met(
         self, state: dict[str, Any], story: dict[str, Any], ms: dict[str, Any]
     ) -> tuple[int, list[str]]:
-        gate = story.get("phase2_climax_gate", {})
-        conditions = gate.get("conditions", [])
-        flags = state.get("flags", {})
-        faction_rep = flags.get("faction_reputation", {})
-        met: list[str] = []
-        for cond in conditions:
-            cid = cond.get("id", "")
-            if cond.get("tension_min") is not None and get_tension(state) >= int(cond["tension_min"]):
-                met.append(cid)
-            elif cond.get("faction_rep_min") is not None:
-                if any(int(v) >= int(cond["faction_rep_min"]) for v in faction_rep.values()):
-                    met.append(cid)
-            elif cond.get("flag") and flags.get(cond["flag"]):
-                met.append(cid)
-        return len(met), met
+        return self._climax_gate_conditions_met(state, ms, story.get("phase2_climax_gate", {}))
 
     def _update_phase2_climax_readiness(
         self,
@@ -721,7 +759,7 @@ class MainStoryEngine:
         flags["phase2_climax_ready"] = True
         ms["phase2_subphase"] = "climax"
         pending = flags.setdefault("pending_events", [])
-        for seed_id in self._phase2_flow(story).get("climax_seeds", []):
+        for seed_id in self._applicable_climax_seeds(story, ms, phase=2):
             if seed_id not in pending:
                 pending.append(seed_id)
         return [f"[2단계 클라이맥스] 조건 {count}/{len(gate.get('conditions', []))} 충족 — 판의 균열 임박"]
@@ -863,21 +901,7 @@ class MainStoryEngine:
     def _phase3_climax_conditions_met(
         self, state: dict[str, Any], story: dict[str, Any], ms: dict[str, Any]
     ) -> tuple[int, list[str]]:
-        gate = story.get("phase3_climax_gate", {})
-        conditions = gate.get("conditions", [])
-        flags = state.get("flags", {})
-        faction_rep = flags.get("faction_reputation", {})
-        met: list[str] = []
-        for cond in conditions:
-            cid = cond.get("id", "")
-            if cond.get("tension_min") is not None and get_tension(state) >= int(cond["tension_min"]):
-                met.append(cid)
-            elif cond.get("faction_rep_min") is not None:
-                if any(int(v) >= int(cond["faction_rep_min"]) for v in faction_rep.values()):
-                    met.append(cid)
-            elif cond.get("flag") and flags.get(cond["flag"]):
-                met.append(cid)
-        return len(met), met
+        return self._climax_gate_conditions_met(state, ms, story.get("phase3_climax_gate", {}))
 
     def _update_phase3_climax_readiness(
         self,
@@ -903,7 +927,7 @@ class MainStoryEngine:
         flags["phase3_climax_ready"] = True
         ms["phase3_subphase"] = "climax"
         pending = flags.setdefault("pending_events", [])
-        for seed_id in self._phase3_flow(story).get("climax_seeds", []):
+        for seed_id in self._applicable_climax_seeds(story, ms, phase=3):
             if seed_id not in pending:
                 pending.append(seed_id)
         return [f"[3단계 클라이맥스] 조건 {count}/{len(gate.get('conditions', []))} 충족 — 결말의 문 임박"]

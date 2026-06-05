@@ -70,6 +70,12 @@ class ContentLoader:
             if sub:
                 pools.extend(entry.get("by_main_story_phase3", {}).get(sub, []))
 
+        faction = flags.get("alliance_faction") or ms.get("alliance_faction")
+        if faction:
+            by_faction = entry.get("by_alliance_faction", {})
+            if isinstance(by_faction, dict):
+                pools.extend(by_faction.get(faction, []))
+
         stage_key = f"{active}:{stage}" if active else ""
         stage_lines = entry.get("by_quest_stage", {}).get(stage_key, [])
         if stage_lines:
