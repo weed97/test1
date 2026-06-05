@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "game_modes": ["story", "ecology", "hybrid"],
+  "default_mode": "story",
+  "tick": {
+    "agents_per_zone_max": 24,
+    "moves_per_agent_per_beat": 1,
+    "combat_rounds_max": 3
+  },
+  "archetypes": {
+    "shadow_predator": {
+      "kind": "monster",
+      "character_ref": "silver_stalker",
+      "skills": ["shadow_lash", "ambush"],
+      "ai": "predator_patrol",
+      "traits": ["plunder_growth"],
+      "spawn_maps": ["forest_01"],
+      "territory_base_radius": 4
+    },
+    "village_elder_builder": {
+      "kind": "npc",
+      "character_ref": "elder_maren",
+      "skills": ["lay_stone", "rally"],
+      "ai": "builder",
+      "traits": ["settlement"],
+      "spawn_maps": ["ashpoint_01"]
+    },
+    "innkeeper_civilian": {
+      "kind": "npc",
+      "character_ref": "lilian_innkeeper",
+      "skills": ["call_help"],
+      "ai": "flee_predator",
+      "traits": ["civilian"],
+      "spawn_maps": ["ashpoint_01", "forest_01"]
+    }
+  },
+  "skills": {
+    "shadow_lash": {
+      "element": "shadow",
+      "power": 18,
+      "mana_cost": 14,
+      "range_tiles": 2,
+      "cooldown_beats": 2
+    },
+    "ambush": {
+      "element": "shadow",
+      "power": 8,
+      "mana_cost": 6,
+      "range_tiles": 1,
+      "cooldown_beats": 3,
+      "tags": ["first_strike"]
+    },
+    "lay_stone": {
+      "element": "earth",
+      "power": 0,
+      "mana_cost": 5,
+      "range_tiles": 0,
+      "cooldown_beats": 1,
+      "tags": ["build_progress"]
+    },
+    "rally": {
+      "element": "light",
+      "power": 0,
+      "mana_cost": 8,
+      "range_tiles": 3,
+      "cooldown_beats": 4,
+      "tags": ["buff_ally"]
+    },
+    "call_help": {
+      "element": "",
+      "power": 0,
+      "mana_cost": 0,
+      "range_tiles": 5,
+      "cooldown_beats": 5,
+      "tags": ["alert_player"]
+    }
+  },
+  "settlement_stages": [
+    { "id": "camp", "build_points": 10, "structure_tile": "camp" },
+    { "id": "hamlet", "build_points": 40, "structure_tile": "hamlet" },
+    { "id": "village", "build_points": 100, "structure_tile": "village" }
+  ],
+  "plunder_growth": {
+    "victims_per_tier": 2,
+    "power_bonus_per_victim": 3,
+    "max_absorbed_skills": 2
+  }
+}

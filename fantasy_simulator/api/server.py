@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from api.session_store import SessionStore, package_root, turn_payload
+from utils.field_agents import agents_manifest, ensure_ecology_seeds, ecology_enabled
 from utils.spatial import maps_manifest
 from utils.temporal import TemporalMode
 
@@ -41,6 +42,7 @@ class NewSessionRequest(BaseModel):
     seed: Optional[int] = None
     mode: Mode = "rule"
     temporal_mode: Temporal = "classic"
+    game_mode: str = Field("story", pattern="^(story|ecology|hybrid)$")
 
 
 class NewSessionResponse(BaseModel):
@@ -90,16 +92,35 @@ def health() -> HealthResponse:
 
 @app.post("/v1/session/new", response_model=NewSessionResponse)
 def new_session(body: NewSessionRequest) -> NewSessionResponse:
-    session_id, _ = _store.create(
+    session_id, session = _store.create(
         seed=body.seed,
         mode=body.mode,
         temporal_mode=body.temporal_mode,
     )
+    session.state.setdefault("flags", {})["game_mode"] = body.game_mode
+    if body.game_mode in ("ecology", "hybrid"):
+        ensure_ecology_seeds(session.state, base_dir=package_root())
+    session.manager.save(session.state)
     return NewSessionResponse(
         session_id=session_id,
         temporal_mode=body.temporal_mode,
         mode=body.mode,
     )
+
+
+@app.get("/v1/world/agents")
+def world_agents(session_id: str, map_id: str | None = None) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    mid = map_id or session.state.get("world", {}).get("map_id", "ashpoint_01")
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        "map_id": mid,
+        "ecology_enabled": ecology_enabled(session.state),
+        "agents": agents_manifest(session.state, mid),
+    }
 
 
 @app.get("/v1/world/maps")

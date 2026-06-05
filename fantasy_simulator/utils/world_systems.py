@@ -7,6 +7,7 @@ from typing import Any
 
 from utils.faction_engine import FactionEngine
 from utils.main_story_engine import MainStoryEngine
+from utils.field_agents import tick_field_ecology
 from utils.world_tension import passive_drift
 
 
@@ -27,4 +28,5 @@ def tick_world_systems(
 
     main = MainStoryEngine(base_dir)
     lines.extend(main.tick(state, turn=turn))
+    lines.extend(tick_field_ecology(state, base_dir=base_dir, rng=rng))
     return lines
