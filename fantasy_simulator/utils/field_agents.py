@@ -14,6 +14,7 @@ from utils.progression import (
     load_progression_config,
     spawn_evolved_monster,
 )
+from utils.agent_competition import attach_society, tick_agent_competition
 from utils.spatial import load_world_maps, pois_at_tile, resolve_zone_from_world
 
 
@@ -90,6 +91,7 @@ def spawn_archetype(
             "stage_id": "camp",
         }
     get_agents(state).append(instance)
+    attach_society(instance, base_dir=base_dir)
     return instance
 
 
@@ -111,7 +113,7 @@ def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None
                 tier=1,
                 base_dir=base_dir,
             )
-        spawn_evolved_monster(
+        agent, _ = spawn_evolved_monster(
             state,
             "shadow_beast",
             map_id="forest_01",
@@ -120,6 +122,11 @@ def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None
             tier=1,
             base_dir=base_dir,
         )
+        if agent:
+            attach_society(agent, base_dir=base_dir)
+        for a in agents_on_map(state, "forest_01"):
+            if a.get("evolution_chain") == "goblin":
+                attach_society(a, base_dir=base_dir)
     if "ashpoint_01" in maps_cfg:
         spawn_archetype(
             state, "village_elder_builder", map_id="ashpoint_01", x=45, y=35, base_dir=base_dir
@@ -156,6 +163,7 @@ def _tick_predator(
     maps: dict[str, Any],
     rng: random.Random,
     *,
+    state: dict[str, Any],
     base_dir: str | Path,
 ) -> list[str]:
     lines: list[str] = []
@@ -176,6 +184,18 @@ def _tick_predator(
                 prog_cfg = load_progression_config(base_dir)
                 xp = int(prog_cfg.get("evolution_xp_per_plunder", 15))
                 lines.extend(grant_evolution_xp(agent, xp, base_dir=base_dir))
+                from utils.agent_competition import get_civilization_state, load_civ_config
+
+                civ_id = agent.get("civilization_id")
+                if civ_id:
+                    ccfg = load_civ_config(base_dir)
+                    cdef = ccfg.get("civilizations", {}).get(civ_id, {})
+                    gain = int(cdef.get("prosperity_per_npc_plunder", 8))
+                    cs = get_civilization_state(state, civ_id)
+                    cs["prosperity"] = int(cs.get("prosperity", 0)) + gain
+                state.setdefault("flags", {}).setdefault("ecology", {})[
+                    "last_predator_npc_kill"
+                ] = True
                 others.remove(target)
             return lines
         _move_toward(agent, int(target["x"]), int(target["y"]), maps)
@@ -223,7 +243,11 @@ def tick_field_ecology(
     for agent in list(agents):
         ai = agent.get("ai", "")
         if ai == "predator_patrol":
-            lines.extend(_tick_predator(agent, get_agents(state), maps, r, base_dir=base_dir))
+            lines.extend(
+                _tick_predator(
+                    agent, get_agents(state), maps, r, state=state, base_dir=base_dir
+                )
+            )
         elif ai == "builder":
             lines.extend(_tick_builder(agent, cfg))
         elif ai == "flee_predator":
@@ -231,6 +255,10 @@ def tick_field_ecology(
             if preds:
                 p = preds[0]
                 _move_toward(agent, int(agent["x"]) - (int(p["x"]) - int(agent["x"])), int(agent["y"]), maps)
+
+    lines.extend(
+        tick_agent_competition(state, map_id, base_dir=base_dir, rng=r)
+    )
 
     zone = resolve_zone_from_world(world)
     if lines:
@@ -260,6 +288,9 @@ def agents_manifest(state: dict[str, Any], map_id: str) -> list[dict[str, Any]]:
                 "skills": a.get("skills", []),
                 "settlement": a.get("settlement"),
                 "plunder": a.get("plunder"),
+                "civilization_id": a.get("civilization_id"),
+                "culture_tags": a.get("culture_tags"),
+                "prosperity": a.get("prosperity"),
             }
         )
     return out

@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "evolution_chain_to_civ": {
+    "goblin": "goblin_tribe",
+    "shadow_beast": "shadow_clan"
+  },
+  "civilizations": {
+    "goblin_tribe": {
+      "label": "고블린 부족연",
+      "kind": "monster",
+      "culture_tags": ["raid", "totem", "warband"],
+      "stages": [
+        { "id": "scattered", "prosperity": 0, "label": "흩어진 무리" },
+        { "id": "warband", "prosperity": 35, "label": "전투 무리" },
+        { "id": "horde", "prosperity": 90, "label": "군세" }
+      ],
+      "rivals": ["shadow_clan"],
+      "prosperity_per_rival_win": 12,
+      "prosperity_per_npc_plunder": 8
+    },
+    "shadow_clan": {
+      "label": "그림자 일족",
+      "kind": "monster",
+      "culture_tags": ["ambush", "pack", "seal_touched"],
+      "stages": [
+        { "id": "whelps", "prosperity": 0, "label": "새끼 무리" },
+        { "id": "pack", "prosperity": 40, "label": "사냥 무리" },
+        { "id": "dominion", "prosperity": 100, "label": "영역 지배" }
+      ],
+      "rivals": ["goblin_tribe"],
+      "prosperity_per_rival_win": 14,
+      "prosperity_per_npc_plunder": 10
+    }
+  },
+  "npc_societies": {
+    "ashpoint_commons": {
+      "label": "애쉬포인트 공동체",
+      "kind": "npc",
+      "stages": [
+        { "id": "struggling", "prosperity": 0 },
+        { "id": "stable", "prosperity": 50 },
+        { "id": "flourishing", "prosperity": 120 }
+      ],
+      "rivalry_slowdown": 3
+    }
+  },
+  "competition": {
+    "max_rivalry_events_per_tick": 2,
+    "rivalry_range_tiles": 2,
+    "monster_vs_monster_damage_base": 10,
+    "prosperity_decay_if_predator_wins": 5
+  }
+}

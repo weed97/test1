@@ -166,6 +166,9 @@ def spawn_evolved_monster(
     }
     apply_evolution_tier_to_agent(agent, tdef)
     _get_agents(state).append(agent)
+    from utils.agent_competition import attach_society
+
+    attach_society(agent, base_dir=base_dir)
     return agent, ""
 
 

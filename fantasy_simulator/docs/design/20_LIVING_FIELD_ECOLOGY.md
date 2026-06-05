@@ -54,7 +54,7 @@ flowchart TB
 |------|------|
 | `spatial` | 어디서 (이미 있음) |
 | **`field_agents`** (신규) | 누가, HP, 스킬 CD, 목표 |
-| **`ecology_tick`** (신규) | 비트마다/존 tick: 이동·교전·건설 |
+| **`ecology_tick`** (신규) | 비트마다/존 tick: 이동·교전·건설·**문명 경쟁** (25) |
 | `rule_engine` | 스킬 해석 (전투 확장) |
 | `event_engine` | **발견** 시만 짧은 서사 (퀘스트 강제 X) |
 

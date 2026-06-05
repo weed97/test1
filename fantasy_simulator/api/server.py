@@ -271,6 +271,20 @@ def progression_equip(body: ProgressionEquipRequest) -> dict[str, Any]:
     return {"api_version": API_VERSION, "session_id": body.session_id, **result}
 
 
+@app.get("/v1/ecology/civilizations")
+def ecology_civilizations(session_id: str) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    eco = session.state.get("flags", {}).get("ecology", {})
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        "ecology_enabled": ecology_enabled(session.state),
+        "civilizations": eco.get("civilizations", {}),
+    }
+
+
 @app.get("/v1/world/agents")
 def world_agents(session_id: str, map_id: str | None = None) -> dict[str, Any]:
     session = _store.get(session_id)
