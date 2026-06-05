@@ -1,6 +1,6 @@
-# 이세계 풀다이브 VR — 세계 설계 인덱스
+# 이세계 초몰입 풀다이브 — 세계 설계 인덱스
 
-에르도리아(Eldoria)를 **완전 몰입형 풀다이브 VR 이세계**로 운영하기 위한 설계 문서 모음입니다.  
+에르도리아(Eldoria)를 **VR×BCI×Mnemosyne(딥마인드급 월드 모델) 융합**, **오감+육감 현실 동형**, **구분 불가능한 완전 이세계**로 운영하기 위한 설계 문서 모음입니다.  
 구현은 `fantasy_simulator/` 엔진·콘텐츠와 1:1로 대응되도록 작성했습니다.
 
 ## 읽는 순서
@@ -16,11 +16,14 @@
 | [06_SYSTEMS_MAP.md](06_SYSTEMS_MAP.md) | 엔진 모듈 ↔ VR 메타 상태 매핑 |
 | [07_CONTENT_ROADMAP.md](07_CONTENT_ROADMAP.md) | 시즌·DLC·씨앗·퀘스트 계획 |
 | [08_PLAYER_LOOPS.md](08_PLAYER_LOOPS.md) | 일상·소셜·경제·엔드게임 루프 |
+| [09_BCI_DEEPMIND_FUSION.md](09_BCI_DEEPMIND_FUSION.md) | **VR×BCI×Mnemosyne 융합**, 육감, 샤드 AI |
+| [10_REALITY_PARITY.md](10_REALITY_PARITY.md) | 현실 동형성 R0–R4 규격·검증 |
 
 ## 현재 구현과의 관계
 
 - **이미 플레이 가능:** 애쉬포인트 변경, `smoke_on_the_mountain` → `ashen_seal_cracking` 3단계 메인 스토리, 세력 평판, 긴장도, 150+ 이벤트 씨앗.
-- **설계만 있는 레이어:** VR 로비, 현실-게임 이중 시간, 길드/파티 인스턴스, 서버 샤드 — `06_SYSTEMS_MAP.md`의 `flags.vr_meta` 확장으로 단계적 도입.
+- **설계만 있는 레이어:** BCI 읽기/쓰기, Mnemosyne 샤드 AI, 육감·체화, R3 현실 동형 — `flags.bci_meta` + `09`·`10` 문서.
+- **스키마:** `config/vr_meta.schema.json`, `config/bci_meta.schema.json`
 
 ## 관련 문서
 

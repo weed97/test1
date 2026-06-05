@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "eldoria/bci_meta",
+  "title": "Eldoria BCI + Mnemosyne Meta Layer",
+  "description": "Optional flags.bci_meta for VR×BCI fusion and DeepMind-class world model (in-universe: Mnemosyne Core).",
+  "type": "object",
+  "properties": {
+    "link_tier": {
+      "type": "string",
+      "enum": ["legacy_vr", "full_dive", "nex_r2", "nex_r3", "nex_r4"],
+      "default": "nex_r3",
+      "description": "Reality parity tier — see docs/design/10_REALITY_PARITY.md"
+    },
+    "mnemosyne_shard_id": {
+      "type": "string",
+      "description": "World model shard identifier"
+    },
+    "embodiment_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Body ownership / proprioception sync quality"
+    },
+    "pain_cap": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.65 },
+    "proprioception_sync": { "type": "boolean", "default": true },
+    "interoception_sim": {
+      "type": "string",
+      "enum": ["off", "light", "standard", "hardcore"],
+      "default": "standard",
+      "description": "Hunger, fatigue, heartbeat, fear somatics"
+    },
+    "olfactory_enabled": { "type": "boolean", "default": false },
+    "gustatory_enabled": { "type": "boolean", "default": false },
+    "guardian_pulse_ok": {
+      "type": "boolean",
+      "default": true,
+      "description": "Biological safety loop — false triggers forced_disconnect"
+    },
+    "calibration_done": { "type": "boolean", "default": false },
+    "anchor_phrase_hash": {
+      "type": "string",
+      "description": "One-way hash of return-anchor word; never store plaintext"
+    },
+    "memory_tags": {
+      "type": "object",
+      "properties": {
+        "diegetic_weight": { "type": "number", "minimum": 0, "maximum": 1 },
+        "meta_anchor_strength": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "read_profile": {
+      "type": "object",
+      "description": "Neural read → gameplay modifiers (optional)",
+      "properties": {
+        "focus_bias": { "type": "number" },
+        "fear_sensitivity": { "type": "number" }
+      }
+    },
+    "write_queue": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "somatic": { "type": "string" },
+          "intensity": { "type": "number" },
+          "duration_ms": { "type": "integer" }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}
