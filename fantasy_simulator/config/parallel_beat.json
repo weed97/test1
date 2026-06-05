@@ -7,6 +7,11 @@
     "simultaneous_damage_scale": 1.0,
     "movement_conflict": "higher_priority_wins"
   },
+  "sovereign_siege": {
+    "no_attacker_cap": true,
+    "sum_damage_before_regen": true,
+    "holder_archetype_id": "npc_arthur_pendragon"
+  },
   "macro_lanes": ["settlement", "civilization_coupling", "world_conflicts"],
   "subticks_per_moment": 1,
   "presentation": {

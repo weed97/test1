@@ -369,6 +369,10 @@ def tick_world_conflicts(
             base_dir=base_dir,
         )
 
+    from utils.sovereign_siege import tick_sovereign_coalition_siege
+
+    lines.extend(tick_sovereign_coalition_siege(state, base_dir=base_dir))
+
     _enforce_world_floor(state, base_dir)
     return lines
 

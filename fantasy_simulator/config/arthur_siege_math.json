@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "fixed_scale": 1000,
+  "comment": "아서 공성·연합 병렬 타격 수학 — 설계 앵커 (docs/design/41_ARTHUR_SIEGE_MATH.md)",
+  "arthur": {
+    "hp_milli": 9999000,
+    "hp_label": "9999.000",
+    "defense_milli": 100000000,
+    "defense_note": "sovereign_defense_floor — 99.999% 감쇠, raw 10만당 HP 1"
+  },
+  "mitigation_anchor": {
+    "raw_soft_cap_milli": 100000000,
+    "raw_soft_cap_label": "100000.000",
+    "hp_per_hit_at_raw_cap_milli": 1000,
+    "hp_per_hit_label": "1.000 (최소 관통 0.001%)",
+    "hits_to_kill_at_min_hp_damage": 9999,
+    "comment": "만 명이 동시에 1씩 넣으면 즉사 — HP 풀과 동일"
+  },
+  "world_apex_attackers": {
+    "count_at_raw_cap": 10,
+    "comment": "세계에서 raw 10만을 낼 수 있는 존재 ~10명 — 솔로로는 9999타 필요"
+  },
+  "regeneration": {
+    "combat_cap_per_sec_milli": 200000,
+    "combat_cap_label": "200.000 HP/s",
+    "wounded_regen_mult_milli": 800,
+    "wounded_regen_label": "피격 시 회복 ×0.800 → 160.000 HP/s",
+    "contested_regen_mult_milli": 50,
+    "contested_label": "주권 쟁탈 시 추가 ×0.050 (arthur_coalition)"
+  },
+  "sustained_siege": {
+    "net_hp_per_sec_target_milli": 1000,
+    "aggregate_raw_dps_for_net_1hp_milli": 1600000000,
+    "aggregate_raw_dps_label": "1600000.000 raw/s 합산 시 겨우 순 +1.000 HP/s (160 회복 상쇄)",
+    "formula_comment": "순피해/s ≈ (Σraw×through) − wounded_regen; through≈0.01% at 연합 스웜 밀도"
+  },
+  "instant_kill_examples": {
+    "simultaneous_one_hp_hits": 9999,
+    "elite_squad": {
+      "attackers": 2000,
+      "hp_damage_per_striker_milli": 1000000,
+      "hp_damage_label": "1000.000 (정예 천 데미지급)",
+      "total_hp_damage_milli": 2000000000,
+      "comment": "2000×1000 = 200만 HP — 9999 풀 즉시 붕괴"
+    }
+  },
+  "parallel_beat": {
+    "sum_damage_before_regen": true,
+    "no_attacker_cap_on_sovereign": true,
+    "wound_stack_per_damaged_beat": 1,
+    "break_meter_per_striker_milli": 100,
+    "break_meter_per_1000_attackers_milli": 50000
+  },
+  "coalition_pressure": {
+    "base_strikers_per_beat": 120,
+    "growth_mult_per_ecology_beat_milli": 1020,
+    "elite_fraction_milli": 50,
+    "elite_hp_damage_per_striker_milli": 1000000,
+    "mob_raw_attack_per_striker_milli": 5000000,
+    "mob_raw_label": "5000.000 raw — 관통 후 ~0.05 HP"
+  }
+}

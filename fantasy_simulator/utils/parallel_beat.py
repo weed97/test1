@@ -43,6 +43,16 @@ def _plan_priority(agent: dict[str, Any], *, base_dir: str | Path) -> int:
     return _iq(agent) + int(pack.get("dominance", 0)) + int(agent.get("evolution_tier", 1)) * 5
 
 
+def _is_sovereign_holder(agent: dict[str, Any] | None, *, base_dir: str | Path) -> bool:
+    if not agent:
+        return False
+    if agent.get("world_sovereign_holder"):
+        return True
+    sov = load_parallel_config(base_dir).get("sovereign_siege", {})
+    holder = str(sov.get("holder_archetype_id", "npc_arthur_pendragon"))
+    return str(agent.get("archetype_id", "")) == holder or str(agent.get("instance_id", "")) == holder
+
+
 def _pack_group_key(agent: dict[str, Any] | None, actor_id: str) -> str:
     if not agent:
         return f"solo:{actor_id}"
@@ -266,7 +276,12 @@ def resolve_and_commit_field_beat(
         if not target:
             continue
         atk_plans.sort(key=lambda p: -int(p.get("priority", 0)))
-        atk_plans = atk_plans[: int(fld.get("max_attackers_per_target", 4))]
+        sov_siege = pcfg.get("sovereign_siege", {})
+        if not (
+            _is_sovereign_holder(target, base_dir=base_dir)
+            and sov_siege.get("no_attacker_cap")
+        ):
+            atk_plans = atk_plans[: int(fld.get("max_attackers_per_target", 4))]
         total = 0
         for pl in atk_plans:
             actor = agents_by_id.get(str(pl["actor_id"]))

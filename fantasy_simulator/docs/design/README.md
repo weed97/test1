@@ -41,6 +41,7 @@
 | [38_COMBAT_POWER.md](38_COMBAT_POWER.md) | **전투력** · 직업 스탯 루트 · 장비별 능력·등급 스킬 |
 | [39_PRECISION_COMBAT_MATH.md](39_PRECISION_COMBAT_MATH.md) | **0.001** 데미지·방어·회피·크리 · 밸런스 |
 | [40_STAT_PRECISION_AND_SOVEREIGN_SURVIVAL.md](40_STAT_PRECISION_AND_SOVEREIGN_SURVIVAL.md) | 물리/마법·99.999% 방어·만타·아서 회복 |
+| [41_ARTHUR_SIEGE_MATH.md](41_ARTHUR_SIEGE_MATH.md) | **아서 공성 수학** · 연합 병렬·즉사·160만 DPS 앵커 |
 
 ## 현재 구현과의 관계
 
