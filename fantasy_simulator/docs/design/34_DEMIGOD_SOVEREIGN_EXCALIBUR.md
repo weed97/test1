@@ -12,7 +12,7 @@ T1~T3 일반 → 전설 L1~L6 → 신화 M1~M3 (active ~30)
 - **양손검(투핸드 소드)** 이기 때문에 **마법사·한손검·활** 주력은 불가 — **투핸드 검술 최고 경지** 검사만 착용·승계 자격.
 - 승계: **① 아서와 결투 승리** ② **아서가 물려줌** (극히 어려움) ③ **연합 전쟁**으로 뺏기 (사실상 현실적 루트).
 
-관련: [24_ELDORIA_UNIVERSE_AND_POWER_ECOLOGY.md](24_ELDORIA_UNIVERSE_AND_POWER_ECOLOGY.md) (준신만 의도적 불균형 예외)
+관련: [24_ELDORIA_UNIVERSE_AND_POWER_ECOLOGY.md](24_ELDORIA_UNIVERSE_AND_POWER_ECOLOGY.md) · [36_ITEM_GRADES_AND_LEVEL_SUPREMACY.md](36_ITEM_GRADES_AND_LEVEL_SUPREMACY.md) · [37_ARTHUR_AND_MONSTER_GRAND_COALITION.md](37_ARTHUR_AND_MONSTER_GRAND_COALITION.md)
 
 ---
 

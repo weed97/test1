@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "grades_ordered_high_to_low": [
+    "demigod",
+    "mythic",
+    "legend",
+    "hero",
+    "rare",
+    "high",
+    "common"
+  ],
+  "labels": {
+    "demigod": "준신",
+    "mythic": "신화",
+    "legend": "전설",
+    "hero": "영웅",
+    "rare": "희귀",
+    "high": "고급",
+    "common": "일반"
+  },
+  "wield_gates": {
+    "comment": "등급 착용·결속 최소 요구 — 미달 시 소지만 가능, 실전 스탯 미적용",
+    "demigod": {
+      "min_character_level": 800,
+      "min_weapon_class_level": 999,
+      "min_mastery_rank": "grandmaster"
+    },
+    "mythic": {
+      "min_character_level": 500,
+      "min_weapon_class_level": 700,
+      "min_mastery_rank": "master"
+    },
+    "legend": {
+      "min_character_level": 200,
+      "min_weapon_class_level": 400,
+      "min_mastery_rank": "expert"
+    },
+    "hero": { "min_character_level": 80, "min_weapon_class_level": 150 },
+    "rare": { "min_character_level": 30, "min_weapon_class_level": 60 },
+    "high": { "min_character_level": 10, "min_weapon_class_level": 25 },
+    "common": { "min_character_level": 1, "min_weapon_class_level": 1 }
+  },
+  "combat_supremacy": {
+    "comment": "등급보다 레벨이 우선. 아래 가중치로 effective_power 계산",
+    "character_level_weight": 0.42,
+    "weapon_class_level_weight": 0.48,
+    "item_grade_weight": 0.1,
+    "examples": [
+      "무기 Lv1 + 준신검 < 무기 Lv999 + 일반검",
+      "캐릭터 Lv1 + 준신(결속 불가) < 캐릭터 Lv999 + 일반",
+      "준신 착용 가능 = 무기 Lv999 경지 — 현재 아서왕만 엑스칼리버 결속"
+    ]
+  }
+}

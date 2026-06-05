@@ -36,6 +36,8 @@
 | [28_PARALLEL_BEAT.md](28_PARALLEL_BEAT.md) | **병렬 비트**·연출 스태거 |
 | [34_DEMIGOD_SOVEREIGN_EXCALIBUR.md](34_DEMIGOD_SOVEREIGN_EXCALIBUR.md) | **준신 주권**·엑스칼리버·4년 소원·아서 승계 |
 | [35_WEAPON_CLASS_MASTERY.md](35_WEAPON_CLASS_MASTERY.md) | **무기 클래스별** 직업·레벨·경지 (들기≠착용) |
+| [36_ITEM_GRADES_AND_LEVEL_SUPREMACY.md](36_ITEM_GRADES_AND_LEVEL_SUPREMACY.md) | **등급** 준신~일반 · **레벨 우선** |
+| [37_ARTHUR_AND_MONSTER_GRAND_COALITION.md](37_ARTHUR_AND_MONSTER_GRAND_COALITION.md) | **아서** · 대몬스터 연합 · 검주 보스 |
 
 ## 현재 구현과의 관계
 

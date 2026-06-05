@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "world_sovereign": {
+    "holder_id": "npc_arthur_pendragon",
+    "kingdom_id": "arthur_sovereign_realm",
+    "character_level": 999,
+    "weapon_masteries": {
+      "two_handed_sword": { "level": 999, "rank": "grandmaster" }
+    },
+    "note": "현재 유일하게 투핸드 999 + 엑스칼리버 결속 가능"
+  },
+  "apex_challenger": {
+    "id": "coalition_blade_sovereign",
+    "label": "연합 검주 · 엑스칼리버 근원",
+    "kind": "monster",
+    "character_level": 920,
+    "weapon_masteries": {
+      "two_handed_sword": { "level": 900, "rank": "grandmaster" }
+    },
+    "exclusive_goal": "excalibur",
+    "note": "세계 2위급. 유일하게 아서의 검을 노리는 최강 보스"
+  },
+  "monster_grand_coalition": {
+    "id": "grand_monster_coalition",
+    "label": "대몬스터 연합",
+    "scale": {
+      "headcount_vs_arthur_kingdom": "far_larger",
+      "quality_per_unit_vs_arthur_army": "inferior",
+      "comment": "숫자는 왕국을 압도하나 개체전·정예전은 아서 왕국군이 위"
+    },
+    "growth": {
+      "model": "multiplicative",
+      "increases_each_ecology_beat": true,
+      "feared_by_arthur": true,
+      "reason": "증식 구조 — 막아도 다음 틱에 더 불어남"
+    },
+    "war_fronts": [
+      "all_monster_realms_vs_kingdoms",
+      "coalition_vs_arthur_sovereign_realm"
+    ]
+  },
+  "alliances_with_arthur": {
+    "who": "top_tier_kingdoms_only",
+    "kingdom_ids_example": ["silver_empire", "dwarf_deepforge", "elf_high_court"],
+    "can_repel_up_to": "monster_division",
+    "cannot_repel": "grand_coalition_above_division",
+    "arthur_bears": "remainder — often requires sovereign_wish every 4 years"
+  },
+  "arthur_needs": {
+    "strong_characters": true,
+    "coalition_player_allies": true,
+    "wish_cycle_pressure": true
+  }
+}
