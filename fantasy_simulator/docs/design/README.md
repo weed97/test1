@@ -26,6 +26,7 @@
 | [16_CUSTOM_ENGINE_VS_GODOT_CLIENT.md](16_CUSTOM_ENGINE_VS_GODOT_CLIENT.md) | **우리 엔진 vs Godot**·몰입·비용 (무료/유료 구분) |
 | [19_SPATIAL_SIMULATION.md](19_SPATIAL_SIMULATION.md) | **Godot 타일 ↔ 시뮬 좌표**·존·맵 전환 |
 | [20_LIVING_FIELD_ECOLOGY.md](20_LIVING_FIELD_ECOLOGY.md) | **살아 있는 필드**·NPC/몬스터 스킬·탐험 중심 생태계 |
+| [21_PLAYER_SETTLEMENT_BUILDING.md](21_PLAYER_SETTLEMENT_BUILDING.md) | **플레이어 건설**·건축 Lv·고용·대장간·왕국 |
 
 ## 현재 구현과의 관계
 

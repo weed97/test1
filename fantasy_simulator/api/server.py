@@ -17,6 +17,13 @@ from pydantic import BaseModel, Field
 
 from api.session_store import SessionStore, package_root, turn_payload
 from utils.field_agents import agents_manifest, ensure_ecology_seeds, ecology_enabled
+from utils.settlement_build import (
+    get_player_settlement,
+    hire_workers,
+    settlement_status,
+    start_build,
+    try_start_kingdom,
+)
 from utils.spatial import maps_manifest
 from utils.temporal import TemporalMode
 
@@ -65,6 +72,27 @@ class PositionRequest(BaseModel):
     position: PositionBody
 
 
+class BuildRequest(BaseModel):
+    session_id: str
+    building_id: str
+    map_id: str
+    x: int
+    y: int
+    mode: str = Field("self", pattern="^(self|hire)$")
+
+
+class HireRequest(BaseModel):
+    session_id: str
+    count: int = Field(1, ge=1, le=12)
+
+
+class KingdomRequest(BaseModel):
+    session_id: str
+    map_id: str
+    x: int
+    y: int
+
+
 class TurnRequest(BaseModel):
     session_id: str
     action: str = Field(..., min_length=1, max_length=512)
@@ -100,12 +128,77 @@ def new_session(body: NewSessionRequest) -> NewSessionResponse:
     session.state.setdefault("flags", {})["game_mode"] = body.game_mode
     if body.game_mode in ("ecology", "hybrid"):
         ensure_ecology_seeds(session.state, base_dir=package_root())
+        get_player_settlement(session.state)
     session.manager.save(session.state)
     return NewSessionResponse(
         session_id=session_id,
         temporal_mode=body.temporal_mode,
         mode=body.mode,
     )
+
+
+@app.get("/v1/settlement/status")
+def settlement_status_route(session_id: str) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        **settlement_status(session.state, base_dir=package_root()),
+    }
+
+
+@app.post("/v1/settlement/build")
+def settlement_build(body: BuildRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    if not ecology_enabled(session.state):
+        raise HTTPException(status_code=400, detail="ecology or hybrid mode required")
+    result = start_build(
+        session.state,
+        body.building_id,
+        map_id=body.map_id,
+        x=body.x,
+        y=body.y,
+        mode=body.mode,  # type: ignore[arg-type]
+        base_dir=package_root(),
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "build failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/settlement/hire")
+def settlement_hire(body: HireRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    result = hire_workers(session.state, body.count, base_dir=package_root())
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "hire failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/settlement/kingdom")
+def settlement_kingdom(body: KingdomRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    result = try_start_kingdom(
+        session.state,
+        map_id=body.map_id,
+        x=body.x,
+        y=body.y,
+        base_dir=package_root(),
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "kingdom failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
 
 
 @app.get("/v1/world/agents")

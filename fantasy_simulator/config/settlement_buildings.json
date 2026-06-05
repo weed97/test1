@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "construction_levels": [
+    {
+      "level": 1,
+      "title": "견습 건축가",
+      "xp_required": 0,
+      "max_active_projects": 1,
+      "self_labor_per_beat": 2
+    },
+    {
+      "level": 2,
+      "title": "마을 터 잡기",
+      "xp_required": 80,
+      "max_active_projects": 1,
+      "self_labor_per_beat": 3
+    },
+    {
+      "level": 3,
+      "title": "장인 감독",
+      "xp_required": 200,
+      "max_active_projects": 2,
+      "self_labor_per_beat": 4
+    },
+    {
+      "level": 4,
+      "title": "영주 보직",
+      "xp_required": 450,
+      "max_active_projects": 2,
+      "self_labor_per_beat": 5
+    },
+    {
+      "level": 5,
+      "title": "왕국 설계자",
+      "xp_required": 900,
+      "max_active_projects": 3,
+      "self_labor_per_beat": 6
+    }
+  ],
+  "hire": {
+    "gold_per_worker": 120,
+    "wage_gold_per_beat": 8,
+    "labor_per_worker_per_beat": 4,
+    "max_hired": 12,
+    "unlock_construction_level": 2
+  },
+  "kingdom": {
+    "label": "왕국 승격",
+    "min_construction_level": 5,
+    "gold_cost": 5000,
+    "labor_cost": 500,
+    "materials": { "wood": 200, "stone": 300, "iron": 80 },
+    "build_points": 400,
+    "requires_buildings": ["hall", "blacksmith", "barracks", "market"]
+  },
+  "buildings": {
+    "camp_fire": {
+      "label": "모닥불·쉼터",
+      "category": "basic",
+      "min_construction_level": 1,
+      "gold_cost": 30,
+      "labor_cost": 8,
+      "materials": { "wood": 15 },
+      "build_points": 15,
+      "roles": ["rest"],
+      "effects": { "rest_bonus": true, "tension_relief": 1 }
+    },
+    "storage_shack": {
+      "label": "창고",
+      "category": "basic",
+      "min_construction_level": 1,
+      "gold_cost": 50,
+      "labor_cost": 12,
+      "materials": { "wood": 25 },
+      "build_points": 20,
+      "roles": ["stash"],
+      "effects": { "stockpile_cap": 50 }
+    },
+    "well": {
+      "label": "우물",
+      "category": "civic",
+      "min_construction_level": 2,
+      "gold_cost": 80,
+      "labor_cost": 25,
+      "materials": { "wood": 10, "stone": 35 },
+      "build_points": 35,
+      "roles": ["water"],
+      "effects": { "survival_water": true }
+    },
+    "blacksmith": {
+      "label": "대장장이",
+      "category": "craft",
+      "min_construction_level": 2,
+      "gold_cost": 220,
+      "labor_cost": 55,
+      "materials": { "wood": 25, "stone": 40, "iron": 25 },
+      "build_points": 70,
+      "roles": ["smith", "repair"],
+      "effects": { "enables_craft": ["weapons", "armor"], "npc_role_slot": "blacksmith" },
+      "hire_npc_optional": { "archetype": "village_blacksmith", "gold": 150 }
+    },
+    "inn": {
+      "label": "여관",
+      "category": "civic",
+      "min_construction_level": 2,
+      "gold_cost": 180,
+      "labor_cost": 45,
+      "materials": { "wood": 50, "stone": 20 },
+      "build_points": 60,
+      "roles": ["innkeeper", "rumor"],
+      "effects": { "rest_quality": 2, "gold_income_per_day": 5 }
+    },
+    "barracks": {
+      "label": "병영",
+      "category": "military",
+      "min_construction_level": 3,
+      "gold_cost": 320,
+      "labor_cost": 80,
+      "materials": { "wood": 40, "stone": 60, "iron": 15 },
+      "build_points": 90,
+      "roles": ["militia"],
+      "effects": { "defense_rating": 15, "hire_militia": true }
+    },
+    "market": {
+      "label": "시장",
+      "category": "trade",
+      "min_construction_level": 3,
+      "gold_cost": 280,
+      "labor_cost": 70,
+      "materials": { "wood": 35, "stone": 25 },
+      "build_points": 75,
+      "roles": ["merchant"],
+      "effects": { "trade_discount": 0.1, "gold_income_per_day": 12 }
+    },
+    "hall": {
+      "label": "영주 회관",
+      "category": "civic",
+      "min_construction_level": 4,
+      "gold_cost": 500,
+      "labor_cost": 120,
+      "materials": { "wood": 60, "stone": 100, "iron": 20 },
+      "build_points": 120,
+      "roles": ["lord", "decree"],
+      "effects": { "faction_influence": 10, "hire_workers_bonus": 2 }
+    },
+    "shrine": {
+      "label": "작은 신전",
+      "category": "faith",
+      "min_construction_level": 3,
+      "gold_cost": 350,
+      "labor_cost": 90,
+      "materials": { "stone": 80, "wood": 20 },
+      "build_points": 85,
+      "roles": ["cleric"],
+      "effects": { "tension_decay": 2 }
+    }
+  }
+}
