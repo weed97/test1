@@ -1,8 +1,10 @@
 {
-  "version": 1,
+  "version": 2,
   "metric_id": "combat_power",
   "label": "전투력",
-  "note": "effective_power 의 플레이어-facing 이름. UI·랭킹·위협도 표시용.",
+  "note": "effective_power 의 플레이어-facing 이름. 실전 피해는 combat_precision.json (0.001 단위).",
+  "precision_config": "combat_precision.json",
+  "precision_module": "utils.combat_precision",
   "priority_order": ["character_level", "weapon_class_level", "item_grade"],
   "weights": {
     "character_level": 0.5,

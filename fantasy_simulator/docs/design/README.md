@@ -39,6 +39,7 @@
 | [36_ITEM_GRADES_AND_LEVEL_SUPREMACY.md](36_ITEM_GRADES_AND_LEVEL_SUPREMACY.md) | **등급** 준신~일반 · **레벨 우선** |
 | [37_ARTHUR_AND_MONSTER_GRAND_COALITION.md](37_ARTHUR_AND_MONSTER_GRAND_COALITION.md) | **아서** · 대몬스터 연합 · 검주 보스 |
 | [38_COMBAT_POWER.md](38_COMBAT_POWER.md) | **전투력** · 직업 스탯 루트 · 장비별 능력·등급 스킬 |
+| [39_PRECISION_COMBAT_MATH.md](39_PRECISION_COMBAT_MATH.md) | **0.001** 데미지·방어·회피·크리 · 밸런스 |
 
 ## 현재 구현과의 관계
 

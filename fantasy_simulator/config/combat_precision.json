@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "fixed_scale": 1000,
+  "rate_scale": 100000,
+  "comment": {
+    "fixed_scale": "공격·방어·데미지: 정수 = 실수×1000 (예: 45.125 → 45125)",
+    "rate_scale": "확률: 정수 = %×1000 (예: 12.345% → 12345, 100% → 100000)"
+  },
+  "priority_order": ["character_level", "weapon_class_level", "item_grade"],
+  "mitigation": {
+    "model": "rational",
+    "k_defense_milli": 8500000,
+    "comment": "mult = K/(K+def_milli). 방어 1.000↑마다 피해 곡선 하락 — 레벨 구간별 K는 tier 보간"
+  },
+  "evasion": {
+    "model": "difference_clamp",
+    "base_hit_rate": 100000,
+    "min_hit_rate": 5000,
+    "max_hit_rate": 99500,
+    "accuracy_per_milli_attack": 0.012,
+    "evasion_per_milli_agi": 0.018,
+    "comment": "hit% = clamp(base + acc - eva, min, max). 0.001% 단위"
+  },
+  "critical": {
+    "base_rate": 5000,
+    "max_rate": 75000,
+    "damage_multiplier_milli": 2000,
+    "comment": "기본 5.000%, 상한 75.000%, 크리 배율 2.000× (2000/1000)"
+  },
+  "damage_pipeline": [
+    "roll_hit",
+    "base_weapon_milli",
+    "mastery_bonus_milli",
+    "stat_scaling_milli",
+    "grade_multiplier_milli",
+    "level_supremacy_milli",
+    "mitigation",
+    "crit_multiplier",
+    "floor_min_damage_milli"
+  ],
+  "min_final_damage_milli": 1000,
+  "level_supremacy": {
+    "character_weight_milli": 500,
+    "weapon_mastery_weight_milli": 350,
+    "grade_weight_milli": 150,
+    "per_level_delta_milli": 1000,
+    "comment": "가중 합×레벨차 — 캐릭터 Lv 1차, 무기 Lv 2차, 등급 3차. 1레벨차도 mult에 반영"
+  },
+  "balance_guards": {
+    "max_damage_per_strike_milli": 500000000,
+    "max_hp_milli": 2000000000,
+    "never_zero_if_hit": true,
+    "deterministic_seed_optional": true
+  },
+  "sensitivity_targets": {
+    "comment": "밸런스 검증 목표치 — 테스트가 참조",
+    "defense_plus_1_000_reduces_damage_at_least_milli": 40,
+    "attack_plus_1_000_increases_damage_at_least_milli": 40,
+    "one_character_level_at_mid_tier": "material"
+  }
+}
