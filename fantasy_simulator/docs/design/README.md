@@ -35,6 +35,7 @@
 | [27_ECOLOGY_AGENT_OBJECTS.md](27_ECOLOGY_AGENT_OBJECTS.md) | **ecology_agent 객체**·HP/MP/스킬·지성·Godot 스프라이트 |
 | [28_PARALLEL_BEAT.md](28_PARALLEL_BEAT.md) | **병렬 비트**·연출 스태거 |
 | [34_DEMIGOD_SOVEREIGN_EXCALIBUR.md](34_DEMIGOD_SOVEREIGN_EXCALIBUR.md) | **준신 주권**·엑스칼리버·4년 소원·아서 승계 |
+| [35_WEAPON_CLASS_MASTERY.md](35_WEAPON_CLASS_MASTERY.md) | **무기 클래스별** 직업·레벨·경지 (들기≠착용) |
 
 ## 현재 구현과의 관계
 

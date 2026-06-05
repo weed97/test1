@@ -6,7 +6,7 @@
 
 | 대상 | 성장 축 |
 |------|---------|
-| 영웅 (party) | 직업·레벨·스킬 해금·장비 슬롯 |
+| 영웅 (party) | 주직업·레벨·**무기 클래스별 레벨**·스킬·장비 슬롯 |
 | 몬스터 | 진화 체인 (고블린 → 챔피언 → 킹) |
 | 맵 | `max_total` / 종족별 `species_caps` |
 
@@ -20,7 +20,8 @@
 - 세션 생성(`ecology` / `hybrid`) 시 `init_heroes_from_party()` — 가렛→기사, 엘라라→마법 견습
 - `explore` 턴 종료 시 `on_explore_progression()` → `explore_xp` (기본 8)
 - 레벨업 시 `skills_by_level` 자동 해금 또는 `skill_points`로 `unlock_skill`
-- `equip_item` — 직업·최소 레벨 검사
+- `equip_item` — 주직업·최소 레벨 검사
+- **무기 클래스 마스터리** — `config/weapon_mastery.json` · [35_WEAPON_CLASS_MASTERY.md](35_WEAPON_CLASS_MASTERY.md) (투핸드/원핸드/활/지팡이 각각 레벨·경지)
 
 ## 몬스터 진화
 

@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "note": "무기 클래스별 직업·레벨 — 들고 있다고 인정되지 않음. rank/level로 착용 자격 판정.",
+  "classes": {
+    "two_handed_sword": {
+      "label": "투핸드 소드",
+      "hands": 2,
+      "ranks": [
+        { "id": "novice", "min_level": 1, "label": "견습" },
+        { "id": "adept", "min_level": 3, "label": "숙련" },
+        { "id": "expert", "min_level": 6, "label": "달인" },
+        { "id": "master", "min_level": 8, "label": "마스터" },
+        { "id": "grandmaster", "min_level": 10, "label": "최고 경지" }
+      ],
+      "max_level": 10,
+      "level_xp": [0, 120, 320, 600, 950, 1400, 2000, 2800, 3900, 5500]
+    },
+    "one_handed_sword": {
+      "label": "원핸드 소드",
+      "hands": 1,
+      "ranks": [
+        { "id": "novice", "min_level": 1, "label": "견습" },
+        { "id": "adept", "min_level": 3, "label": "숙련" },
+        { "id": "expert", "min_level": 6, "label": "달인" },
+        { "id": "master", "min_level": 8, "label": "마스터" },
+        { "id": "grandmaster", "min_level": 10, "label": "최고 경지" }
+      ],
+      "max_level": 10,
+      "level_xp": [0, 100, 280, 520, 820, 1200, 1700, 2400, 3300, 4800]
+    },
+    "bow": {
+      "label": "활",
+      "hands": 2,
+      "ranks": [
+        { "id": "novice", "min_level": 1, "label": "견습" },
+        { "id": "adept", "min_level": 3, "label": "숙련" },
+        { "id": "expert", "min_level": 6, "label": "달인" },
+        { "id": "master", "min_level": 8, "label": "마스터" },
+        { "id": "grandmaster", "min_level": 10, "label": "최고 경지" }
+      ],
+      "max_level": 10,
+      "level_xp": [0, 100, 280, 520, 820, 1200, 1700, 2400, 3300, 4800]
+    },
+    "staff": {
+      "label": "지팡이·술기",
+      "hands": 2,
+      "ranks": [
+        { "id": "novice", "min_level": 1, "label": "견습" },
+        { "id": "adept", "min_level": 3, "label": "숙련" },
+        { "id": "expert", "min_level": 6, "label": "달인" },
+        { "id": "master", "min_level": 8, "label": "마스터" },
+        { "id": "grandmaster", "min_level": 10, "label": "최고 경지" }
+      ],
+      "max_level": 10,
+      "level_xp": [0, 110, 300, 560, 880, 1280, 1800, 2500, 3500, 5000]
+    }
+  },
+  "hero_state_shape": {
+    "weapon_masteries": {
+      "two_handed_sword": { "level": 10, "rank": "grandmaster", "xp": 5500 }
+    }
+  },
+  "equip_rules": {
+    "holding_item_is_not_enough": true,
+    "bind_requires_mastery": true,
+    "inventory_equip_without_mastery": "cosmetic_or_training_only"
+  }
+}

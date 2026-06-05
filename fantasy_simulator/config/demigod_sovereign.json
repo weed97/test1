@@ -17,13 +17,14 @@
     "wish_interval_years": 4,
     "eligibility": {
       "requires_weapon_kind": "two_handed_sword",
+      "requires_mastery_class": "two_handed_sword",
+      "requires_mastery_rank": "grandmaster",
+      "requires_mastery_level_at_max": true,
+      "holding_or_inventory_is_not_enough": true,
+      "requires_bind_ritual": true,
       "blocked_primary_jobs": ["arcane_apprentice", "ranger"],
       "blocked_tags": ["pure_caster", "staff_main", "dual_wield", "one_handed_main"],
-      "min_weapon_mastery_rank": "grandmaster",
-      "mastery_track": "two_handed_sword",
-      "min_job_level": 5,
-      "allowed_primary_jobs": ["knight", "wanderer"],
-      "note": "양손검(투핸드) 최고 경지 — 마법사·한손검·활 주무기는 인정 안 함"
+      "note": "투핸드 소드 클래스 최고 경지(만렙 grandmaster)만 결속 가능 — 들고만 있어서는 불가"
     },
     "observable": {
       "vfx": "sovereign_sky_rite",
@@ -111,7 +112,8 @@
         "note": "매우매우매우 어려움 — 숨겨진 시즌급 조건"
       }
     },
-    "on_ineligible_wield": "reject_equip",
+    "on_ineligible_wield": "reject_bind",
+    "on_ineligible_hold": "may_carry_but_no_sovereign_powers",
     "monster_exception": {
       "allowed": true,
       "requires_archetype_tags": ["blade_sovereign", "two_handed_wielder"],
