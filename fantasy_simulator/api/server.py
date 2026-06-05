@@ -28,6 +28,7 @@ from utils.civilization_coupling import (
     civilization_world_status,
     init_player_civilization,
 )
+from utils.world_conflicts import conflicts_status, init_world_conflicts
 from utils.progression import (
     equip_item,
     init_heroes_from_party,
@@ -160,6 +161,7 @@ def new_session(body: NewSessionRequest) -> NewSessionResponse:
         ensure_ecology_seeds(session.state, base_dir=root)
         init_heroes_from_party(session.state, base_dir=root)
         get_player_settlement(session.state)
+        init_world_conflicts(session.state, base_dir=root)
     session.manager.save(session.state)
     return NewSessionResponse(
         session_id=session_id,
@@ -280,6 +282,19 @@ def progression_equip(body: ProgressionEquipRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=result.get("error", "equip failed"))
     session.manager.save(session.state)
     return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.get("/v1/ecology/wars")
+def ecology_wars(session_id: str) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        "ecology_enabled": ecology_enabled(session.state),
+        **conflicts_status(session.state, base_dir=package_root()),
+    }
 
 
 @app.get("/v1/ecology/civilizations")

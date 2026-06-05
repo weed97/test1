@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "war_goals": {
+    "resource": { "label": "자원 거점", "weight": 25 },
+    "mana": { "label": "마나 샘", "weight": 20 },
+    "plunder": { "label": "약탈", "weight": 22 },
+    "secrets": { "label": "비밀 정보", "weight": 15 },
+    "relic": { "label": "극희 귀물", "weight": 18 }
+  },
+  "balance": {
+    "invasion_chance_per_beat": 0.22,
+    "max_wars_per_tick": 1,
+    "max_active_wars": 4,
+    "world_prosperity_floor": 8,
+    "kingdom_collapse_floor": 5,
+    "never_erase_all_kingdoms": true,
+    "max_kingdoms_lost_per_tick": 1,
+    "alliance_coordination": 0.88,
+    "player_alliance_bonus_per_build_level": 4,
+    "player_alliance_bonus_per_worker": 2
+  },
+  "invasion_pairs": [
+    {
+      "attacker_civ": "goblin_tribe",
+      "defender_realm": "human",
+      "defender_kingdom": "frontier_ash",
+      "min_attacker_prosperity": 30
+    },
+    {
+      "attacker_civ": "shadow_clan",
+      "defender_realm": "elf",
+      "defender_kingdom": "silver_court",
+      "min_attacker_prosperity": 35
+    },
+    {
+      "attacker_civ": "beastkin_prides",
+      "defender_realm": "human",
+      "defender_kingdom": "coast_march",
+      "min_attacker_prosperity": 40
+    },
+    {
+      "attacker_civ": "dark_elf_umbral",
+      "defender_realm": "dwarf",
+      "defender_kingdom": "deepforge_union",
+      "min_attacker_prosperity": 45
+    }
+  ],
+  "realm_alliances": {
+    "human": ["ashpoint_commons", "player_frontier_kingdom"],
+    "elf": ["elf_silver_court", "player_silver_enclave"],
+    "dwarf": ["dwarf_deepforge", "player_deepforge_hold"],
+    "dark_elf": ["dark_elf_umbral", "player_umbral_court"],
+    "beastkin": ["beastkin_prides", "player_pridelands_band"]
+  },
+  "apex_predators": [
+    {
+      "id": "ashen_leviathan",
+      "label": "잿빛 레비아탄",
+      "realm": "human",
+      "bound_civ": "shadow_clan",
+      "min_civ_prosperity": 85,
+      "min_civ_stage": "dominion",
+      "threat_kingdom": "frontier_ash",
+      "can_erase_one_kingdom": true,
+      "cannot_erase_world": true,
+      "base_power": 140
+    },
+    {
+      "id": "goblin_overking",
+      "label": "고블린 오버킹",
+      "realm": "human",
+      "bound_civ": "goblin_tribe",
+      "min_civ_prosperity": 90,
+      "min_civ_stage": "horde",
+      "threat_kingdom": "frontier_ash",
+      "can_erase_one_kingdom": true,
+      "cannot_erase_world": true,
+      "base_power": 130
+    },
+    {
+      "id": "silver_ancient",
+      "label": "실버 고대목",
+      "realm": "elf",
+      "bound_civ": "elf_silver_court",
+      "min_civ_prosperity": 100,
+      "min_civ_stage": "high_court",
+      "threat_kingdom": "silver_court",
+      "can_erase_one_kingdom": true,
+      "cannot_erase_world": true,
+      "base_power": 150
+    },
+    {
+      "id": "pride_worldbreaker",
+      "label": "세계포식 우두머리",
+      "realm": "beastkin",
+      "bound_civ": "beastkin_prides",
+      "min_civ_prosperity": 95,
+      "min_civ_stage": "pride_rule",
+      "threat_kingdom": "pride_lands",
+      "can_erase_one_kingdom": true,
+      "cannot_erase_world": true,
+      "base_power": 145
+    }
+  ],
+  "outcome_bands": {
+    "repelled": { "max_ratio": 0.72, "attacker_loss": 15, "defender_loss": 5 },
+    "stalemate": { "max_ratio": 1.05, "attacker_loss": 10, "defender_loss": 10 },
+    "invasion_success": { "max_ratio": 1.75, "attacker_gain": 8, "defender_loss": 28 },
+    "kingdom_collapse": { "max_ratio": 2.4, "attacker_gain": 12, "defender_loss": 55 },
+    "apex_kingdom_fall": { "max_ratio": 99, "attacker_gain": 20, "defender_loss": 70 }
+  }
+}
