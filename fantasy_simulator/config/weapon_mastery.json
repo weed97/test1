@@ -55,10 +55,11 @@
     }
   },
   "power_scaling": {
-    "comment": "실전 위력은 캐릭터 Lv × 활성 직업 Lv × 사용 무기 클래스 Lv 가 곱해져 체감이 완전히 달라짐",
-    "weapon_level_weight": 1.0,
-    "character_level_weight": 0.35,
-    "job_level_weight": 0.45
+    "priority_order": ["character_level", "weapon_class_level", "item_grade"],
+    "comment": "1 캐릭터 Lv · 2 무기 클래스 Lv · 3 아이템 등급. 직업 Lv는 스킬/역할 별도 축.",
+    "character_level_weight": 0.5,
+    "weapon_class_level_weight": 0.35,
+    "item_grade_weight": 0.15
   },
   "hero_state_shape": {
     "character_level": 1,

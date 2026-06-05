@@ -41,14 +41,15 @@
     "common": { "min_character_level": 1, "min_weapon_class_level": 1 }
   },
   "combat_supremacy": {
-    "comment": "등급보다 레벨이 우선. 아래 가중치로 effective_power 계산",
-    "character_level_weight": 0.42,
-    "weapon_class_level_weight": 0.48,
-    "item_grade_weight": 0.1,
+    "priority_order": ["character_level", "weapon_class_level", "item_grade"],
+    "comment": "강함 순서: 1 캐릭터 레벨 → 2 무기 클래스 레벨 → 3 아이템 등급",
+    "character_level_weight": 0.5,
+    "weapon_class_level_weight": 0.35,
+    "item_grade_weight": 0.15,
     "examples": [
-      "무기 Lv1 + 준신검 < 무기 Lv999 + 일반검",
-      "캐릭터 Lv1 + 준신(결속 불가) < 캐릭터 Lv999 + 일반",
-      "준신 착용 가능 = 무기 Lv999 경지 — 현재 아서왕만 엑스칼리버 결속"
+      "캐릭터 Lv999 + 일반 > 캐릭터 Lv1 + 준신(결속 불가)",
+      "무기 Lv999 + 일반검 > 무기 Lv1 + 준신검 (캐릭터 Lv 비슷할 때)",
+      "등급은 마지막 배율 — 레벨이 같을수록 등급 차이 체감"
     ]
   }
 }
