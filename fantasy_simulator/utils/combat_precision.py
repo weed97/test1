@@ -17,6 +17,49 @@ def load_combat_precision_config(base_dir: str | Path) -> dict[str, Any]:
         return json.load(f)
 
 
+def load_power_tiers_config(base_dir: str | Path) -> dict[str, Any]:
+    path = Path(base_dir) / "config" / "power_tiers.json"
+    with path.open(encoding="utf-8") as f:
+        return json.load(f)
+
+
+def attacker_has_armor_pierce(attacker: dict[str, Any], *, cfg: dict[str, Any]) -> bool:
+    if attacker.get("armor_pierce") or attacker.get("excalibur_bound"):
+        return True
+    tier = str(attacker.get("tier", ""))
+    ap = cfg.get("armor_pierce", {})
+    return tier in ap.get("enabled_tiers", ["demigod", "excalibur_bound"])
+
+
+def defender_is_demigod(defender: dict[str, Any]) -> bool:
+    return str(defender.get("tier", "")) == "demigod" or bool(defender.get("world_sovereign"))
+
+
+def hp_cap_milli_for_tier(tier: str, *, tiers_cfg: dict[str, Any]) -> int:
+    tiers = tiers_cfg.get("tiers", {})
+    if tier == "demigod":
+        return int(tiers.get("demigod", {}).get("hp_cap_milli", 1_000_000_000))
+    if tier in ("apex_mortal", "apex"):
+        return int(tiers.get("apex_mortal", {}).get("hp_cap_milli", 99_999_000))
+    return int(tiers_cfg.get("balance_guards", {}).get("max_hp_milli", 999_000))
+
+
+def compute_pierce_damage_milli(attacker: dict[str, Any], *, cfg: dict[str, Any]) -> int:
+    """Armor-piercing component — bypasses mitigation; demigod / Excalibur only."""
+    if not attacker_has_armor_pierce(attacker, cfg=cfg):
+        return 0
+    ap = cfg.get("armor_pierce", {})
+    cap = int(ap.get("max_pierce_per_hit_milli", 9_999_000))
+    raw = int(attacker.get("pierce_attack_milli", attacker.get("attack_milli", 0)))
+    return min(cap, max(0, raw))
+
+
+def cap_mitigated_vs_demigod(mitigated_milli: int, *, cfg: dict[str, Any]) -> int:
+    """Non-pierce attackers chip at most 1.000 HP vs demigod per strike."""
+    chip = int(cfg.get("armor_pierce", {}).get("apex_mortal_chip_vs_demigod_milli", 1000))
+    return min(chip, max(0, mitigated_milli))
+
+
 def fixed_scale(cfg: dict[str, Any] | None = None) -> int:
     return int((cfg or {}).get("fixed_scale", _FIXED_SCALE))
 
@@ -170,19 +213,26 @@ def resolve_strike_damage_milli(
     after_level = (raw * level_supremacy_multiplier(attacker, defender, cfg=cfg)) // _FIXED_SCALE
     def_m = int(defender.get("defense_milli", 0))
     after_armor = apply_mitigation_milli(after_level, def_m, cfg=cfg)
+    if defender_is_demigod(defender) and not attacker_has_armor_pierce(attacker, cfg=cfg):
+        after_armor = cap_mitigated_vs_demigod(after_armor, cfg=cfg)
     mit = mitigation_multiplier(def_m, cfg=cfg)
+    pierce = compute_pierce_damage_milli(attacker, cfg=cfg)
 
     crit_rate = compute_crit_rate_milli(attacker, cfg=cfg)
     crit = force_crit if force_crit is not None else rng.randint(1, _RATE_SCALE) <= crit_rate
     crit_mult = int(cfg.get("critical", {}).get("damage_multiplier_milli", 2000))
-    final = after_armor
-    if crit:
-        final = (after_armor * crit_mult) // _FIXED_SCALE
+    mitigated_final = after_armor
+    if crit and pierce <= 0:
+        mitigated_final = (after_armor * crit_mult) // _FIXED_SCALE
+    elif crit and pierce > 0:
+        mitigated_final = (after_armor * crit_mult) // _FIXED_SCALE
 
     hit_cap = int(cfg.get("hp_damage_per_hit_cap_milli", 10_000_000))
-    final = min(hit_cap, final)
+    mitigated_final = min(hit_cap, mitigated_final)
     min_d = int(cfg.get("min_final_damage_milli", 1000))
-    final = max(min_d, final)
+    if pierce <= 0:
+        mitigated_final = max(min_d, mitigated_final)
+    final = min(hit_cap, mitigated_final + pierce)
 
     return {
         "hit": True,
@@ -191,11 +241,14 @@ def resolve_strike_damage_milli(
         "damage": from_milli(final, cfg=cfg),
         "hit_rate_milli": hit_rate,
         "crit_rate_milli": crit_rate,
+        "armor_pierce_milli": pierce,
         "audit": {
             "raw_attack_milli": int(attacker.get("attack_milli", 0)),
             "after_level_supremacy_milli": after_level,
             "mitigation_mult_milli": mit,
             "after_armor_milli": after_armor,
+            "mitigated_final_milli": mitigated_final,
+            "pierce_milli": pierce,
             "final_milli": final,
         },
     }

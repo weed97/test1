@@ -42,6 +42,7 @@
 | [39_PRECISION_COMBAT_MATH.md](39_PRECISION_COMBAT_MATH.md) | **0.001** 데미지·방어·회피·크리 · 밸런스 |
 | [40_STAT_PRECISION_AND_SOVEREIGN_SURVIVAL.md](40_STAT_PRECISION_AND_SOVEREIGN_SURVIVAL.md) | 물리/마법·99.999% 방어·만타·아서 회복 |
 | [41_ARTHUR_SIEGE_MATH.md](41_ARTHUR_SIEGE_MATH.md) | **아서 공성 수학** · 연합 병렬·즉사·160만 DPS 앵커 |
+| [42_DEMIGOD_HP_AND_ARMOR_PIERCE.md](42_DEMIGOD_HP_AND_ARMOR_PIERCE.md) | **준신 HP 100만** · 방무 9999 · 필멸 99,999 |
 
 ## 현재 구현과의 관계
 

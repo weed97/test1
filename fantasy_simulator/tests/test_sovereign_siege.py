@@ -44,9 +44,9 @@ class SovereignSiegeTests(unittest.TestCase):
         )
         self.assertEqual(regen, 160_000)
 
-    def test_9999_simultaneous_one_hp_hits_kill(self) -> None:
+    def test_one_million_simultaneous_one_hp_hits_kill(self) -> None:
         hp = int(self.siege["arthur"]["hp_milli"])
-        strikes = [1000] * 9999
+        strikes = [1000] * 1_000_000
         r = resolve_parallel_strikes_milli(
             strikes,
             hp_milli_before=hp,
@@ -58,8 +58,8 @@ class SovereignSiegeTests(unittest.TestCase):
         self.assertTrue(r["instant_kill"])
         self.assertEqual(r["hp_milli_after"], 0)
 
-    def test_2000_elites_at_1000_hp_instant_kill(self) -> None:
-        ex = self.siege["instant_kill_examples"]["elite_squad"]
+    def test_pierce_elite_squad_instant_kill(self) -> None:
+        ex = self.siege["instant_kill_examples"]["elite_pierce_squad"]
         n = int(ex["attackers"])
         per = int(ex["hp_damage_per_striker_milli"])
         hp = int(self.siege["arthur"]["hp_milli"])

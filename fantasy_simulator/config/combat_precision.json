@@ -53,9 +53,19 @@
   },
   "raw_damage_soft_cap_milli": 100000000,
   "hp_damage_per_hit_cap_milli": 10000000,
+  "armor_pierce": {
+    "enabled_tiers": ["demigod", "excalibur_bound"],
+    "max_pierce_per_hit_milli": 9999000,
+    "demigod_attacks_per_sec": 10,
+    "apex_mortal_chip_vs_demigod_milli": 1000,
+    "apex_mortal_max_mult_per_sec_milli": 3000,
+    "comment": "필멸 맥스뎀→아서 1.000; 준신 방무→9999×10/s"
+  },
   "balance_guards": {
     "max_damage_per_strike_milli": 100000000,
-    "max_hp_milli": 99990000,
+    "max_hp_demigod_milli": 1000000000,
+    "max_hp_apex_mortal_milli": 99999000,
+    "max_hp_milli": 1000000000,
     "never_zero_if_hit": true,
     "deterministic_seed_optional": true,
     "combat_regen_cap_per_sec_milli": 200000

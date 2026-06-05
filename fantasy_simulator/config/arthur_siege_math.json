@@ -3,8 +3,9 @@
   "fixed_scale": 1000,
   "comment": "아서 공성·연합 병렬 타격 수학 — 설계 앵커 (docs/design/41_ARTHUR_SIEGE_MATH.md)",
   "arthur": {
-    "hp_milli": 9999000,
-    "hp_label": "9999.000",
+    "tier": "demigod",
+    "hp_milli": 1000000000,
+    "hp_label": "1000000.000",
     "defense_milli": 100000000,
     "defense_note": "sovereign_defense_floor — 99.999% 감쇠, raw 10만당 HP 1"
   },
@@ -13,8 +14,8 @@
     "raw_soft_cap_label": "100000.000",
     "hp_per_hit_at_raw_cap_milli": 1000,
     "hp_per_hit_label": "1.000 (최소 관통 0.001%)",
-    "hits_to_kill_at_min_hp_damage": 9999,
-    "comment": "만 명이 동시에 1씩 넣으면 즉사 — HP 풀과 동일"
+    "hits_to_kill_at_min_hp_damage": 1000000,
+    "comment": "필멸 맥스뎀→1.000칩 — 100만타; 백만 mob raw/s는 회복보다 약함"
   },
   "world_apex_attackers": {
     "count_at_raw_cap": 10,
@@ -35,14 +36,24 @@
     "formula_comment": "순피해/s ≈ (Σraw×through) − wounded_regen; through≈0.01% at 연합 스웜 밀도"
   },
   "instant_kill_examples": {
-    "simultaneous_one_hp_hits": 9999,
-    "elite_squad": {
-      "attackers": 2000,
-      "hp_damage_per_striker_milli": 1000000,
-      "hp_damage_label": "1000.000 (정예 천 데미지급)",
-      "total_hp_damage_milli": 2000000000,
-      "comment": "2000×1000 = 200만 HP — 9999 풀 즉시 붕괴"
+    "simultaneous_one_hp_hits": 1000000,
+    "armor_pierce_demigod": {
+      "damage_per_hit_milli": 9999000,
+      "attacks_per_sec": 10,
+      "comment": "준신 방무 9999×10/s — 다른 준신 결투용"
+    },
+    "elite_pierce_squad": {
+      "attackers": 120,
+      "hp_damage_per_striker_milli": 9999000,
+      "comment": "방무 정예 120×9999 ≈ 120만 — 연합·검주 루트"
     }
+  },
+  "mob_army_cannot_solo_kill": {
+    "attackers": 1000000,
+    "raw_per_striker_per_sec_milli": 10000,
+    "net_hp_per_sec_vs_arthur_milli": 100000,
+    "wounded_regen_per_sec_milli": 160000,
+    "comment": "100만×10 raw/s — 순피해 음수, break·방무 정예 필요"
   },
   "parallel_beat": {
     "sum_damage_before_regen": true,

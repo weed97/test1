@@ -27,7 +27,8 @@ def _sovereign_state(state: dict[str, Any]) -> dict[str, Any]:
         "world_sovereign",
         {
             "holder_id": "npc_arthur_pendragon",
-            "hp_milli": 9999000,
+            "hp_milli": 1000000000,
+            "tier": "demigod",
             "contested": False,
             "wound_stacks": 0,
             "sovereign_break_meter": 0,
@@ -263,6 +264,19 @@ def tick_sovereign_coalition_siege(
     return lines
 
 
+def estimate_mob_army_net_hp_per_sec_milli(
+    *,
+    siege_cfg: dict[str, Any],
+    combat_cfg: dict[str, Any],
+) -> int:
+    """Net HP/s from mob anchor (1M × 10 raw/s) vs Arthur mitigation."""
+    mob = siege_cfg.get("mob_army_cannot_solo_kill", {})
+    n = int(mob.get("attackers", 1_000_000))
+    raw = int(mob.get("raw_per_striker_per_sec_milli", 10_000))
+    per = hp_damage_from_raw_milli(raw, combat_cfg=combat_cfg, siege_cfg=siege_cfg)
+    return n * per
+
+
 def sovereign_siege_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
     siege_cfg = load_arthur_siege_math_config(base_dir)
     coalition_cfg = load_arthur_coalition_config(base_dir)
@@ -283,6 +297,9 @@ def sovereign_siege_status(state: dict[str, Any], *, base_dir: str | Path) -> di
         "wound_stacks": wounds,
         "regen_per_sec_milli": regen,
         "sovereign_break_meter": int(sov.get("sovereign_break_meter", 0)),
-        "hits_to_kill_at_min_damage": int(anchor.get("hits_to_kill_at_min_hp_damage", 9999)),
+        "hits_to_kill_at_min_damage": int(anchor.get("hits_to_kill_at_min_hp_damage", 1_000_000)),
+        "mob_army_net_hp_per_sec_milli": estimate_mob_army_net_hp_per_sec_milli(
+            siege_cfg=siege_cfg, combat_cfg=load_combat_precision_config(base_dir)
+        ),
         "world_apex_at_raw_cap": int(siege_cfg.get("world_apex_attackers", {}).get("count_at_raw_cap", 10)),
     }
