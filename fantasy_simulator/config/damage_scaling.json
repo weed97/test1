@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "stat_per_point": {
+    "str_damage_percent_per_point": 0.88,
+    "int_damage_percent_per_point": 0.92,
+    "character_level_percent_per_level": 0.1,
+    "comment": "STR 1000 → +880% (=×9.8), Lv1당 +0.1%"
+  },
+  "weapon_grade_base_damage": {
+    "common": 1,
+    "high": 2,
+    "rare": 5,
+    "hero": 10,
+    "legend": 50,
+    "mythic": 100,
+    "demigod": 100
+  },
+  "range_coeff": {
+    "melee": 1.1,
+    "ranged": 0.8
+  },
+  "skill_coeff": {
+    "magic_aoe": 0.9,
+    "magic_single": 1.0,
+    "ranged_phys_aoe": 0.7,
+    "ranged_phys_single": 0.8,
+    "melee_phys_aoe": 0.6,
+    "melee_phys_single": 1.1
+  },
+  "critical_multiplier": 1.5,
+  "mythic_pierce_fraction": 0.1,
+  "comment_pierce": "신화급 고정뎀의 10%만 방무 — 세계 2~11위만"
+}

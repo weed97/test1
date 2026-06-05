@@ -319,6 +319,19 @@ def combat_preview_strike(body: CombatPreviewRequest) -> dict[str, Any]:
     }
 
 
+@app.get("/v1/combat/elite_coalition")
+def combat_elite_coalition() -> dict[str, Any]:
+    from utils.combat_stats import elite_coalition_pierce_dps, load_combat_bundle
+
+    root = package_root()
+    bundle = load_combat_bundle(root)
+    return {
+        "api_version": API_VERSION,
+        **elite_coalition_pierce_dps(bundle=bundle),
+        "note": "2~11위 전원 방무 정예 — 뭉치면 아서 광역 1초컷 위험",
+    }
+
+
 @app.get("/v1/combat/combatant/{preset_id}")
 def combat_combatant(preset_id: str) -> dict[str, Any]:
     from utils.combat_stats import build_combatant_snapshot, combat_power_estimate

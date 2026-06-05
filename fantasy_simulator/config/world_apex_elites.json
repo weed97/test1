@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "comment": "세계 2~11위 — 신화템 10% 방무, 무기숙련 고정. 아서 격파 정예 연합.",
+  "world_pierce_cap": 10,
+  "rank_1": {
+    "holder": "npc_arthur_pendragon",
+    "note": "1위 아서 — 준신 방무 100%"
+  },
+  "pierce_elite": {
+    "base_pierce_dps": 1000,
+    "dps_falloff_percent_per_rank_below_2": 5,
+    "combined_dps_at_full_coalition": 5000,
+    "seconds_to_kill_arthur_1m_hp": 200,
+    "attacks_per_sec_rank_2": 5,
+    "comment": "2위 1000 방무 DPS, 순위마다 -5%, 10명 합산 ~5000"
+  },
+  "ranks": {
+    "2": { "weapon_mastery_level": 900, "preset_id": "world_rank_02", "label": "세계 2위" },
+    "3": { "weapon_mastery_level": 880, "preset_id": "world_rank_03", "label": "세계 3위" },
+    "4": { "weapon_mastery_level": 860, "preset_id": "world_rank_04", "label": "세계 4위" },
+    "5": { "weapon_mastery_level": 840, "preset_id": "world_rank_05", "label": "세계 5위" },
+    "6": { "weapon_mastery_level": 820, "preset_id": "world_rank_06", "label": "세계 6위" },
+    "7": { "weapon_mastery_level": 800, "preset_id": "world_rank_07", "label": "세계 7위" },
+    "8": { "weapon_mastery_level": 780, "preset_id": "world_rank_08", "label": "세계 8위" },
+    "9": { "weapon_mastery_level": 760, "preset_id": "world_rank_09", "label": "세계 9위" },
+    "10": { "weapon_mastery_level": 740, "preset_id": "world_rank_10", "label": "세계 10위" },
+    "11": { "weapon_mastery_level": 720, "preset_id": "world_rank_11", "label": "세계 11위" }
+  },
+  "arthur_counter": {
+    "aoe_one_shot_clustered_elites": true,
+    "comment": "정예가 뭉치면 아서 광역 1초컷 — 산개·딜 타이밍이 핵심"
+  }
+}

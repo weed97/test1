@@ -1,4 +1,4 @@
-"""Combat stats — build snapshots, resolve strikes (single entry for sim + API)."""
+"""Combat stats — snapshots, damage scaling, world pierce elites."""
 
 from __future__ import annotations
 
@@ -38,11 +38,11 @@ def _config_bundle(base_dir: str) -> dict[str, Any]:
     return {
         "precision": load_combat_precision_config(root),
         "stats": _read_json(root, "config/combat_stats.json"),
+        "scaling": _read_json(root, "config/damage_scaling.json"),
+        "elites": _read_json(root, "config/world_apex_elites.json"),
         "tiers": _read_json(root, "config/power_tiers.json"),
-        "grades": _read_json(root, "config/item_grades.json"),
         "equipment": _read_json(root, "config/equipment_templates.json"),
         "jobs": _read_json(root, "config/job_stat_routes.json"),
-        "mastery": _read_json(root, "config/weapon_mastery.json"),
         "combatants": _read_json(root, "config/combatants.json"),
         "coalition": _read_json(root, "config/arthur_coalition.json"),
     }
@@ -55,6 +55,74 @@ def load_combat_bundle(base_dir: str | Path) -> dict[str, Any]:
 def grade_index(grade: str) -> int:
     g = grade.lower()
     return _GRADE_ORDER.index(g) if g in _GRADE_ORDER else 0
+
+
+def grade_base_damage(grade: str, *, bundle: dict[str, Any]) -> float:
+    return float(bundle["scaling"]["weapon_grade_base_damage"].get(grade.lower(), 1))
+
+
+def elite_pierce_dps(rank: int, *, bundle: dict[str, Any]) -> float:
+    """방무 정예 DPS — 2위 1000, 순위당 -5%."""
+    pe = bundle["elites"]["pierce_elite"]
+    base = float(pe["base_pierce_dps"])
+    fall = float(pe["dps_falloff_percent_per_rank_below_2"]) / 100.0
+    if rank <= 2:
+        return base
+    return base * ((1.0 - fall) ** (rank - 2))
+
+
+def elite_coalition_pierce_dps(*, bundle: dict[str, Any]) -> dict[str, Any]:
+    """2~11위 전원 합산 방무 DPS."""
+    per_rank = {str(r): elite_pierce_dps(r, bundle=bundle) for r in range(2, 12)}
+    total = sum(per_rank.values())
+    pe = bundle["elites"]["pierce_elite"]
+    hp = int(bundle["coalition"].get("siege", {}).get("hp_milli", 1_000_000_000))
+    regen = int(bundle["coalition"].get("siege", {}).get("regen_per_sec_milli", 160_000))
+    net = max(0, int(total * 1000) - regen) // 1000
+    secs = hp // max(1, int(total * 1000) - regen) if int(total * 1000) > regen else 0
+    return {
+        "per_rank_dps": per_rank,
+        "combined_pierce_dps": round(total, 1),
+        "target_combined_dps": pe.get("combined_dps_at_full_coalition", 5000),
+        "realistic_range": [3000, 4000],
+        "net_dps_after_regen": net,
+        "seconds_to_kill_arthur": secs or int(pe.get("seconds_to_kill_arthur_1m_hp", 200)),
+    }
+
+
+def compute_skill_damage(
+    snapshot: dict[str, Any],
+    *,
+    bundle: dict[str, Any],
+    skill_power_percent: float = 700.0,
+    skill_kind: str = "melee_phys_single",
+    crit: bool = True,
+) -> dict[str, Any]:
+    """스탯·등급·스킬 계수 — 신화 10% 방무 분리."""
+    sc = bundle["scaling"]
+    grade = str(snapshot.get("weapon_grade", "mythic"))
+    base = grade_base_damage(grade, bundle=bundle)
+    range_k = float(sc["range_coeff"]["melee" if "melee" in skill_kind else "ranged"])
+    skill_k = float(sc["skill_coeff"].get(skill_kind, 1.0))
+    prim = snapshot.get("primary") or {}
+    str_mult = 1.0 + float(prim.get("str", 0)) * float(sc["stat_per_point"]["str_damage_percent_per_point"]) / 100.0
+    int_mult = 1.0 + float(prim.get("int", 0)) * float(sc["stat_per_point"]["int_damage_percent_per_point"]) / 100.0
+    stat_mult = str_mult if "magic" in skill_kind else str_mult
+    if "magic" in skill_kind:
+        stat_mult = int_mult
+    lv_mult = 1.0 + int(snapshot.get("character_level", 1)) * float(
+        sc["stat_per_point"]["character_level_percent_per_level"]
+    ) / 100.0
+    power = skill_power_percent / 100.0
+    crit_k = float(sc["critical_multiplier"]) if crit else 1.0
+    total = base * range_k * skill_k * power * stat_mult * lv_mult * crit_k
+    pierce_frac = float(sc["mythic_pierce_fraction"])
+    pierce = total * pierce_frac if snapshot.get("world_apex_rank") else 0.0
+    return {
+        "total_damage": round(total, 1),
+        "pierce_damage": round(pierce, 1),
+        "normal_damage": round(total - pierce, 1),
+    }
 
 
 def compute_primary_stats(
@@ -89,10 +157,25 @@ def hp_cap_milli_for(tier: str, *, bundle: dict[str, Any]) -> int:
     tiers = bundle["tiers"].get("tiers", {})
     if tier == "demigod":
         return int(tiers.get("demigod", {}).get("hp_cap_milli", 1_000_000_000))
-    if tier == "apex_mortal":
+    if tier in ("apex_mortal", "apex_elite"):
         return int(tiers.get("apex_mortal", {}).get("hp_cap_milli", 99_999_000))
     pools = bundle["stats"].get("hp_pools", {})
     return int(pools.get("default_mortal_cap_milli", 50_000_000))
+
+
+def _apply_elite_pierce_fields(snap: dict[str, Any], *, bundle: dict[str, Any]) -> None:
+    rank = snap.get("world_apex_rank")
+    if not rank or int(rank) < 2:
+        return
+    ri = int(rank)
+    dps = elite_pierce_dps(ri, bundle=bundle)
+    aps = int(bundle["elites"]["pierce_elite"].get("attacks_per_sec_rank_2", 5))
+    snap["pierce_dps_milli"] = int(dps * 1000)
+    snap["pierce_per_hit_milli"] = int(dps * 1000) // max(1, aps)
+    snap["attacks_per_sec_milli"] = aps * 1000
+    snap["tier"] = "apex_elite"
+    snap["weapon_grade"] = "mythic"
+    snap["mythic_partial_pierce"] = True
 
 
 def build_combatant_snapshot(
@@ -101,7 +184,6 @@ def build_combatant_snapshot(
     preset_id: str | None = None,
     overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Full combatant for strike resolution (milli stats)."""
     bundle = load_combat_bundle(base_dir)
     cfg = bundle["precision"]
     data: dict[str, Any] = {}
@@ -118,34 +200,37 @@ def build_combatant_snapshot(
     tier = str(data.get("tier", "mortal"))
     equip = data.get("equipment") or {}
 
-    prim = compute_primary_stats(
+    prim = data.get("primary") or compute_primary_stats(
         job_id, character_level=char_lv, job_level=job_lv, jobs_cfg=bundle["jobs"]
     )
+    if data.get("str_override"):
+        prim = dict(prim)
+        prim["str"] = int(data["str_override"])
+
     wpn = _weapon_template(bundle["equipment"], equip.get("weapon"))
     arm = _armor_template(bundle["equipment"], equip.get("armor"))
-    wconst = bundle["stats"].get("weapon_constants", {}).get(
-        wpn.get("weapon_class", wclass),
-        bundle["stats"].get("weapon_constants", {}).get("two_handed_sword", {}),
-    )
-    if equip.get("weapon") == "excalibur_sovereign_blade":
-        wconst = bundle["stats"].get("weapon_constants", {}).get(
-            "excalibur_sovereign_blade", wconst
-        )
+    w_grade = str(wpn.get("grade", data.get("weapon_grade", "common")))
 
-    w_grade = str(wpn.get("grade", "common"))
-    scale = fixed_scale(cfg)
-    phys_k = int(wconst.get("phys_constant_milli", 1000)) / scale
-    str_m = to_milli(prim["str"] * 0.42 + prim["dex"] * 0.18, cfg=cfg)
-    wpn_atk = to_milli(float(wpn.get("attack", 10)), cfg=cfg)
-    mastery_bonus = to_milli(wpn_lv * 0.95, cfg=cfg)
-    attack_milli = int((str_m + wpn_atk + mastery_bonus) * phys_k)
+    scale_dmg = compute_skill_damage(
+        {
+            "primary": prim,
+            "character_level": char_lv,
+            "weapon_grade": w_grade,
+            "world_apex_rank": data.get("world_apex_rank"),
+        },
+        bundle=bundle,
+        skill_power_percent=float(data.get("skill_power_percent", 100)),
+        skill_kind=str(data.get("skill_kind", "melee_phys_single")),
+        crit=False,
+    )
+    attack_milli = to_milli(scale_dmg["total_damage"], cfg=cfg)
     attack_milli = min(attack_milli, int(cfg.get("raw_damage_soft_cap_milli", 100_000_000)))
 
-    def_m = to_milli(float(arm.get("defense", prim["vit"] * 0.35)), cfg=cfg)
+    def_m = to_milli(float(arm.get("defense", prim.get("vit", 10) * 0.35)), cfg=cfg)
     if tier == "demigod":
         def_m = max(def_m, int(cfg.get("mitigation", {}).get("sovereign_defense_floor_milli", 100_000_000)))
 
-    vit_hp = to_milli(prim["vit"] * 8.5 + char_lv * 2.2, cfg=cfg)
+    vit_hp = to_milli(prim.get("vit", 10) * 8.5 + char_lv * 2.2, cfg=cfg)
     hp_milli = min(hp_cap_milli_for(tier, bundle=bundle), max(vit_hp, 5_000))
 
     snap: dict[str, Any] = {
@@ -155,40 +240,38 @@ def build_combatant_snapshot(
         "character_level": char_lv,
         "weapon_mastery_level": wpn_lv,
         "item_grade_index": grade_index(w_grade),
+        "weapon_grade": w_grade,
         "attack_milli": attack_milli,
         "defense_milli": def_m,
         "hp_milli": hp_milli,
-        "phys_attack_milli": attack_milli,
-        "phys_defense_milli": def_m,
         "primary": prim,
         "weapon_class": wclass,
         "armor_pierce": bool(data.get("armor_pierce") or data.get("excalibur_bound")),
         "excalibur_bound": bool(data.get("excalibur_bound")),
         "world_sovereign": bool(data.get("world_sovereign")),
+        "world_apex_rank": data.get("world_apex_rank"),
     }
     if tier == "demigod" and bundle["coalition"].get("world_sovereign", {}).get("hp_milli"):
         snap["hp_milli"] = int(bundle["coalition"]["world_sovereign"]["hp_milli"])
+    _apply_elite_pierce_fields(snap, bundle=bundle)
     return snap
 
 
 def agent_to_combatant(agent: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
-    """Map ecology_agent / field agent → combat snapshot."""
     preset = agent.get("combatant_preset")
     if preset:
         return build_combatant_snapshot(base_dir=base_dir, preset_id=str(preset))
-
-    stats = agent.get("stats") or {}
-    tier = str(agent.get("tier", "mortal"))
     if agent.get("world_sovereign_holder") or agent.get("archetype_id") == "npc_arthur_pendragon":
         return build_combatant_snapshot(base_dir=base_dir, preset_id="npc_arthur_pendragon")
-
+    stats = agent.get("stats") or {}
     overrides = {
-        "tier": tier,
+        "tier": str(agent.get("tier", "mortal")),
         "character_level": int(agent.get("character_level", stats.get("level", 1))),
         "job_id": agent.get("job_id", "wanderer"),
         "job_level": int(agent.get("job_level", 1)),
         "weapon_class": agent.get("weapon_class", "one_handed_sword"),
         "weapon_mastery_level": int(agent.get("weapon_mastery_level", 1)),
+        "world_apex_rank": agent.get("world_apex_rank"),
         "label": agent.get("label") or agent.get("archetype_id", "agent"),
     }
     snap = build_combatant_snapshot(base_dir=base_dir, overrides=overrides)
@@ -208,8 +291,7 @@ def strike_damage_milli(
     force_hit: bool | None = None,
     force_sovereign_through: bool | None = None,
 ) -> dict[str, Any]:
-    bundle = load_combat_bundle(base_dir)
-    cfg = bundle["precision"]
+    cfg = load_combat_precision_config(base_dir)
     atk = dict(attacker)
     if skill_multiplier != 1.0:
         atk["attack_milli"] = int(atk.get("attack_milli", 0) * skill_multiplier)
@@ -230,43 +312,36 @@ def strike_damage_hp(
     base_dir: str | Path,
     rng: Any,
     skill_multiplier: float = 1.0,
-    minimum: int = 0,
 ) -> int:
-    """Integer HP damage for field agents / rule engine."""
     r = strike_damage_milli(
-        attacker,
-        defender,
-        base_dir=base_dir,
-        rng=rng,
-        skill_multiplier=skill_multiplier,
+        attacker, defender, base_dir=base_dir, rng=rng, skill_multiplier=skill_multiplier
     )
-    dmg = int(round(from_milli(int(r.get("damage_milli", 0)), cfg=load_combat_precision_config(base_dir))))
-    if minimum > 0 and r.get("hit") and dmg < minimum and int(r.get("damage_milli", 0)) > 0:
-        return minimum
-    return max(0, dmg)
+    return max(
+        0,
+        int(round(from_milli(int(r.get("damage_milli", 0)), cfg=load_combat_precision_config(base_dir)))),
+    )
 
 
 def combat_power_estimate(snapshot: dict[str, Any], *, base_dir: str | Path) -> int:
-    """Simple 전투력 display number."""
     cfg = load_combat_precision_config(base_dir)
-    atk = int(snapshot.get("attack_milli", 0))
-    hp = int(snapshot.get("hp_milli", 0))
-    defn = int(snapshot.get("defense_milli", 0))
-    lv = int(snapshot.get("character_level", 1))
-    wm = int(snapshot.get("weapon_mastery_level", 1))
-    gr = int(snapshot.get("item_grade_index", 0))
-    return (atk + defn + hp // fixed_scale(cfg)) // fixed_scale(cfg) + lv + wm + gr * 50
+    pierce_dps = int(snapshot.get("pierce_dps_milli", 0)) // fixed_scale(cfg)
+    return (
+        int(snapshot.get("attack_milli", 0)) // fixed_scale(cfg)
+        + pierce_dps
+        + int(snapshot.get("character_level", 1))
+        + int(snapshot.get("weapon_mastery_level", 1))
+    )
 
 
 def sovereign_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
     from utils.sovereign_siege import sovereign_siege_status
 
+    bundle = load_combat_bundle(base_dir)
     arthur = build_combatant_snapshot(base_dir=base_dir, preset_id="npc_arthur_pendragon")
     status = sovereign_siege_status(state, base_dir=base_dir)
     status["arthur_snapshot"] = {
         "hp_milli": arthur["hp_milli"],
-        "attack_milli": arthur["attack_milli"],
-        "defense_milli": arthur["defense_milli"],
         "combat_power": combat_power_estimate(arthur, base_dir=base_dir),
     }
+    status["elite_coalition"] = elite_coalition_pierce_dps(bundle=bundle)
     return status

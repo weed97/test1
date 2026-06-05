@@ -44,8 +44,31 @@ def hp_cap_milli_for_tier(tier: str, *, tiers_cfg: dict[str, Any]) -> int:
     return int(tiers_cfg.get("balance_guards", {}).get("max_hp_milli", 999_000))
 
 
+def world_apex_rank(attacker: dict[str, Any]) -> int | None:
+    r = attacker.get("world_apex_rank")
+    if r is None:
+        return None
+    ri = int(r)
+    return ri if 2 <= ri <= 11 else None
+
+
+def partial_pierce_per_hit_milli(attacker: dict[str, Any]) -> int:
+    """신화 10% 방무 — 세계 2~11위 고정 타격."""
+    preset = int(attacker.get("pierce_per_hit_milli", 0))
+    if preset > 0:
+        return preset
+    rank = world_apex_rank(attacker)
+    if rank is None:
+        return 0
+    dps = int(attacker.get("pierce_dps_milli", 0))
+    aps = max(1, int(attacker.get("attacks_per_sec_milli", 1000)) // 1000)
+    if dps > 0:
+        return dps // aps
+    return 0
+
+
 def compute_pierce_damage_milli(attacker: dict[str, Any], *, cfg: dict[str, Any]) -> int:
-    """Armor-piercing component — bypasses mitigation; demigod / Excalibur only."""
+    """Full armor-pierce — demigod / Excalibur."""
     if not attacker_has_armor_pierce(attacker, cfg=cfg):
         return 0
     ap = cfg.get("armor_pierce", {})
@@ -257,32 +280,36 @@ def resolve_strike_damage_milli(
     hit_cap = int(cfg.get("hp_damage_per_hit_cap_milli", 10_000_000))
     min_d = int(cfg.get("min_final_damage_milli", 1000))
 
+    partial_pierce = partial_pierce_per_hit_milli(attacker)
+
     if defender_is_demigod(defender) and not attacker_has_armor_pierce(attacker, cfg=cfg):
         sovereign_through = roll_sovereign_through(
             rng, cfg=cfg, force=force_sovereign_through
         )
-        if not sovereign_through:
+        through_dmg = 0
+        if sovereign_through:
+            through_dmg = min(
+                hit_cap,
+                sovereign_proc_damage_milli(attacker, cfg=cfg, rng=rng),
+            )
+        final = through_dmg + partial_pierce
+        if final <= 0:
             return {
                 "hit": True,
                 "crit": False,
-                "sovereign_through": False,
+                "sovereign_through": sovereign_through,
                 "damage_milli": 0,
                 "damage": 0.0,
                 "hit_rate_milli": hit_rate,
                 "crit_rate_milli": crit_rate,
-                "armor_pierce_milli": 0,
+                "armor_pierce_milli": partial_pierce,
                 "audit": {
-                    "raw_attack_milli": int(attacker.get("attack_milli", 0)),
-                    "after_level_supremacy_milli": after_level,
-                    "mitigation_mult_milli": mit,
-                    "sovereign_through_rolled": False,
+                    "sovereign_through_rolled": sovereign_through,
+                    "partial_pierce_milli": partial_pierce,
                 },
             }
-        mitigated_final = min(
-            hit_cap,
-            sovereign_proc_damage_milli(attacker, cfg=cfg, rng=rng),
-        )
-        final = mitigated_final
+        mitigated_final = through_dmg
+        pierce = partial_pierce
     else:
         mitigated_final = after_armor
         if crit and pierce <= 0:
@@ -303,6 +330,7 @@ def resolve_strike_damage_milli(
         "hit_rate_milli": hit_rate,
         "crit_rate_milli": crit_rate,
         "armor_pierce_milli": pierce,
+        "partial_pierce_milli": partial_pierce,
         "audit": {
             "raw_attack_milli": int(attacker.get("attack_milli", 0)),
             "after_level_supremacy_milli": after_level,

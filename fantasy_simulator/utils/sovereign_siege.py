@@ -35,13 +35,15 @@ def _sovereign_state(state: dict[str, Any], *, siege: dict[str, Any]) -> dict[st
 
 def coalition_net_dps_milli(*, coalition_cfg: dict[str, Any]) -> int:
     s = coalition_cfg.get("siege", {})
-    return int(s.get("net_dps_milli", 40_000))
+    mob = s.get("mob_army", {})
+    return int(mob.get("net_dps_milli", s.get("net_dps_milli", 40_000)))
 
 
 def estimate_coalition_siege_seconds(*, coalition_cfg: dict[str, Any]) -> int:
     s = coalition_cfg.get("siege", {})
-    if "seconds_to_kill" in s:
-        return int(s["seconds_to_kill"])
+    mob = s.get("mob_army", {})
+    if mob.get("seconds_to_kill"):
+        return int(mob["seconds_to_kill"])
     net = coalition_net_dps_milli(coalition_cfg=coalition_cfg)
     if net <= 0:
         return 0
@@ -72,8 +74,9 @@ def tick_sovereign_coalition_siege(
         max(strikers, strikers + strikers // 10),
     )
 
-    anchor_n = max(1, int(siege.get("anchor_strikers", 300_000)))
-    agg_dps = (growth["strikers"] * int(siege.get("aggregate_dps_milli", 200_000))) // anchor_n
+    mob = siege.get("mob_army", siege)
+    anchor_n = max(1, int(mob.get("anchor_strikers", 300_000)))
+    agg_dps = (growth["strikers"] * int(mob.get("aggregate_dps_milli", 200_000))) // anchor_n
     regen = int(siege.get("regen_per_sec_milli", 160_000))
     if contested:
         regen = regen // 5

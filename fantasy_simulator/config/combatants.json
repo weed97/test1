@@ -1,10 +1,11 @@
 {
-  "version": 1,
-  "comment": "전투 스냅샷 프리셋 — build_combatant_snapshot 에 병합",
+  "version": 2,
+  "comment": "전투 프리셋 — world_rank_02~11 = 신화 10% 방무 정예",
   "npc_arthur_pendragon": {
     "label": "아서왕",
     "tier": "demigod",
     "world_sovereign": true,
+    "world_apex_rank": 1,
     "character_level": 999,
     "job_id": "knight",
     "job_level": 999,
@@ -15,13 +16,96 @@
     "excalibur_bound": true
   },
   "coalition_blade_sovereign": {
-    "label": "연합 검주",
-    "tier": "apex_mortal",
+    "label": "연합 검주 · 세계 2위",
+    "tier": "apex_elite",
+    "world_apex_rank": 2,
     "character_level": 920,
     "job_id": "knight",
     "job_level": 900,
     "weapon_class": "two_handed_sword",
     "weapon_mastery_level": 900,
+    "str_override": 1000,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" },
+    "skill_kind": "melee_phys_single",
+    "skill_power_percent": 700
+  },
+  "world_rank_02": {
+    "label": "세계 2위",
+    "tier": "apex_elite",
+    "world_apex_rank": 2,
+    "character_level": 920,
+    "job_id": "knight",
+    "weapon_mastery_level": 900,
+    "str_override": 1000,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" },
+    "skill_kind": "melee_phys_single",
+    "skill_power_percent": 700
+  },
+  "world_rank_03": {
+    "label": "세계 3위",
+    "tier": "apex_elite",
+    "world_apex_rank": 3,
+    "character_level": 900,
+    "job_id": "knight",
+    "weapon_mastery_level": 880,
+    "str_override": 980,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+  },
+  "world_rank_04": {
+    "label": "세계 4위",
+    "tier": "apex_elite",
+    "world_apex_rank": 4,
+    "weapon_mastery_level": 860,
+    "str_override": 960,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+  },
+  "world_rank_05": {
+    "label": "세계 5위",
+    "tier": "apex_elite",
+    "world_apex_rank": 5,
+    "weapon_mastery_level": 840,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+  },
+  "world_rank_06": {
+    "label": "세계 6위",
+    "tier": "apex_elite",
+    "world_apex_rank": 6,
+    "weapon_mastery_level": 820,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+  },
+  "world_rank_07": {
+    "label": "세계 7위",
+    "tier": "apex_elite",
+    "world_apex_rank": 7,
+    "weapon_mastery_level": 800,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+  },
+  "world_rank_08": {
+    "label": "세계 8위",
+    "tier": "apex_elite",
+    "world_apex_rank": 8,
+    "weapon_mastery_level": 780,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+  },
+  "world_rank_09": {
+    "label": "세계 9위",
+    "tier": "apex_elite",
+    "world_apex_rank": 9,
+    "weapon_mastery_level": 760,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+  },
+  "world_rank_10": {
+    "label": "세계 10위",
+    "tier": "apex_elite",
+    "world_apex_rank": 10,
+    "weapon_mastery_level": 740,
+    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+  },
+  "world_rank_11": {
+    "label": "세계 11위",
+    "tier": "apex_elite",
+    "world_apex_rank": 11,
+    "weapon_mastery_level": 720,
     "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
   },
   "grand_coalition_mob": {
@@ -30,17 +114,14 @@
     "character_level": 40,
     "job_id": "wanderer",
     "job_level": 20,
-    "weapon_class": "one_handed_sword",
     "weapon_mastery_level": 15,
     "equipment": { "weapon": "iron_greatsword" }
   },
   "apex_knight_lv999": {
-    "label": "만렙 기사",
+    "label": "만렙 기사 (방무 없음)",
     "tier": "apex_mortal",
     "character_level": 999,
     "job_id": "knight",
-    "job_level": 999,
-    "weapon_class": "two_handed_sword",
     "weapon_mastery_level": 999,
     "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
   }

@@ -65,14 +65,21 @@
   "siege": {
     "hp_milli": 1000000000,
     "regen_per_sec_milli": 160000,
-    "anchor_strikers": 300000,
-    "aggregate_dps_milli": 200000,
-    "net_dps_milli": 40000,
-    "seconds_to_kill": 25000,
-    "through_rate_milli": 1,
-    "strikes_per_through": 100000,
-    "apex_on_through_damage_milli": 9999000,
-    "mob_on_through_min_milli": 100000,
-    "mob_on_through_max_milli": 300000
+    "mob_army": {
+      "anchor_strikers": 300000,
+      "aggregate_dps_milli": 200000,
+      "net_dps_milli": 40000,
+      "seconds_to_kill": 25000
+    },
+    "pierce_elite_coalition": {
+      "ranks": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "rank_2_pierce_dps": 1000,
+      "falloff_percent_per_rank": 5,
+      "combined_pierce_dps": 5000,
+      "combined_realistic_min": 3000,
+      "combined_realistic_max": 4000,
+      "seconds_to_kill_at_5000_dps": 200,
+      "arthur_aoe_one_shot_if_clustered": true
+    }
   }
 }
