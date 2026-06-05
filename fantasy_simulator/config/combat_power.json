@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "metric_id": "combat_power",
+  "label": "전투력",
+  "note": "effective_power 의 플레이어-facing 이름. UI·랭킹·위협도 표시용.",
+  "priority_order": ["character_level", "weapon_class_level", "item_grade"],
+  "weights": {
+    "character_level": 0.5,
+    "weapon_class_level": 0.35,
+    "item_grade": 0.15
+  },
+  "formula": {
+    "comment": "전투력 = 캐릭터 기반 + 직업 스탯 루트 + 무기마스터리 보너스 + 장비(무기·방어구·악세) 합산",
+    "components": [
+      "character_base_stats",
+      "job_stat_route",
+      "weapon_mastery_scaling",
+      "equipped_weapon",
+      "equipped_armor",
+      "equipped_accessories",
+      "grade_affixes_and_skills"
+    ],
+    "approximate": "combat_power = floor(char_contrib + job_contrib + mastery_contrib + weapon_cp + armor_cp + accessory_cp)"
+  },
+  "weapon_mastery_scaling": {
+    "comment": "무기 종류·레벨마다 추가 성능 곡선이 다름 — weapon_templates 참조",
+    "default_per_level": { "attack": 0.6, "accuracy": 0.02 },
+    "by_class": {
+      "two_handed_sword": { "attack_per_level": 0.95, "stagger_per_level": 0.01 },
+      "bow": { "attack_per_level": 0.72, "crit_per_level": 0.015 },
+      "staff": { "spell_power_per_level": 0.88, "mana_per_level": 0.5 }
+    }
+  },
+  "grade_combat_hooks": {
+    "common": { "affix_slots": 0, "grants_skills": false },
+    "high": { "affix_slots": 1, "grants_skills": false },
+    "rare": { "affix_slots": 1, "special_effect": true },
+    "hero": { "affix_slots": 2, "special_effect": true },
+    "legend": {
+      "affix_slots": 2,
+      "grants_skills": true,
+      "combat_transform": "optional",
+      "comment": "전투 패턴·스킬 큰 변화 가능"
+    },
+    "mythic": { "affix_slots": 3, "grants_skills": true, "realm_affix": true },
+    "demigod": { "affix_slots": 4, "grants_skills": true, "sovereign_hook": true }
+  },
+  "slots": {
+    "weapon": { "stats": ["attack", "speed", "crit", "element", "base_damage_min", "base_damage_max"] },
+    "armor": { "stats": ["defense", "resist_physical", "resist_element", "block"] },
+    "accessory": { "stats": ["bonus_str", "bonus_int", "proc_effects", "utility"] }
+  }
+}

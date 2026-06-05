@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "comment": "무기·방어구·악세서리 템플릿 — 종류별 기본 능력치·등급별 스킬·특수효과",
+  "weapons": {
+    "iron_greatsword": {
+      "weapon_class": "two_handed_sword",
+      "grade": "common",
+      "label": "철 대검",
+      "base_damage_min": 12,
+      "base_damage_max": 18,
+      "attack": 14,
+      "speed": 0.85,
+      "mastery_bonus_curve": "two_handed_sword"
+    },
+    "sealbreaker_blade": {
+      "weapon_class": "two_handed_sword",
+      "grade": "legend",
+      "label": "봉인 파쇄검",
+      "base_damage_min": 85,
+      "base_damage_max": 120,
+      "attack": 102,
+      "speed": 0.9,
+      "mastery_bonus_curve": "two_handed_sword",
+      "skills": ["legend_cleave", "seal_resonance"],
+      "combat_transform": "wide_arc_strikes",
+      "affixes": ["armor_break_chance"]
+    },
+    "excalibur_sovereign_blade": {
+      "weapon_class": "two_handed_sword",
+      "grade": "demigod",
+      "label": "엑스칼리버",
+      "base_damage_min": 400,
+      "base_damage_max": 520,
+      "attack": 460,
+      "mastery_bonus_curve": "two_handed_sword",
+      "skills": ["sovereign_wish_rite", "kings_aegis"],
+      "sovereign_power_id": "sovereign_wish"
+    }
+  },
+  "armor": {
+    "leather_vest": {
+      "grade": "common",
+      "slot": "armor",
+      "defense": 8,
+      "resist_physical": 0.02
+    },
+    "mythic_plate_core": {
+      "grade": "mythic",
+      "slot": "armor",
+      "defense": 180,
+      "resist_physical": 0.22,
+      "resist_element": { "fire": 0.15, "shadow": 0.2 },
+      "affixes": ["damage_reflect_low"],
+      "skills": ["mythic_bulwark"]
+    }
+  },
+  "accessories": {
+    "scout_cloak": {
+      "grade": "hero",
+      "slot": "accessory",
+      "bonus_agi": 12,
+      "proc_effects": ["evasion_on_explore"],
+      "affixes": ["move_silent"]
+    },
+    "ring_of_ash_king": {
+      "grade": "legend",
+      "slot": "accessory",
+      "bonus_str": 25,
+      "bonus_vit": 15,
+      "skills": ["ash_burst"],
+      "affixes": ["tension_decay_party"]
+    }
+  },
+  "instance_fields": [
+    "template_id",
+    "grade",
+    "quality",
+    "legend_band",
+    "mastery_applied_class",
+    "rolled_affixes",
+    "granted_skills"
+  ]
+}

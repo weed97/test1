@@ -40,9 +40,10 @@
     "high": { "min_character_level": 10, "min_weapon_class_level": 25 },
     "common": { "min_character_level": 1, "min_weapon_class_level": 1 }
   },
+  "combat_power_metric": "combat_power",
   "combat_supremacy": {
     "priority_order": ["character_level", "weapon_class_level", "item_grade"],
-    "comment": "강함 순서: 1 캐릭터 레벨 → 2 무기 클래스 레벨 → 3 아이템 등급",
+    "comment": "전투력(combat_power) 산출 시 강함 순서: 1 캐릭터 Lv → 2 무기 클래스 Lv → 3 등급. 상세는 combat_power.json",
     "character_level_weight": 0.5,
     "weapon_class_level_weight": 0.35,
     "item_grade_weight": 0.15,

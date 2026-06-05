@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "comment": "직업별 스탯 성장 루트 — 캐릭터 Lv·직업 Lv 올라갈 때 합산",
+  "stats": ["str", "agi", "vit", "int", "dex", "luck"],
+  "jobs": {
+    "knight": {
+      "label": "기사",
+      "growth_per_job_level": {
+        "str": 2.2,
+        "vit": 2.0,
+        "agi": 0.5,
+        "int": 0.2,
+        "dex": 0.6,
+        "luck": 0.3
+      },
+      "growth_per_character_level": {
+        "str": 0.4,
+        "vit": 0.35,
+        "agi": 0.15,
+        "int": 0.1,
+        "dex": 0.12,
+        "luck": 0.08
+      },
+      "preferred_weapon_classes": ["two_handed_sword", "one_handed_sword"]
+    },
+    "ranger": {
+      "label": "레인저",
+      "growth_per_job_level": {
+        "str": 0.8,
+        "vit": 1.0,
+        "agi": 2.1,
+        "int": 0.4,
+        "dex": 2.3,
+        "luck": 0.9
+      },
+      "growth_per_character_level": {
+        "str": 0.15,
+        "vit": 0.2,
+        "agi": 0.38,
+        "int": 0.12,
+        "dex": 0.4,
+        "luck": 0.15
+      },
+      "preferred_weapon_classes": ["bow", "dagger"]
+    },
+    "arcane_apprentice": {
+      "label": "마법 견습",
+      "growth_per_job_level": {
+        "str": 0.2,
+        "vit": 0.8,
+        "agi": 0.6,
+        "int": 2.5,
+        "dex": 0.5,
+        "luck": 0.7
+      },
+      "growth_per_character_level": {
+        "str": 0.08,
+        "vit": 0.15,
+        "agi": 0.12,
+        "int": 0.45,
+        "dex": 0.1,
+        "luck": 0.12
+      },
+      "preferred_weapon_classes": ["staff"]
+    },
+    "wanderer": {
+      "label": "방랑자",
+      "growth_per_job_level": {
+        "str": 1.0,
+        "vit": 1.0,
+        "agi": 1.2,
+        "int": 0.8,
+        "dex": 1.1,
+        "luck": 1.0
+      },
+      "growth_per_character_level": {
+        "str": 0.22,
+        "vit": 0.22,
+        "agi": 0.22,
+        "int": 0.22,
+        "dex": 0.22,
+        "luck": 0.22
+      },
+      "preferred_weapon_classes": ["one_handed_sword", "bow", "dagger"]
+    }
+  }
+}
