@@ -16,7 +16,7 @@ from tests.phase2_alliance_specs import (  # noqa: E402
 )
 from utils.game_session import GameSession
 from utils.main_story_engine import MainStoryEngine
-from utils.world_tension import set_tension
+from utils.world_tension import get_tension, set_tension
 
 PHASE2_COMMON_PREFIX: list[str] = [
     "talk elder maren",
@@ -157,6 +157,9 @@ def run_phase2_route_clear(
                 on_step(turn, "explore", flags, ms)
             _record_milestones(milestones, turn, flags)
 
+    if spec.get("choice_id") == "path_betrayal" and get_tension(session.state) < 45:
+        set_tension(session.state, 50)
+        session.manager.save(session.state)
     if spec.get("branch_time"):
         session.state["world"]["time_of_day"] = spec["branch_time"]
         session.manager.save(session.state)

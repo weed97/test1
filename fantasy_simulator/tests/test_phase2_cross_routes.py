@@ -1,7 +1,8 @@
-"""Phase 1 × Phase 2 cross-route smoke tests (representative matrix)."""
+"""Phase 1 × Phase 2 full cross-route matrix (5 × 3 = 15)."""
 
 from __future__ import annotations
 
+import itertools
 import sys
 import unittest
 from pathlib import Path
@@ -18,22 +19,16 @@ from tests.phase2_route_helpers import (  # noqa: E402
     setup_phase2_session,
 )
 
-# One Phase 1 route per Phase 2 branch + two extra pairings.
-CROSS_ROUTE_PAIRS = [
-    ("ally_village", "path_alliance"),
-    ("seek_truth", "path_neutral"),
-    ("pursue_power", "path_betrayal"),
-    ("exploit_chaos", "path_neutral"),
-    ("stay_neutral", "path_alliance"),
-]
+CROSS_ROUTE_PAIRS = list(
+    itertools.product(PHASE1_ROUTE_SPECS.keys(), PHASE2_ROUTE_SPECS.keys())
+)
 
 
 class Phase2CrossRouteTests(unittest.TestCase):
     def test_cross_route_matrix(self) -> None:
+        self.assertEqual(len(CROSS_ROUTE_PAIRS), 15)
         for p1_id, p2_id in CROSS_ROUTE_PAIRS:
             with self.subTest(phase1=p1_id, phase2=p2_id):
-                self.assertIn(p1_id, PHASE1_ROUTE_SPECS)
-                self.assertIn(p2_id, PHASE2_ROUTE_SPECS)
                 with isolated_game_root() as root:
                     session, _ = setup_phase2_session(root, phase1_choice=p1_id)
                     p2_spec = phase2_spec_for(p1_id, p2_id)
