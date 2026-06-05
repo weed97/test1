@@ -137,6 +137,33 @@ def _pick_skill(
     return best[1] if best else None
 
 
+def preview_skill_damage(
+    attacker: dict[str, Any],
+    target: dict[str, Any],
+    skill_id: str,
+    *,
+    base_dir: str | Path,
+    rng: random.Random,
+) -> int:
+    sdef = skill_definition(skill_id, base_dir=base_dir)
+    if "build_progress" in sdef.get("tags", []):
+        return 0
+    iq_bonus = 1.0 + (_iq(attacker) / 100.0) * 0.15
+    plunder = int(attacker.get("plunder", {}).get("power_bonus", 0))
+    base_pwr = float(sdef.get("power", 8)) + plunder * 0.5
+    variance = rng.uniform(0.9, 1.1 + _iq(attacker) / 200.0)
+    return max(1, int(base_pwr * iq_bonus * variance))
+
+
+def commit_skill_costs(attacker: dict[str, Any], skill_id: str, *, base_dir: str | Path) -> None:
+    sdef = skill_definition(skill_id, base_dir=base_dir)
+    cost = int(sdef.get("mana_cost", 0))
+    attacker["mp"] = max(0, int(attacker.get("mp", 0)) - cost)
+    attacker.setdefault("skill_cooldowns", {})[skill_id] = int(
+        sdef.get("cooldown_beats", 2)
+    )
+
+
 def use_skill(
     attacker: dict[str, Any],
     target: dict[str, Any],
@@ -145,20 +172,10 @@ def use_skill(
     base_dir: str | Path,
     rng: random.Random,
 ) -> tuple[int, str]:
-    sdef = skill_definition(skill_id, base_dir=base_dir)
-    cost = int(sdef.get("mana_cost", 0))
-    attacker["mp"] = max(0, int(attacker.get("mp", 0)) - cost)
-    attacker.setdefault("skill_cooldowns", {})[skill_id] = int(
-        sdef.get("cooldown_beats", 2)
-    )
-    iq_bonus = 1.0 + (_iq(attacker) / 100.0) * 0.15
-    plunder = int(attacker.get("plunder", {}).get("power_bonus", 0))
-    base_pwr = float(sdef.get("power", 8)) + plunder * 0.5
-    variance = rng.uniform(0.9, 1.1 + _iq(attacker) / 200.0)
-    dmg = max(1, int(base_pwr * iq_bonus * variance))
-    if "build_progress" in sdef.get("tags", []):
-        return 0, skill_id
-    target["hp"] = int(target.get("hp", 1)) - dmg
+    dmg = preview_skill_damage(attacker, target, skill_id, base_dir=base_dir, rng=rng)
+    commit_skill_costs(attacker, skill_id, base_dir=base_dir)
+    if dmg > 0:
+        target["hp"] = int(target.get("hp", 1)) - dmg
     return dmg, skill_id
 
 

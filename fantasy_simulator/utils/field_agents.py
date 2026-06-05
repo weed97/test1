@@ -142,29 +142,35 @@ def tick_field_ecology(
     if not ecology_enabled(state):
         return []
     r = rng or random.Random()
-    ensure_ecology_seeds(state, base_dir=base_dir)
-    cfg = load_ecology_config(base_dir)
-    maps = load_world_maps(str(base_dir)).get("maps", {})
     world = state.get("world", {})
     map_id = world.get("map_id", "ashpoint_01")
-    all_agents = get_agents(state)
-    map_agents = [a for a in all_agents if a.get("map_id") == map_id]
-    refresh_pack_alphas(map_agents, base_dir=base_dir)
     lines: list[str] = []
 
-    for agent in list(map_agents):
-        normalize_agent(agent, base_dir=base_dir)
-        lines.extend(
-            tick_agent_mind(
-                agent,
-                all_agents,
-                maps,
-                state=state,
-                base_dir=base_dir,
-                rng=r,
-                eco_cfg=cfg,
+    from utils.parallel_beat import parallel_beat_enabled, tick_field_ecology_parallel
+
+    if parallel_beat_enabled(state, base_dir=base_dir):
+        lines.extend(tick_field_ecology_parallel(state, base_dir=base_dir, rng=r))
+    else:
+        ensure_ecology_seeds(state, base_dir=base_dir)
+        cfg = load_ecology_config(base_dir)
+        maps = load_world_maps(str(base_dir)).get("maps", {})
+        all_agents = get_agents(state)
+        map_agents = [a for a in all_agents if a.get("map_id") == map_id]
+        refresh_pack_alphas(map_agents, base_dir=base_dir)
+
+        for agent in list(map_agents):
+            normalize_agent(agent, base_dir=base_dir)
+            lines.extend(
+                tick_agent_mind(
+                    agent,
+                    all_agents,
+                    maps,
+                    state=state,
+                    base_dir=base_dir,
+                    rng=r,
+                    eco_cfg=cfg,
+                )
             )
-        )
 
     lines.extend(tick_agent_competition(state, map_id, base_dir=base_dir, rng=r))
 

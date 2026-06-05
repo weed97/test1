@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "enabled_by_default_in_ecology": true,
+  "phases": ["plan", "resolve", "commit", "macro"],
+  "field": {
+    "max_attackers_per_target": 4,
+    "simultaneous_damage_scale": 1.0,
+    "movement_conflict": "higher_priority_wins"
+  },
+  "macro_lanes": ["settlement", "civilization_coupling", "world_conflicts"],
+  "subticks_per_moment": 1
+}
