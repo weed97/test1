@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "meta": {
+    "eldoria_is": ["game_system", "planet", "diegetic_world_name", "product_universe"],
+    "planet_name": "에르도리아",
+    "engine_codename": "fantasy_simulator",
+    "note": "Ashpoint is one settlement on the planet, not the whole of Eldoria."
+  },
   "world_id": "eldoria",
   "world_label": "에르도리아",
   "world_size": { "width": 100000, "height": 100000 },

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "design_goal": "Few apex legends; no server-wide monopoly by players, NPCs, or monsters.",
+  "apex_rarity": {
+    "per_shard_max_legendary_players_ratio": 0.001,
+    "per_shard_max_legendary_field_bosses": 3,
+    "per_map_max_tier3_evolved_per_species": 1,
+    "notes": "tier3 = goblin_king etc.; enforced with progression species_caps + evolution"
+  },
+  "territory_caps": {
+    "max_resource_nodes_per_guild_ratio": 0.15,
+    "max_maps_controlled_per_kingdom_ratio": 0.2,
+    "player_settlement_max_sites_per_region": 5,
+    "mmo_phase": "future"
+  },
+  "dominance_tax": {
+    "enabled": false,
+    "upkeep_per_controlled_node_per_day": 10,
+    "reputation_drift_if_over_cap": -2,
+    "mmo_phase": "future"
+  },
+  "parallel_progression": {
+    "min_viable_routes_per_tier": 3,
+    "examples": ["craft", "explore", "trade", "faction_quest", "ecology_hunt"]
+  },
+  "pvp_safety": {
+    "safe_zone_tags": ["settlement", "inn", "town_square"],
+    "opt_in_pvp_zones": ["wilderness", "arena", "faction_war"],
+    "mmo_phase": "future"
+  },
+  "coop_parity": {
+    "solo_vs_party_xp_ratio_min": 0.7,
+    "build_project_hire_not_required_for_completion": true
+  }
+}

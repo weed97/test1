@@ -3,7 +3,7 @@
 ## 제품명 (가칭)
 
 **Eldoria Link Nex** — VR×BCI 융합 정식명. 레거시: Eldoria Full-Dive.  
-내부 코드명 `fantasy_simulator`, 세계명 **에르도리아**.
+내부 코드명 `fantasy_simulator`. **에르도리아** = 시스템·행성·게임 전체를 가리키는 이름 (마을 이름 아님) — [24_ELDORIA_UNIVERSE_AND_POWER_ECOLOGY.md](24_ELDORIA_UNIVERSE_AND_POWER_ECOLOGY.md).
 
 > **Nex 스택 전체:** [09_BCI_DEEPMIND_FUSION.md](09_BCI_DEEPMIND_FUSION.md)
 
