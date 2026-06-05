@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "world_size": { "width": 100000, "height": 100000 },
+  "units": {
+    "world_coord": "meter_like",
+    "godot_pixel_per_world_unit": 1,
+    "note": "Playable walk uses map_id local tiles; world_x/y for travel and atlas only."
+  },
+  "starter": {
+    "continent_id": "silverwood",
+    "region_id": "frontier_ash",
+    "map_id": "ashpoint_01",
+    "world_x": 84200,
+    "world_y": 52100,
+    "kingdom_label": "변경 첫 왕국"
+  },
+  "continents": [
+    {
+      "id": "silverwood",
+      "label": "실버우드",
+      "role": "starter_seal_main_story",
+      "aabb": { "x0": 80000, "y0": 40000, "x1": 98000, "y1": 62000 },
+      "landmass": "wide_forest_east_plains",
+      "area_share": 0.14,
+      "regions": [
+        {
+          "id": "frontier_ash",
+          "label": "잿빛 변경",
+          "playable": true,
+          "maps": ["ashpoint_01", "forest_01", "tower_01"],
+          "faction_hub": "ashpoint_council"
+        },
+        {
+          "id": "deep_silver",
+          "label": "고대 실버 숲",
+          "playable": false,
+          "maps": [],
+          "notes": "봉인선 서쪽 — 시즌 확장"
+        }
+      ]
+    },
+    {
+      "id": "aurelia",
+      "label": "오렐리아 왕국령",
+      "role": "politics_capital_knights",
+      "aabb": { "x0": 62000, "y0": 35000, "x1": 78000, "y1": 50000 },
+      "landmass": "temperate_plains_rivers",
+      "area_share": 0.11,
+      "regions": [
+        {
+          "id": "silverhaven",
+          "label": "실버헤이븐",
+          "playable": false,
+          "maps": [],
+          "faction_hub": "silver_cross_order"
+        }
+      ]
+    },
+    {
+      "id": "ironhold",
+      "label": "철요새 연맹",
+      "role": "crafting_fortress_dungeons",
+      "aabb": { "x0": 55000, "y0": 12000, "x1": 65000, "y1": 28000 },
+      "landmass": "compact_mountain_highlands",
+      "area_share": 0.06,
+      "regions": []
+    },
+    {
+      "id": "sunscar",
+      "label": "태양상흔 사막",
+      "role": "ruins_relics_sparse",
+      "aabb": { "x0": 20000, "y0": 55000, "x1": 52000, "y1": 90000 },
+      "landmass": "vast_desert_oasis_dots",
+      "area_share": 0.18,
+      "regions": []
+    },
+    {
+      "id": "frostveil",
+      "label": "서리장막 군도",
+      "role": "naval_boss_winter",
+      "aabb": { "x0": 70000, "y0": 8000, "x1": 92000, "y1": 22000 },
+      "landmass": "fragmented_islands",
+      "area_share": 0.09,
+      "regions": []
+    },
+    {
+      "id": "emerald_coast",
+      "label": "에메랄드 해안",
+      "role": "trade_pirates_fleets",
+      "aabb": { "x0": 10000, "y0": 20000, "x1": 28000, "y1": 75000 },
+      "landmass": "long_coastline",
+      "area_share": 0.08,
+      "regions": []
+    },
+    {
+      "id": "umbral_rift",
+      "label": "심연 균열지",
+      "role": "covenant_high_risk",
+      "aabb": { "x0": 45000, "y0": 62000, "x1": 52000, "y1": 72000 },
+      "landmass": "small_deep_canyon",
+      "area_share": 0.05,
+      "regions": [
+        {
+          "id": "black_covenant_keep",
+          "label": "칠흑 성채",
+          "playable": false,
+          "maps": [],
+          "faction_hub": "black_covenant"
+        }
+      ]
+    },
+    {
+      "id": "skyreach",
+      "label": "천공 능선",
+      "role": "wardens_archives_floating",
+      "aabb": { "x0": 58000, "y0": 62000, "x1": 72000, "y1": 78000 },
+      "landmass": "vertical_peaks_sky_isles",
+      "area_share": 0.07,
+      "regions": []
+    },
+    {
+      "id": "verdant_maw",
+      "label": "비취 야생",
+      "role": "ecology_evolution_beasts",
+      "aabb": { "x0": 25000, "y0": 10000, "x1": 55000, "y1": 45000 },
+      "landmass": "mixed_jungle_swamp_savanna",
+      "area_share": 0.16,
+      "regions": []
+    },
+    {
+      "id": "cradle_sea",
+      "label": "요람 해",
+      "role": "intercontinental_routes_season",
+      "aabb": { "x0": 30000, "y0": 30000, "x1": 70000, "y1": 70000 },
+      "landmass": "ocean_trade_lanes",
+      "area_share": 0.06,
+      "regions": []
+    }
+  ],
+  "sea_routes": [
+    {
+      "id": "route_silverwood_aurelia",
+      "from_continent": "silverwood",
+      "to_continent": "aurelia",
+      "travel_days": 4,
+      "unlock": "flag:frontier_harbor_built"
+    },
+    {
+      "id": "route_emerald_cradle",
+      "from_continent": "emerald_coast",
+      "to_continent": "cradle_sea",
+      "travel_days": 2,
+      "unlock": "reputation:silverwood_trade_union:20"
+    }
+  ]
+}
