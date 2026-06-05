@@ -1,0 +1,29 @@
+; Engine configuration file.
+; Godot 4.6+ — open this folder in Godot Editor and in Cursor.
+config_version=5
+
+[application]
+
+config/name="Eldoria"
+config/description="Steam client — graphics & input; simulation via Python API"
+config/version="0.1.0"
+run/main_scene="res://scenes/main_menu.tscn"
+config/features=PackedStringArray("4.6", "Forward Plus")
+config/icon="res://icon.svg"
+
+[autoload]
+
+ApiConfig="*res://scripts/net/api_config.gd"
+ApiClient="*res://scripts/net/api_client.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+
+[dotnet]
+
+[rendering]
+
+renderer/rendering_method="forward_plus"

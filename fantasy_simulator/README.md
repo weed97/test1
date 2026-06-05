@@ -5,7 +5,7 @@ Cursor 멀티 모델 운영을 위한 판타지 시뮬레이터.
 
 > 운영: [docs/CURSOR_MULTI_MODEL.md](docs/CURSOR_MULTI_MODEL.md) · 콘텐츠: [docs/LORE_AND_EVENTS.md](docs/LORE_AND_EVENTS.md)  
 > **이세계 풀다이브 VR 세계 설계:** [docs/design/README.md](docs/design/README.md)  
-> **Steam + Godot:** [docs/STEAM_GODOT.md](docs/STEAM_GODOT.md) · Godot 스텁: [client/godot/README.md](client/godot/README.md)
+> **Steam + Godot:** [docs/STEAM_GODOT.md](docs/STEAM_GODOT.md) · **Cursor×Godot:** [docs/CURSOR_GODOT.md](docs/CURSOR_GODOT.md) · 프로젝트: [client/godot/](client/godot/)
 
 ## Steam / Godot API (G0)
 

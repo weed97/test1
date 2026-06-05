@@ -1,0 +1,14 @@
+{
+  "godot_tools.editor_path": "",
+  "godot_tools.gdscript_lsp_server_port": 6005,
+  "files.associations": {
+    "*.gd": "gdscript",
+    "*.tscn": "plaintext",
+    "*.tres": "plaintext"
+  },
+  "editor.formatOnSave": false,
+  "[gdscript]": {
+    "editor.defaultFormatter": "geequlim.godot-tools",
+    "editor.tabSize": 4
+  }
+}
