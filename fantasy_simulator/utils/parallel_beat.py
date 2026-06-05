@@ -53,6 +53,16 @@ def _is_sovereign_holder(agent: dict[str, Any] | None, *, base_dir: str | Path) 
     return str(agent.get("archetype_id", "")) == holder or str(agent.get("instance_id", "")) == holder
 
 
+def _uses_precision_combat(actor: dict[str, Any], target: dict[str, Any]) -> bool:
+    """Ecology 잡몹은 plan base_damage — 아서·정예·프리셋만 정밀 전투."""
+    for agent in (actor, target):
+        if agent.get("combatant_preset") or agent.get("world_apex_rank"):
+            return True
+        if agent.get("world_sovereign_holder") or agent.get("archetype_id") == "npc_arthur_pendragon":
+            return True
+    return False
+
+
 def _pack_group_key(agent: dict[str, Any] | None, actor_id: str) -> str:
     if not agent:
         return f"solo:{actor_id}"
@@ -298,17 +308,19 @@ def resolve_and_commit_field_beat(
                 )
                 total += dmg
             else:
-                try:
-                    from utils.combat_stats import agent_to_combatant, strike_damage_hp
+                dmg = int(pl.get("base_damage", 5))
+                if _uses_precision_combat(actor, target):
+                    try:
+                        from utils.combat_stats import agent_to_combatant, strike_damage_hp
 
-                    dmg = strike_damage_hp(
-                        agent_to_combatant(actor, base_dir=base_dir),
-                        agent_to_combatant(target, base_dir=base_dir),
-                        base_dir=base_dir,
-                        rng=rng,
-                    )
-                except (OSError, KeyError, ValueError):
-                    dmg = int(pl.get("base_damage", 5))
+                        dmg = strike_damage_hp(
+                            agent_to_combatant(actor, base_dir=base_dir),
+                            agent_to_combatant(target, base_dir=base_dir),
+                            base_dir=base_dir,
+                            rng=rng,
+                        )
+                    except (OSError, KeyError, ValueError):
+                        dmg = int(pl.get("base_damage", 5))
                 if dmg <= 0:
                     dmg = int(pl.get("base_damage", 5))
                 total += dmg

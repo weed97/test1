@@ -12,6 +12,7 @@
     "weapon_class": "two_handed_sword",
     "weapon_mastery_level": 999,
     "equipment": { "weapon": "excalibur_sovereign_blade", "armor": "mythic_plate_core" },
+    "str_override": 2000,
     "armor_pierce": true,
     "excalibur_bound": true
   },
@@ -25,7 +26,7 @@
     "weapon_class": "two_handed_sword",
     "weapon_mastery_level": 900,
     "str_override": 1000,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" },
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" },
     "skill_kind": "melee_phys_single",
     "skill_power_percent": 700
   },
@@ -37,7 +38,7 @@
     "job_id": "knight",
     "weapon_mastery_level": 900,
     "str_override": 1000,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" },
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" },
     "skill_kind": "melee_phys_single",
     "skill_power_percent": 700
   },
@@ -49,7 +50,7 @@
     "job_id": "knight",
     "weapon_mastery_level": 880,
     "str_override": 980,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" }
   },
   "world_rank_04": {
     "label": "세계 4위",
@@ -57,56 +58,56 @@
     "world_apex_rank": 4,
     "weapon_mastery_level": 860,
     "str_override": 960,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" }
   },
   "world_rank_05": {
     "label": "세계 5위",
     "tier": "apex_elite",
     "world_apex_rank": 5,
     "weapon_mastery_level": 840,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" }
   },
   "world_rank_06": {
     "label": "세계 6위",
     "tier": "apex_elite",
     "world_apex_rank": 6,
     "weapon_mastery_level": 820,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" }
   },
   "world_rank_07": {
     "label": "세계 7위",
     "tier": "apex_elite",
     "world_apex_rank": 7,
     "weapon_mastery_level": 800,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" }
   },
   "world_rank_08": {
     "label": "세계 8위",
     "tier": "apex_elite",
     "world_apex_rank": 8,
     "weapon_mastery_level": 780,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" }
   },
   "world_rank_09": {
     "label": "세계 9위",
     "tier": "apex_elite",
     "world_apex_rank": 9,
     "weapon_mastery_level": 760,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" }
   },
   "world_rank_10": {
     "label": "세계 10위",
     "tier": "apex_elite",
     "world_apex_rank": 10,
     "weapon_mastery_level": 740,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" }
   },
   "world_rank_11": {
     "label": "세계 11위",
     "tier": "apex_elite",
     "world_apex_rank": 11,
     "weapon_mastery_level": 720,
-    "equipment": { "weapon": "sealbreaker_blade", "armor": "mythic_plate_core" }
+    "equipment": { "weapon": "mythic_3t_world_pierce_blade", "armor": "mythic_plate_core" }
   },
   "grand_coalition_mob": {
     "label": "연합 잡병",

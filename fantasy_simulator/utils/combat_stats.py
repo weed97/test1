@@ -61,6 +61,16 @@ def grade_base_damage(grade: str, *, bundle: dict[str, Any]) -> float:
     return float(bundle["scaling"]["weapon_grade_base_damage"].get(grade.lower(), 1))
 
 
+def weapon_attack_base(wpn: dict[str, Any], grade: str, *, bundle: dict[str, Any]) -> float:
+    if wpn.get("attack") is not None:
+        return float(wpn["attack"])
+    return grade_base_damage(grade, bundle=bundle)
+
+
+def weapon_is_mythic_3t(wpn: dict[str, Any]) -> bool:
+    return str(wpn.get("mythic_tier", "")).upper() == "3T"
+
+
 def elite_pierce_dps(rank: int, *, bundle: dict[str, Any]) -> float:
     """방무 정예 DPS — 2위 1000, 순위당 -5%."""
     pe = bundle["elites"]["pierce_elite"]
@@ -101,7 +111,7 @@ def compute_skill_damage(
     """스탯·등급·스킬 계수 — 신화 10% 방무 분리."""
     sc = bundle["scaling"]
     grade = str(snapshot.get("weapon_grade", "mythic"))
-    base = grade_base_damage(grade, bundle=bundle)
+    base = float(snapshot.get("weapon_attack_base", grade_base_damage(grade, bundle=bundle)))
     range_k = float(sc["range_coeff"]["melee" if "melee" in skill_kind else "ranged"])
     skill_k = float(sc["skill_coeff"].get(skill_kind, 1.0))
     prim = snapshot.get("primary") or {}
@@ -116,8 +126,10 @@ def compute_skill_damage(
     power = skill_power_percent / 100.0
     crit_k = float(sc["critical_multiplier"]) if crit else 1.0
     total = base * range_k * skill_k * power * stat_mult * lv_mult * crit_k
-    pierce_frac = float(sc["mythic_pierce_fraction"])
-    pierce = total * pierce_frac if snapshot.get("world_apex_rank") else 0.0
+    pierce_frac = float(sc.get("mythic_3t_pierce_fraction", 0.1))
+    has_3t = bool(snapshot.get("mythic_3t_weapon"))
+    rank = snapshot.get("world_apex_rank")
+    pierce = total * pierce_frac if has_3t and rank and int(rank) >= 2 else 0.0
     return {
         "total_damage": round(total, 1),
         "pierce_damage": round(pierce, 1),
@@ -157,16 +169,41 @@ def hp_cap_milli_for(tier: str, *, bundle: dict[str, Any]) -> int:
     tiers = bundle["tiers"].get("tiers", {})
     if tier == "demigod":
         return int(tiers.get("demigod", {}).get("hp_cap_milli", 1_000_000_000))
-    if tier in ("apex_mortal", "apex_elite"):
+    if tier == "apex_elite":
+        return int(tiers.get("apex_elite", {}).get("hp_cap_milli", 500_000_000))
+    if tier == "apex_mortal":
         return int(tiers.get("apex_mortal", {}).get("hp_cap_milli", 99_999_000))
     pools = bundle["stats"].get("hp_pools", {})
     return int(pools.get("default_mortal_cap_milli", 50_000_000))
 
 
-def _apply_elite_pierce_fields(snap: dict[str, Any], *, bundle: dict[str, Any]) -> None:
+def _apply_arthur_sovereign_fields(snap: dict[str, Any], *, bundle: dict[str, Any]) -> None:
+    if not snap.get("world_sovereign"):
+        return
+    sa = bundle["scaling"]["sovereign_arthur"]
+    prim = dict(snap.get("primary") or {})
+    prim["str"] = int(sa.get("str_stat", 2000))
+    snap["primary"] = prim
+    aps = int(sa.get("attacks_per_sec", 10))
+    dps = int(sa.get("pierce_dps", 100_000))
+    per_hit = int(sa.get("pierce_per_hit", dps // max(1, aps)))
+    snap["pierce_dps_milli"] = dps * 1000
+    snap["pierce_per_hit_milli"] = per_hit * 1000
+    snap["attacks_per_sec_milli"] = aps * 1000
+    snap["armor_pierce"] = True
+    snap["pierce_fraction"] = float(sa.get("pierce_fraction", 1.0))
+
+
+def _apply_elite_pierce_fields(
+    snap: dict[str, Any], *, bundle: dict[str, Any], wpn: dict[str, Any]
+) -> None:
     rank = snap.get("world_apex_rank")
     if not rank or int(rank) < 2:
         return
+    if not weapon_is_mythic_3t(wpn):
+        snap["mythic_3t_weapon"] = False
+        return
+    snap["mythic_3t_weapon"] = True
     ri = int(rank)
     dps = elite_pierce_dps(ri, bundle=bundle)
     aps = int(bundle["elites"]["pierce_elite"].get("attacks_per_sec_rank_2", 5))
@@ -176,6 +213,9 @@ def _apply_elite_pierce_fields(snap: dict[str, Any], *, bundle: dict[str, Any]) 
     snap["tier"] = "apex_elite"
     snap["weapon_grade"] = "mythic"
     snap["mythic_partial_pierce"] = True
+    elite_hp = bundle["elites"].get("elite_hp_milli")
+    if elite_hp:
+        snap["hp_milli"] = int(elite_hp)
 
 
 def build_combatant_snapshot(
@@ -211,12 +251,15 @@ def build_combatant_snapshot(
     arm = _armor_template(bundle["equipment"], equip.get("armor"))
     w_grade = str(wpn.get("grade", data.get("weapon_grade", "common")))
 
+    wpn_base = weapon_attack_base(wpn, w_grade, bundle=bundle)
     scale_dmg = compute_skill_damage(
         {
             "primary": prim,
             "character_level": char_lv,
             "weapon_grade": w_grade,
+            "weapon_attack_base": wpn_base,
             "world_apex_rank": data.get("world_apex_rank"),
+            "mythic_3t_weapon": weapon_is_mythic_3t(wpn),
         },
         bundle=bundle,
         skill_power_percent=float(data.get("skill_power_percent", 100)),
@@ -251,10 +294,48 @@ def build_combatant_snapshot(
         "world_sovereign": bool(data.get("world_sovereign")),
         "world_apex_rank": data.get("world_apex_rank"),
     }
-    if tier == "demigod" and bundle["coalition"].get("world_sovereign", {}).get("hp_milli"):
+    if data.get("hp_override_milli"):
+        snap["hp_milli"] = int(data["hp_override_milli"])
+    elif tier == "demigod" and bundle["coalition"].get("world_sovereign", {}).get("hp_milli"):
         snap["hp_milli"] = int(bundle["coalition"]["world_sovereign"]["hp_milli"])
-    _apply_elite_pierce_fields(snap, bundle=bundle)
+    _apply_arthur_sovereign_fields(snap, bundle=bundle)
+    _apply_elite_pierce_fields(snap, bundle=bundle, wpn=wpn)
     return snap
+
+
+def resolve_excalibur_aoe(
+    attacker: dict[str, Any],
+    targets: list[dict[str, Any]],
+    *,
+    bundle: dict[str, Any],
+    ultimate: bool = False,
+) -> dict[str, Any]:
+    """아서 광역 — 일반(×0.5) vs 성검 궁극기(원샷). 반경 100px 밀집 가정."""
+    ult_cfg = bundle["scaling"]["excalibur_ultimate"]
+    per_hit = int(attacker.get("pierce_per_hit_milli", 10_000_000))
+    coeff = float(ult_cfg.get("aoe_coeff", 0.5))
+    aoe_hit = int(per_hit * coeff) if not ultimate else per_hit * 50
+    results: list[dict[str, Any]] = []
+    kills = 0
+    for t in targets:
+        hp = int(t.get("hp_milli", 0))
+        if ultimate or hp <= aoe_hit:
+            dmg = hp
+            kills += 1
+        else:
+            dmg = min(hp, aoe_hit)
+            if dmg >= hp:
+                kills += 1
+        results.append({"target_id": t.get("id"), "damage_milli": dmg, "killed": dmg >= hp})
+    return {
+        "skill_id": ult_cfg.get("skill_id"),
+        "ultimate": ultimate,
+        "radius_pixels": int(ult_cfg.get("radius_pixels", 100)),
+        "targets_in_radius": len(targets),
+        "kills": kills,
+        "mass_kill_threshold": int(ult_cfg.get("instant_kill_targets_in_radius_min", 10_000)),
+        "results": results,
+    }
 
 
 def agent_to_combatant(agent: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
@@ -341,7 +422,10 @@ def sovereign_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str
     status = sovereign_siege_status(state, base_dir=base_dir)
     status["arthur_snapshot"] = {
         "hp_milli": arthur["hp_milli"],
+        "pierce_dps_milli": arthur.get("pierce_dps_milli"),
+        "pierce_per_hit_milli": arthur.get("pierce_per_hit_milli"),
         "combat_power": combat_power_estimate(arthur, base_dir=base_dir),
     }
+    status["excalibur_ultimate"] = bundle["scaling"].get("excalibur_ultimate", {})
     status["elite_coalition"] = elite_coalition_pierce_dps(bundle=bundle)
     return status

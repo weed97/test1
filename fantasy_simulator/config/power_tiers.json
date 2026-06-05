@@ -17,6 +17,13 @@
       "out_of_combat_regen_per_sec_milli": 1000000,
       "note": "아서 기본 적용 — 맥스뎀 방무·초당 10타"
     },
+    "apex_elite": {
+      "id": "apex_elite",
+      "label": "세계 2~11위 방무 정예",
+      "hp_cap_milli": 500000000,
+      "hp_cap_label": "500000.000",
+      "requires_mythic_3t_weapon": true
+    },
     "apex_mortal": {
       "id": "apex_mortal",
       "label": "만렙 999 필멸 극치",

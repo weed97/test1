@@ -4,7 +4,7 @@
     "str_damage_percent_per_point": 0.88,
     "int_damage_percent_per_point": 0.92,
     "character_level_percent_per_level": 0.1,
-    "comment": "STR 1000 → +880% (=×9.8), Lv1당 +0.1%"
+    "comment": "STR 2000 → +1760%; 엑스칼리버 기본 공격 500 — 맥스뎀 플래그 대신 스탯"
   },
   "weapon_grade_base_damage": {
     "common": 1,
@@ -13,8 +13,10 @@
     "hero": 10,
     "legend": 50,
     "mythic": 100,
-    "demigod": 100
+    "demigod": 500
   },
+  "mythic_3t_pierce_fraction": 0.1,
+  "comment_3t": "최고 티어 신화 3T 무기만 딜의 10% 방무 — 일반 신화100 아님",
   "range_coeff": {
     "melee": 1.1,
     "ranged": 0.8
@@ -28,6 +30,25 @@
     "melee_phys_single": 1.1
   },
   "critical_multiplier": 1.5,
-  "mythic_pierce_fraction": 0.1,
-  "comment_pierce": "신화급 고정뎀의 10%만 방무 — 세계 2~11위만"
+  "sovereign_arthur": {
+    "str_stat": 2000,
+    "excalibur_weapon_attack": 500,
+    "pierce_fraction": 1.0,
+    "pierce_dps": 100000,
+    "attacks_per_sec": 10,
+    "pierce_per_hit": 10000,
+    "comment": "100% 방무 · 초당 10타 · DPS 10만 — 맥스뎀 강제 아님"
+  },
+  "excalibur_ultimate": {
+    "skill_id": "excalibur_sovereign_judgment",
+    "label": "성검 궁극기 — 주권의 심판",
+    "radius_pixels": 100,
+    "aoe_coeff": 0.5,
+    "pierce_fraction": 1.0,
+    "cooldown_sec": 7200,
+    "only_when_danger_hp_ratio_below": 0.25,
+    "instant_kill_targets_in_radius_min": 10000,
+    "one_shot_elite_hp": true,
+    "comment": "위기 시만 · 민첩 회피 불가 · 반경 100px 내 만 명 즉사 가능"
+  }
 }

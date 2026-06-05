@@ -18,6 +18,7 @@ from utils.combat_stats import (  # noqa: E402
     elite_coalition_pierce_dps,
     elite_pierce_dps,
     load_combat_bundle,
+    resolve_excalibur_aoe,
     strike_damage_milli,
 )
 from utils.sovereign_siege import (  # noqa: E402
@@ -95,6 +96,22 @@ class CombatStatsTests(unittest.TestCase):
             self.assertLess(coal["combined_pierce_dps"], 8500)
             self.assertLessEqual(coal["seconds_to_kill_arthur"], 400)
 
+    def test_elite_hp_500k(self) -> None:
+        with isolated_game_root() as root:
+            elite = build_combatant_snapshot(base_dir=root, preset_id="world_rank_02")
+            self.assertEqual(elite["hp_milli"], 500_000_000)
+
+    def test_arthur_aoe_elite_survives_normal_ultimate_kills(self) -> None:
+        with isolated_game_root() as root:
+            bundle = load_combat_bundle(root)
+            arthur = build_combatant_snapshot(base_dir=root, preset_id="npc_arthur_pendragon")
+            elite = build_combatant_snapshot(base_dir=root, preset_id="world_rank_02")
+            normal = resolve_excalibur_aoe(arthur, [elite], bundle=bundle, ultimate=False)
+            ult = resolve_excalibur_aoe(arthur, [elite], bundle=bundle, ultimate=True)
+            self.assertFalse(normal["results"][0]["killed"])
+            self.assertLess(normal["results"][0]["damage_milli"], elite["hp_milli"])
+            self.assertTrue(ult["results"][0]["killed"])
+
     def test_mythic_skill_scaling(self) -> None:
         with isolated_game_root() as root:
             bundle = load_combat_bundle(root)
@@ -103,6 +120,7 @@ class CombatStatsTests(unittest.TestCase):
                 "character_level": 920,
                 "weapon_grade": "mythic",
                 "world_apex_rank": 2,
+                "mythic_3t_weapon": True,
             }
             r = compute_skill_damage(
                 snap, bundle=bundle, skill_power_percent=700, skill_kind="melee_phys_single", crit=True

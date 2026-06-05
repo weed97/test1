@@ -68,7 +68,12 @@ def partial_pierce_per_hit_milli(attacker: dict[str, Any]) -> int:
 
 
 def compute_pierce_damage_milli(attacker: dict[str, Any], *, cfg: dict[str, Any]) -> int:
-    """Full armor-pierce — demigod / Excalibur."""
+    """Full armor-pierce — demigod / Excalibur (100% 방무, 고정 타격 우선)."""
+    preset_hit = int(attacker.get("pierce_per_hit_milli", 0))
+    if preset_hit > 0 and attacker_has_armor_pierce(attacker, cfg=cfg):
+        ap = cfg.get("armor_pierce", {})
+        cap = int(ap.get("max_pierce_per_hit_milli", 9_999_000))
+        return min(cap, preset_hit)
     if not attacker_has_armor_pierce(attacker, cfg=cfg):
         return 0
     ap = cfg.get("armor_pierce", {})

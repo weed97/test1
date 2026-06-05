@@ -1,6 +1,9 @@
 {
   "version": 1,
-  "comment": "세계 2~11위 — 신화템 10% 방무, 무기숙련 고정. 아서 격파 정예 연합.",
+  "comment": "세계 2~11위 — 신화 3T 무기만 10% 방무. HP 50만. 아서 DPS 10만(100% 방무).",
+  "elite_hp": 500000,
+  "elite_hp_milli": 500000000,
+  "mythic_weapon_tier_required": "3T",
   "world_pierce_cap": 10,
   "rank_1": {
     "holder": "npc_arthur_pendragon",
@@ -27,7 +30,14 @@
     "11": { "weapon_mastery_level": 720, "preset_id": "world_rank_11", "label": "세계 11위" }
   },
   "arthur_counter": {
-    "aoe_one_shot_clustered_elites": true,
-    "comment": "정예가 뭉치면 아서 광역 1초컷 — 산개·딜 타이밍이 핵심"
+    "pierce_dps": 100000,
+    "pierce_fraction": 1.0,
+    "attacks_per_sec": 10,
+    "aoe_radius_pixels": 100,
+    "aoe_coeff": 0.5,
+    "aoe_instant_kill_min_targets": 10000,
+    "ultimate_cooldown_sec": 7200,
+    "elite_survives_single_hit_at_500k_hp": true,
+    "comment": "일반 광역은 정예 50만HP 한방 안 죽음 — 궁극기·뭉침 시 위험"
   }
 }

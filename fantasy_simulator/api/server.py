@@ -319,6 +319,22 @@ def combat_preview_strike(body: CombatPreviewRequest) -> dict[str, Any]:
     }
 
 
+@app.post("/v1/combat/arthur_aoe")
+def combat_arthur_aoe(
+    target_presets: list[str] | None = None,
+    ultimate: bool = False,
+) -> dict[str, Any]:
+    from utils.combat_stats import build_combatant_snapshot, load_combat_bundle, resolve_excalibur_aoe
+
+    root = package_root()
+    bundle = load_combat_bundle(root)
+    arthur = build_combatant_snapshot(base_dir=root, preset_id="npc_arthur_pendragon")
+    presets = target_presets or [f"world_rank_{r:02d}" for r in range(2, 6)]
+    targets = [build_combatant_snapshot(base_dir=root, preset_id=p) for p in presets]
+    result = resolve_excalibur_aoe(arthur, targets, bundle=bundle, ultimate=ultimate)
+    return {"api_version": API_VERSION, "arthur_aoe": result}
+
+
 @app.get("/v1/combat/elite_coalition")
 def combat_elite_coalition() -> dict[str, Any]:
     from utils.combat_stats import elite_coalition_pierce_dps, load_combat_bundle

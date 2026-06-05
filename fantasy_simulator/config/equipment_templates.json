@@ -29,12 +29,23 @@
       "weapon_class": "two_handed_sword",
       "grade": "demigod",
       "label": "엑스칼리버",
+      "attack": 500,
       "base_damage_min": 400,
       "base_damage_max": 520,
-      "attack": 460,
       "mastery_bonus_curve": "two_handed_sword",
-      "skills": ["sovereign_wish_rite", "kings_aegis"],
-      "sovereign_power_id": "sovereign_wish"
+      "skills": ["sovereign_wish_rite", "kings_aegis", "excalibur_sovereign_judgment"],
+      "sovereign_power_id": "sovereign_wish",
+      "pierce_fraction": 1.0
+    },
+    "mythic_3t_world_pierce_blade": {
+      "weapon_class": "two_handed_sword",
+      "grade": "mythic",
+      "mythic_tier": "3T",
+      "label": "신화 3T · 세계 방무검",
+      "attack": 100,
+      "affixes": ["mythic_3t_pierce_10_percent"],
+      "pierce_fraction": 0.1,
+      "comment": "세계 2~11위 전용 — 딜의 10%만 방무"
     }
   },
   "armor": {
