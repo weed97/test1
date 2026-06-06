@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>은빛가시 왕국 시뮬레이터</title>
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero panel">
+        <div>
+          <p class="eyebrow">Medieval Fantasy Simulator</p>
+          <h1 id="kingdom-name">은빛가시 왕국</h1>
+          <p class="hero-copy">
+            영주의 자리에 올라 농장, 병영, 마법사의 탑, 모험가 길드를 관리하세요.
+            계절마다 자원과 위협이 변하고, 선택에 따라 왕국의 운명이 달라집니다.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <div class="turn-badge">
+            <span id="turn">1턴</span>
+            <strong id="season">봄</strong>
+          </div>
+          <button id="advance-turn" class="primary-button" type="button">다음 계절 진행</button>
+          <button id="reset" class="ghost-button" type="button">새 왕국 시작</button>
+        </div>
+      </section>
+
+      <section class="status panel">
+        <strong>왕국 선언</strong>
+        <p id="status">왕국은 아직 버티고 있습니다.</p>
+      </section>
+
+      <section id="resources" class="grid resources" aria-label="자원 현황"></section>
+      <section id="metrics" class="grid metrics" aria-label="왕국 지표"></section>
+
+      <section class="layout">
+        <div class="panel">
+          <div class="section-heading">
+            <p class="eyebrow">Command</p>
+            <h2>명령 선택</h2>
+          </div>
+          <div id="actions" class="actions"></div>
+        </div>
+
+        <aside class="side-column">
+          <section class="panel">
+            <div class="section-heading">
+              <p class="eyebrow">Domain</p>
+              <h2>영지 건물</h2>
+            </div>
+            <ul id="buildings" class="stack-list"></ul>
+          </section>
+
+          <section class="panel">
+            <div class="section-heading">
+              <p class="eyebrow">Guild</p>
+              <h2>모험가</h2>
+            </div>
+            <ul id="adventurers" class="adventurer-list"></ul>
+          </section>
+        </aside>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <p class="eyebrow">Chronicle</p>
+          <h2>왕국 연대기</h2>
+        </div>
+        <ol id="log" class="log"></ol>
+      </section>
+    </main>
+
+    <script src="src/simulator.js"></script>
+    <script src="src/app.js"></script>
+  </body>
+</html>
