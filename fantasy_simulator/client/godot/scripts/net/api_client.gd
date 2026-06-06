@@ -15,8 +15,13 @@ var sim_facing: String = "south"
 var tile_pixels: int = 16
 
 
-func new_game(seed: int = -1, temporal_mode: String = "precision") -> void:
-	var body := {"mode": "rule", "temporal_mode": temporal_mode}
+func new_game(seed: int = -1, temporal_mode: String = "precision", game_mode: String = "hybrid") -> void:
+	var body := {
+		"mode": "rule",
+		"temporal_mode": temporal_mode,
+		"game_mode": game_mode,
+		"player_race": "human",
+	}
 	if seed >= 0:
 		body["seed"] = seed
 	var parsed := await _post_json("/v1/session/new", body)

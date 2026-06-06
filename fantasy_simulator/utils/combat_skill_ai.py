@@ -28,6 +28,9 @@ def _usable_skills(
         sdef = skill_definition(sk_id, base_dir=base_dir)
         if sdef.get("type") == "passive":
             continue
+        tags = set(sdef.get("tags", []))
+        if "out_of_combat" in tags or sdef.get("combat_pipeline") == "world_edict":
+            continue
         if int(agent.get("mp", 0)) < int(sdef.get("mana_cost", 0)):
             continue
         if distance > int(sdef.get("range_tiles", 1)):

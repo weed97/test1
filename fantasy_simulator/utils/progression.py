@@ -272,6 +272,7 @@ def on_explore_progression(state: dict[str, Any], *, base_dir: str | Path) -> li
 def unlock_skill(
     state: dict[str, Any], character_id: str, skill_id: str, *, base_dir: str | Path
 ) -> dict[str, Any]:
+    from utils.level_unlocks import skills_available_for_hero
     from utils.skill_catalog import catalog_skill
 
     cfg = load_progression_config(base_dir)
@@ -282,6 +283,20 @@ def unlock_skill(
         return {"ok": False, "error": "스킬 포인트 부족"}
     if skill_id in h.get("unlocked_skills", []):
         return {"ok": False, "error": "이미 해금됨"}
+    eligible = set(skills_available_for_hero(h, base_dir=base_dir))
+    legacy_ok = False
+    if skill_id in cfg.get("skills", {}):
+        job_id = str(h.get("active_job_id") or h.get("job_id", "wanderer"))
+        jl = int(h.get("job_level", 1))
+        job_cfg = cfg.get("jobs", {}).get(job_id, {})
+        if skill_id in job_cfg.get("starter_skills", []):
+            legacy_ok = True
+        for need_lv, skills in job_cfg.get("skills_by_level", {}).items():
+            if jl >= int(need_lv) and skill_id in skills:
+                legacy_ok = True
+                break
+    if skill_id not in eligible and not legacy_ok:
+        return {"ok": False, "error": "해금 조건 미달"}
     h["skill_points"] = int(h["skill_points"]) - 1
     h.setdefault("unlocked_skills", []).append(skill_id)
     return {"ok": True, "skill_id": skill_id}

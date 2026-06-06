@@ -40,4 +40,42 @@ class ApiServerTests(unittest.TestCase):
     def test_sovereign_status(self) -> None:
         r = self.client.get("/v1/sovereign/status")
         self.assertEqual(r.status_code, 200)
-        self.assertIn("hp_milli", r.json())
+        body = r.json()
+        self.assertIn("hp_milli", body)
+        self.assertIn("wish", body)
+
+    def test_hybrid_session_skill_tree(self) -> None:
+        created = self.client.post(
+            "/v1/session/new",
+            json={"game_mode": "hybrid", "temporal_mode": "precision"},
+        )
+        self.assertEqual(created.status_code, 200)
+        sid = created.json()["session_id"]
+        status = self.client.get(f"/v1/progression/status?session_id={sid}")
+        self.assertEqual(status.status_code, 200)
+        heroes = status.json().get("heroes", {})
+        cid = next(iter(heroes), "gareth_ironshield")
+        tree = self.client.get(
+            f"/v1/progression/skill_tree?session_id={sid}&character_id={cid}"
+        )
+        self.assertEqual(tree.status_code, 200)
+        payload = tree.json().get("skill_tree", {})
+        self.assertEqual(payload.get("counts", {}).get("job_total"), 300)
+
+    def test_sovereign_wish_empower_kingdom(self) -> None:
+        created = self.client.post(
+            "/v1/session/new",
+            json={"game_mode": "hybrid"},
+        )
+        sid = created.json()["session_id"]
+        r = self.client.post(
+            "/v1/sovereign/wish",
+            json={
+                "session_id": sid,
+                "edict_type": "empower_kingdom",
+                "civilization_id": "ashpoint_commons",
+                "prosperity_gain": 10,
+            },
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json().get("ok"))

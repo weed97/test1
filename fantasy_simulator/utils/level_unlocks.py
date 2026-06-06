@@ -116,7 +116,7 @@ def normalize_hero_progress(hero: dict[str, Any], *, base_dir: str | Path) -> di
         jl = int(hero["job_level"])
         hero["jobs"][job_id]["level"] = jl
     hero["job_level"] = jl
-    hero.setdefault("character_level", int(hero.get("character_level", max(1, jl // 2))))
+    hero.setdefault("character_level", int(hero.get("character_level", max(1, jl))))
     hero.setdefault("character_xp", int(hero.get("character_xp", 0)))
 
     hero.setdefault("weapon_masteries", {})
@@ -209,8 +209,11 @@ def skills_available_for_hero(hero: dict[str, Any], *, base_dir: str | Path) -> 
     for wclass, wlv in snap["weapon_masteries"].items():
         for sdef in catalog_skills_for_weapon_class(wclass, base_dir=base_dir):
             reqs = dict(sdef.get("unlock_requirements", {}))
-            reqs["weapon_mastery_level"] = reqs.get("weapon_mastery_level", 1)
-            if wlv >= int(reqs["weapon_mastery_level"]):
+            reqs.setdefault("weapon_mastery_level", 1)
+            reqs.setdefault("weapon_class", wclass)
+            snap_weapon = dict(snap)
+            snap_weapon["weapon_masteries"] = {wclass: wlv}
+            if _requirements_met(reqs, snap_weapon, job_id=job_id):
                 available.append(str(sdef["skill_id"]))
     return available
 
@@ -288,7 +291,8 @@ def can_wield_grade(
         return False, f"{weapon_class} 숙련 Lv{gate['min_weapon_class_level']} 필요"
     need_rank = gate.get("min_mastery_rank")
     if need_rank:
-        rank_order = list(_read_json(base_dir, "config/weapon_mastery.json").get("rank_thresholds", {}))
+        thresholds = _read_json(base_dir, "config/weapon_mastery.json").get("rank_thresholds", {})
+        rank_order = sorted(thresholds.keys(), key=lambda k: int(thresholds[k]))
         have = mastery_rank_for_level(wlv, base_dir=base_dir)
         if _rank_index(rank_order, have) < _rank_index(rank_order, str(need_rank)):
             return False, f"숙련 경지 {need_rank} 필요"

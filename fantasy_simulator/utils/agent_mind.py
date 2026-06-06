@@ -208,10 +208,22 @@ def use_skill(
     base_dir: str | Path,
     rng: random.Random,
 ) -> tuple[int, str]:
+    from utils.skill_effects import (
+        apply_buff_from_skill,
+        apply_damage_with_buffs,
+        is_buff_skill,
+    )
+
+    sdef = skill_definition(skill_id, base_dir=base_dir)
     dmg = preview_skill_damage(attacker, target, skill_id, base_dir=base_dir, rng=rng)
     commit_skill_costs(attacker, skill_id, base_dir=base_dir)
+    if is_buff_skill(sdef):
+        apply_buff_from_skill(attacker, skill_id, sdef, base_dir=base_dir)
+        return 0, skill_id
     if dmg > 0:
-        target["hp"] = int(target.get("hp", 1)) - dmg
+        dealt = apply_damage_with_buffs(target, dmg, base_dir=base_dir)
+        target["hp"] = int(target.get("hp", 1)) - dealt
+        return dealt, skill_id
     return dmg, skill_id
 
 
@@ -298,6 +310,9 @@ def tick_agent_mind(
 ) -> list[str]:
     lines: list[str] = []
     decay_skill_cooldowns(agent)
+    from utils.skill_effects import tick_agent_buffs
+
+    lines.extend(tick_agent_buffs(agent, base_dir=base_dir))
     update_relations(agent, others, base_dir=base_dir, rng=rng)
 
     label = agent.get("label") or agent.get("archetype_id", "agent")

@@ -57,7 +57,7 @@ class AgentCompetitionTests(unittest.TestCase):
             session.state.setdefault("flags", {})["game_mode"] = "ecology"
             ensure_ecology_seeds(session.state, base_dir=root)
             lines = tick_agent_competition(
-                session.state, "ashpoint_01", base_dir=root
+                session.state, "ashpoint_01", base_dir=root, rng=session.rng
             )
             soc = get_civilization_state(session.state, "ashpoint_commons")
             self.assertGreaterEqual(int(soc.get("prosperity", 0)), 0)

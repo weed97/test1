@@ -309,9 +309,21 @@ def resolve_and_commit_field_beat(
             tgt_label = pl.get("target_label", tid)
             alabel = pl.get("actor_label", pl["actor_id"])
             if pl["action"] == "skill":
+                from utils.ecology_objects import skill_definition
+                from utils.skill_effects import (
+                    apply_buff_from_skill,
+                    apply_damage_with_buffs,
+                    is_buff_skill,
+                )
+
                 sk = str(pl["skill_id"])
+                sdef = skill_definition(sk, base_dir=base_dir)
                 dmg = preview_skill_damage(actor, target, sk, base_dir=base_dir, rng=rng)
                 commit_skill_costs(actor, sk, base_dir=base_dir)
+                if is_buff_skill(sdef):
+                    apply_buff_from_skill(actor, sk, sdef, base_dir=base_dir)
+                    strike_lines.append(f"[버프] {alabel} : {sk}")
+                    continue
                 strike_lines.append(
                     f"[스킬] {alabel} → {tgt_label} : {sk} ({dmg} 피해)"
                 )
@@ -339,11 +351,14 @@ def resolve_and_commit_field_beat(
 
         pending_damage[tid] = int(total * scale)
 
+    from utils.skill_effects import apply_damage_with_buffs
+
     for tid, dmg in pending_damage.items():
         target = agents_by_id.get(tid)
         if not target:
             continue
-        target["hp"] = int(target.get("hp", 1)) - dmg
+        dealt = apply_damage_with_buffs(target, dmg, base_dir=base_dir)
+        target["hp"] = int(target.get("hp", 1)) - dealt
         if int(target["hp"]) <= 0:
             tgt_label = target.get("label") or tid
             strike_lines.append(f"[전투] {tgt_label} 쓰러짐.")
@@ -456,6 +471,11 @@ def tick_field_ecology_parallel(
 
     agents_by_id = {a["instance_id"]: a for a in map_agents}
     plans: list[dict[str, Any]] = []
+    lines: list[str] = []
+    from utils.skill_effects import tick_agent_buffs
+
+    for agent in list(agents_by_id.values()):
+        lines.extend(tick_agent_buffs(agent, base_dir=base_dir))
     for agent in list(agents_by_id.values()):
         pl = plan_agent_beat(
             agent, agents_by_id, maps, base_dir=base_dir, rng=r, eco_cfg=eco_cfg
@@ -468,14 +488,16 @@ def tick_field_ecology_parallel(
     )
     duration_ms = max((int(e["delay_ms"]) for e in presentation), default=0)
 
-    lines = resolve_and_commit_field_beat(
-        plans,
-        agents_by_id,
-        maps,
-        state=state,
-        base_dir=base_dir,
-        rng=r,
-        eco_cfg=eco_cfg,
+    lines.extend(
+        resolve_and_commit_field_beat(
+            plans,
+            agents_by_id,
+            maps,
+            state=state,
+            base_dir=base_dir,
+            rng=r,
+            eco_cfg=eco_cfg,
+        )
     )
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     eco["last_parallel_beat"] = {
