@@ -319,11 +319,11 @@ def unlock_skill(
 def equip_item(
     state: dict[str, Any], character_id: str, item_id: str, *, base_dir: str | Path
 ) -> dict[str, Any]:
+    from utils.item_catalog import get_item_def
     from utils.level_unlocks import can_wield_grade
 
-    cfg = load_progression_config(base_dir)
-    item = cfg.get("items", {}).get(item_id)
-    if not item:
+    item = get_item_def(item_id, base_dir=base_dir)
+    if not item or not item.get("equippable"):
         return {"ok": False, "error": "unknown item"}
     h = get_hero_progress(state, character_id, base_dir=base_dir)
     slot = item.get("slot", "weapon")
@@ -343,6 +343,83 @@ def equip_item(
         owned.append(item_id)
     h.setdefault("equipment", {})[slot] = item_id
     return {"ok": True, "slot": slot, "item_id": item_id}
+
+
+def grant_item(
+    state: dict[str, Any], item_id: str, count: int = 1, *, base_dir: str | Path
+) -> dict[str, Any]:
+    from utils.item_catalog import get_item_def
+
+    item = get_item_def(item_id, base_dir=base_dir)
+    if not item:
+        return {"ok": False, "error": "unknown item"}
+    inv = state.setdefault("inventory", {})
+    if item.get("consumable") or item.get("stackable"):
+        stacks = inv.setdefault("consumables", {})
+        stacks[item_id] = int(stacks.get(item_id, 0)) + max(1, count)
+    else:
+        owned = inv.setdefault("equipment_owned", [])
+        if item_id not in owned:
+            owned.append(item_id)
+    return {"ok": True, "item_id": item_id, "count": count}
+
+
+def use_item(
+    state: dict[str, Any], character_id: str, item_id: str, *, base_dir: str | Path
+) -> dict[str, Any]:
+    from utils.item_catalog import get_item_def
+
+    item = get_item_def(item_id, base_dir=base_dir)
+    if not item or not item.get("consumable"):
+        return {"ok": False, "error": "not consumable"}
+    inv = state.setdefault("inventory", {})
+    stacks = inv.setdefault("consumables", {})
+    if int(stacks.get(item_id, 0)) < 1:
+        return {"ok": False, "error": "아이템 없음"}
+    stacks[item_id] = int(stacks[item_id]) - 1
+    if stacks[item_id] <= 0:
+        stacks.pop(item_id, None)
+    h = get_hero_progress(state, character_id, base_dir=base_dir)
+    effects: dict[str, Any] = {}
+    hp_r = item.get("hp_restore")
+    if hp_r is not None:
+        max_hp = int(h.get("max_hp", 100))
+        cur = int(h.get("hp", max_hp))
+        restore = int(hp_r)
+        if restore >= 9999:
+            cur = max_hp
+        else:
+            cur = min(max_hp, cur + restore)
+        h["hp"] = cur
+        effects["hp"] = cur
+    mp_r = item.get("mp_restore")
+    if mp_r is not None:
+        max_mp = int(h.get("max_mp", 50))
+        cur = int(h.get("mp", max_mp))
+        restore = int(mp_r)
+        cur = min(max_mp, cur + restore)
+        h["mp"] = cur
+        effects["mp"] = cur
+    if item.get("cure_poison"):
+        h.pop("poisoned", None)
+        effects["cure_poison"] = True
+    for stat in ("str", "agi", "vit"):
+        key = f"buff_{stat}"
+        if item.get(key):
+            h.setdefault("buffs", {})[stat] = int(h.get("buffs", {}).get(stat, 0)) + int(item[key])
+            effects[key] = h["buffs"][stat]
+    return {
+        "ok": True,
+        "item_id": item_id,
+        "label": item.get("label", item_id),
+        "effects": effects,
+    }
+
+
+def _catalog_items_summary(base_dir: str | Path) -> dict[str, Any]:
+    from utils.item_catalog import catalog_counts
+
+    return catalog_counts(base_dir=base_dir)
 
 
 def progression_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
@@ -374,7 +451,7 @@ def progression_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[s
             jid: {"label": j.get("label"), "skills_by_level": j.get("skills_by_level")}
             for jid, j in cfg.get("jobs", {}).items()
         },
-        "items": cfg.get("items", {}),
+        "items": _catalog_items_summary(base_dir),
         "evolution_chains": list(cfg.get("evolution_chains", {}).keys()),
         "map_spawn": {
             "map_id": map_id,

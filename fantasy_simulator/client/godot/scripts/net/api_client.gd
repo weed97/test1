@@ -148,6 +148,41 @@ func fetch_skill_tree(character_id: String) -> Dictionary:
 	return parsed.get("skill_tree", {})
 
 
+func fetch_item_catalog(
+	category: String = "",
+	grade: String = "",
+	search: String = "",
+	limit: int = 200,
+) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var path := "/v1/catalog/items?session_id=%s&limit=%d" % [session_id.uri_encode(), limit]
+	if not category.is_empty():
+		path += "&category=%s" % category.uri_encode()
+	if not grade.is_empty():
+		path += "&grade=%s" % grade.uri_encode()
+	if not search.is_empty():
+		path += "&q=%s" % search.uri_encode()
+	var parsed := await _post_json(path, {}, HTTPClient.METHOD_GET)
+	return parsed if parsed != null else {}
+
+
+func use_item(character_id: String, item_id: String) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/progression/use_item",
+		{
+			"session_id": session_id,
+			"character_id": character_id,
+			"item_id": item_id,
+		},
+	)
+	return parsed if parsed != null else {}
+
+
 func unlock_skill(character_id: String, skill_id: String) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
