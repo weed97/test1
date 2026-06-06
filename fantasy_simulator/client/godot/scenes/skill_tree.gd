@@ -8,7 +8,7 @@ func _ready() -> void:
 		$VBox/TreeLabel.text = "세션이 없습니다. 메인 메뉴에서 새 게임을 시작하세요."
 		return
 	await _populate_characters()
-	_load_tree()
+	await _load_tree()
 
 
 func _populate_characters() -> void:
@@ -32,6 +32,7 @@ func _load_tree() -> void:
 	var cid: String = str($VBox/CharacterOption.get_item_metadata($VBox/CharacterOption.selected))
 	var tree: Dictionary = await ApiClient.fetch_skill_tree(cid)
 	if tree.is_empty():
+		$VBox/TreeLabel.text = "스킬 트리를 불러오지 못했습니다. API 서버와 세션을 확인하세요."
 		return
 	_render_tree(tree)
 
@@ -87,7 +88,7 @@ func _render_tree(payload: Dictionary) -> void:
 
 
 func _on_character_changed(_index: int) -> void:
-	_load_tree()
+	await _load_tree()
 
 
 func _on_back_pressed() -> void:

@@ -148,6 +148,21 @@ class LevelUnlockTests(unittest.TestCase):
         need = xp_threshold_for_level(999, formula) + 1
         self.assertEqual(level_from_xp(need, formula, max_level=999), 999)
 
+    def test_normalize_legacy_shorthand_axes(self) -> None:
+        with isolated_game_root() as root:
+            hero = normalize_hero_progress(
+                {
+                    "active_job_id": "knight",
+                    "jobs": {"knight": {"job_level": 50, "xp": 0}},
+                    "weapon_masteries": {"two_handed_sword": 30},
+                },
+                base_dir=root,
+            )
+            self.assertEqual(hero["jobs"]["knight"]["level"], 50)
+            wm = hero["weapon_masteries"]["two_handed_sword"]
+            self.assertEqual(wm["level"], 30)
+            self.assertIn("rank", wm)
+
 
 if __name__ == "__main__":
     unittest.main()
