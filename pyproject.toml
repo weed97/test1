@@ -1,14 +1,21 @@
 [project]
-name = "medieval-text-mmorpg-simulator"
+name = "fantasy-monorepo-sims"
 version = "0.1.0"
-description = "Large-scale medieval fantasy text MMORPG simulator with dynamic NPC dialogue."
+description = "Medieval fantasy simulators monorepo (mmorpg_sim + fantasy_mmorpg)."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
 
 [project.scripts]
-fantasy-mmorpg = "mmorpg_sim.cli:main"
+mmorpg-sim = "mmorpg_sim.cli:main"
+fantasy-mmorpg = "fantasy_mmorpg.cli:main"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["mmorpg_sim*", "fantasy_mmorpg*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "fantasy_mmorpg/tests", "mmorpg_sim/tests", "sungjwa_hunter_sim/tests"]
