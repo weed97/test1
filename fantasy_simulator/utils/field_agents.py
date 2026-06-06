@@ -95,6 +95,25 @@ def spawn_archetype(
     return agent
 
 
+def _ecology_rng(state: dict[str, Any], rng: random.Random | None = None) -> tuple[random.Random, bool]:
+    """Return ecology RNG; persist state across ticks when caller does not supply one."""
+    if rng is not None:
+        return rng, True
+    eco = state.setdefault("flags", {}).setdefault("ecology", {})
+    saved = eco.get("rng_state")
+    if saved is not None:
+        r = random.Random()
+        r.setstate(saved)
+        return r, False
+    return random.Random(), False
+
+
+def _persist_ecology_rng(state: dict[str, Any], r: random.Random, *, external: bool) -> None:
+    if external:
+        return
+    state.setdefault("flags", {}).setdefault("ecology", {})["rng_state"] = r.getstate()
+
+
 def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None:
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     if eco.get("initialized"):
@@ -141,7 +160,7 @@ def tick_field_ecology(
 ) -> list[str]:
     if not ecology_enabled(state):
         return []
-    r = rng or random.Random()
+    r, external_rng = _ecology_rng(state, rng)
     world = state.get("world", {})
     map_id = world.get("map_id", "ashpoint_01")
     lines: list[str] = []
@@ -177,6 +196,7 @@ def tick_field_ecology(
     zone = resolve_zone_from_world(world)
     if lines:
         state.setdefault("flags", {}).setdefault("ecology", {})["last_tick_zone"] = zone
+    _persist_ecology_rng(state, r, external=external_rng)
     return lines
 
 

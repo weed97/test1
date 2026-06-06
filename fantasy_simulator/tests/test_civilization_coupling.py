@@ -74,7 +74,9 @@ class CivilizationCouplingTests(unittest.TestCase):
             session = GameSession.from_root(root, mode="rule", seed=4)
             session.state.setdefault("flags", {})["game_mode"] = "ecology"
             init_player_civilization(session.state, player_race="human", base_dir=root)
-            lines = tick_world_systems(session.state, base_dir=root, turn=1)
+            lines = tick_world_systems(
+                session.state, base_dir=root, turn=1, rng=session.rng
+            )
             joined = "\n".join(lines)
             self.assertTrue(
                 "[세계]" in joined
