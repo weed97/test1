@@ -5,6 +5,7 @@ signal turn_completed(payload: Dictionary)
 signal session_created(payload: Dictionary)
 signal position_synced(payload: Dictionary)
 signal maps_loaded(payload: Dictionary)
+signal agents_loaded(payload: Dictionary)
 signal api_error(message: String)
 
 var session_id: String = ""
@@ -13,6 +14,8 @@ var sim_map_id: String = "ashpoint_01"
 var sim_tile: Vector2i = Vector2i(40, 48)
 var sim_facing: String = "south"
 var tile_pixels: int = 16
+
+var _http_busy: bool = false
 
 
 func new_game(seed: int = -1, temporal_mode: String = "precision", game_mode: String = "hybrid") -> void:
@@ -50,10 +53,10 @@ func sync_position(
 	y: int,
 	facing: String = "south",
 	allow_transition: bool = true,
-) -> void:
+) -> bool:
 	if session_id.is_empty():
 		api_error.emit("no session")
-		return
+		return false
 	var body := {
 		"session_id": session_id,
 		"position": {
@@ -66,22 +69,26 @@ func sync_position(
 	}
 	var parsed := await _post_json("/v1/world/position", body)
 	if parsed == null:
-		return
+		return false
+	if not parsed.get("ok", true):
+		api_error.emit("position sync rejected")
+		return false
 	var pos: Dictionary = parsed.get("position", {})
 	sim_map_id = str(pos.get("map_id", map_id))
 	sim_tile = Vector2i(int(pos.get("x", x)), int(pos.get("y", y)))
 	sim_facing = str(pos.get("facing", facing))
 	position_synced.emit(parsed)
+	return true
 
 
 func run_turn(
 	action: String,
 	temporal_mode: String = "precision",
 	at_position: bool = true,
-) -> void:
+) -> bool:
 	if session_id.is_empty():
 		api_error.emit("no session — call new_game() first")
-		return
+		return false
 	var body := {
 		"session_id": session_id,
 		"action": action,
@@ -97,9 +104,10 @@ func run_turn(
 		}
 	var parsed := await _post_json("/v1/turn", body)
 	if parsed == null:
-		return
+		return false
 	_apply_position_from_payload(parsed)
 	turn_completed.emit(parsed)
+	return true
 
 
 func _apply_position_from_payload(parsed: Dictionary) -> void:
@@ -126,7 +134,7 @@ func fetch_progression_status() -> Dictionary:
 func fetch_skill_tree(character_id: String) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
-		return {}
+		return {"error": "no session"}
 	var parsed := await _post_json(
 		"/v1/progression/skill_tree?session_id=%s&character_id=%s" % [
 			session_id.uri_encode(),
@@ -136,8 +144,46 @@ func fetch_skill_tree(character_id: String) -> Dictionary:
 		HTTPClient.METHOD_GET,
 	)
 	if parsed == null:
-		return {}
+		return {"error": "request failed"}
 	return parsed.get("skill_tree", {})
+
+
+func unlock_skill(character_id: String, skill_id: String) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/progression/unlock_skill",
+		{
+			"session_id": session_id,
+			"character_id": character_id,
+			"skill_id": skill_id,
+		},
+	)
+	return parsed if parsed != null else {}
+
+
+func cast_sovereign_wish(edict_type: String, extra: Dictionary = {}) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var body := {"session_id": session_id, "edict_type": edict_type}
+	body.merge(extra, true)
+	var parsed := await _post_json("/v1/sovereign/wish", body)
+	return parsed if parsed != null else {}
+
+
+func fetch_world_agents(map_id: String = "") -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var path := "/v1/world/agents?session_id=%s" % session_id.uri_encode()
+	if not map_id.is_empty():
+		path += "&map_id=%s" % map_id.uri_encode()
+	var parsed := await _post_json(path, {}, HTTPClient.METHOD_GET)
+	if parsed != null:
+		agents_loaded.emit(parsed)
+	return parsed if parsed != null else {}
 
 
 func health_check() -> bool:
@@ -146,6 +192,15 @@ func health_check() -> bool:
 
 
 func _post_json(path: String, body: Dictionary, method: int = HTTPClient.METHOD_POST) -> Variant:
+	while _http_busy:
+		await get_tree().process_frame
+	_http_busy = true
+	var result: Variant = await _post_json_impl(path, body, method)
+	_http_busy = false
+	return result
+
+
+func _post_json_impl(path: String, body: Dictionary, method: int) -> Variant:
 	var url := ApiConfig.base_url() + path
 	var http := HTTPRequest.new()
 	add_child(http)
@@ -160,11 +215,11 @@ func _post_json(path: String, body: Dictionary, method: int = HTTPClient.METHOD_
 	var args: Array = await http.request_completed
 	http.queue_free()
 
-	var result: int = args[0]
+	var req_result: int = args[0]
 	var code: int = args[1]
 	var raw: PackedByteArray = args[3]
-	if result != HTTPRequest.RESULT_SUCCESS:
-		api_error.emit("network error: %s" % result)
+	if req_result != HTTPRequest.RESULT_SUCCESS:
+		api_error.emit("network error: %s" % req_result)
 		return null
 	if code < 200 or code >= 300:
 		var err_text := raw.get_string_from_utf8()

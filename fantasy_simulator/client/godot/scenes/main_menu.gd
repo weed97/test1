@@ -1,5 +1,7 @@
 extends Control
 
+var _session_busy: bool = false
+
 
 func _ready() -> void:
 	ApiClient.session_created.connect(_on_session_created)
@@ -23,37 +25,40 @@ func _check_server() -> void:
 
 
 func _on_new_game_pressed() -> void:
-	$VBox/ExploreButton.disabled = true
-	$VBox/Explore2DButton.disabled = true
-	$VBox/SkillTreeButton.disabled = true
+	if _session_busy:
+		return
+	_session_busy = true
+	_set_play_buttons(false)
 	$VBox/Narrative.clear()
 	$VBox/Narrative.text = "세션 생성 중…\n"
 	await ApiClient.new_game(42, "precision")
+	_session_busy = false
 	if ApiClient.session_id.is_empty():
-		_enable_play_buttons()
+		_set_play_buttons(true)
 
 
 func _on_explore_pressed() -> void:
+	if _session_busy or ApiClient.session_id.is_empty():
+		$VBox/Narrative.text += "\n[오류] 세션이 없습니다. 새 게임을 먼저 시작하세요.\n"
+		return
 	$VBox/Narrative.text += "\n[탐험]\n"
 	await ApiClient.run_turn("explore", "precision")
 
 
 func _on_session_created(payload: Dictionary) -> void:
 	$VBox/Narrative.text += "session_id: %s\n" % payload.get("session_id", "?")
-	$VBox/ExploreButton.disabled = false
-	$VBox/Explore2DButton.disabled = false
-	$VBox/SkillTreeButton.disabled = false
+	_set_play_buttons(true)
 	await ApiClient.fetch_world_maps()
 
 
 func _on_explore_2d_pressed() -> void:
-	if ApiClient.session_id.is_empty():
+	if _session_busy or ApiClient.session_id.is_empty():
 		return
 	get_tree().change_scene_to_file("res://scenes/exploration.tscn")
 
 
 func _on_skill_tree_pressed() -> void:
-	if ApiClient.session_id.is_empty():
+	if _session_busy or ApiClient.session_id.is_empty():
 		return
 	get_tree().change_scene_to_file("res://scenes/skill_tree.tscn")
 
@@ -72,10 +77,11 @@ func _on_turn_completed(payload: Dictionary) -> void:
 func _on_api_error(message: String) -> void:
 	$VBox/Narrative.text += "\n[오류] %s\n" % message
 	push_warning("API: %s" % message)
-	_enable_play_buttons()
+	_session_busy = false
+	_set_play_buttons(true)
 
 
-func _enable_play_buttons() -> void:
-	$VBox/ExploreButton.disabled = false
-	$VBox/Explore2DButton.disabled = false
-	$VBox/SkillTreeButton.disabled = false
+func _set_play_buttons(enabled: bool) -> void:
+	$VBox/ExploreButton.disabled = not enabled
+	$VBox/Explore2DButton.disabled = not enabled
+	$VBox/SkillTreeButton.disabled = not enabled

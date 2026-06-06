@@ -129,6 +129,61 @@ def persist_ecology_rng(state: dict[str, Any], r: random.Random) -> None:
     ]
 
 
+def init_world_sovereign(state: dict[str, Any], *, base_dir: str | Path) -> None:
+    """Bind world sovereign holder flags for wish/siege systems."""
+    from utils.sovereign_wish import load_demigod_config
+
+    cfg = load_demigod_config(base_dir)
+    holder = cfg.get("initial_holder", {})
+    holder_id = str(holder.get("id", "npc_arthur_pendragon"))
+    sov = state.setdefault("flags", {}).setdefault("world_sovereign", {})
+    sov.setdefault("holder_id", holder_id)
+    sov.setdefault("contested", False)
+    sov.setdefault("sovereign_break_meter", 0)
+
+
+def spawn_sovereign_holder(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any] | None:
+    """Place Arthur (world sovereign) on the field ecology map if not already present."""
+    from utils.combat_stats import build_combatant_snapshot
+    from utils.parallel_beat import load_parallel_config
+
+    eco = state.setdefault("flags", {}).setdefault("ecology", {})
+    if eco.get("sovereign_holder_spawned"):
+        return None
+    pb = load_parallel_config(base_dir)
+    holder_id = str(pb.get("sovereign_siege", {}).get("holder_archetype_id", "npc_arthur_pendragon"))
+    for agent in get_agents(state):
+        if agent.get("world_sovereign_holder") or str(agent.get("archetype_id", "")) == holder_id:
+            eco["sovereign_holder_spawned"] = True
+            return agent
+    preset = build_combatant_snapshot(base_dir=base_dir, preset_id=holder_id)
+    maps_cfg = load_world_maps(str(base_dir)).get("maps", {})
+    map_id = "ashpoint_01" if "ashpoint_01" in maps_cfg else next(iter(maps_cfg), "ashpoint_01")
+    spawn = maps_cfg.get(map_id, {}).get("spawn", {})
+    sx = int(spawn.get("x", 40)) + 10
+    sy = int(spawn.get("y", 48)) - 8
+    agent = build_ecology_agent(
+        archetype_id=holder_id,
+        kind="npc",
+        map_id=map_id,
+        x=sx,
+        y=sy,
+        base_dir=base_dir,
+        label=str(preset.get("label", "아서왕")),
+        skills=list(preset.get("skills", [])),
+        extra={
+            "world_sovereign_holder": True,
+            "combatant_preset": holder_id,
+            "tier": preset.get("tier", "demigod"),
+            "ai": "sovereign_patrol",
+        },
+    )
+    get_agents(state).append(agent)
+    attach_society(agent, base_dir=base_dir)
+    eco["sovereign_holder_spawned"] = True
+    return agent
+
+
 def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None:
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     if eco.get("initialized"):
@@ -164,6 +219,7 @@ def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None
         spawn_archetype(
             state, "innkeeper_civilian", map_id="ashpoint_01", x=38, y=32, base_dir=base_dir
         )
+    spawn_sovereign_holder(state, base_dir=base_dir)
     eco["initialized"] = True
 
 
