@@ -139,6 +139,18 @@ class ArthurSkillRequest(BaseModel):
     distance_pixels: Optional[list[int]] = None
 
 
+class SovereignWishRequest(BaseModel):
+    session_id: str
+    edict_type: str = Field(..., min_length=1, max_length=64)
+    civilization_id: Optional[str] = None
+    prosperity_gain: Optional[int] = None
+    prosperity_penalty: Optional[int] = None
+    power_bonus: Optional[int] = None
+    rule_key: Optional[str] = None
+    rule_value: Optional[Any] = None
+    label: Optional[str] = None
+
+
 class TurnRequest(BaseModel):
     session_id: str
     action: str = Field(..., min_length=1, max_length=512)
@@ -172,13 +184,13 @@ def new_session(body: NewSessionRequest) -> NewSessionResponse:
         temporal_mode=body.temporal_mode,
     )
     session.state.setdefault("flags", {})["game_mode"] = body.game_mode
+    root = package_root()
+    init_heroes_from_party(session.state, base_dir=root)
     if body.game_mode in ("ecology", "hybrid"):
-        root = package_root()
         init_player_civilization(
             session.state, player_race=body.player_race, base_dir=root
         )
         ensure_ecology_seeds(session.state, base_dir=root)
-        init_heroes_from_party(session.state, base_dir=root)
         get_player_settlement(session.state)
         init_world_conflicts(session.state, base_dir=root)
     session.manager.save(session.state)
@@ -429,6 +441,37 @@ def sovereign_status_route(session_id: Optional[str] = None) -> dict[str, Any]:
             raise HTTPException(status_code=404, detail="session not found")
         state = session.state
     return {"api_version": API_VERSION, **sovereign_status(state, base_dir=root)}
+
+
+@app.post("/v1/sovereign/wish")
+def sovereign_wish_route(body: SovereignWishRequest) -> dict[str, Any]:
+    from utils.sovereign_wish import resolve_sovereign_wish
+
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    payload: dict[str, Any] = {"edict_type": body.edict_type}
+    for key in (
+        "civilization_id",
+        "prosperity_gain",
+        "prosperity_penalty",
+        "power_bonus",
+        "rule_key",
+        "rule_value",
+        "label",
+    ):
+        val = getattr(body, key, None)
+        if val is not None:
+            payload[key] = val
+    result = resolve_sovereign_wish(session.state, payload, base_dir=package_root())
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "wish failed"))
+    session.manager.save(session.state)
+    return {
+        "api_version": API_VERSION,
+        "session_id": body.session_id,
+        **result,
+    }
 
 
 @app.get("/v1/ecology/wars")

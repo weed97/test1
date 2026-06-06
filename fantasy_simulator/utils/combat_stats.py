@@ -736,10 +736,12 @@ def combat_power_estimate(snapshot: dict[str, Any], *, base_dir: str | Path) -> 
 
 def sovereign_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
     from utils.sovereign_siege import sovereign_siege_status
+    from utils.sovereign_wish import wish_status
 
     bundle = load_combat_bundle(base_dir)
     arthur = build_combatant_snapshot(base_dir=base_dir, preset_id="npc_arthur_pendragon")
     status = sovereign_siege_status(state, base_dir=base_dir)
+    status["wish"] = wish_status(state, base_dir=base_dir)
     status["arthur_snapshot"] = {
         "hp_milli": arthur["hp_milli"],
         "pierce_dps_milli": arthur.get("pierce_dps_milli"),

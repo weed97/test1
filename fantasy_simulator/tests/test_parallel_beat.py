@@ -146,7 +146,9 @@ class ParallelBeatTests(unittest.TestCase):
             flags = session.state.setdefault("flags", {})
             flags["game_mode"] = "ecology"
             session.state["world"]["map_id"] = "forest_01"
-            lines = run_world_parallel_beat(session.state, base_dir=root, turn=1)
+            lines = run_world_parallel_beat(
+                session.state, base_dir=root, turn=1, rng=session.rng
+            )
             eco = flags.setdefault("ecology", {})
             self.assertEqual(eco.get("beat_mode"), "parallel")
             self.assertIn("last_parallel_beat", eco)

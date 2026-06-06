@@ -75,6 +75,26 @@ class CombatSkillAiTests(unittest.TestCase):
             )
             self.assertEqual(sk, "excalibur_sovereign_judgment")
 
+    def test_out_of_combat_wish_not_picked_in_combat(self) -> None:
+        with isolated_game_root() as root:
+            arthur = {
+                "archetype_id": "npc_arthur_pendragon",
+                "world_sovereign_holder": True,
+                "skills": [
+                    "sovereign_blade_combo",
+                    "sovereign_wish_rite",
+                ],
+                "skill_cooldowns": {},
+                "hp": 80,
+                "max_hp": 100,
+                "mp": 500,
+            }
+            target = {"hp": 50, "max_hp": 50}
+            sk = pick_combat_skill(
+                arthur, target, base_dir=root, distance=1, rng=random.Random(2)
+            )
+            self.assertEqual(sk, "sovereign_blade_combo")
+
     def test_eight_jobs_three_hundred_skills(self) -> None:
         with isolated_game_root() as root:
             from utils.skill_catalog import catalog_skill_count_for_job

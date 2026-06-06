@@ -11,18 +11,26 @@ func _ready() -> void:
 
 func _check_server() -> void:
 	var ok: bool = await ApiClient.health_check()
-	$VBox/ServerLabel.text = "API: %s (%s)" % [
-		ApiConfig.base_url(),
-		"연결됨" if ok else "서버 꺼짐 — uvicorn 실행 필요",
-	]
+	if ok:
+		$VBox/ServerLabel.text = "API: %s (연결됨)" % ApiConfig.base_url()
+	else:
+		$VBox/ServerLabel.text = (
+			"API: %s (연결 실패)\n"
+			+ "원인: Python API 서버가 실행 중이 아닙니다.\n"
+			+ "터미널: cd fantasy_simulator && pip install -r requirements-api.txt\n"
+			+ "         uvicorn api.server:app --port 8765"
+		) % ApiConfig.base_url()
 
 
 func _on_new_game_pressed() -> void:
 	$VBox/ExploreButton.disabled = true
+	$VBox/Explore2DButton.disabled = true
 	$VBox/SkillTreeButton.disabled = true
 	$VBox/Narrative.clear()
 	$VBox/Narrative.text = "세션 생성 중…\n"
 	await ApiClient.new_game(42, "precision")
+	if ApiClient.session_id.is_empty():
+		_enable_play_buttons()
 
 
 func _on_explore_pressed() -> void:
@@ -64,3 +72,10 @@ func _on_turn_completed(payload: Dictionary) -> void:
 func _on_api_error(message: String) -> void:
 	$VBox/Narrative.text += "\n[오류] %s\n" % message
 	push_warning("API: %s" % message)
+	_enable_play_buttons()
+
+
+func _enable_play_buttons() -> void:
+	$VBox/ExploreButton.disabled = false
+	$VBox/Explore2DButton.disabled = false
+	$VBox/SkillTreeButton.disabled = false

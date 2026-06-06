@@ -161,8 +161,9 @@ def preview_skill_damage(
             if preview.get("pipeline") != "world_edict":
                 return max(0, dmg_hp)
             return 0
-        except (OSError, KeyError, json.JSONDecodeError):
-            pass
+        except (OSError, KeyError, json.JSONDecodeError) as exc:
+            if is_sovereign_skill(sdef):
+                raise RuntimeError(f"sovereign skill preview failed: {skill_id}") from exc
     try:
         from utils.combat_stats import agent_to_combatant, strike_damage_hp
 
@@ -182,8 +183,11 @@ def preview_skill_damage(
         dmg = strike_damage_hp(atk, defn, base_dir=base_dir, rng=rng, skill_multiplier=mult)
         if dmg > 0:
             return dmg
-    except (OSError, KeyError, json.JSONDecodeError):
-        pass
+    except (OSError, KeyError, json.JSONDecodeError) as exc:
+        if sdef.get("combat_pipeline") == "catalog" and (
+            attacker.get("jobs") or attacker.get("unlocked_skills")
+        ):
+            raise RuntimeError(f"catalog skill preview failed: {skill_id}") from exc
     iq_bonus = 1.0 + (_iq(attacker) / 100.0) * 0.15
     plunder = int(attacker.get("plunder", {}).get("power_bonus", 0))
     base_pwr = float(sdef.get("power", 8)) + plunder * 0.5
@@ -208,10 +212,22 @@ def use_skill(
     base_dir: str | Path,
     rng: random.Random,
 ) -> tuple[int, str]:
+    from utils.skill_effects import (
+        apply_buff_from_skill,
+        apply_damage_with_buffs,
+        is_buff_skill,
+    )
+
+    sdef = skill_definition(skill_id, base_dir=base_dir)
     dmg = preview_skill_damage(attacker, target, skill_id, base_dir=base_dir, rng=rng)
     commit_skill_costs(attacker, skill_id, base_dir=base_dir)
+    if is_buff_skill(sdef):
+        apply_buff_from_skill(attacker, skill_id, sdef, base_dir=base_dir)
+        return 0, skill_id
     if dmg > 0:
-        target["hp"] = int(target.get("hp", 1)) - dmg
+        dealt = apply_damage_with_buffs(target, dmg, base_dir=base_dir)
+        target["hp"] = int(target.get("hp", 1)) - dealt
+        return dealt, skill_id
     return dmg, skill_id
 
 
@@ -298,6 +314,9 @@ def tick_agent_mind(
 ) -> list[str]:
     lines: list[str] = []
     decay_skill_cooldowns(agent)
+    from utils.skill_effects import tick_agent_buffs
+
+    lines.extend(tick_agent_buffs(agent, base_dir=base_dir))
     update_relations(agent, others, base_dir=base_dir, rng=rng)
 
     label = agent.get("label") or agent.get("archetype_id", "agent")

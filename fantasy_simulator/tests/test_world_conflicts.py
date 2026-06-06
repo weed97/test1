@@ -33,7 +33,7 @@ class WorldConflictsTests(unittest.TestCase):
             all_lines: list[str] = []
             for _ in range(40):
                 all_lines.extend(
-                    tick_world_conflicts(session.state, base_dir=root)
+                    tick_world_conflicts(session.state, base_dir=root, rng=session.rng)
                 )
             status = conflicts_status(session.state, base_dir=root)
             civs = session.state["flags"]["ecology"]["civilizations"]
@@ -52,7 +52,7 @@ class WorldConflictsTests(unittest.TestCase):
             init_world_conflicts(session.state, base_dir=root)
             get_civilization_state(session.state, "goblin_tribe")["prosperity"] = 100
             for _ in range(50):
-                tick_world_conflicts(session.state, base_dir=root)
+                tick_world_conflicts(session.state, base_dir=root, rng=session.rng)
             hist = conflicts_status(session.state, base_dir=root)["history"]
             if hist:
                 w = hist[-1]

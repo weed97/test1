@@ -43,6 +43,50 @@ def mastery_rank_for_level(level: int, *, base_dir: str | Path) -> str:
     return rank
 
 
+def _normalize_job_block(block: Any, *, fallback_level: int = 1, fallback_xp: int = 0) -> dict[str, Any]:
+    if isinstance(block, int):
+        return {"level": block, "xp": 0}
+    if not isinstance(block, dict):
+        return {"level": fallback_level, "xp": fallback_xp}
+    level = int(block.get("level", block.get("job_level", fallback_level)))
+    return {"level": level, "xp": int(block.get("xp", fallback_xp))}
+
+
+def _normalize_weapon_mastery_block(
+    block: Any,
+    *,
+    base_dir: str | Path,
+    fallback_level: int = 1,
+) -> dict[str, Any]:
+    if isinstance(block, int):
+        level = min(int(block), 999)
+        return {
+            "level": level,
+            "xp": 0,
+            "rank": mastery_rank_for_level(level, base_dir=base_dir),
+        }
+    if not isinstance(block, dict):
+        level = fallback_level
+        return {
+            "level": level,
+            "xp": 0,
+            "rank": mastery_rank_for_level(level, base_dir=base_dir),
+        }
+    level = min(999, int(block.get("level", block.get("weapon_mastery_level", fallback_level))))
+    return {
+        "level": level,
+        "xp": int(block.get("xp", 0)),
+        "rank": mastery_rank_for_level(level, base_dir=base_dir),
+    }
+
+
+def _rank_index(rank_order: list[str], rank: str) -> int:
+    try:
+        return rank_order.index(rank)
+    except ValueError:
+        return -1
+
+
 def normalize_hero_progress(hero: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
     """Migrate legacy hero dict to multi-axis Lv999 schema."""
     prog = load_progression_config(base_dir)
@@ -54,6 +98,14 @@ def normalize_hero_progress(hero: dict[str, Any], *, base_dir: str | Path) -> di
     if "jobs" not in hero:
         jl = int(hero.get("job_level", 1))
         hero["jobs"] = {job_id: {"level": jl, "xp": int(hero.get("xp", 0))}}
+    hero["jobs"] = {
+        jid: _normalize_job_block(
+            block,
+            fallback_level=int(hero.get("job_level", 1)),
+            fallback_xp=int(hero.get("xp", 0)),
+        )
+        for jid, block in hero["jobs"].items()
+    }
     if job_id not in hero["jobs"]:
         hero["jobs"][job_id] = {
             "level": int(hero.get("job_level", 1)),
@@ -64,7 +116,7 @@ def normalize_hero_progress(hero: dict[str, Any], *, base_dir: str | Path) -> di
         jl = int(hero["job_level"])
         hero["jobs"][job_id]["level"] = jl
     hero["job_level"] = jl
-    hero.setdefault("character_level", int(hero.get("character_level", max(1, jl // 2))))
+    hero.setdefault("character_level", int(hero.get("character_level", max(1, jl))))
     hero.setdefault("character_xp", int(hero.get("character_xp", 0)))
 
     hero.setdefault("weapon_masteries", {})
@@ -77,8 +129,16 @@ def normalize_hero_progress(hero: dict[str, Any], *, base_dir: str | Path) -> di
             "rank": mastery_rank_for_level(wlv, base_dir=base_dir),
         }
 
-    for wclass, block in hero["weapon_masteries"].items():
-        block["level"] = min(max_lv, int(block.get("level", 1)))
+    hero["weapon_masteries"] = {
+        wclass: _normalize_weapon_mastery_block(
+            block,
+            base_dir=base_dir,
+            fallback_level=int(hero.get("weapon_mastery_level", 1)),
+        )
+        for wclass, block in hero["weapon_masteries"].items()
+    }
+    for block in hero["weapon_masteries"].values():
+        block["level"] = min(max_lv, int(block["level"]))
         block["rank"] = mastery_rank_for_level(block["level"], base_dir=base_dir)
 
     hero.setdefault("unlocked_skills", [])
@@ -149,8 +209,11 @@ def skills_available_for_hero(hero: dict[str, Any], *, base_dir: str | Path) -> 
     for wclass, wlv in snap["weapon_masteries"].items():
         for sdef in catalog_skills_for_weapon_class(wclass, base_dir=base_dir):
             reqs = dict(sdef.get("unlock_requirements", {}))
-            reqs["weapon_mastery_level"] = reqs.get("weapon_mastery_level", 1)
-            if wlv >= int(reqs["weapon_mastery_level"]):
+            reqs.setdefault("weapon_mastery_level", 1)
+            reqs.setdefault("weapon_class", wclass)
+            snap_weapon = dict(snap)
+            snap_weapon["weapon_masteries"] = {wclass: wlv}
+            if _requirements_met(reqs, snap_weapon, job_id=job_id):
                 available.append(str(sdef["skill_id"]))
     return available
 
@@ -228,9 +291,10 @@ def can_wield_grade(
         return False, f"{weapon_class} 숙련 Lv{gate['min_weapon_class_level']} 필요"
     need_rank = gate.get("min_mastery_rank")
     if need_rank:
-        rank_order = list(_read_json(base_dir, "config/weapon_mastery.json").get("rank_thresholds", {}))
+        thresholds = _read_json(base_dir, "config/weapon_mastery.json").get("rank_thresholds", {})
+        rank_order = sorted(thresholds.keys(), key=lambda k: int(thresholds[k]))
         have = mastery_rank_for_level(wlv, base_dir=base_dir)
-        if rank_order.index(have) < rank_order.index(str(need_rank)):
+        if _rank_index(rank_order, have) < _rank_index(rank_order, str(need_rank)):
             return False, f"숙련 경지 {need_rank} 필요"
     return True, ""
 
