@@ -37,7 +37,16 @@ func _load_tree() -> void:
 	_load_token += 1
 	var token := _load_token
 	$VBox/TreeLabel.text = "스킬 트리 불러오는 중…"
-	var cid: String = str($VBox/CharacterOption.get_item_metadata($VBox/CharacterOption.selected))
+	var opt: OptionButton = $VBox/CharacterOption
+	if opt.item_count == 0:
+		$VBox/TreeLabel.text = "캐릭터 목록이 비어 있습니다."
+		return
+	var sel := opt.selected
+	if sel < 0:
+		sel = 0
+	var cid: String = str(opt.get_item_metadata(sel))
+	if cid.is_empty():
+		cid = opt.get_item_text(sel)
 	var tree: Dictionary = await ApiClient.fetch_skill_tree(cid)
 	if token != _load_token:
 		return

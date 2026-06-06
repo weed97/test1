@@ -26,8 +26,12 @@ func new_game(seed: int = -1, temporal_mode: String = "precision", game_mode: St
 		body["seed"] = seed
 	var parsed := await _post_json("/v1/session/new", body)
 	if parsed == null:
+		api_error.emit("session create failed")
 		return
 	session_id = str(parsed.get("session_id", ""))
+	if session_id.is_empty():
+		api_error.emit("session_id missing in response")
+		return
 	session_created.emit(parsed)
 
 

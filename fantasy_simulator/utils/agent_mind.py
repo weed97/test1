@@ -184,7 +184,9 @@ def preview_skill_damage(
         if dmg > 0:
             return dmg
     except (OSError, KeyError, json.JSONDecodeError) as exc:
-        if sdef.get("combat_pipeline") == "catalog":
+        if sdef.get("combat_pipeline") == "catalog" and (
+            attacker.get("jobs") or attacker.get("unlocked_skills")
+        ):
             raise RuntimeError(f"catalog skill preview failed: {skill_id}") from exc
     iq_bonus = 1.0 + (_iq(attacker) / 100.0) * 0.15
     plunder = int(attacker.get("plunder", {}).get("power_bonus", 0))

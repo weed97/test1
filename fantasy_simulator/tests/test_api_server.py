@@ -30,6 +30,19 @@ class ApiServerTests(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["api_version"], 1)
 
+    def test_arthur_skill_endpoint(self) -> None:
+        r = self.client.post(
+            "/v1/combat/arthur_skill",
+            json={
+                "skill_id": "sovereign_blade_combo",
+                "target_presets": ["world_rank_02"],
+            },
+        )
+        self.assertEqual(r.status_code, 200)
+        body = r.json().get("arthur_skill", {})
+        self.assertEqual(body.get("skill_id"), "sovereign_blade_combo")
+        self.assertIn("pipeline", body)
+
     def test_combat_combatant_arthur(self) -> None:
         r = self.client.get("/v1/combat/combatant/npc_arthur_pendragon")
         self.assertEqual(r.status_code, 200)

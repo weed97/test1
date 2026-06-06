@@ -103,7 +103,10 @@ def ecology_rng(state: dict[str, Any], rng: random.Random | None = None) -> rand
     saved = eco.get("rng_state")
     if saved is not None:
         r = random.Random()
-        r.setstate(saved)
+        if isinstance(saved, list) and len(saved) == 3:
+            r.setstate((int(saved[0]), tuple(saved[1]), saved[2]))
+        else:
+            r.setstate(saved)
         return r
     seed = eco.get("rng_seed")
     if seed is None:
@@ -117,7 +120,13 @@ def ecology_rng(state: dict[str, Any], rng: random.Random | None = None) -> rand
 
 
 def persist_ecology_rng(state: dict[str, Any], r: random.Random) -> None:
-    state.setdefault("flags", {}).setdefault("ecology", {})["rng_state"] = r.getstate()
+    """Persist RNG as JSON-safe lists (tuple from getstate is not portable)."""
+    version, internal, gauss = r.getstate()
+    state.setdefault("flags", {}).setdefault("ecology", {})["rng_state"] = [
+        version,
+        list(internal),
+        gauss,
+    ]
 
 
 def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None:

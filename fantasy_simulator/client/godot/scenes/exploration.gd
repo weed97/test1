@@ -29,10 +29,12 @@ func _ready() -> void:
 
 
 func _setup_camera() -> void:
-	if _player.get_node_or_null("Camera2D") == null:
-		var cam := Camera2D.new()
+	var cam: Camera2D = _player.get_node_or_null("Camera2D") as Camera2D
+	if cam == null:
+		cam = Camera2D.new()
 		cam.name = "Camera2D"
 		_player.add_child(cam)
+	cam.make_current()
 
 
 func _setup_collision() -> void:
