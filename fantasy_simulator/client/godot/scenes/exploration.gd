@@ -152,5 +152,13 @@ func _on_api_error(message: String) -> void:
 	_narrative.text += "\n[오류] %s\n" % message
 
 
+func _on_inventory_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/inventory.tscn")
+
+
+func _on_catalog_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/item_catalog.tscn")
+
+
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

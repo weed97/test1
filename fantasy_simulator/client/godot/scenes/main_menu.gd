@@ -63,6 +63,18 @@ func _on_skill_tree_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/skill_tree.tscn")
 
 
+func _on_inventory_pressed() -> void:
+	if _session_busy or ApiClient.session_id.is_empty():
+		return
+	get_tree().change_scene_to_file("res://scenes/inventory.tscn")
+
+
+func _on_catalog_pressed() -> void:
+	if _session_busy or ApiClient.session_id.is_empty():
+		return
+	get_tree().change_scene_to_file("res://scenes/item_catalog.tscn")
+
+
 func _on_turn_completed(payload: Dictionary) -> void:
 	for line in payload.get("lines", []):
 		$VBox/Narrative.text += str(line) + "\n"
@@ -85,3 +97,5 @@ func _set_play_buttons(enabled: bool) -> void:
 	$VBox/ExploreButton.disabled = not enabled
 	$VBox/Explore2DButton.disabled = not enabled
 	$VBox/SkillTreeButton.disabled = not enabled
+	$VBox/InventoryButton.disabled = not enabled
+	$VBox/CatalogButton.disabled = not enabled

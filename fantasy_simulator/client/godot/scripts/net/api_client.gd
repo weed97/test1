@@ -168,6 +168,47 @@ func fetch_item_catalog(
 	return parsed if parsed != null else {}
 
 
+func equip_item(character_id: String, item_id: String) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/progression/equip",
+		{
+			"session_id": session_id,
+			"character_id": character_id,
+			"item_id": item_id,
+		},
+	)
+	return parsed if parsed != null else {}
+
+
+func grant_item(item_id: String, count: int = 1) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/progression/grant_item",
+		{
+			"session_id": session_id,
+			"item_id": item_id,
+			"count": count,
+		},
+	)
+	return parsed if parsed != null else {}
+
+
+func fetch_item_detail(item_id: String) -> Dictionary:
+	var parsed := await _post_json(
+		"/v1/catalog/items/%s" % item_id.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	if parsed == null:
+		return {}
+	return parsed.get("item", {})
+
+
 func use_item(character_id: String, item_id: String) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
