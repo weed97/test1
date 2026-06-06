@@ -34,6 +34,8 @@ client/godot/
   project.godot
   scenes/main_menu.tscn      # 새 게임 → 2D 탐험
   scenes/exploration.tscn   # WASD + 타일 ↔ 시뮬 좌표
+  scenes/inventory.tscn     # 인벤 · 착용/사용
+  scenes/item_catalog.tscn  # 아이템 도감 (213+)
   scripts/net/api_client.gd # sync_position, run_turn
   scripts/player/player_controller.gd
 ```

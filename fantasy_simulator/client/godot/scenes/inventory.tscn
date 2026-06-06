@@ -1,0 +1,106 @@
+[gd_scene load_steps=2 format=3 uid="uid://eldoria_inventory"]
+
+[ext_resource type="Script" path="res://scenes/inventory.gd" id="1_inv"]
+
+[node name="Inventory" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_inv")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 16.0
+offset_right = -20.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="VBox"]
+layout_mode = 2
+text = "인벤토리"
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "—"
+
+[node name="CharacterOption" type="OptionButton" parent="VBox"]
+layout_mode = 2
+
+[node name="EquippedLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "장착 —"
+
+[node name="ListsRow" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="OwnedPanel" type="VBoxContainer" parent="VBox/ListsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="OwnedTitle" type="Label" parent="VBox/ListsRow/OwnedPanel"]
+layout_mode = 2
+text = "보유 장비"
+
+[node name="OwnedList" type="ItemList" parent="VBox/ListsRow/OwnedPanel"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ConsumablePanel" type="VBoxContainer" parent="VBox/ListsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="ConsumableTitle" type="Label" parent="VBox/ListsRow/ConsumablePanel"]
+layout_mode = 2
+text = "소비 아이템"
+
+[node name="ConsumableList" type="ItemList" parent="VBox/ListsRow/ConsumablePanel"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DetailLabel" type="TextEdit" parent="VBox"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+editable = false
+wrap_mode = 1
+
+[node name="ActionRow" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EquipButton" type="Button" parent="VBox/ActionRow"]
+layout_mode = 2
+disabled = true
+text = "착용"
+
+[node name="UseButton" type="Button" parent="VBox/ActionRow"]
+layout_mode = 2
+disabled = true
+text = "사용"
+
+[node name="StarterPackButton" type="Button" parent="VBox/ActionRow"]
+layout_mode = 2
+text = "시작 패키지 지급"
+
+[node name="CatalogButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "아이템 도감"
+
+[node name="BackButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "메인 메뉴"
