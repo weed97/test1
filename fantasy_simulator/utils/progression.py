@@ -29,16 +29,25 @@ def _eco_prog(state: dict[str, Any]) -> dict[str, Any]:
     return eco.setdefault("progression", {})
 
 
+def party_character_ids(state: dict[str, Any]) -> set[str]:
+    party = list(state.get("party", []) or state.get("active_characters", []))
+    prog = _eco_prog(state).get("heroes", {})
+    return set(party) | set(prog.keys())
+
+
 def get_hero_progress(
     state: dict[str, Any],
     character_id: str,
     *,
     base_dir: str | Path | None = None,
+    create_if_missing: bool = True,
 ) -> dict[str, Any]:
     from utils.level_unlocks import normalize_hero_progress, sync_unlocked_skills
 
     prog = _eco_prog(state)
     heroes = prog.setdefault("heroes", {})
+    if character_id not in heroes and not create_if_missing:
+        raise KeyError(character_id)
     if character_id not in heroes:
         slots: list[str] = []
         cfg = load_progression_config(base_dir) if base_dir else {}

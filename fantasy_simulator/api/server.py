@@ -16,7 +16,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from api.session_store import SessionStore, package_root, turn_payload
-from utils.field_agents import agents_manifest, ensure_ecology_seeds, ecology_enabled
+from utils.field_agents import (
+    agents_manifest,
+    ensure_ecology_seeds,
+    ecology_enabled,
+    init_world_sovereign,
+)
 from utils.settlement_build import (
     get_player_settlement,
     hire_workers,
@@ -60,7 +65,7 @@ class NewSessionRequest(BaseModel):
     seed: Optional[int] = None
     mode: Mode = "rule"
     temporal_mode: Temporal = "classic"
-    game_mode: str = Field("story", pattern="^(story|ecology|hybrid)$")
+    game_mode: str = Field("hybrid", pattern="^(story|ecology|hybrid)$")
     player_race: str = Field(
         "human",
         pattern="^(human|dwarf|elf|dark_elf|beastkin)$",
@@ -187,6 +192,7 @@ def new_session(body: NewSessionRequest) -> NewSessionResponse:
     root = package_root()
     init_heroes_from_party(session.state, base_dir=root)
     if body.game_mode in ("ecology", "hybrid"):
+        init_world_sovereign(session.state, base_dir=root)
         init_player_civilization(
             session.state, player_race=body.player_race, base_dir=root
         )
@@ -286,7 +292,16 @@ def progression_skill_tree_route(session_id: str, character_id: str) -> dict[str
     if session is None:
         raise HTTPException(status_code=404, detail="session not found")
     root = package_root()
-    hero = get_hero_progress(session.state, character_id, base_dir=root)
+    from utils.progression import party_character_ids
+
+    if character_id not in party_character_ids(session.state):
+        raise HTTPException(status_code=404, detail=f"unknown character_id: {character_id}")
+    try:
+        hero = get_hero_progress(
+            session.state, character_id, base_dir=root, create_if_missing=False
+        )
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"unknown character_id: {character_id}")
     return {
         "api_version": API_VERSION,
         "session_id": session_id,
@@ -592,13 +607,16 @@ def run_turn(body: TurnRequest) -> dict[str, Any]:
     if body.position is not None:
         pos_dict = body.position.model_dump()
 
-    result = session.run_turn(
-        action=body.action,
-        enemy_id=body.enemy_id,
-        temporal_mode=temporal,
-        time_scale=body.time_scale,
-        position=pos_dict,
-    )
+    try:
+        result = session.run_turn(
+            action=body.action,
+            enemy_id=body.enemy_id,
+            temporal_mode=temporal,
+            time_scale=body.time_scale,
+            position=pos_dict,
+        )
+    except (RuntimeError, KeyError, ValueError) as exc:
+        raise HTTPException(status_code=500, detail=f"turn failed: {exc}") from exc
     payload = turn_payload(session, result)
     payload["session_id"] = body.session_id
     return payload

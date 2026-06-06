@@ -19,6 +19,8 @@ position = Vector2(640, -8)
 [node name="WallBottom" type="CollisionShape2D" parent="Bounds"]
 position = Vector2(640, 728)
 
+[node name="AgentsLayer" type="Node2D" parent="."]
+
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(648, 776)
 script = ExtResource("2_player")

@@ -57,6 +57,32 @@ class ApiServerTests(unittest.TestCase):
         self.assertIn("hp_milli", body)
         self.assertIn("wish", body)
 
+    def test_default_session_is_hybrid(self) -> None:
+        created = self.client.post("/v1/session/new", json={})
+        self.assertEqual(created.status_code, 200)
+        sid = created.json()["session_id"]
+        settlement = self.client.get(f"/v1/settlement/status?session_id={sid}")
+        self.assertEqual(settlement.status_code, 200)
+        agents = self.client.get(f"/v1/world/agents?session_id={sid}")
+        self.assertEqual(agents.status_code, 200)
+        self.assertTrue(agents.json().get("ecology_enabled"))
+
+    def test_skill_tree_unknown_character_404(self) -> None:
+        created = self.client.post("/v1/session/new", json={"game_mode": "hybrid"})
+        sid = created.json()["session_id"]
+        tree = self.client.get(
+            f"/v1/progression/skill_tree?session_id={sid}&character_id=not_a_hero"
+        )
+        self.assertEqual(tree.status_code, 404)
+
+    def test_ecology_spawns_sovereign_holder(self) -> None:
+        created = self.client.post("/v1/session/new", json={"game_mode": "hybrid"})
+        sid = created.json()["session_id"]
+        agents = self.client.get(f"/v1/world/agents?session_id={sid}&map_id=ashpoint_01")
+        self.assertEqual(agents.status_code, 200)
+        labels = [a.get("label", "") for a in agents.json().get("agents", [])]
+        self.assertTrue(any("아서" in lbl for lbl in labels))
+
     def test_hybrid_session_skill_tree(self) -> None:
         created = self.client.post(
             "/v1/session/new",

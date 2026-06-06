@@ -50,8 +50,14 @@ func _load_tree() -> void:
 	var tree: Dictionary = await ApiClient.fetch_skill_tree(cid)
 	if token != _load_token:
 		return
+	if tree.has("error"):
+		$VBox/TreeLabel.text = "스킬 트리 오류: %s" % tree.get("error", "unknown")
+		return
 	if tree.is_empty():
-		$VBox/TreeLabel.text = "스킬 트리를 불러오지 못했습니다. API 서버와 세션을 확인하세요."
+		$VBox/TreeLabel.text = (
+			"스킬 트리가 비어 있습니다.\n"
+			+ "API 서버(uvicorn)가 실행 중인지, 메인 메뉴에서 새 게임(hybrid)을 시작했는지 확인하세요."
+		)
 		return
 	_render_tree(tree)
 
