@@ -36,9 +36,11 @@ from utils.civilization_coupling import (
 from utils.world_conflicts import conflicts_status, init_world_conflicts
 from utils.progression import (
     equip_item,
+    grant_item,
     init_heroes_from_party,
     progression_status,
     unlock_skill,
+    use_item,
 )
 from utils.spatial import maps_manifest
 from utils.temporal import TemporalMode
@@ -123,6 +125,18 @@ class ProgressionEquipRequest(BaseModel):
     session_id: str
     character_id: str
     item_id: str
+
+
+class ProgressionUseItemRequest(BaseModel):
+    session_id: str
+    character_id: str
+    item_id: str
+
+
+class ProgressionGrantRequest(BaseModel):
+    session_id: str
+    item_id: str
+    count: int = Field(1, ge=1, le=99)
 
 
 class CombatPreviewRequest(BaseModel):
@@ -328,6 +342,56 @@ def progression_unlock(body: ProgressionUnlockRequest) -> dict[str, Any]:
     return {"api_version": API_VERSION, "session_id": body.session_id, **result}
 
 
+@app.get("/v1/catalog/items")
+def catalog_items_route(
+    session_id: Optional[str] = None,
+    category: Optional[str] = None,
+    grade: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: int = 200,
+    offset: int = 0,
+) -> dict[str, Any]:
+    from utils.item_catalog import build_catalog_manifest
+
+    root = package_root()
+    if session_id:
+        session = _store.get(session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="session not found")
+    payload = build_catalog_manifest(
+        base_dir=root,
+        category=category,
+        grade=grade,
+        search=q,
+        limit=min(limit, 500),
+        offset=max(offset, 0),
+    )
+    inv_summary = None
+    if session_id:
+        inv = session.state.get("inventory", {})
+        inv_summary = {
+            "equipment_owned": list(inv.get("equipment_owned", [])),
+            "consumables": dict(inv.get("consumables", {})),
+        }
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        "inventory": inv_summary,
+        **payload,
+    }
+
+
+@app.get("/v1/catalog/items/{item_id}")
+def catalog_item_detail_route(item_id: str) -> dict[str, Any]:
+    from utils.item_catalog import get_item_def
+
+    root = package_root()
+    item = get_item_def(item_id, base_dir=root)
+    if item is None:
+        raise HTTPException(status_code=404, detail=f"unknown item: {item_id}")
+    return {"api_version": API_VERSION, "item": item}
+
+
 @app.post("/v1/progression/equip")
 def progression_equip(body: ProgressionEquipRequest) -> dict[str, Any]:
     session = _store.get(body.session_id)
@@ -343,6 +407,44 @@ def progression_equip(body: ProgressionEquipRequest) -> dict[str, Any]:
     )
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail=result.get("error", "equip failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/progression/use_item")
+def progression_use_item(body: ProgressionUseItemRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    if not ecology_enabled(session.state):
+        raise HTTPException(status_code=400, detail="ecology or hybrid mode required")
+    result = use_item(
+        session.state,
+        body.character_id,
+        body.item_id,
+        base_dir=package_root(),
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "use failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/progression/grant_item")
+def progression_grant_item(body: ProgressionGrantRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    if not ecology_enabled(session.state):
+        raise HTTPException(status_code=400, detail="ecology or hybrid mode required")
+    result = grant_item(
+        session.state,
+        body.item_id,
+        body.count,
+        base_dir=package_root(),
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "grant failed"))
     session.manager.save(session.state)
     return {"api_version": API_VERSION, "session_id": body.session_id, **result}
 

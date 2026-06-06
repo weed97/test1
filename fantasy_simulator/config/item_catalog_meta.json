@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "title": "Eldoria 통합 아이템 도감",
+  "categories": [
+    { "id": "weapon", "name": "무기", "icon": "⚔️", "equippable": true },
+    { "id": "armor", "name": "방어구", "icon": "🛡️", "equippable": true },
+    { "id": "accessory", "name": "장신구", "icon": "💍", "equippable": true },
+    { "id": "potion", "name": "물약", "icon": "🧪", "consumable": true },
+    { "id": "magic", "name": "마법 도구", "icon": "🔮", "consumable": true },
+    { "id": "material", "name": "재료", "icon": "🪨", "stackable": true }
+  ],
+  "rarity_to_grade": {
+    "common": "common",
+    "uncommon": "high",
+    "rare": "rare",
+    "epic": "hero",
+    "legendary": "legend"
+  },
+  "grade_colors": {
+    "common": "#9aa0a6",
+    "high": "#3fa75a",
+    "rare": "#3b82f6",
+    "hero": "#a855f7",
+    "legend": "#f59e0b",
+    "mythic": "#ef4444",
+    "demigod": "#fcd34d"
+  },
+  "grade_stat_multipliers": {
+    "common": 1.0,
+    "high": 1.35,
+    "rare": 1.75,
+    "hero": 2.4,
+    "legend": 3.2,
+    "mythic": 4.5,
+    "demigod": 8.0
+  },
+  "weapon_name_parts": {
+    "two_handed_sword": ["대검", "참마검", "파쇄검"],
+    "one_handed_sword": ["장검", "세검", "귀검"],
+    "bow": ["장궁", "사냥궁", "명궁"],
+    "staff": ["지팡이", "술봉", "현자의 지팡이"],
+    "dagger": ["단검", "암검", "비수"],
+    "spear": ["창", "장창", "용창"]
+  },
+  "armor_name_parts": ["갑옷", "판갑", "수호구"],
+  "accessory_name_parts": ["반지", "목걸이", "부적", "망토"],
+  "material_bases": [
+    "철광석", "구리광석", "은광석", "미스릴 광맥", "용비늘 조각",
+    "고대 나무 심재", "달빛 허브", "늪지 수액", "불꽃 결정", "서리 가루",
+    "그림자 실", "성수 방울", "고블린 이빨", "늑대 가죽", "곰 가죽",
+    "거미 독샘", "박쥐 날개", "유령 잔향", "정령 가루", "암흑 핵"
+  ],
+  "potion_bases": [
+    { "suffix": "회복 물약", "hp_restore": 30, "grade": "common" },
+    { "suffix": "상급 회복 물약", "hp_restore": 80, "grade": "high" },
+    { "suffix": "완전 회복 영약", "hp_restore": 9999, "grade": "legend" },
+    { "suffix": "마나 물약", "mp_restore": 40, "grade": "common" },
+    { "suffix": "상급 마나 물약", "mp_restore": 100, "grade": "high" },
+    { "suffix": "해독제", "cure_poison": true, "grade": "high" },
+    { "suffix": "활력 토닉", "hp_restore": 20, "mp_restore": 20, "grade": "rare" },
+    { "suffix": "체력 강화제", "buff_vit": 5, "grade": "rare" },
+    { "suffix": "민첩 비약", "buff_agi": 5, "grade": "rare" },
+    { "suffix": "전투 광분약", "buff_str": 8, "grade": "hero" }
+  ]
+}
