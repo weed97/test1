@@ -167,7 +167,12 @@ func _post_json(path: String, body: Dictionary, method: int = HTTPClient.METHOD_
 		api_error.emit("network error: %s" % result)
 		return null
 	if code < 200 or code >= 300:
-		api_error.emit("HTTP %s: %s" % [code, raw.get_string_from_utf8()])
+		var err_text := raw.get_string_from_utf8()
+		var detail := err_text
+		var parsed_err = JSON.parse_string(err_text)
+		if parsed_err is Dictionary and parsed_err.get("detail"):
+			detail = str(parsed_err.get("detail"))
+		api_error.emit("HTTP %s: %s" % [code, detail])
 		return null
 
 	var text := raw.get_string_from_utf8()

@@ -11,10 +11,15 @@ func _ready() -> void:
 
 func _check_server() -> void:
 	var ok: bool = await ApiClient.health_check()
-	$VBox/ServerLabel.text = "API: %s (%s)" % [
-		ApiConfig.base_url(),
-		"연결됨" if ok else "서버 꺼짐 — uvicorn 실행 필요",
-	]
+	if ok:
+		$VBox/ServerLabel.text = "API: %s (연결됨)" % ApiConfig.base_url()
+	else:
+		$VBox/ServerLabel.text = (
+			"API: %s (연결 실패)\n"
+			+ "원인: Python API 서버가 실행 중이 아닙니다.\n"
+			+ "터미널: cd fantasy_simulator && pip install -r requirements-api.txt\n"
+			+ "         uvicorn api.server:app --port 8765"
+		) % ApiConfig.base_url()
 
 
 func _on_new_game_pressed() -> void:
