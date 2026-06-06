@@ -1,0 +1,288 @@
+{
+  "meta": {
+    "title": "중세 판타지 아이템 도감",
+    "version": "1.0.0",
+    "description": "무기, 방어구, 물약, 마법 도구 등 중세 판타지 세계관의 아이템 모음집"
+  },
+  "categories": [
+    { "id": "weapon", "name": "무기", "icon": "⚔️" },
+    { "id": "armor", "name": "방어구", "icon": "🛡️" },
+    { "id": "potion", "name": "물약", "icon": "🧪" },
+    { "id": "magic", "name": "마법 도구", "icon": "🔮" },
+    { "id": "accessory", "name": "장신구", "icon": "💍" },
+    { "id": "material", "name": "재료", "icon": "🪨" }
+  ],
+  "rarities": [
+    { "id": "common", "name": "일반", "color": "#9aa0a6" },
+    { "id": "uncommon", "name": "고급", "color": "#3fa75a" },
+    { "id": "rare", "name": "희귀", "color": "#3b82f6" },
+    { "id": "epic", "name": "영웅", "color": "#a855f7" },
+    { "id": "legendary", "name": "전설", "color": "#f59e0b" }
+  ],
+  "items": [
+    {
+      "id": "iron-sword",
+      "name": "강철 장검",
+      "category": "weapon",
+      "rarity": "common",
+      "icon": "🗡️",
+      "value": 50,
+      "weight": 3.0,
+      "description": "대장간에서 흔히 볼 수 있는 튼튼한 한손검. 모험 초기에 신뢰할 수 있는 동반자다.",
+      "stats": { "공격력": 12, "내구도": 80 }
+    },
+    {
+      "id": "battle-axe",
+      "name": "전투 도끼",
+      "category": "weapon",
+      "rarity": "uncommon",
+      "icon": "🪓",
+      "value": 120,
+      "weight": 5.5,
+      "description": "두꺼운 갑옷도 갈라내는 묵직한 양손 도끼. 휘두르는 데 힘이 필요하다.",
+      "stats": { "공격력": 22, "내구도": 100, "치명타": "8%" }
+    },
+    {
+      "id": "elven-bow",
+      "name": "엘프의 장궁",
+      "category": "weapon",
+      "rarity": "rare",
+      "icon": "🏹",
+      "value": 450,
+      "weight": 1.8,
+      "description": "엘프 장인이 천 년 된 위령목으로 깎아낸 활. 바람을 가르듯 화살이 날아간다.",
+      "stats": { "공격력": 28, "사거리": "85m", "명중률": "+15%" }
+    },
+    {
+      "id": "flametongue",
+      "name": "화염의 검 '플레임텅'",
+      "category": "weapon",
+      "rarity": "epic",
+      "icon": "🔥",
+      "value": 2200,
+      "weight": 3.2,
+      "description": "칼날이 영원히 타오르는 마검. 베인 상처는 불꽃에 휩싸인다.",
+      "stats": { "공격력": 45, "화염 피해": 18, "내구도": 150 }
+    },
+    {
+      "id": "excalibur",
+      "name": "성검 엑스칼리버",
+      "category": "weapon",
+      "rarity": "legendary",
+      "icon": "⚔️",
+      "value": 99999,
+      "weight": 2.5,
+      "description": "참된 왕만이 뽑을 수 있는 전설의 성검. 빛으로 어둠을 정화한다.",
+      "stats": { "공격력": 88, "신성 피해": 40, "위압": "+25", "내구도": "무한" }
+    },
+    {
+      "id": "leather-armor",
+      "name": "가죽 갑옷",
+      "category": "armor",
+      "rarity": "common",
+      "icon": "🥋",
+      "value": 40,
+      "weight": 6.0,
+      "description": "무두질한 가죽으로 만든 가벼운 보호구. 민첩한 도적들이 즐겨 입는다.",
+      "stats": { "방어력": 8, "무게 패널티": "낮음" }
+    },
+    {
+      "id": "chainmail",
+      "name": "사슬 갑옷",
+      "category": "armor",
+      "rarity": "uncommon",
+      "icon": "🛡️",
+      "value": 180,
+      "weight": 14.0,
+      "description": "촘촘히 엮은 쇠고리가 베기 공격을 효과적으로 막아준다.",
+      "stats": { "방어력": 18, "베기 저항": "+20%" }
+    },
+    {
+      "id": "knight-plate",
+      "name": "기사의 판금 갑옷",
+      "category": "armor",
+      "rarity": "rare",
+      "icon": "🦾",
+      "value": 600,
+      "weight": 25.0,
+      "description": "왕국 기사단의 정식 장비. 전신을 강철로 감싸 어떤 일격도 견뎌낸다.",
+      "stats": { "방어력": 32, "물리 저항": "+25%", "무게 패널티": "높음" }
+    },
+    {
+      "id": "dragonscale-mail",
+      "name": "용비늘 갑옷",
+      "category": "armor",
+      "rarity": "epic",
+      "icon": "🐉",
+      "value": 3500,
+      "weight": 12.0,
+      "description": "쓰러뜨린 화룡의 비늘로 제작한 갑옷. 가볍지만 강철보다 단단하다.",
+      "stats": { "방어력": 48, "화염 저항": "+60%", "무게 패널티": "보통" }
+    },
+    {
+      "id": "minor-heal-potion",
+      "name": "하급 회복 물약",
+      "category": "potion",
+      "rarity": "common",
+      "icon": "🧪",
+      "value": 15,
+      "weight": 0.3,
+      "description": "약초를 우려낸 붉은 물약. 가벼운 상처를 빠르게 아물게 한다.",
+      "stats": { "체력 회복": 30 }
+    },
+    {
+      "id": "mana-potion",
+      "name": "마나 물약",
+      "category": "potion",
+      "rarity": "uncommon",
+      "icon": "🔵",
+      "value": 35,
+      "weight": 0.3,
+      "description": "별빛을 머금은 푸른 물약. 고갈된 마력을 되살린다.",
+      "stats": { "마나 회복": 50 }
+    },
+    {
+      "id": "antidote",
+      "name": "만능 해독제",
+      "category": "potion",
+      "rarity": "uncommon",
+      "icon": "🟢",
+      "value": 60,
+      "weight": 0.3,
+      "description": "온갖 독과 저주를 중화하는 귀한 물약. 늪지대 탐험의 필수품.",
+      "stats": { "독 제거": "전체", "지속 시간": "10분" }
+    },
+    {
+      "id": "elixir-of-life",
+      "name": "생명의 영약",
+      "category": "potion",
+      "rarity": "legendary",
+      "icon": "✨",
+      "value": 8000,
+      "weight": 0.5,
+      "description": "연금술의 정점. 죽음의 문턱에서도 완전한 부활을 약속한다.",
+      "stats": { "체력 회복": "전체", "부활": "1회", "최대 체력": "+50" }
+    },
+    {
+      "id": "wooden-staff",
+      "name": "수습 마법사의 지팡이",
+      "category": "magic",
+      "rarity": "common",
+      "icon": "🪄",
+      "value": 45,
+      "weight": 1.5,
+      "description": "마탑 견습생에게 지급되는 기본 지팡이. 기초 주문 시전을 돕는다.",
+      "stats": { "주문력": 10, "마나 효율": "+5%" }
+    },
+    {
+      "id": "scroll-fireball",
+      "name": "화염구 두루마리",
+      "category": "magic",
+      "rarity": "rare",
+      "icon": "📜",
+      "value": 250,
+      "weight": 0.2,
+      "description": "한 번 읽으면 거대한 화염구를 소환하는 일회용 마법서.",
+      "stats": { "화염 피해": 60, "사용 횟수": 1 }
+    },
+    {
+      "id": "orb-of-frost",
+      "name": "서리의 오브",
+      "category": "magic",
+      "rarity": "epic",
+      "icon": "❄️",
+      "value": 1800,
+      "weight": 0.8,
+      "description": "영원히 얼지 않는 한기를 품은 수정구. 적을 얼려 행동을 봉인한다.",
+      "stats": { "냉기 피해": 38, "빙결 확률": "30%", "주문력": "+25" }
+    },
+    {
+      "id": "staff-of-archmage",
+      "name": "대마법사의 지팡이",
+      "category": "magic",
+      "rarity": "legendary",
+      "icon": "🌟",
+      "value": 12000,
+      "weight": 2.0,
+      "description": "고대 대마법사의 모든 지혜가 깃든 지팡이. 별조차 떨어뜨린다는 전설이 있다.",
+      "stats": { "주문력": 90, "마나 효율": "+40%", "주문 가속": "+20%" }
+    },
+    {
+      "id": "ring-of-protection",
+      "name": "수호의 반지",
+      "category": "accessory",
+      "rarity": "uncommon",
+      "icon": "💍",
+      "value": 200,
+      "weight": 0.1,
+      "description": "착용자를 은은한 보호막으로 감싸는 마법 반지.",
+      "stats": { "방어력": "+5", "모든 저항": "+5%" }
+    },
+    {
+      "id": "amulet-of-vitality",
+      "name": "활력의 부적",
+      "category": "accessory",
+      "rarity": "rare",
+      "icon": "📿",
+      "value": 520,
+      "weight": 0.2,
+      "description": "생명력의 룬이 새겨진 목걸이. 착용자의 활력을 크게 끌어올린다.",
+      "stats": { "최대 체력": "+80", "체력 재생": "+2/초" }
+    },
+    {
+      "id": "cloak-of-shadows",
+      "name": "그림자 망토",
+      "category": "accessory",
+      "rarity": "epic",
+      "icon": "🧥",
+      "value": 2400,
+      "weight": 1.0,
+      "description": "그림자 속에 몸을 숨겨주는 암살자의 망토. 어둠 속에서 모습이 흐려진다.",
+      "stats": { "은신": "+40%", "이동 속도": "+10%", "회피": "+15%" }
+    },
+    {
+      "id": "iron-ore",
+      "name": "철광석",
+      "category": "material",
+      "rarity": "common",
+      "icon": "🪨",
+      "value": 8,
+      "weight": 2.0,
+      "description": "제련하여 무기와 방어구의 재료로 쓰이는 기본 광물.",
+      "stats": { "제련 등급": "1" }
+    },
+    {
+      "id": "mithril-ingot",
+      "name": "미스릴 주괴",
+      "category": "material",
+      "rarity": "rare",
+      "icon": "⛏️",
+      "value": 350,
+      "weight": 0.8,
+      "description": "은빛으로 빛나는 전설의 금속. 깃털처럼 가볍지만 강철보다 단단하다.",
+      "stats": { "제련 등급": "5" }
+    },
+    {
+      "id": "dragon-heart",
+      "name": "용의 심장",
+      "category": "material",
+      "rarity": "legendary",
+      "icon": "❤️‍🔥",
+      "value": 15000,
+      "weight": 3.0,
+      "description": "고대 용에게서만 얻을 수 있는 영험한 심장. 최고급 마법 장비 제작의 핵심 재료.",
+      "stats": { "제련 등급": "10", "마력 함유량": "극대" }
+    },
+    {
+      "id": "phoenix-feather",
+      "name": "불사조의 깃털",
+      "category": "material",
+      "rarity": "epic",
+      "icon": "🪶",
+      "value": 4200,
+      "weight": 0.1,
+      "description": "불꽃 속에서 다시 태어나는 불사조의 깃털. 부활 마법의 촉매로 쓰인다.",
+      "stats": { "제련 등급": "8", "속성": "화염/부활" }
+    }
+  ]
+}

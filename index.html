@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>중세 판타지 아이템 도감</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero__crest">⚔️</div>
+      <h1 class="hero__title">중세 판타지 아이템 도감</h1>
+      <p class="hero__subtitle">무기 · 방어구 · 물약 · 마법 도구 · 장신구 · 재료</p>
+    </header>
+
+    <section class="controls" aria-label="검색 및 필터">
+      <div class="search">
+        <span class="search__icon">🔍</span>
+        <input
+          type="search"
+          id="searchInput"
+          class="search__input"
+          placeholder="아이템 이름이나 설명으로 검색…"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="filters">
+        <div class="filter-group" id="categoryFilters" role="group" aria-label="분류 필터"></div>
+        <div class="filter-group" id="rarityFilters" role="group" aria-label="등급 필터"></div>
+      </div>
+    </section>
+
+    <p class="result-count" id="resultCount" aria-live="polite"></p>
+
+    <main class="grid" id="itemGrid"></main>
+
+    <p class="empty" id="emptyState" hidden>조건에 맞는 아이템이 없습니다.</p>
+
+    <footer class="footer">
+      <span id="footerStat"></span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
