@@ -1,0 +1,3 @@
+[console_scripts]
+fantasy-mmorpg = fantasy_mmorpg.cli:main
+mmorpg-sim = mmorpg_sim.cli:main

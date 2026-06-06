@@ -1,3 +1,10 @@
+Metadata-Version: 2.4
+Name: fantasy-monorepo-sims
+Version: 0.1.0
+Summary: Medieval fantasy simulators monorepo (mmorpg_sim + fantasy_mmorpg).
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+
 # weed97/test1 — 판타지 시뮬레이터 모노레포
 
 이 저장소의 **메인 프로젝트**는 `fantasy_simulator/` (Eldoria — Python API + Godot 클라이언트)입니다.

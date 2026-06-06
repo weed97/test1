@@ -1,0 +1,16 @@
+{
+  "name": "medieval-fantasy-simulator",
+  "version": "1.0.0",
+  "description": "A browser-based medieval fantasy kingdom simulator.",
+  "main": "simulator.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "simulation",
+    "fantasy",
+    "game"
+  ],
+  "author": "",
+  "license": "MIT"
+}
