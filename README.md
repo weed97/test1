@@ -1,58 +1,48 @@
-# 중세 판타지 아이템 도감 (Medieval Fantasy Item List)
+# weed97/test1 — 판타지 시뮬레이터 모노레포
 
-중세 판타지 세계관의 아이템을 모아놓은 인터랙티브 웹 도감입니다.
-무기, 방어구, 물약, 마법 도구, 장신구, 재료 등 다양한 아이템을 분류·등급·검색으로 탐색할 수 있습니다.
+이 저장소의 **메인 프로젝트**는 `fantasy_simulator/` (Eldoria — Python API + Godot 클라이언트)입니다.
 
-## 주요 기능
-
-- **분류 필터**: 무기 / 방어구 / 물약 / 마법 도구 / 장신구 / 재료
-- **등급 필터**: 일반 · 고급 · 희귀 · 영웅 · 전설 (색상으로 구분)
-- **검색**: 아이템 이름과 설명으로 실시간 검색
-- **상세 정보**: 각 아이템의 능력치, 무게, 가치(골드) 표시
-- 반응형 레이아웃 + 중세 판타지 테마 UI (외부 의존성 없는 순수 HTML/CSS/JS)
-
-## 실행 방법
-
-`fetch`로 JSON을 불러오기 때문에 간단한 로컬 서버에서 실행해야 합니다.
+## 빠른 실행 (Eldoria)
 
 ```bash
-# Python 3
+cd fantasy_simulator
+pip install -r requirements-api.txt
+uvicorn api.server:app --port 8765
+
+# 검증 (268 tests + API smoke)
+bash scripts/verify.sh
+```
+
+Godot 4: `fantasy_simulator/client/godot/project.godot` 열기 → 메인 메뉴에서 **새 게임** (API 서버 필수).
+
+## 포함 프로젝트
+
+| 경로 | 설명 |
+|------|------|
+| `fantasy_simulator/` | Eldoria 본편 — ecology/hybrid 시뮬, 스킬트리, Godot 2D |
+| `data/items.json` + `index.html` | 중세 판타지 **아이템 도감** 웹앱 |
+| `sungjwa_hunter_sim/` | 성좌 헌터 외부 시뮬레이터 (Python) |
+| `mmorpg_sim/` | 텍스트 MMORPG 시뮬 스캐폴드 |
+| `fantasy_mmorpg/` | 판타지 MMORPG 텍스트 엔진 |
+| `src/` (루트) | 중세 판타지 JS 시뮬레이터 (브라우저) |
+
+## 아이템 도감 실행
+
+```bash
 python3 -m http.server 8000
-
-# 또는 Node.js
-npx serve .
+# http://localhost:8000
 ```
 
-브라우저에서 `http://localhost:8000` 으로 접속하세요.
+## 세계관 — 잿빛 왕관의 노래
 
-## 파일 구조
+**잿빛 왕관의 노래**는 오래된 왕국, 금지된 마법, 무너져 가는 기사도, 용의 핏줄을 둘러싼 중세 판타지 세계관입니다. 내전 직전의 왕국 **아르벨론**을 배경으로 사라진 왕관과 고대 저주를 추적합니다.
 
-```
-.
-├── index.html       # 페이지 구조
-├── styles.css       # 중세 판타지 테마 스타일
-├── app.js           # 렌더링·검색·필터 로직
-└── data/
-    └── items.json   # 아이템 데이터 (분류·등급·아이템 목록)
-```
+- **루멘폴 성도** · **그림바르크 산맥** · **은잎 숲** · **검은 방앗간 마을** · **세라크 항구**
+- 세력: 태양십자 기사단, 백탑 마법사 길드, 황혼 교단, 붉은사슴 가문
+- Eldoria(`fantasy_simulator`)의 애쉬포인트·실버우드는 이 세계관의 변경 지역으로 연결됩니다.
 
-## 아이템 데이터 추가하기
+자세한 로어·시나리오는 `docs/world/ash_crown_setting.md` 참고.
 
-`data/items.json` 의 `items` 배열에 항목을 추가하면 자동으로 화면에 반영됩니다.
+## 개발
 
-```json
-{
-  "id": "고유-id",
-  "name": "아이템 이름",
-  "category": "weapon",
-  "rarity": "rare",
-  "icon": "🗡️",
-  "value": 100,
-  "weight": 2.0,
-  "description": "설명 텍스트",
-  "stats": { "공격력": 20, "내구도": 100 }
-}
-```
-
-- `category` 는 `weapon` / `armor` / `potion` / `magic` / `accessory` / `material` 중 하나
-- `rarity` 는 `common` / `uncommon` / `rare` / `epic` / `legendary` 중 하나
+클라우드 에이전트 설정: `AGENTS.md`
