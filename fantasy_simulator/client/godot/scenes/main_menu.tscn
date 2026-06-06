@@ -50,6 +50,11 @@ layout_mode = 2
 disabled = true
 text = "2D 탐험 (좌표 연동)"
 
+[node name="SkillTreeButton" type="Button" parent="VBox"]
+layout_mode = 2
+disabled = true
+text = "스킬 트리 (Lv999)"
+
 [node name="Hud" type="Label" parent="VBox"]
 layout_mode = 2
 text = "—"
@@ -63,3 +68,4 @@ wrap_mode = 1
 [connection signal="pressed" from="VBox/NewGameButton" to="." method="_on_new_game_pressed"]
 [connection signal="pressed" from="VBox/ExploreButton" to="." method="_on_explore_pressed"]
 [connection signal="pressed" from="VBox/Explore2DButton" to="." method="_on_explore_2d_pressed"]
+[connection signal="pressed" from="VBox/SkillTreeButton" to="." method="_on_skill_tree_pressed"]

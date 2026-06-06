@@ -217,7 +217,16 @@ def plan_agent_beat(
         plan["move_to"] = [int(target["x"]), int(target["y"])]
         return plan
 
-    sk = _pick_skill(agent, target, base_dir=base_dir, distance=dist)
+    enemies_near = sum(
+        1
+        for o in others
+        if o.get("instance_id") != agent.get("instance_id")
+        and _manhattan(agent, o) <= 3
+        and agent.get("relations", {}).get(o.get("instance_id"), "hostile") != "ally"
+    )
+    sk = _pick_skill(
+        agent, target, base_dir=base_dir, distance=dist, enemy_count=max(1, enemies_near), rng=rng
+    )
     if sk:
         plan["action"] = "skill"
         plan["skill_id"] = sk
@@ -300,9 +309,21 @@ def resolve_and_commit_field_beat(
             tgt_label = pl.get("target_label", tid)
             alabel = pl.get("actor_label", pl["actor_id"])
             if pl["action"] == "skill":
+                from utils.ecology_objects import skill_definition
+                from utils.skill_effects import (
+                    apply_buff_from_skill,
+                    apply_damage_with_buffs,
+                    is_buff_skill,
+                )
+
                 sk = str(pl["skill_id"])
+                sdef = skill_definition(sk, base_dir=base_dir)
                 dmg = preview_skill_damage(actor, target, sk, base_dir=base_dir, rng=rng)
                 commit_skill_costs(actor, sk, base_dir=base_dir)
+                if is_buff_skill(sdef):
+                    apply_buff_from_skill(actor, sk, sdef, base_dir=base_dir)
+                    strike_lines.append(f"[버프] {alabel} : {sk}")
+                    continue
                 strike_lines.append(
                     f"[스킬] {alabel} → {tgt_label} : {sk} ({dmg} 피해)"
                 )
@@ -330,11 +351,14 @@ def resolve_and_commit_field_beat(
 
         pending_damage[tid] = int(total * scale)
 
+    from utils.skill_effects import apply_damage_with_buffs
+
     for tid, dmg in pending_damage.items():
         target = agents_by_id.get(tid)
         if not target:
             continue
-        target["hp"] = int(target.get("hp", 1)) - dmg
+        dealt = apply_damage_with_buffs(target, dmg, base_dir=base_dir)
+        target["hp"] = int(target.get("hp", 1)) - dealt
         if int(target["hp"]) <= 0:
             tgt_label = target.get("label") or tid
             strike_lines.append(f"[전투] {tgt_label} 쓰러짐.")
@@ -434,7 +458,9 @@ def tick_field_ecology_parallel(
     rng: random.Random | None = None,
 ) -> list[str]:
     """Plan → resolve → commit for all agents on active map."""
-    r = rng or random.Random()
+    from utils.field_agents import ecology_rng, persist_ecology_rng
+
+    r = ecology_rng(state, rng)
     ensure_ecology_seeds(state, base_dir=base_dir)
     eco_cfg = load_ecology_config(base_dir)
     maps = load_world_maps(str(base_dir)).get("maps", {})
@@ -447,6 +473,11 @@ def tick_field_ecology_parallel(
 
     agents_by_id = {a["instance_id"]: a for a in map_agents}
     plans: list[dict[str, Any]] = []
+    lines: list[str] = []
+    from utils.skill_effects import tick_agent_buffs
+
+    for agent in list(agents_by_id.values()):
+        lines.extend(tick_agent_buffs(agent, base_dir=base_dir))
     for agent in list(agents_by_id.values()):
         pl = plan_agent_beat(
             agent, agents_by_id, maps, base_dir=base_dir, rng=r, eco_cfg=eco_cfg
@@ -459,14 +490,16 @@ def tick_field_ecology_parallel(
     )
     duration_ms = max((int(e["delay_ms"]) for e in presentation), default=0)
 
-    lines = resolve_and_commit_field_beat(
-        plans,
-        agents_by_id,
-        maps,
-        state=state,
-        base_dir=base_dir,
-        rng=r,
-        eco_cfg=eco_cfg,
+    lines.extend(
+        resolve_and_commit_field_beat(
+            plans,
+            agents_by_id,
+            maps,
+            state=state,
+            base_dir=base_dir,
+            rng=r,
+            eco_cfg=eco_cfg,
+        )
     )
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     eco["last_parallel_beat"] = {
@@ -476,6 +509,7 @@ def tick_field_ecology_parallel(
         "presentation_schedule": presentation,
         "presentation_duration_ms": duration_ms,
     }
+    persist_ecology_rng(state, r)
     return lines
 
 
@@ -487,7 +521,9 @@ def run_macro_parallel_lanes(
     rng: random.Random | None = None,
 ) -> list[str]:
     """Macro systems: disjoint state keys, same beat snapshot spirit."""
-    r = rng or random.Random()
+    from utils.field_agents import ecology_rng, persist_ecology_rng
+
+    r = ecology_rng(state, rng)
     lines: list[str] = []
     civ_snapshot = copy.deepcopy(
         state.get("flags", {}).get("ecology", {}).get("civilizations", {})
@@ -503,6 +539,7 @@ def run_macro_parallel_lanes(
 
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     eco["last_macro_parallel"] = {"lanes": 3, "civ_keys_at_plan": len(civ_snapshot)}
+    persist_ecology_rng(state, r)
     return lines
 
 
@@ -514,12 +551,13 @@ def run_world_parallel_beat(
     rng: random.Random | None = None,
 ) -> list[str]:
     """Full ecology beat: field (parallel) + competition + macro lanes."""
-    from utils.field_agents import tick_field_ecology
+    from utils.field_agents import ecology_rng, persist_ecology_rng, tick_field_ecology
 
-    r = rng or random.Random()
+    r = ecology_rng(state, rng)
     lines: list[str] = []
     lines.extend(tick_field_ecology(state, base_dir=base_dir, rng=r))
     lines.extend(run_macro_parallel_lanes(state, base_dir=base_dir, turn=turn, rng=r))
+    persist_ecology_rng(state, r)
     world = state.get("world", {})
     zone = resolve_zone_from_world(world)
     if lines:

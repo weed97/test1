@@ -46,7 +46,9 @@ class EcologyObjectTests(unittest.TestCase):
             ensure_ecology_seeds(session.state, base_dir=root)
             lines: list[str] = []
             for _ in range(12):
-                lines.extend(tick_field_ecology(session.state, base_dir=root))
+                lines.extend(
+                    tick_field_ecology(session.state, base_dir=root, rng=session.rng)
+                )
             joined = "\n".join(lines)
             self.assertTrue(
                 "[스킬]" in joined or "[전투]" in joined or "[지성]" in joined

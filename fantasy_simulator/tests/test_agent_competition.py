@@ -42,7 +42,9 @@ class AgentCompetitionTests(unittest.TestCase):
             ensure_ecology_seeds(session.state, base_dir=root)
             all_lines: list[str] = []
             for _ in range(15):
-                all_lines.extend(tick_field_ecology(session.state, base_dir=root))
+                all_lines.extend(
+                    tick_field_ecology(session.state, base_dir=root, rng=session.rng)
+                )
             rivalry = [ln for ln in all_lines if "[경쟁]" in ln or "[문명]" in ln]
             civ = get_civilization_state(session.state, "goblin_tribe")
             self.assertTrue(
@@ -55,7 +57,7 @@ class AgentCompetitionTests(unittest.TestCase):
             session.state.setdefault("flags", {})["game_mode"] = "ecology"
             ensure_ecology_seeds(session.state, base_dir=root)
             lines = tick_agent_competition(
-                session.state, "ashpoint_01", base_dir=root
+                session.state, "ashpoint_01", base_dir=root, rng=session.rng
             )
             soc = get_civilization_state(session.state, "ashpoint_commons")
             self.assertGreaterEqual(int(soc.get("prosperity", 0)), 0)

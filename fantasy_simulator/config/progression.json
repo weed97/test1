@@ -55,6 +55,30 @@
         "3": ["mana_shield"],
         "4": ["arcane_burst"]
       }
+    },
+    "paladin": {
+      "label": "성기사",
+      "starter_skills": ["paladin_atk_001"],
+      "level_xp": [0, 50, 120, 220, 400],
+      "skills_by_level": {}
+    },
+    "assassin": {
+      "label": "암살자",
+      "starter_skills": ["assassin_atk_001"],
+      "level_xp": [0, 45, 110, 210, 380],
+      "skills_by_level": {}
+    },
+    "cleric": {
+      "label": "성직자",
+      "starter_skills": ["cleric_atk_001"],
+      "level_xp": [0, 55, 130, 240, 420],
+      "skills_by_level": {}
+    },
+    "berserker": {
+      "label": "광전사",
+      "starter_skills": ["berserker_atk_001"],
+      "level_xp": [0, 48, 115, 215, 390],
+      "skills_by_level": {}
     }
   },
   "skills": {

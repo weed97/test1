@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "max_level": 999,
+  "comment": "직업당 300 스킬 + 무기클래스당 60 스킬 — 레벨축별 정밀 해금",
+  "jobs": [
+    "knight",
+    "ranger",
+    "arcane_apprentice",
+    "wanderer",
+    "paladin",
+    "assassin",
+    "cleric",
+    "berserker"
+  ],
+  "skill_catalog": {
+    "skills_per_job": 300,
+    "categories": {
+      "attack": {
+        "count": 80,
+        "prefix": "atk",
+        "label_ko": "공격",
+        "default_tags": ["attack"],
+        "default_skill_kind": "melee_phys_single",
+        "unlock_axis": "job_level",
+        "weapon_mastery_gate_every_n": 40
+      },
+      "move": {
+        "count": 40,
+        "prefix": "mov",
+        "label_ko": "이동",
+        "default_tags": ["move"],
+        "default_skill_kind": "utility",
+        "unlock_axis": "job_level"
+      },
+      "support": {
+        "count": 50,
+        "prefix": "sup",
+        "label_ko": "보조",
+        "default_tags": ["support"],
+        "default_skill_kind": "utility",
+        "unlock_axis": "job_level"
+      },
+      "buff": {
+        "count": 45,
+        "prefix": "buf",
+        "label_ko": "버프",
+        "default_tags": ["buff_ally"],
+        "default_skill_kind": "buff",
+        "unlock_axis": "job_level"
+      },
+      "debuff": {
+        "count": 45,
+        "prefix": "deb",
+        "label_ko": "디버프",
+        "default_tags": ["debuff"],
+        "default_skill_kind": "debuff",
+        "unlock_axis": "job_level"
+      },
+      "passive": {
+        "count": 40,
+        "prefix": "psv",
+        "label_ko": "패시브",
+        "default_tags": ["passive"],
+        "type": "passive",
+        "unlock_axis": "character_level"
+      }
+    },
+    "scaling": {
+      "base_power": 8,
+      "power_per_tier": 0.38,
+      "power_per_unlock_level": 0.015,
+      "mana_base": 4,
+      "mana_per_tier": 0.22,
+      "range_tiles_base": 1,
+      "range_tiles_every_n_tiers": 25,
+      "cooldown_beats_base": 3,
+      "cooldown_reduction_every_n_tiers": 15
+    },
+    "job_skill_kind_overrides": {
+      "knight": { "attack": "melee_phys_single", "debuff": "melee_phys_single" },
+      "ranger": { "attack": "ranged_phys_single", "move": "ranged_phys_single" },
+      "arcane_apprentice": {
+        "attack": "magic_single",
+        "buff": "magic_single",
+        "debuff": "magic_aoe"
+      },
+      "wanderer": { "attack": "melee_phys_single", "support": "utility" },
+      "paladin": { "attack": "melee_phys_single", "buff": "buff", "support": "buff" },
+      "assassin": { "attack": "melee_phys_single", "move": "utility", "debuff": "debuff" },
+      "cleric": { "attack": "magic_single", "buff": "buff", "support": "buff" },
+      "berserker": { "attack": "melee_phys_aoe", "buff": "buff", "debuff": "debuff" }
+    }
+  },
+  "weapon_skill_catalog": {
+    "skills_per_class": 60,
+    "unlock_axis": "weapon_mastery_level",
+    "categories": {
+      "attack": { "count": 25, "prefix": "watk", "tags": ["attack", "weapon_bound"] },
+      "move": { "count": 10, "prefix": "wmov", "tags": ["move", "weapon_bound"] },
+      "buff": { "count": 10, "prefix": "wbuf", "tags": ["buff_self", "weapon_bound"] },
+      "passive": { "count": 15, "prefix": "wpsv", "tags": ["passive", "weapon_bound"], "type": "passive" }
+    },
+    "scaling": {
+      "base_power": 10,
+      "power_per_tier": 0.42,
+      "power_per_mastery_level": 0.018
+    }
+  },
+  "milestone_unlocks": {
+    "character_level": {
+      "every_n_levels": 10,
+      "passive_slot_every": 50,
+      "max_passive_slots": 20
+    },
+    "job_level": {
+      "skill_interval": 3,
+      "comment": "직업 Lv 3마다 클래스 스킬 1개 — 300개는 카탈로그 인덱스로 분배"
+    },
+    "weapon_mastery_level": {
+      "skill_interval": 5,
+      "rank_from_thresholds": true,
+      "training_weapon_every": 25,
+      "comment": "숙련 Lv 5마다 무기 전용 스킬 1개"
+    }
+  },
+  "equip_unlock_curve": {
+    "comment": "등급 게이트는 item_grades.wield_gates — 여기는 Lv 구간별 추가 해금",
+    "weapon_mastery_milestones": [
+      { "level": 25, "unlock": "training_weapons_common" },
+      { "level": 50, "unlock": "training_weapons_high" },
+      { "level": 100, "unlock": "offhand_slot" },
+      { "level": 150, "unlock": "training_weapons_rare" },
+      { "level": 200, "unlock": "trinket_slot" },
+      { "level": 300, "unlock": "training_weapons_hero" },
+      { "level": 400, "unlock": "dual_wield_cosmetic" },
+      { "level": 500, "unlock": "grade_mythic_wield_check" },
+      { "level": 600, "unlock": "training_weapons_legend" },
+      { "level": 700, "unlock": "weapon_affix_reroll" },
+      { "level": 800, "unlock": "training_weapons_mythic" },
+      { "level": 900, "unlock": "bind_ritual_eligible" },
+      { "level": 999, "unlock": "grandmaster_sovereign_bind_gate" }
+    ],
+    "character_level_milestones": [
+      { "level": 50, "unlock": "accessory_slot_2" },
+      { "level": 100, "unlock": "party_slot_plus_1" },
+      { "level": 200, "unlock": "mount_cosmetic" },
+      { "level": 500, "unlock": "legendary_quest_gate" },
+      { "level": 999, "unlock": "apex_mortal_cap_unlock" }
+    ],
+    "job_level_milestones": [
+      { "level": 100, "unlock": "job_skill_enhance_tier_2" },
+      { "level": 300, "unlock": "job_skill_enhance_tier_3" },
+      { "level": 600, "unlock": "job_skill_enhance_tier_4" },
+      { "level": 900, "unlock": "job_skill_enhance_tier_5" },
+      { "level": 999, "unlock": "job_grandmaster_title" }
+    ]
+  }
+}

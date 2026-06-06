@@ -45,6 +45,7 @@
 | [42_DEMIGOD_HP_AND_ARMOR_PIERCE.md](42_DEMIGOD_HP_AND_ARMOR_PIERCE.md) | **준신 HP 100만** · 방무 9999 · 필멸 99,999 |
 | [43_WORLD_PIERCE_ELITES.md](43_WORLD_PIERCE_ELITES.md) | **2~11위** 방무 정예 · 신화 10% · 합산 5000 DPS |
 | [44_ARTHUR_SKILLS.md](44_ARTHUR_SKILLS.md) | **아서 핵심 스킬 5종** · 맥스뎀 캡 · 광역/궁극기/소원 의식 |
+| [45_LEVEL_UNLOCK_AND_SKILL_CATALOG.md](45_LEVEL_UNLOCK_AND_SKILL_CATALOG.md) | **Lv999 해금** · 직업당 300 스킬 · 숙련 착용 게이트 |
 
 ## 현재 구현과의 관계
 

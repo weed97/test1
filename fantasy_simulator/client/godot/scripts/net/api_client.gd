@@ -15,14 +15,23 @@ var sim_facing: String = "south"
 var tile_pixels: int = 16
 
 
-func new_game(seed: int = -1, temporal_mode: String = "precision") -> void:
-	var body := {"mode": "rule", "temporal_mode": temporal_mode}
+func new_game(seed: int = -1, temporal_mode: String = "precision", game_mode: String = "hybrid") -> void:
+	var body := {
+		"mode": "rule",
+		"temporal_mode": temporal_mode,
+		"game_mode": game_mode,
+		"player_race": "human",
+	}
 	if seed >= 0:
 		body["seed"] = seed
 	var parsed := await _post_json("/v1/session/new", body)
 	if parsed == null:
+		api_error.emit("session create failed")
 		return
 	session_id = str(parsed.get("session_id", ""))
+	if session_id.is_empty():
+		api_error.emit("session_id missing in response")
+		return
 	session_created.emit(parsed)
 
 
@@ -102,6 +111,35 @@ func _apply_position_from_payload(parsed: Dictionary) -> void:
 	sim_facing = str(pos.get("facing", sim_facing))
 
 
+func fetch_progression_status() -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/progression/status?session_id=%s" % session_id.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	return parsed if parsed != null else {}
+
+
+func fetch_skill_tree(character_id: String) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/progression/skill_tree?session_id=%s&character_id=%s" % [
+			session_id.uri_encode(),
+			character_id.uri_encode(),
+		],
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	if parsed == null:
+		return {}
+	return parsed.get("skill_tree", {})
+
+
 func health_check() -> bool:
 	var parsed := await _post_json("/v1/health", {}, HTTPClient.METHOD_GET)
 	return parsed != null and parsed.get("status") == "ok"
@@ -129,7 +167,12 @@ func _post_json(path: String, body: Dictionary, method: int = HTTPClient.METHOD_
 		api_error.emit("network error: %s" % result)
 		return null
 	if code < 200 or code >= 300:
-		api_error.emit("HTTP %s: %s" % [code, raw.get_string_from_utf8()])
+		var err_text := raw.get_string_from_utf8()
+		var detail := err_text
+		var parsed_err = JSON.parse_string(err_text)
+		if parsed_err is Dictionary and parsed_err.get("detail"):
+			detail = str(parsed_err.get("detail"))
+		api_error.emit("HTTP %s: %s" % [code, detail])
 		return null
 
 	var text := raw.get_string_from_utf8()

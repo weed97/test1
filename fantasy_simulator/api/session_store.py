@@ -59,6 +59,11 @@ class SessionStore:
             seed=seed,
             temporal_mode=temporal_mode,  # type: ignore[arg-type]
         )
+        meta = session.state.setdefault("meta", {})
+        if seed is not None:
+            meta["rng_seed"] = int(seed)
+        elif "rng_seed" not in meta:
+            meta["rng_seed"] = session.rng.randint(0, 2_147_483_647)
         session.manager.save(session.state)
         self._sessions[session_id] = session
         return session_id, session
@@ -69,7 +74,14 @@ class SessionStore:
         path = sessions_root() / session_id
         if not (path / "state").is_dir():
             return None
-        session = GameSession.from_root(path, mode="rule")
+        import json
+
+        meta_seed: int | None = None
+        meta_path = path / "state" / "meta.json"
+        if meta_path.is_file():
+            with meta_path.open(encoding="utf-8") as f:
+                meta_seed = json.load(f).get("rng_seed")
+        session = GameSession.from_root(path, mode="rule", seed=meta_seed)
         self._sessions[session_id] = session
         return session
 

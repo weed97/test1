@@ -24,7 +24,7 @@ class FieldEcologyTests(unittest.TestCase):
         with isolated_game_root() as root:
             session = GameSession.from_root(root, mode="rule", seed=1)
             session.state.setdefault("flags", {})["game_mode"] = "story"
-            lines = tick_field_ecology(session.state, base_dir=root)
+            lines = tick_field_ecology(session.state, base_dir=root, rng=session.rng)
             self.assertEqual(lines, [])
 
     def test_ecology_spawns_agents(self) -> None:
@@ -50,7 +50,7 @@ class FieldEcologyTests(unittest.TestCase):
             ensure_ecology_seeds(session.state, base_dir=root)
             for a in agents_on_map(session.state, "ashpoint_01"):
                 a["map_id"] = "forest_01"
-            lines = tick_field_ecology(session.state, base_dir=root)
+            lines = tick_field_ecology(session.state, base_dir=root, rng=session.rng)
             self.assertTrue(ecology_enabled(session.state))
 
 

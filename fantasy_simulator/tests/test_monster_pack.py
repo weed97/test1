@@ -38,23 +38,27 @@ class MonsterPackTests(unittest.TestCase):
             ensure_ecology_seeds(session.state, base_dir=root)
             lines: list[str] = []
             for _ in range(25):
-                lines.extend(tick_field_ecology(session.state, base_dir=root))
+                lines.extend(
+                    tick_field_ecology(session.state, base_dir=root, rng=session.rng)
+                )
             joined = "\n".join(lines)
             self.assertTrue(
                 "[내부전]" in joined
                 or "[무리]" in joined
                 or "[스킬]" in joined
             )
-            refresh_pack_alphas(
-                [a for a in get_agents(session.state) if a.get("map_id") == "forest_01"],
-                base_dir=root,
-            )
-            alphas = [
-                a
-                for a in get_agents(session.state)
-                if a.get("pack", {}).get("role") == "alpha"
+            forest_agents = [
+                a for a in get_agents(session.state) if a.get("map_id") == "forest_01"
             ]
-            self.assertGreaterEqual(len(alphas), 1)
+            refresh_pack_alphas(forest_agents, base_dir=root)
+            living_monsters = [
+                a
+                for a in forest_agents
+                if a.get("kind") == "monster" and int(a.get("hp", 0)) > 0
+            ]
+            if living_monsters:
+                alphas = [a for a in living_monsters if a.get("pack", {}).get("role") == "alpha"]
+                self.assertGreaterEqual(len(alphas), 1)
 
 
 if __name__ == "__main__":

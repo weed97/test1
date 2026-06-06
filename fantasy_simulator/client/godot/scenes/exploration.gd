@@ -9,6 +9,8 @@ extends Node2D
 
 func _ready() -> void:
 	add_to_group("exploration_root")
+	_setup_collision()
+	_setup_camera()
 	if ApiClient.session_id.is_empty():
 		get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 		return
@@ -24,6 +26,31 @@ func _ready() -> void:
 		ApiClient.sim_tile.y,
 		ApiClient.sim_facing,
 	)
+
+
+func _setup_camera() -> void:
+	var cam: Camera2D = _player.get_node_or_null("Camera2D") as Camera2D
+	if cam == null:
+		cam = Camera2D.new()
+		cam.name = "Camera2D"
+		_player.add_child(cam)
+	cam.make_current()
+
+
+func _setup_collision() -> void:
+	var player_shape := RectangleShape2D.new()
+	player_shape.size = Vector2(14, 14)
+	_player.get_node("CollisionShape2D").shape = player_shape
+	var wall_w := RectangleShape2D.new()
+	wall_w.size = Vector2(1280, 16)
+	var wall_h := RectangleShape2D.new()
+	wall_h.size = Vector2(16, 720)
+	$Bounds/WallTop.shape = wall_w
+	$Bounds/WallBottom.shape = wall_w
+	if $Bounds.has_node("WallLeft"):
+		$Bounds/WallLeft.shape = wall_h
+	if $Bounds.has_node("WallRight"):
+		$Bounds/WallRight.shape = wall_h
 
 
 func on_map_changed(_payload: Dictionary) -> void:

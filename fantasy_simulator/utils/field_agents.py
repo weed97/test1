@@ -95,6 +95,40 @@ def spawn_archetype(
     return agent
 
 
+def ecology_rng(state: dict[str, Any], rng: random.Random | None = None) -> random.Random:
+    """Return ecology RNG — restore saved state, else seed from session meta."""
+    if rng is not None:
+        return rng
+    eco = state.setdefault("flags", {}).setdefault("ecology", {})
+    saved = eco.get("rng_state")
+    if saved is not None:
+        r = random.Random()
+        if isinstance(saved, list) and len(saved) == 3:
+            r.setstate((int(saved[0]), tuple(saved[1]), saved[2]))
+        else:
+            r.setstate(saved)
+        return r
+    seed = eco.get("rng_seed")
+    if seed is None:
+        seed = state.get("meta", {}).get("rng_seed")
+    if seed is None:
+        seed = random.randint(0, 2_147_483_647)
+    seed = int(seed)
+    eco["rng_seed"] = seed
+    state.setdefault("meta", {})["rng_seed"] = seed
+    return random.Random(seed)
+
+
+def persist_ecology_rng(state: dict[str, Any], r: random.Random) -> None:
+    """Persist RNG as JSON-safe lists (tuple from getstate is not portable)."""
+    version, internal, gauss = r.getstate()
+    state.setdefault("flags", {}).setdefault("ecology", {})["rng_state"] = [
+        version,
+        list(internal),
+        gauss,
+    ]
+
+
 def ensure_ecology_seeds(state: dict[str, Any], *, base_dir: str | Path) -> None:
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     if eco.get("initialized"):
@@ -141,7 +175,7 @@ def tick_field_ecology(
 ) -> list[str]:
     if not ecology_enabled(state):
         return []
-    r = rng or random.Random()
+    r = ecology_rng(state, rng)
     world = state.get("world", {})
     map_id = world.get("map_id", "ashpoint_01")
     lines: list[str] = []
@@ -177,6 +211,7 @@ def tick_field_ecology(
     zone = resolve_zone_from_world(world)
     if lines:
         state.setdefault("flags", {}).setdefault("ecology", {})["last_tick_zone"] = zone
+    persist_ecology_rng(state, r)
     return lines
 
 

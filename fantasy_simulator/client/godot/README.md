@@ -2,6 +2,17 @@
 
 이 폴더는 **완성된 Godot 프로젝트**입니다. Cursor와 Godot 에디터 모두에서 열 수 있습니다.
 
+## 자주 보는 오류 (원인)
+
+| 증상 | 원인 | 해결 |
+|------|------|------|
+| `HTTP 404: session not found` | Godot만 실행, 세션 없음 | 메인 메뉴 **새 게임** 먼저 |
+| `연결 실패` / `network error` | API 서버 미실행 | 아래 uvicorn 실행 |
+| `ecology or hybrid mode required` | 구버전 story 세션 | **새 게임** (hybrid 자동) |
+| 스킬 트리 빈 화면 | API 꺼짐 또는 세션 만료 | 서버 + 새 게임 |
+
+검증: `bash scripts/verify.sh` (Python 테스트 + API 스모크)
+
 ## 빠른 시작
 
 1. **API 서버** (다른 터미널):

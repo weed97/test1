@@ -23,6 +23,11 @@ def load_intelligence_config(base_dir: str | Path) -> dict[str, Any]:
 
 
 def skill_definition(skill_id: str, *, base_dir: str | Path) -> dict[str, Any]:
+    from utils.skill_catalog import catalog_skill
+
+    cat = catalog_skill(skill_id, base_dir=base_dir)
+    if cat:
+        return dict(cat)
     eco = load_ecology_config(base_dir)
     if skill_id in eco.get("skills", {}):
         sdef = dict(eco["skills"][skill_id])
@@ -38,6 +43,8 @@ def skill_definition(skill_id: str, *, base_dir: str | Path) -> dict[str, Any]:
         "cooldown_beats": 2,
         "element": sk.get("element", ""),
         "tags": list(sk.get("tags", [])),
+        "combat_pipeline": "legacy",
+        "type": sk.get("type", "active"),
     }
 
 
