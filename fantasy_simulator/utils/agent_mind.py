@@ -161,8 +161,9 @@ def preview_skill_damage(
             if preview.get("pipeline") != "world_edict":
                 return max(0, dmg_hp)
             return 0
-        except (OSError, KeyError, json.JSONDecodeError):
-            pass
+        except (OSError, KeyError, json.JSONDecodeError) as exc:
+            if is_sovereign_skill(sdef):
+                raise RuntimeError(f"sovereign skill preview failed: {skill_id}") from exc
     try:
         from utils.combat_stats import agent_to_combatant, strike_damage_hp
 
@@ -182,8 +183,9 @@ def preview_skill_damage(
         dmg = strike_damage_hp(atk, defn, base_dir=base_dir, rng=rng, skill_multiplier=mult)
         if dmg > 0:
             return dmg
-    except (OSError, KeyError, json.JSONDecodeError):
-        pass
+    except (OSError, KeyError, json.JSONDecodeError) as exc:
+        if sdef.get("combat_pipeline") == "catalog":
+            raise RuntimeError(f"catalog skill preview failed: {skill_id}") from exc
     iq_bonus = 1.0 + (_iq(attacker) / 100.0) * 0.15
     plunder = int(attacker.get("plunder", {}).get("power_bonus", 0))
     base_pwr = float(sdef.get("power", 8)) + plunder * 0.5

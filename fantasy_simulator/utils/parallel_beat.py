@@ -458,7 +458,9 @@ def tick_field_ecology_parallel(
     rng: random.Random | None = None,
 ) -> list[str]:
     """Plan → resolve → commit for all agents on active map."""
-    r = rng or random.Random()
+    from utils.field_agents import ecology_rng, persist_ecology_rng
+
+    r = ecology_rng(state, rng)
     ensure_ecology_seeds(state, base_dir=base_dir)
     eco_cfg = load_ecology_config(base_dir)
     maps = load_world_maps(str(base_dir)).get("maps", {})
@@ -507,6 +509,7 @@ def tick_field_ecology_parallel(
         "presentation_schedule": presentation,
         "presentation_duration_ms": duration_ms,
     }
+    persist_ecology_rng(state, r)
     return lines
 
 
@@ -518,7 +521,9 @@ def run_macro_parallel_lanes(
     rng: random.Random | None = None,
 ) -> list[str]:
     """Macro systems: disjoint state keys, same beat snapshot spirit."""
-    r = rng or random.Random()
+    from utils.field_agents import ecology_rng, persist_ecology_rng
+
+    r = ecology_rng(state, rng)
     lines: list[str] = []
     civ_snapshot = copy.deepcopy(
         state.get("flags", {}).get("ecology", {}).get("civilizations", {})
@@ -534,6 +539,7 @@ def run_macro_parallel_lanes(
 
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     eco["last_macro_parallel"] = {"lanes": 3, "civ_keys_at_plan": len(civ_snapshot)}
+    persist_ecology_rng(state, r)
     return lines
 
 
@@ -545,12 +551,13 @@ def run_world_parallel_beat(
     rng: random.Random | None = None,
 ) -> list[str]:
     """Full ecology beat: field (parallel) + competition + macro lanes."""
-    from utils.field_agents import tick_field_ecology
+    from utils.field_agents import ecology_rng, persist_ecology_rng, tick_field_ecology
 
-    r = rng or random.Random()
+    r = ecology_rng(state, rng)
     lines: list[str] = []
     lines.extend(tick_field_ecology(state, base_dir=base_dir, rng=r))
     lines.extend(run_macro_parallel_lanes(state, base_dir=base_dir, turn=turn, rng=r))
+    persist_ecology_rng(state, r)
     world = state.get("world", {})
     zone = resolve_zone_from_world(world)
     if lines:

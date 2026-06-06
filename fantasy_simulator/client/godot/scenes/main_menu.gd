@@ -19,10 +19,13 @@ func _check_server() -> void:
 
 func _on_new_game_pressed() -> void:
 	$VBox/ExploreButton.disabled = true
+	$VBox/Explore2DButton.disabled = true
 	$VBox/SkillTreeButton.disabled = true
 	$VBox/Narrative.clear()
 	$VBox/Narrative.text = "세션 생성 중…\n"
 	await ApiClient.new_game(42, "precision")
+	if ApiClient.session_id.is_empty():
+		_enable_play_buttons()
 
 
 func _on_explore_pressed() -> void:
@@ -64,3 +67,10 @@ func _on_turn_completed(payload: Dictionary) -> void:
 func _on_api_error(message: String) -> void:
 	$VBox/Narrative.text += "\n[오류] %s\n" % message
 	push_warning("API: %s" % message)
+	_enable_play_buttons()
+
+
+func _enable_play_buttons() -> void:
+	$VBox/ExploreButton.disabled = false
+	$VBox/Explore2DButton.disabled = false
+	$VBox/SkillTreeButton.disabled = false

@@ -43,6 +43,8 @@ def skill_definition(skill_id: str, *, base_dir: str | Path) -> dict[str, Any]:
         "cooldown_beats": 2,
         "element": sk.get("element", ""),
         "tags": list(sk.get("tags", [])),
+        "combat_pipeline": "legacy",
+        "type": sk.get("type", "active"),
     }
 
 

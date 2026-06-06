@@ -55,7 +55,7 @@ class CivilizationCouplingTests(unittest.TestCase):
                 before["civilizations"].get("dwarf_deepforge", {}).get("prosperity", 0)
             )
             for _ in range(5):
-                tick_civilization_coupling(session.state, base_dir=root)
+                tick_civilization_coupling(session.state, base_dir=root, rng=session.rng)
             after = civilization_world_status(session.state, base_dir=root)
             dwarf_after = int(
                 after["civilizations"].get("dwarf_deepforge", {}).get("prosperity", 0)

@@ -79,3 +79,34 @@ class ApiServerTests(unittest.TestCase):
         )
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.json().get("ok"))
+
+    def test_hybrid_turn_and_position(self) -> None:
+        created = self.client.post(
+            "/v1/session/new",
+            json={"game_mode": "hybrid", "seed": 99, "temporal_mode": "precision"},
+        )
+        self.assertEqual(created.status_code, 200)
+        sid = created.json()["session_id"]
+        turn = self.client.post(
+            "/v1/turn",
+            json={"session_id": sid, "action": "explore", "temporal_mode": "precision"},
+        )
+        self.assertEqual(turn.status_code, 200)
+        self.assertIn("lines", turn.json())
+        pos = self.client.post(
+            "/v1/world/position",
+            json={
+                "session_id": sid,
+                "position": {
+                    "map_id": "ashpoint_01",
+                    "x": 41,
+                    "y": 48,
+                    "facing": "south",
+                },
+            },
+        )
+        self.assertEqual(pos.status_code, 200)
+        self.assertTrue(pos.json().get("ok", True))
+        agents = self.client.get(f"/v1/world/agents?session_id={sid}&map_id=ashpoint_01")
+        self.assertEqual(agents.status_code, 200)
+        self.assertIn("agents", agents.json())

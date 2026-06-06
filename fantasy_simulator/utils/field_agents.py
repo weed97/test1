@@ -95,22 +95,28 @@ def spawn_archetype(
     return agent
 
 
-def _ecology_rng(state: dict[str, Any], rng: random.Random | None = None) -> tuple[random.Random, bool]:
-    """Return ecology RNG; persist state across ticks when caller does not supply one."""
+def ecology_rng(state: dict[str, Any], rng: random.Random | None = None) -> random.Random:
+    """Return ecology RNG — restore saved state, else seed from session meta."""
     if rng is not None:
-        return rng, True
+        return rng
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     saved = eco.get("rng_state")
     if saved is not None:
         r = random.Random()
         r.setstate(saved)
-        return r, False
-    return random.Random(), False
+        return r
+    seed = eco.get("rng_seed")
+    if seed is None:
+        seed = state.get("meta", {}).get("rng_seed")
+    if seed is None:
+        seed = random.randint(0, 2_147_483_647)
+    seed = int(seed)
+    eco["rng_seed"] = seed
+    state.setdefault("meta", {})["rng_seed"] = seed
+    return random.Random(seed)
 
 
-def _persist_ecology_rng(state: dict[str, Any], r: random.Random, *, external: bool) -> None:
-    if external:
-        return
+def persist_ecology_rng(state: dict[str, Any], r: random.Random) -> None:
     state.setdefault("flags", {}).setdefault("ecology", {})["rng_state"] = r.getstate()
 
 
@@ -160,7 +166,7 @@ def tick_field_ecology(
 ) -> list[str]:
     if not ecology_enabled(state):
         return []
-    r, external_rng = _ecology_rng(state, rng)
+    r = ecology_rng(state, rng)
     world = state.get("world", {})
     map_id = world.get("map_id", "ashpoint_01")
     lines: list[str] = []
@@ -196,7 +202,7 @@ def tick_field_ecology(
     zone = resolve_zone_from_world(world)
     if lines:
         state.setdefault("flags", {}).setdefault("ecology", {})["last_tick_zone"] = zone
-    _persist_ecology_rng(state, r, external=external_rng)
+    persist_ecology_rng(state, r)
     return lines
 
 
