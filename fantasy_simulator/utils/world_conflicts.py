@@ -168,12 +168,28 @@ def _maybe_start_invasion(
     kingdom = pair["defender_kingdom"]
     goal_id, goal_label = _pick_war_goal(conflicts, rng)
 
+    profile = _eco(state).get("player_profile") or {}
+    if profile.get("realm_id") == realm:
+        from utils.kingdom_system import get_kingdom_charter
+        from utils.kingdom_war import start_siege_war
+
+        if get_kingdom_charter(state):
+            siege = start_siege_war(
+                state,
+                attacker_civ=attacker,
+                goal_id=goal_id,
+                goal_label=goal_label,
+                base_dir=base_dir,
+                rng=rng,
+            )
+            if siege.get("ok"):
+                return siege
+
     atk_p = _military_power(state, attacker, civ_cfg, civ_cfg, rng=rng)
     def_p, allies = _alliance_power(
         state, realm, conflicts, civ_cfg, rng, base_dir=base_dir
     )
 
-    profile = _eco(state).get("player_profile") or {}
     if profile.get("realm_id") == realm:
         def_p += _player_alliance_bonus(state, conflicts, base_dir=base_dir)
 

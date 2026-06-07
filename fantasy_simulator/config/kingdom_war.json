@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "siege": {
+    "max_rounds": 15,
+    "morale_break_threshold": 25,
+    "defender_wall_bonus_per_level": 0.12,
+    "tower_raid_reduction": 0.08,
+    "barrier_damage_from_magic_mult": 1.35,
+    "phases": [
+      { "id": "ranged_duel", "label": "원거리 교전", "bow_weight": 1.4, "magic_weight": 0.6 },
+      { "id": "magic_bombardment", "label": "마법 포격", "bow_weight": 0.5, "magic_weight": 1.5 },
+      { "id": "melee_assault", "label": "공성 돌격", "bow_weight": 0.7, "magic_weight": 0.8, "sword_weight": 1.5 }
+    ]
+  },
+  "combat_classes": {
+    "sword": {
+      "label": "검사·근접",
+      "attack": 18,
+      "defense": 16,
+      "vs_barrier": 0.4,
+      "vs_wall_mult": 1.25,
+      "morale_hit": 3
+    },
+    "bow": {
+      "label": "궁수·활",
+      "attack": 15,
+      "defense": 10,
+      "vs_barrier": 0.25,
+      "on_wall_def_mult": 1.6,
+      "morale_hit": 2
+    },
+    "magic": {
+      "label": "마법사",
+      "attack": 22,
+      "defense": 7,
+      "vs_barrier": 1.1,
+      "vs_wall_mult": 0.9,
+      "morale_hit": 4
+    },
+    "beast": {
+      "label": "야수·몬스터",
+      "attack": 20,
+      "defense": 14,
+      "vs_barrier": 0.55,
+      "vs_wall_mult": 1.1,
+      "morale_hit": 5
+    }
+  },
+  "monster_legions": {
+    "default": {
+      "label": "몬스터 군단",
+      "size_base": 60,
+      "mix": { "sword": 0.35, "bow": 0.25, "magic": 0.15, "beast": 0.25 }
+    },
+    "goblin_tribe": {
+      "label": "고블린 군단",
+      "size_base": 90,
+      "mix": { "sword": 0.45, "bow": 0.35, "beast": 0.2 }
+    },
+    "shadow_clan": {
+      "label": "그림자 군단",
+      "size_base": 70,
+      "mix": { "magic": 0.4, "bow": 0.3, "sword": 0.3 }
+    },
+    "beastkin_prides": {
+      "label": "수인 무리 연합",
+      "size_base": 85,
+      "mix": { "beast": 0.5, "sword": 0.3, "bow": 0.2 }
+    },
+    "dark_elf_umbral": {
+      "label": "암흑 엘프 군단",
+      "size_base": 75,
+      "mix": { "magic": 0.35, "bow": 0.35, "sword": 0.3 }
+    },
+    "goblin_overking_horde": {
+      "label": "고블린 오버킹 대군",
+      "size_base": 140,
+      "mix": { "sword": 0.3, "bow": 0.2, "magic": 0.2, "beast": 0.3 }
+    }
+  },
+  "defender_mapping": {
+    "guard": "sword",
+    "elite": "sword",
+    "scout": "bow",
+    "wall_archer": "bow",
+    "mage_per_city_level": 3
+  },
+  "outcomes": {
+    "siege_repelled": { "attacker_morale_loss": 40, "defender_stability_gain": 8 },
+    "breach_failed": { "attacker_morale_loss": 25, "barrier_damage_mult": 0.6 },
+    "barrier_broken": { "defender_stability_loss": 15, "attacker_gain_prosperity": 10 },
+    "kingdom_endured": { "defender_stability_gain": 12, "attacker_morale_loss": 30 }
+  }
+}
