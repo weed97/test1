@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "founding": {
+    "label": "왕국 선포 의식",
+    "min_construction_level": 5,
+    "requires_buildings": ["hall", "blacksmith", "barracks", "market"],
+    "min_hired_workers": 8,
+    "gold_cost": 85000,
+    "ancillary_gold": 35000,
+    "ancillary_note": "외교·의식·봉헌·인력 유지 — 선포와 동시에 소멸",
+    "materials": {
+      "wood": 800,
+      "stone": 1200,
+      "iron": 400,
+      "crystal": 50
+    },
+    "build_points": 2500,
+    "mode": "hire"
+  },
+  "barrier": {
+    "label": "왕국 결계",
+    "base_max_hp": 12000,
+    "hp_per_level": 8000,
+    "regen_per_beat": 80,
+    "physical_destroy_blocked": true,
+    "siege_damage_reduction": 0.65,
+    "notes": "결계가 붕괴하기 전에는 왕국 영토를 물리적으로 멸망시킬 수 없음"
+  },
+  "fortifications": {
+    "walls": {
+      "label": "성벽",
+      "max_level": 5,
+      "levels": [
+        { "level": 1, "gold": 12000, "materials": { "stone": 200, "wood": 80 }, "hp_bonus": 2000, "wall_defense": 15 },
+        { "level": 2, "gold": 22000, "materials": { "stone": 350, "iron": 60 }, "hp_bonus": 3500, "wall_defense": 28 },
+        { "level": 3, "gold": 38000, "materials": { "stone": 500, "iron": 120 }, "hp_bonus": 5500, "wall_defense": 45 },
+        { "level": 4, "gold": 60000, "materials": { "stone": 700, "iron": 200, "crystal": 20 }, "hp_bonus": 8000, "wall_defense": 65 },
+        { "level": 5, "gold": 95000, "materials": { "stone": 1000, "iron": 350, "crystal": 40 }, "hp_bonus": 12000, "wall_defense": 90 }
+      ]
+    },
+    "tower": {
+      "label": "방어 포탑",
+      "max_count": 8,
+      "gold_each": 15000,
+      "materials_each": { "stone": 120, "iron": 80, "wood": 40 },
+      "attack_per_tower": 25,
+      "range_bonus": 2
+    },
+    "barrier_ritual": {
+      "label": "결계 강화 의식",
+      "max_level": 5,
+      "levels": [
+        { "level": 1, "gold": 25000, "materials": { "crystal": 30 }, "hp_mult": 1.15 },
+        { "level": 2, "gold": 45000, "materials": { "crystal": 60 }, "hp_mult": 1.35 },
+        { "level": 3, "gold": 75000, "materials": { "crystal": 100, "iron": 100 }, "hp_mult": 1.6 },
+        { "level": 4, "gold": 120000, "materials": { "crystal": 150, "iron": 200 }, "hp_mult": 1.9 },
+        { "level": 5, "gold": 200000, "materials": { "crystal": 250, "iron": 400 }, "hp_mult": 2.2 }
+      ]
+    }
+  },
+  "interior": {
+    "farmland": {
+      "label": "농경지",
+      "max_plots": 12,
+      "gold_each": 8000,
+      "materials_each": { "wood": 30 },
+      "food_per_beat_each": 6,
+      "build_points": 40
+    },
+    "city_district": {
+      "label": "도시 구역",
+      "max_level": 4,
+      "levels": [
+        { "level": 1, "gold": 30000, "materials": { "wood": 150, "stone": 200 }, "population_cap": 200, "tax_bonus": 0.02 },
+        { "level": 2, "gold": 65000, "materials": { "wood": 250, "stone": 400, "iron": 80 }, "population_cap": 500, "tax_bonus": 0.04 },
+        { "level": 3, "gold": 120000, "materials": { "stone": 600, "iron": 150 }, "population_cap": 1200, "tax_bonus": 0.06 },
+        { "level": 4, "gold": 220000, "materials": { "stone": 900, "iron": 300, "crystal": 40 }, "population_cap": 3000, "tax_bonus": 0.08 }
+      ]
+    },
+    "training_ground": {
+      "label": "훈련소",
+      "max_level": 4,
+      "levels": [
+        { "level": 1, "gold": 18000, "materials": { "wood": 80, "iron": 40 }, "train_slots": 2, "xp_mult": 1.0 },
+        { "level": 2, "gold": 40000, "materials": { "wood": 120, "iron": 90, "stone": 60 }, "train_slots": 4, "xp_mult": 1.3 },
+        { "level": 3, "gold": 75000, "materials": { "stone": 150, "iron": 150 }, "train_slots": 6, "xp_mult": 1.6 },
+        { "level": 4, "gold": 130000, "materials": { "stone": 250, "iron": 250, "crystal": 20 }, "train_slots": 10, "xp_mult": 2.0 }
+      ]
+    }
+  },
+  "military": {
+    "unit_caps_base": 20,
+    "unit_caps_per_training_level": 15,
+    "units": {
+      "scout": {
+        "label": "정찰병",
+        "gold": 400,
+        "food": 2,
+        "attack": 8,
+        "defense": 5,
+        "role": "scout",
+        "train_beats": 3
+      },
+      "guard": {
+        "label": "경비병",
+        "gold": 800,
+        "food": 4,
+        "attack": 12,
+        "defense": 18,
+        "role": "garrison",
+        "train_beats": 5
+      },
+      "wall_archer": {
+        "label": "성벽 궁수",
+        "gold": 1200,
+        "food": 4,
+        "attack": 22,
+        "defense": 10,
+        "role": "wall",
+        "requires_walls_level": 1,
+        "train_beats": 6
+      },
+      "elite": {
+        "label": "정예 전투원",
+        "gold": 2500,
+        "food": 8,
+        "attack": 35,
+        "defense": 28,
+        "role": "elite",
+        "requires_training_ground": 2,
+        "train_beats": 10
+      }
+    }
+  },
+  "default_laws": {
+    "tax_rate": 0.08,
+    "pvp_policy": "safe_in_settlement",
+    "trade_policy": "regulated",
+    "curfew": false,
+    "conscription": false
+  },
+  "upkeep": {
+    "base_gold_per_beat": 35,
+    "gold_per_military": 3,
+    "food_per_military": 1,
+    "gold_per_tower": 12,
+    "gold_per_city_level": 20,
+    "stability_penalty_if_unpaid": 8,
+    "barrier_offline_if_unpaid_beats": 3
+  },
+  "siege": {
+    "barrier_must_break_before_physical_destroy": true,
+    "wall_archer_damage_mult_on_walls": 1.8,
+    "elite_defense_bonus_in_city": 1.25
+  }
+}
