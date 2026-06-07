@@ -430,6 +430,102 @@ def _finalize_siege(
         cs["prosperity"] = int(cs.get("prosperity", 0)) + 8
 
 
+def tick_siege_for_sim_minutes(
+    state: dict[str, Any],
+    *,
+    sim_minutes: float,
+    base_dir: str | Path,
+    rng: random.Random | None = None,
+    sim_clock_cfg: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Resolve siege rounds from accumulated simulation minutes (realtime clock)."""
+    empty: dict[str, Any] = {"lines": [], "simulation": None, "new_events": []}
+    if not ecology_enabled(state) or not get_kingdom_charter(state):
+        return empty
+
+    bucket = _war_bucket(state)
+    active = [w for w in bucket.get("active", []) if w.get("status") == "active"]
+    if not active:
+        return empty
+
+    wcfg = load_war_config(base_dir)
+    sc = state.setdefault("meta", {}).setdefault("sim_clock", {})
+    siege_cfg = (sim_clock_cfg or {}).get("siege", {})
+    mpr = max(
+        1.0,
+        float(
+            siege_cfg.get(
+                "minutes_per_round",
+                wcfg.get("simulation", {}).get("minutes_per_round", 20),
+            )
+        ),
+    )
+    sc["siege_accum"] = float(sc.get("siege_accum", 0.0)) + float(sim_minutes)
+    stagger = int(
+        siege_cfg.get(
+            "stagger_ms_per_event",
+            wcfg.get("simulation", {}).get("stagger_ms_per_event", 90),
+        )
+    )
+    rng = rng or random.Random()
+    t_cursor = int(sc.get("siege_t_cursor_ms", 0))
+
+    all_lines: list[str] = []
+    new_events: list[dict[str, Any]] = []
+    war_sims: list[dict[str, Any]] = []
+    rounds_done = 0
+
+    while sc["siege_accum"] >= mpr:
+        sc["siege_accum"] -= mpr
+        rounds_done += 1
+        for war in list(active):
+            if war.get("status") != "active":
+                continue
+            result = resolve_siege_round(
+                state,
+                war,
+                base_dir=base_dir,
+                rng=rng,
+                sim_t0_ms=t_cursor,
+            )
+            all_lines.extend(result.get("lines", []))
+            evs = result.get("events", [])
+            new_events.extend(evs)
+            t_cursor += stagger * max(1, len(evs)) + 200
+            war_sims.append(
+                {
+                    "war_id": war.get("war_id"),
+                    "attacker_label": war.get("attacker", {}).get("label"),
+                    "defender_name": war.get("defender", {}).get("kingdom_name"),
+                    "status": war.get("status"),
+                    "outcome": war.get("outcome"),
+                    "round": result.get("round"),
+                    "barrier_hp": result.get("barrier_hp"),
+                    "events": evs,
+                }
+            )
+        active = [w for w in bucket.get("active", []) if w.get("status") == "active"]
+        if not active:
+            break
+
+    sc["siege_t_cursor_ms"] = t_cursor
+    if rounds_done == 0:
+        return empty
+
+    charter = get_kingdom_charter(state)
+    simulation = {
+        "source": "sim_clock",
+        "rounds_simulated": rounds_done,
+        "sim_minutes": sim_minutes,
+        "wars": war_sims,
+        "barrier_hp": int(charter.get("barrier", {}).get("hp", 0)) if charter else 0,
+    }
+    bucket["last_simulation"] = simulation
+    if new_events:
+        state.setdefault("flags", {}).setdefault("ecology", {})["_last_siege_sim"] = simulation
+    return {"lines": all_lines, "simulation": simulation, "new_events": new_events}
+
+
 def simulate_kingdom_wars_for_turn(
     state: dict[str, Any],
     *,
@@ -443,6 +539,13 @@ def simulate_kingdom_wars_for_turn(
     empty: dict[str, Any] = {"lines": [], "simulation": None}
     if not ecology_enabled(state):
         return empty
+    try:
+        from utils.sim_clock import sim_clock_enabled
+
+        if sim_clock_enabled(state, base_dir=base_dir):
+            return empty
+    except ImportError:
+        pass
     if not get_kingdom_charter(state):
         return empty
 

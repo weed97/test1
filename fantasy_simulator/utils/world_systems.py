@@ -25,6 +25,14 @@ def tick_world_systems(
     lines: list[str] = []
     FactionEngine(base_dir).ensure_initialized(state)
 
+    try:
+        from utils.sim_clock import sim_clock_enabled
+
+        if sim_clock_enabled(state, base_dir=base_dir):
+            return lines
+    except ImportError:
+        pass
+
     _, tension_note = passive_drift(state, rng=rng)
     if tension_note:
         lines.append(tension_note)

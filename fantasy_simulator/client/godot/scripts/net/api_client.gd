@@ -7,8 +7,11 @@ signal position_synced(payload: Dictionary)
 signal maps_loaded(payload: Dictionary)
 signal agents_loaded(payload: Dictionary)
 signal api_error(message: String)
+signal sim_tick_completed(payload: Dictionary)
 
 var session_id: String = ""
+var sim_clock_enabled: bool = false
+var sim_realtime_scale: float = 12.0
 var world_maps: Dictionary = {}
 var sim_map_id: String = "ashpoint_01"
 var sim_tile: Vector2i = Vector2i(40, 48)
@@ -35,6 +38,7 @@ func new_game(seed: int = -1, temporal_mode: String = "precision", game_mode: St
 	if session_id.is_empty():
 		api_error.emit("session_id missing in response")
 		return
+	await fetch_sim_status()
 	session_created.emit(parsed)
 
 
@@ -377,6 +381,43 @@ func recruit_kingdom_military(unit_type: String, count: int = 1) -> Dictionary:
 		},
 	)
 	return parsed if parsed != null else {}
+
+
+func fetch_sim_status() -> Dictionary:
+	if session_id.is_empty():
+		return {}
+	var parsed := await _post_json(
+		"/v1/sim/status?session_id=%s" % session_id.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	if parsed == null:
+		return {}
+	var clock: Dictionary = parsed.get("sim_clock", {})
+	sim_clock_enabled = bool(clock.get("enabled", false))
+	sim_realtime_scale = float(clock.get("realtime_scale", 12.0))
+	return parsed
+
+
+func sim_tick(dt_real_ms: int) -> Dictionary:
+	if session_id.is_empty():
+		return {}
+	if not sim_clock_enabled:
+		return {}
+	var parsed := await _post_json(
+		"/v1/sim/tick",
+		{
+			"session_id": session_id,
+			"dt_real_ms": clampi(dt_real_ms, 0, 30000),
+		},
+	)
+	if parsed == null:
+		return {}
+	var clock: Dictionary = parsed.get("sim_clock", {})
+	sim_clock_enabled = bool(clock.get("enabled", sim_clock_enabled))
+	sim_realtime_scale = float(clock.get("realtime_scale", sim_realtime_scale))
+	sim_tick_completed.emit(parsed)
+	return parsed
 
 
 func health_check() -> bool:

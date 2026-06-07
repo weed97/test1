@@ -15,7 +15,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from api.session_store import SessionStore, package_root, turn_payload
+from api.session_store import SessionStore, package_root, sim_tick_payload, turn_payload
 from utils.field_agents import (
     agents_manifest,
     ensure_ecology_seeds,
@@ -236,6 +236,11 @@ class TurnRequest(BaseModel):
     position: Optional[PositionBody] = None
 
 
+class SimTickRequest(BaseModel):
+    session_id: str
+    dt_real_ms: int = Field(..., ge=0, le=30_000)
+
+
 class HealthResponse(BaseModel):
     api_version: int
     status: str
@@ -269,6 +274,9 @@ def new_session(body: NewSessionRequest) -> NewSessionResponse:
         ensure_ecology_seeds(session.state, base_dir=root)
         get_player_settlement(session.state)
         init_world_conflicts(session.state, base_dir=root)
+        from utils.sim_clock import enable_sim_clock
+
+        enable_sim_clock(session.state, base_dir=root)
     session.manager.save(session.state)
     return NewSessionResponse(
         session_id=session_id,
@@ -897,12 +905,51 @@ def session_status(session_id: str) -> dict[str, Any]:
     session = _store.get(session_id)
     if session is None:
         raise HTTPException(status_code=404, detail="session not found")
+    from utils.sim_clock import sim_clock_status
+
+    root = package_root()
     return {
         "api_version": API_VERSION,
         "session_id": session_id,
         "report": session.status_report(),
         "world": session.state.get("world", {}),
+        "sim_clock": sim_clock_status(session.state, base_dir=root),
     }
+
+
+@app.get("/v1/sim/status")
+def sim_status(session_id: str) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    from utils.sim_clock import sim_clock_status
+
+    root = package_root()
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        "sim_clock": sim_clock_status(session.state, base_dir=root),
+    }
+
+
+@app.post("/v1/sim/tick")
+def sim_tick(body: SimTickRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    dt_seconds = body.dt_real_ms / 1000.0
+    try:
+        result = session.run_sim_tick(dt_real_seconds=dt_seconds)
+    except (RuntimeError, KeyError, ValueError) as exc:
+        raise HTTPException(status_code=500, detail=f"sim tick failed: {exc}") from exc
+    if not result.get("ok"):
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("error", "sim tick rejected"),
+        )
+    payload = sim_tick_payload(session, result)
+    payload["session_id"] = body.session_id
+    return payload
 
 
 @app.post("/v1/turn")

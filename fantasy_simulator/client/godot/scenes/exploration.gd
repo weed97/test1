@@ -9,6 +9,9 @@ extends Node2D
 
 var _siege_replay: PanelContainer
 var _kingdom_status_cache: Dictionary = {}
+var _sim_tick_accum: float = 0.0
+var _sim_tick_busy: bool = false
+const SIM_TICK_INTERVAL := 1.0
 
 
 func _ready() -> void:
@@ -22,6 +25,7 @@ func _ready() -> void:
 	ApiClient.position_synced.connect(_on_position_synced)
 	ApiClient.api_error.connect(_on_api_error)
 	ApiClient.agents_loaded.connect(_on_agents_loaded)
+	ApiClient.sim_tick_completed.connect(_on_sim_tick_completed)
 	await ApiClient.fetch_world_maps()
 	_apply_map_bounds(ApiClient.sim_map_id)
 	_apply_map_theme(ApiClient.sim_map_id)
@@ -36,6 +40,34 @@ func _ready() -> void:
 	if ok:
 		await ApiClient.fetch_world_agents(ApiClient.sim_map_id)
 	_setup_siege_overlay()
+
+
+func _process(delta: float) -> void:
+	if not ApiClient.sim_clock_enabled or _sim_tick_busy:
+		return
+	_sim_tick_accum += delta
+	if _sim_tick_accum < SIM_TICK_INTERVAL:
+		return
+	var ms := int(_sim_tick_accum * 1000.0)
+	_sim_tick_accum = 0.0
+	_poll_sim_tick(ms)
+
+
+func _poll_sim_tick(dt_ms: int) -> void:
+	_sim_tick_busy = true
+	var payload: Dictionary = await ApiClient.sim_tick(dt_ms)
+	_sim_tick_busy = false
+	if payload.is_empty():
+		return
+	_on_sim_tick_completed(payload)
+
+
+func _on_sim_tick_completed(payload: Dictionary) -> void:
+	_update_hud(payload)
+	var events: Array = payload.get("new_siege_events", [])
+	if events.is_empty():
+		return
+	await _maybe_play_siege(payload)
 
 
 func _setup_siege_overlay() -> void:
@@ -172,12 +204,25 @@ func _on_agents_loaded(payload: Dictionary) -> void:
 
 func _update_hud(payload: Dictionary) -> void:
 	var world: Dictionary = payload.get("world", {})
-	_hud.text = "맵 %s · 타일 (%d,%d) · 긴장 %s" % [
+	var clock: Dictionary = payload.get("sim_clock", {})
+	var time_str := "?"
+	if world.has("minute_of_day"):
+		var mod := int(world["minute_of_day"])
+		time_str = "%02d:%02d" % [mod / 60, mod % 60]
+	elif payload.has("clock"):
+		time_str = str(payload.get("clock", "?"))
+	var scale := float(clock.get("realtime_scale", ApiClient.sim_realtime_scale))
+	_hud.text = "맵 %s · (%d,%d) · D%s %s · 긴장 %s · 시뮬×%.0f" % [
 		ApiClient.sim_map_id,
 		ApiClient.sim_tile.x,
 		ApiClient.sim_tile.y,
+		world.get("day", "?"),
+		time_str,
 		world.get("tension", "?"),
+		scale,
 	]
+	if bool(payload.get("ecology_beat", false)):
+		await ApiClient.fetch_world_agents(ApiClient.sim_map_id)
 
 
 func _on_api_error(message: String) -> void:

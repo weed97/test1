@@ -94,6 +94,36 @@ class SessionStore:
         return False
 
 
+def sim_tick_payload(session: GameSession, result: dict[str, Any]) -> dict[str, Any]:
+    """Enrich sim tick result for Godot HUD binding."""
+    from utils.sim_clock import sim_clock_status
+
+    world = session.state.get("world", {})
+    flags = session.state.get("flags", {})
+    return {
+        "api_version": 1,
+        "session_id": None,
+        **result,
+        "sim_clock": sim_clock_status(session.state, base_dir=session.manager.base_dir),
+        "world": {
+            "day": world.get("day"),
+            "time_of_day": world.get("time_of_day"),
+            "minute_of_day": world.get("minute_of_day"),
+            "location": world.get("location"),
+            "tension": world.get("tension"),
+            "weather": world.get("weather"),
+            "zone_id": world.get("zone_id"),
+            "map_id": world.get("map_id"),
+        },
+        "position": position_snapshot(world),
+        "siege_simulation": result.get("siege_simulation")
+        or flags.get("ecology", {}).get("kingdom_wars", {}).get("last_simulation"),
+        "active_sieges": flags.get("ecology", {})
+        .get("kingdom_wars", {})
+        .get("active", []),
+    }
+
+
 def turn_payload(session: GameSession, result: dict[str, Any]) -> dict[str, Any]:
     """Enrich TurnResult for Godot HUD binding."""
     world = session.state.get("world", {})
