@@ -299,6 +299,8 @@ def tick_player_build_projects(
                     x=int(site.get("x", 0)),
                     y=int(site.get("y", 0)),
                     name=site["name"],
+                    doctrine_id=str(proj.get("doctrine_id", "")),
+                    custom_decree=str(proj.get("custom_decree", "")),
                     base_dir=base_dir,
                 )
                 lines.append(founded.get("message", "[왕국] 선포 완료"))
@@ -358,6 +360,8 @@ def try_start_kingdom(
     y: int,
     base_dir: str | Path,
     kingdom_name: str = "플레이어 왕국",
+    doctrine_id: str = "",
+    custom_decree: str = "",
 ) -> dict[str, Any]:
     from utils.kingdom_system import (
         can_found_kingdom,
@@ -385,6 +389,8 @@ def try_start_kingdom(
         "mode": str(fdef.get("mode", "hire")),
         "is_kingdom_project": True,
         "kingdom_name": kingdom_name,
+        "doctrine_id": doctrine_id,
+        "custom_decree": custom_decree,
     }
     return {
         "ok": True,

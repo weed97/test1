@@ -85,6 +85,195 @@ def _default_charter(
         "prosperity": 95,
         "unpaid_beats": 0,
         "physically_destroyed": False,
+        "monarchy": _default_monarchy(cfg),
+    }
+
+
+def _monarchy_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
+    return cfg.get("monarchy", {})
+
+
+def _default_monarchy(cfg: dict[str, Any]) -> dict[str, Any]:
+    mcfg = _monarchy_cfg(cfg)
+    return {
+        "doctrine_id": str(mcfg.get("default_doctrine", "feudal_balance")),
+        "custom_decree": "",
+        "installed_at": None,
+    }
+
+
+def list_government_doctrines(*, base_dir: str | Path) -> list[dict[str, Any]]:
+    cfg = load_kingdom_config(base_dir)
+    doctrines = _monarchy_cfg(cfg).get("doctrines", {})
+    out: list[dict[str, Any]] = []
+    for did, ddef in doctrines.items():
+        out.append(
+            {
+                "id": did,
+                "label": ddef.get("label", did),
+                "motto": ddef.get("motto", ""),
+                "description": ddef.get("description", ""),
+                "authority_basis": ddef.get("authority_basis", "mixed"),
+                "rank_ladder": ddef.get("rank_ladder", []),
+                "effects": ddef.get("effects", {}),
+                "law_hints": ddef.get("law_hints", {}),
+            }
+        )
+    return out
+
+
+def get_doctrine_def(doctrine_id: str, cfg: dict[str, Any]) -> dict[str, Any] | None:
+    ddef = _monarchy_cfg(cfg).get("doctrines", {}).get(doctrine_id)
+    return ddef if isinstance(ddef, dict) else None
+
+
+def get_active_doctrine(charter: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
+    mon = charter.get("monarchy", _default_monarchy(cfg))
+    did = str(mon.get("doctrine_id", "feudal_balance"))
+    ddef = get_doctrine_def(did, cfg) or get_doctrine_def(
+        str(_monarchy_cfg(cfg).get("default_doctrine", "feudal_balance")), cfg
+    ) or {}
+    decree = str(mon.get("custom_decree", "")).strip() or str(ddef.get("motto", ""))
+    return {
+        "doctrine_id": did,
+        "label": ddef.get("label", did),
+        "motto": ddef.get("motto", ""),
+        "custom_decree": decree,
+        "description": ddef.get("description", ""),
+        "authority_basis": ddef.get("authority_basis", "mixed"),
+        "rank_ladder": ddef.get("rank_ladder", []),
+        "effects": dict(ddef.get("effects", {})),
+        "law_hints": dict(ddef.get("law_hints", {})),
+    }
+
+
+def doctrine_effects(charter: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
+    return get_active_doctrine(charter, cfg).get("effects", {})
+
+
+def _implied_authority_rank(
+    charter: dict[str, Any],
+    cfg: dict[str, Any],
+    state: dict[str, Any],
+) -> dict[str, Any]:
+    """Which rank ladder step the ruler/player roughly holds under current doctrine."""
+    active = get_active_doctrine(charter, cfg)
+    ladder = active.get("rank_ladder", [])
+    if not ladder:
+        return {"rank": 0, "title": "—", "score": 0}
+    basis = active.get("authority_basis", "mixed")
+    mil = charter.get("military", {})
+    interior = charter.get("interior", {})
+    score = 0
+    if basis == "might":
+        score = int(mil.get("elite", 0)) * 30 + _military_total(charter) * 5
+    elif basis == "wealth":
+        score = _party_gold(state) // 1000
+    elif basis == "knowledge":
+        score = int(interior.get("training_ground_level", 0)) * 25 + int(
+            interior.get("city_level", 0)
+        ) * 20
+    elif basis == "faith":
+        score = int(charter.get("barrier", {}).get("ritual_level", 0)) * 35
+    elif basis == "merit":
+        score = int(interior.get("farmland_plots", 0)) * 8 + int(
+            interior.get("city_level", 0)
+        ) * 15 + _military_total(charter) * 3
+    elif basis == "equality":
+        score = int(charter.get("stability", 75))
+    else:
+        score = (
+            _military_total(charter) * 4
+            + _party_gold(state) // 2000
+            + int(interior.get("city_level", 0)) * 10
+        )
+    rank_idx = 0
+    thresholds = [0, 15, 40, 80]
+    for i, th in enumerate(thresholds):
+        if score >= th:
+            rank_idx = min(i, len(ladder) - 1)
+    row = ladder[rank_idx]
+    return {
+        "rank": row.get("rank", rank_idx + 1),
+        "title": row.get("title", "?"),
+        "authority": row.get("authority", "low"),
+        "score": score,
+        "basis": basis,
+        "requirement": row.get("requirement", ""),
+    }
+
+
+def monarchy_summary(
+    charter: dict[str, Any],
+    cfg: dict[str, Any],
+    state: dict[str, Any],
+) -> dict[str, Any]:
+    active = get_active_doctrine(charter, cfg)
+    effects = active.get("effects", {})
+    rank = _implied_authority_rank(charter, cfg, state)
+    return {
+        "doctrine": active,
+        "active_effects": effects,
+        "ruler_rank": rank,
+        "decree_text": active.get("custom_decree") or active.get("motto"),
+    }
+
+
+def set_kingdom_doctrine(
+    state: dict[str, Any],
+    doctrine_id: str,
+    *,
+    base_dir: str | Path,
+    custom_decree: str = "",
+    is_founding: bool = False,
+) -> dict[str, Any]:
+    charter = get_kingdom_charter(state)
+    if not charter:
+        return {"ok": False, "error": "왕국이 없습니다"}
+    cfg = load_kingdom_config(base_dir)
+    ddef = get_doctrine_def(doctrine_id, cfg)
+    if not ddef:
+        return {"ok": False, "error": f"unknown doctrine: {doctrine_id}"}
+    mon = charter.setdefault("monarchy", _default_monarchy(cfg))
+    old_id = str(mon.get("doctrine_id", ""))
+    if old_id == doctrine_id and not custom_decree and not is_founding:
+        return {"ok": True, "monarchy": monarchy_summary(charter, cfg, state), "unchanged": True}
+
+    if not is_founding and old_id and old_id != doctrine_id:
+        mcfg = _monarchy_cfg(cfg)
+        cost = int(mcfg.get("change_gold_cost", 8000))
+        stab_cost = int(mcfg.get("change_stability_cost", 12))
+        if _party_gold(state) < cost:
+            return {"ok": False, "error": f"왕정 개혁 비용 {cost}G 부족"}
+        _set_party_gold(state, _party_gold(state) - cost)
+        charter["stability"] = max(
+            0, int(charter.get("stability", 75)) - stab_cost
+        )
+
+    mon["doctrine_id"] = doctrine_id
+    if custom_decree.strip():
+        mon["custom_decree"] = custom_decree.strip()
+    elif is_founding:
+        mon["custom_decree"] = ""
+    mon["installed_at"] = "founded" if is_founding else "reformed"
+
+    hints = ddef.get("law_hints", {})
+    laws = charter.setdefault("laws", {})
+    for key, val in hints.items():
+        if key in laws or key in cfg.get("default_laws", {}):
+            laws[key] = val
+
+    if is_founding:
+        charter["stability"] = min(
+            100,
+            int(charter.get("stability", 75))
+            + int(ddef.get("effects", {}).get("stability_base_bonus", 0)),
+        )
+
+    return {
+        "ok": True,
+        "monarchy": monarchy_summary(charter, cfg, state),
+        "doctrine_id": doctrine_id,
     }
 
 
@@ -205,6 +394,8 @@ def complete_kingdom_founding(
     x: int,
     y: int,
     name: str = "플레이어 왕국",
+    doctrine_id: str = "",
+    custom_decree: str = "",
     base_dir: str | Path,
 ) -> dict[str, Any]:
     """Create charter after kingdom construction project completes."""
@@ -233,13 +424,27 @@ def complete_kingdom_founding(
         cs["prosperity"] = max(int(cs.get("prosperity", 0)), 95)
         cs["stage_id"] = "kingdom"
 
+    did = doctrine_id.strip() or str(
+        _monarchy_cfg(kcfg).get("default_doctrine", "feudal_balance")
+    )
+    doctrine_result = set_kingdom_doctrine(
+        state,
+        did,
+        base_dir=base_dir,
+        custom_decree=custom_decree,
+        is_founding=True,
+    )
+    mon = doctrine_result.get("monarchy", {})
+    decree = mon.get("decree_text", "")
+
     return {
         "ok": True,
         "kingdom_id": kingdom_id,
         "charter": charter,
+        "monarchy": mon,
         "message": (
             f"[왕국] '{name}' 결계가 전개되었다. 물리적 멸망은 결계 붕괴 전까지 불가. "
-            f"({map_id} {x},{y})"
+            f"왕정: {decree} ({map_id} {x},{y})"
         ),
     }
 
@@ -271,13 +476,16 @@ def _military_total(charter: dict[str, Any]) -> int:
 def _military_cap(charter: dict[str, Any], cfg: dict[str, Any]) -> int:
     mil = cfg.get("military", {})
     tg = int(charter.get("interior", {}).get("training_ground_level", 0))
-    return int(mil.get("unit_caps_base", 20)) + tg * int(
+    base = int(mil.get("unit_caps_base", 20)) + tg * int(
         mil.get("unit_caps_per_training_level", 15)
     )
+    mult = float(doctrine_effects(charter, cfg).get("military_cap_mult", 1.0))
+    return max(5, int(base * mult))
 
 
 def compute_upkeep(charter: dict[str, Any], cfg: dict[str, Any]) -> dict[str, int]:
     up = cfg.get("upkeep", {})
+    fx = doctrine_effects(charter, cfg)
     m = charter.get("military", {})
     mil_count = _military_total(charter) + len(m.get("in_training", []))
     towers = int(charter.get("fortifications", {}).get("tower_count", 0))
@@ -288,6 +496,7 @@ def compute_upkeep(charter: dict[str, Any], cfg: dict[str, Any]) -> dict[str, in
         + towers * int(up.get("gold_per_tower", 12))
         + city * int(up.get("gold_per_city_level", 20))
     )
+    gold = int(gold * float(fx.get("upkeep_gold_mult", 1.0)))
     food = mil_count * int(up.get("food_per_military", 1))
     return {"gold": gold, "food": food}
 
@@ -297,11 +506,13 @@ def kingdom_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, 
     kcfg = load_kingdom_config(base_dir)
     ps = get_player_settlement(state)
     preview = founding_cost_preview(state, base_dir=base_dir)
+    doctrines = list_government_doctrines(base_dir=base_dir)
     payload: dict[str, Any] = {
         "is_kingdom": bool(ps.get("is_kingdom")),
         "founding_preview": preview,
         "party_gold": _party_gold(state),
         "stockpile": dict(ps.get("stockpile", {})),
+        "available_doctrines": doctrines,
     }
     if charter is None:
         payload["charter"] = None
@@ -332,6 +543,7 @@ def kingdom_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, 
                 kcfg.get("siege", {}).get("barrier_must_break_before_physical_destroy", True)
             )
             or int(charter["barrier"]["hp"]) <= 0,
+            "monarchy": monarchy_summary(charter, kcfg, state),
         }
     )
     return payload
@@ -341,6 +553,7 @@ def compute_defense_rating(charter: dict[str, Any], cfg: dict[str, Any]) -> dict
     fort = charter.get("fortifications", {})
     mil = charter.get("military", {})
     barrier = charter.get("barrier", {})
+    fx = doctrine_effects(charter, cfg)
     walls_lvl = int(fort.get("walls_level", 0))
     wall_def = int(fort.get("wall_defense", 0))
     tower_atk = int(fort.get("tower_attack", 0))
@@ -351,8 +564,10 @@ def compute_defense_rating(charter: dict[str, Any], cfg: dict[str, Any]) -> dict
     elites = int(mil.get("elite", 0))
     siege = cfg.get("siege", {})
     arch_mult = float(siege.get("wall_archer_damage_mult_on_walls", 1.8))
+    arch_mult *= float(fx.get("wall_archer_attack_mult", 1.0))
     wall_attack = int(archers * 22 * arch_mult) if walls_lvl > 0 else 0
-    garrison = guards * 18 + elites * 28
+    garrison_mult = float(fx.get("garrison_defense_mult", 1.0))
+    garrison = int((guards * 18 + elites * 28) * garrison_mult)
     return {
         "barrier_hp": int(barrier.get("hp", 0)),
         "barrier_max_hp": int(barrier.get("max_hp", 0)),
@@ -582,7 +797,12 @@ def recruit_military(
     interior_store["food_store"] = int(interior_store.get("food_store", 0)) - food_need
     mil = charter.setdefault("military", {})
     queue = mil.setdefault("in_training", [])
+    fx = doctrine_effects(charter, kcfg)
     beats = int(udef.get("train_beats", 5))
+    mult = float(fx.get("training_beats_mult", 1.0))
+    if unit_type == "elite":
+        mult = min(mult, float(fx.get("elite_train_beats_mult", mult)))
+    beats = max(1, int(math.ceil(beats * mult)))
     for _ in range(count):
         queue.append({"unit": unit_type, "beats_left": beats})
     return {
@@ -644,15 +864,35 @@ def tick_kingdom(state: dict[str, Any], *, base_dir: str | Path) -> list[str]:
         return []
 
     kcfg = load_kingdom_config(base_dir)
+    fx = doctrine_effects(charter, kcfg)
     lines: list[str] = []
     upkeep = compute_upkeep(charter, kcfg)
     gold = _party_gold(state)
     interior = charter.setdefault("interior", {})
     food_store = int(interior.get("food_store", 0))
 
+    # Doctrine stability pulses
+    elites = int(charter.get("military", {}).get("elite", 0))
+    if elites > 0 and fx.get("stability_per_elite"):
+        charter["stability"] = min(
+            100, int(charter.get("stability", 75)) + int(fx["stability_per_elite"])
+        )
+    city_lvl = int(interior.get("city_level", 0))
+    if city_lvl > 0 and fx.get("stability_per_city_level"):
+        charter["stability"] = min(
+            100,
+            int(charter.get("stability", 75))
+            + int(fx["stability_per_city_level"]) * city_lvl,
+        )
+    if fx.get("stability_per_10k_gold"):
+        bonus = (_party_gold(state) // 10000) * int(fx["stability_per_10k_gold"])
+        if bonus > 0:
+            charter["stability"] = min(100, int(charter.get("stability", 75)) + bonus)
+
     # Farmland production
     plots = int(interior.get("farmland_plots", 0))
     fpb = int(kcfg.get("interior", {}).get("farmland", {}).get("food_per_beat_each", 6))
+    fpb = int(fpb * float(fx.get("farmland_food_mult", 1.0)))
     if plots > 0:
         produced = plots * fpb
         interior["food_store"] = food_store + produced
@@ -700,7 +940,12 @@ def tick_kingdom(state: dict[str, Any], *, base_dir: str | Path) -> list[str]:
         kcfg.get("upkeep", {}).get("barrier_offline_if_unpaid_beats", 3)
     ):
         regen = int(barrier.get("regen_per_beat", 80))
+        regen = int(regen * float(fx.get("barrier_regen_mult", 1.0)))
         max_hp = int(barrier.get("max_hp", regen))
         barrier["hp"] = min(max_hp, int(barrier.get("hp", 0)) + regen)
+
+    active = get_active_doctrine(charter, kcfg)
+    if active.get("custom_decree"):
+        lines.append(f"[왕정] {active['custom_decree']}")
 
     return lines

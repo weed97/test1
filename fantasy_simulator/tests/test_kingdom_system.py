@@ -19,7 +19,9 @@ from utils.kingdom_system import (  # noqa: E402
     founding_cost_preview,
     get_kingdom_charter,
     kingdom_status,
+    list_government_doctrines,
     recruit_military,
+    set_kingdom_doctrine,
     tick_kingdom,
     upgrade_fortification,
 )
@@ -158,6 +160,50 @@ class KingdomSystemTests(unittest.TestCase):
             self.assertTrue(st["is_kingdom"])
             self.assertIsNotNone(st["defense_summary"])
             self.assertTrue(st["defense_summary"]["physical_destroy_blocked"])
+
+    def test_government_doctrines_catalog(self) -> None:
+        with isolated_game_root() as root:
+            docs = list_government_doctrines(base_dir=root)
+            ids = {d["id"] for d in docs}
+            self.assertIn("martial_ascendancy", ids)
+            self.assertIn("plutocracy", ids)
+            self.assertIn("scholarship", ids)
+
+    def test_founding_with_martial_doctrine(self) -> None:
+        with isolated_game_root() as root:
+            state = self._ecology_state(root)
+            result = complete_kingdom_founding(
+                state,
+                map_id="m",
+                x=1,
+                y=1,
+                name="강철 왕국",
+                doctrine_id="martial_ascendancy",
+                custom_decree="약자는 훈련장에, 강자는 성벽에!",
+                base_dir=root,
+            )
+            self.assertTrue(result["ok"])
+            charter = get_kingdom_charter(state)
+            assert charter is not None
+            self.assertEqual(charter["monarchy"]["doctrine_id"], "martial_ascendancy")
+            self.assertIn("강자", result["monarchy"]["decree_text"])
+
+    def test_change_doctrine_costs_gold(self) -> None:
+        with isolated_game_root() as root:
+            state = self._ecology_state(root)
+            complete_kingdom_founding(
+                state, map_id="m", x=1, y=1, name="K", base_dir=root
+            )
+            state["inventory"]["party_gold"] = 50_000
+            before = state["inventory"]["party_gold"]
+            r = set_kingdom_doctrine(
+                state, "plutocracy", base_dir=root, custom_decree="부자가 법이다."
+            )
+            self.assertTrue(r["ok"], r)
+            self.assertLess(state["inventory"]["party_gold"], before)
+            charter = get_kingdom_charter(state)
+            assert charter is not None
+            self.assertEqual(charter["monarchy"]["doctrine_id"], "plutocracy")
 
 
 if __name__ == "__main__":
