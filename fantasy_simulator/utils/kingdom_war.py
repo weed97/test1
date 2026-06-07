@@ -33,6 +33,14 @@ def _war_bucket(state: dict[str, Any]) -> dict[str, Any]:
     return _eco(state).setdefault("kingdom_wars", {"active": [], "history": []})
 
 
+def find_active_siege(state: dict[str, Any], war_id: str) -> dict[str, Any] | None:
+    bucket = _war_bucket(state)
+    return next(
+        (w for w in bucket.get("active", []) if w.get("war_id") == war_id),
+        None,
+    )
+
+
 def _class_cfg(wcfg: dict[str, Any], cls: str) -> dict[str, Any]:
     return wcfg.get("combat_classes", {}).get(cls, {})
 
@@ -170,10 +178,17 @@ def start_siege_war(
     }
     bucket.setdefault("active", []).append(war)
 
+    from utils.siege_command import init_war_command
+
+    init_war_command(war, charter, base_dir=base_dir, rng=rng)
+
     line = (
         f"[공성전 개시] {attacker['label']}이(가) '{charter.get('name')}'을(를) 공격한다. "
         f"목적: {goal_label} · 검/활/마법/야수 군단 총 {attacker['total']}."
     )
+    def_cmds = war.get("command", {}).get("defender", {}).get("commanders", [])
+    if def_cmds:
+        line += f" · 수성 지휘관 {len(def_cmds)}명 전장 배치"
     return {"ok": True, "war": war, "lines": [line]}
 
 
@@ -296,6 +311,21 @@ def resolve_siege_round(
     def_power = int(def_power * (1.0 + walls * float(siege_cfg.get("defender_wall_bonus_per_level", 0.12))))
     def_power = int(def_power * float(fx.get("garrison_defense_mult", 1.0)))
 
+    from utils.siege_command import load_command_config, resolve_command_round
+
+    cmd_cfg = load_command_config(base_dir)
+    lost_cfg = cmd_cfg.get("command_lost", {})
+    atk_coord = atk_power
+    def_coord = def_power
+    atk_cmd = war.get("command", {}).get("attacker", {})
+    def_cmd = war.get("command", {}).get("defender", {})
+    if atk_cmd.get("autonomous"):
+        atk_coord = int(atk_power * rng.uniform(0.88, 1.12))
+    if def_cmd.get("autonomous"):
+        def_coord = int(
+            def_power * (1.0 - float(lost_cfg.get("defense_coordination_penalty", 0.38)))
+        )
+
     wcfg_full = wcfg
     sim_cfg = wcfg_full.get("simulation", {})
     stagger = int(sim_cfg.get("stagger_ms_per_event", 90))
@@ -307,12 +337,34 @@ def resolve_siege_round(
 
     lines: list[str] = []
     lines.append(f"[공성 {rnd}라운드·{phase.get('label', '?')}]")
-    for ev in events:
-        lines.append(f"  {ev['text']}")
 
-    net = atk_power - def_power
+    net = atk_coord - def_coord
+    cmd_result = resolve_command_round(
+        war,
+        net=net,
+        atk_power=atk_power,
+        def_power=def_power,
+        base_dir=base_dir,
+        rng=rng,
+        sim_t0_ms=sim_t0_ms,
+        stagger_ms=stagger,
+    )
+    lines.extend(cmd_result.get("lines", []))
+    events.extend(cmd_result.get("events", []))
+    barrier_mult = float(cmd_result.get("barrier_damage_mult", 0.15))
+    def_coord = int(def_coord * float(cmd_result.get("defense_coordination_mult", 1.0)))
+    net = atk_coord - def_coord
+
+    for ev in events:
+        if ev.get("text"):
+            lines.append(f"  {ev['text']}")
+
     if net > 0:
-        barrier_dmg = int(net * float(siege_cfg.get("barrier_damage_from_magic_mult", 1.0)) * 0.15)
+        barrier_dmg = int(
+            net
+            * float(siege_cfg.get("barrier_damage_from_magic_mult", 1.0))
+            * barrier_mult
+        )
         barrier_dmg += int(atk_br.get("magic", 0) * float(_class_cfg(wcfg, "magic").get("vs_barrier", 1.0)) * 0.08)
         barrier_dmg += int(atk_br.get("sword", 0) * 0.05)
         siege_result = apply_siege_damage(
@@ -667,6 +719,8 @@ def siege_live_snapshot(
     barrier_max = int(charter.get("barrier", {}).get("max_hp", 12000)) if charter else 12000
     last_log = war.get("combat_log", [])
     last_net = int(last_log[-1].get("net", 0)) if last_log else 0
+    from utils.siege_command import command_live_view
+
     return {
         "war_id": war.get("war_id"),
         "status": war.get("status"),
@@ -677,6 +731,7 @@ def siege_live_snapshot(
         "barrier_hp": barrier_hp,
         "barrier_max": barrier_max,
         "last_net": last_net,
+        "command": command_live_view(war, base_dir=base_dir),
         "attacker": {
             "label": atk.get("label"),
             "morale": int(atk.get("morale", 0)),

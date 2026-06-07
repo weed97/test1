@@ -171,6 +171,19 @@ class KingdomSiegeRoundRequest(BaseModel):
     war_id: str
 
 
+class KingdomSiegeCommandRequest(BaseModel):
+    session_id: str
+    war_id: str
+    doctrine: str = Field(
+        ...,
+        pattern="^(protect_commanders|coordinate_defense)$",
+    )
+    posture: Optional[str] = Field(
+        None,
+        pattern="^(forward_command|behind_wall|citadel)$",
+    )
+
+
 class ProgressionUnlockRequest(BaseModel):
     session_id: str
     character_id: str
@@ -416,6 +429,49 @@ def kingdom_war_round_route(body: KingdomSiegeRoundRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=result.get("error", "round failed"))
     session.manager.save(session.state)
     return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/kingdom/war/command")
+def kingdom_war_command_route(body: KingdomSiegeCommandRequest) -> dict[str, Any]:
+    from utils.kingdom_war import find_active_siege
+    from utils.siege_command import command_live_view, set_defender_siege_command
+
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    root = package_root()
+    war = find_active_siege(session.state, body.war_id)
+    if war is None:
+        raise HTTPException(status_code=404, detail="active siege not found")
+    result = set_defender_siege_command(
+        war,
+        doctrine=body.doctrine,
+        posture=body.posture,
+        base_dir=root,
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "command failed"))
+    session.manager.save(session.state)
+    return {
+        "api_version": API_VERSION,
+        "session_id": body.session_id,
+        **result,
+        "command": command_live_view(war, base_dir=root),
+    }
+
+
+@app.get("/v1/kingdom/commanders")
+def kingdom_commanders_route(session_id: str) -> dict[str, Any]:
+    from utils.siege_command import kingdom_commander_roster_status
+
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        **kingdom_commander_roster_status(session.state, base_dir=package_root()),
+    }
 
 
 @app.get("/v1/kingdom/doctrines")

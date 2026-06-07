@@ -29,9 +29,18 @@ var _round: int = 0
 var _volley_cooldown: float = 0.0
 var _units: Array[Node2D] = []
 var _projectiles: Array[Dictionary] = []
+var _commander_markers: Array[Dictionary] = []
+var _command_synced: bool = false
+var _def_autonomous: bool = false
+var _def_doctrine: String = "protect_commanders"
 
 @onready var _title_label: Label = $Margin/VBox/TitleLabel
 @onready var _phase_label_node: Label = $Margin/VBox/PhaseLabel
+@onready var _command_label: Label = $Margin/VBox/CommandLabel
+@onready var _cmd_protect_btn: Button = $Margin/VBox/CommandRow/CmdProtectBtn
+@onready var _cmd_defense_btn: Button = $Margin/VBox/CommandRow/CmdDefenseBtn
+@onready var _posture_wall_btn: Button = $Margin/VBox/CommandRow/PostureWallBtn
+@onready var _posture_citadel_btn: Button = $Margin/VBox/CommandRow/PostureCitadelBtn
 @onready var _battlefield: Node2D = $Margin/VBox/BattleArea/Battlefield
 @onready var _barrier_bar: ProgressBar = $Margin/VBox/BarrierRow/BarrierBar
 @onready var _barrier_label: Label = $Margin/VBox/BarrierRow/BarrierLabel
@@ -46,6 +55,10 @@ var _projectiles: Array[Dictionary] = []
 
 func _ready() -> void:
 	_close_btn.pressed.connect(_on_close_pressed)
+	_cmd_protect_btn.pressed.connect(_on_cmd_protect)
+	_cmd_defense_btn.pressed.connect(_on_cmd_defense)
+	_posture_wall_btn.pressed.connect(_on_posture_wall)
+	_posture_citadel_btn.pressed.connect(_on_posture_citadel)
 	visible = false
 	_battlefield.battle_host = self
 
@@ -63,6 +76,7 @@ func open_live(live: Dictionary) -> void:
 	sync_live(live)
 	if _units.is_empty():
 		_spawn_armies(live)
+	_sync_command_state(live.get("command", {}))
 	visible = true
 	_status_label.text = "실시간 공성전 — 시뮬 시계와 연동"
 
@@ -84,6 +98,7 @@ func sync_live(live: Dictionary) -> void:
 	var net := int(live.get("last_net", 0))
 	_assault_pressure = clampf(float(net) / 400.0, 0.0, 1.0)
 	_update_march_targets()
+	_sync_command_state(live.get("command", {}))
 	_update_bars()
 	_battlefield.queue_redraw()
 	if str(live.get("status", "")) != "active":
@@ -97,8 +112,79 @@ func pulse_events(events: Array) -> void:
 		_pulse_one(raw)
 
 
+func _sync_command_state(cmd: Dictionary) -> void:
+	if cmd.is_empty():
+		return
+	var dfn: Dictionary = cmd.get("defender", {})
+	_def_doctrine = str(dfn.get("doctrine", _def_doctrine))
+	_def_autonomous = bool(dfn.get("autonomous", false))
+	var intact: bool = bool(dfn.get("command_chain_intact", true)) and not _def_autonomous
+	var doctrine: String = str(dfn.get("doctrine_label", dfn.get("doctrine", "?")))
+	var posture: String = str(dfn.get("posture_label", dfn.get("posture", "")))
+	var supreme: String = str(dfn.get("supreme_commander", ""))
+	var alive: int = int(dfn.get("alive_count", 0))
+	if _def_autonomous:
+		_command_label.text = "⚠ 명령체계 붕괴 — 부대 단독 교전 (%d명 생존)" % alive
+		_set_command_buttons_enabled(false)
+	else:
+		_command_label.text = "수성 지휘: %s · %s (최고지휘 %s · %d/5)" % [
+			doctrine, posture, supreme, alive,
+		]
+		_set_command_buttons_enabled(true)
+	_commander_markers.clear()
+	for side in ["attacker", "defender"]:
+		var block: Dictionary = cmd.get(side, {})
+		var commanders: Array = block.get("commanders", [])
+		for i in range(commanders.size()):
+			var c: Dictionary = commanders[i]
+			if not bool(c.get("alive", true)):
+				continue
+			var depth: int = int(c.get("posture_depth", 0))
+			var x := 90.0 + float(i) * 22.0
+			var y := 18.0 + float(i) * 8.0
+			if side == "defender":
+				x = WALL_X - 55.0 - float(depth) * 28.0 - float(i) * 6.0
+				y = 24.0 + float(i) * 30.0
+			_commander_markers.append({
+				"side": side,
+				"x": x,
+				"y": y,
+				"name": str(c.get("name", "")),
+				"hp_ratio": clampf(
+					float(c.get("hp", 1)) / float(maxi(int(c.get("max_hp", 1)), 1)),
+					0.0,
+					1.0,
+				),
+				"protected": bool(c.get("protected_by_kingdom", false)),
+			})
+	if not _command_synced:
+		_command_synced = true
+	_battlefield.queue_redraw()
+
+
+func _set_command_buttons_enabled(on: bool) -> void:
+	_cmd_protect_btn.disabled = not on
+	_cmd_defense_btn.disabled = not on
+	_posture_wall_btn.disabled = not on
+	_posture_citadel_btn.disabled = not on
+
+
 func _pulse_one(ev: Dictionary) -> void:
 	var kind: String = str(ev.get("kind", ""))
+	if kind == "commander_hit" or kind == "commander_fall":
+		_flash_commander(str(ev.get("commander_id", "")))
+		if kind == "commander_fall":
+			_assault_pressure = minf(1.0, _assault_pressure + 0.2)
+		var text: String = str(ev.get("text", ""))
+		if not text.is_empty():
+			_status_label.text = text
+		_battlefield.queue_redraw()
+		return
+	if kind == "command_chain_lost":
+		_def_autonomous = true
+		_status_label.text = str(ev.get("text", "명령체계 붕괴"))
+		_set_command_buttons_enabled(false)
+		return
 	if kind == "barrier_break":
 		_barrier_hp = 0
 		_spawn_barrier_burst()
@@ -108,6 +194,9 @@ func _pulse_one(ev: Dictionary) -> void:
 	var cls: String = str(ev.get("class", ""))
 	var side: String = str(ev.get("side", ""))
 	if cls.is_empty():
+		var fallback: String = str(ev.get("text", ""))
+		if not fallback.is_empty():
+			_status_label.text = fallback
 		return
 	_flash_class_units(side, cls)
 	if side == "attacker":
@@ -210,13 +299,50 @@ func _spawn_barrier_burst() -> void:
 		})
 
 
+func _flash_commander(commander_id: String) -> void:
+	for m in _commander_markers:
+		if str(m.get("name", "")).is_empty():
+			continue
+	_fire_projectile("magic", "attacker")
+
+
+func _on_cmd_protect() -> void:
+	_issue_command("protect_commanders", "")
+
+
+func _on_cmd_defense() -> void:
+	_issue_command("coordinate_defense", "")
+
+
+func _on_posture_wall() -> void:
+	_issue_command(_def_doctrine, "behind_wall")
+
+
+func _on_posture_citadel() -> void:
+	_issue_command(_def_doctrine, "citadel")
+
+
+func _issue_command(doctrine: String, posture: String) -> void:
+	if _war_id.is_empty() or _def_autonomous:
+		return
+	var result: Dictionary = await ApiClient.set_siege_command(_war_id, doctrine, posture)
+	if result.get("ok", false):
+		_sync_command_state(result.get("command", {}))
+		_status_label.text = "명령 전달: %s" % result.get("label", doctrine)
+	else:
+		_status_label.text = str(result.get("error", "명령 실패"))
+
+
 func _process(delta: float) -> void:
 	if not _live or not visible:
 		return
 	_volley_cooldown -= delta
 	if _volley_cooldown <= 0.0:
 		_volley_cooldown = 0.55
-		if _phase_id == "ranged_duel" or _phase_id == "magic_bombardment":
+		if _def_autonomous:
+			if randf() < 0.45:
+				_fire_projectile("sword", "attacker")
+		elif _phase_id == "ranged_duel" or _phase_id == "magic_bombardment":
 			_fire_projectile("bow" if _phase_id == "ranged_duel" else "magic", "attacker")
 	_tick_projectiles(delta)
 	_battlefield.queue_redraw()
@@ -264,6 +390,16 @@ func paint_terrain(canvas: Node2D) -> void:
 			canvas.draw_circle(pos, 2.0, col)
 		else:
 			canvas.draw_line(pos, pos + Vector2(8, 0), col, 2.0)
+	for m in _commander_markers:
+		var pos2 := Vector2(float(m["x"]), float(m["y"]))
+		var side: String = str(m.get("side", ""))
+		var col2 := Color(1.0, 0.85, 0.25) if side == "defender" else Color(0.95, 0.35, 0.3)
+		if bool(m.get("protected", false)):
+			col2 = col2.lightened(0.15)
+		canvas.draw_circle(pos2, 9.0, col2.darkened(0.35))
+		canvas.draw_circle(pos2, 7.0, col2)
+		var hp_r: float = float(m.get("hp_ratio", 1.0))
+		canvas.draw_arc(pos2, 10.0, -PI * 0.5, -PI * 0.5 + PI * hp_r, 12, Color(0.2, 0.9, 0.4), 2.0)
 
 
 func _update_bars() -> void:

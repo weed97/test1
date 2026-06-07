@@ -290,6 +290,37 @@ func fetch_kingdom_doctrines() -> Dictionary:
 	return parsed if parsed != null else {}
 
 
+func set_siege_command(
+	war_id: String,
+	doctrine: String,
+	posture: String = "",
+) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {"ok": false, "error": "no session"}
+	var body := {
+		"session_id": session_id,
+		"war_id": war_id,
+		"doctrine": doctrine,
+	}
+	if not posture.is_empty():
+		body["posture"] = posture
+	var parsed := await _post_json("/v1/kingdom/war/command", body)
+	return parsed if parsed != null else {"ok": false, "error": "request failed"}
+
+
+func fetch_kingdom_commanders() -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/kingdom/commanders?session_id=%s" % session_id.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	return parsed if parsed != null else {}
+
+
 func fetch_kingdom_wars() -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
