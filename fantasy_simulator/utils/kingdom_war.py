@@ -644,13 +644,75 @@ def tick_kingdom_wars(
     return result.get("lines", [])
 
 
+def siege_live_snapshot(
+    state: dict[str, Any],
+    war: dict[str, Any],
+    *,
+    base_dir: str | Path,
+) -> dict[str, Any]:
+    """Normalized live siege view for Godot 2D battlefield (not replay timeline)."""
+    charter = get_kingdom_charter(state)
+    wcfg = load_war_config(base_dir)
+    phases = wcfg.get("siege", {}).get("phases", [])
+    rnd = int(war.get("round", 0))
+    if rnd > 0:
+        phase = _phase_for_round(rnd - 1, wcfg)
+    elif phases:
+        phase = phases[0]
+    else:
+        phase = {"id": "assault", "label": "공성"}
+    atk = war.get("attacker", {})
+    dfn = war.get("defender", {})
+    barrier_hp = int(charter.get("barrier", {}).get("hp", 0)) if charter else 0
+    barrier_max = int(charter.get("barrier", {}).get("max_hp", 12000)) if charter else 12000
+    last_log = war.get("combat_log", [])
+    last_net = int(last_log[-1].get("net", 0)) if last_log else 0
+    return {
+        "war_id": war.get("war_id"),
+        "status": war.get("status"),
+        "outcome": war.get("outcome"),
+        "round": rnd,
+        "max_rounds": int(war.get("max_rounds", 15)),
+        "phase": {"id": phase.get("id"), "label": phase.get("label")},
+        "barrier_hp": barrier_hp,
+        "barrier_max": barrier_max,
+        "last_net": last_net,
+        "attacker": {
+            "label": atk.get("label"),
+            "morale": int(atk.get("morale", 0)),
+            "forces": dict(atk.get("forces", {})),
+            "total": int(atk.get("total", 0)),
+        },
+        "defender": {
+            "kingdom_name": dfn.get("kingdom_name"),
+            "morale": int(dfn.get("morale", 0)),
+            "forces": dict(dfn.get("forces", {})),
+            "walls_level": int(dfn.get("walls_level", 0)),
+            "tower_count": int(dfn.get("tower_count", 0)),
+        },
+        "combat_classes": wcfg.get("combat_classes", {}),
+    }
+
+
+def active_siege_live(
+    state: dict[str, Any], *, base_dir: str | Path
+) -> dict[str, Any] | None:
+    bucket = _war_bucket(state)
+    active = [w for w in bucket.get("active", []) if w.get("status") == "active"]
+    if not active:
+        return None
+    return siege_live_snapshot(state, active[0], base_dir=base_dir)
+
+
 def kingdom_wars_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
     wcfg = load_war_config(base_dir)
     bucket = _war_bucket(state)
     charter = get_kingdom_charter(state)
+    live = active_siege_live(state, base_dir=base_dir)
     return {
         "has_kingdom": charter is not None,
         "active_sieges": bucket.get("active", []),
+        "siege_live": live,
         "history": bucket.get("history", [])[-10:],
         "combat_classes": wcfg.get("combat_classes", {}),
         "monster_legions": list(wcfg.get("monster_legions", {}).keys()),

@@ -21,7 +21,7 @@ var _busy: bool = false
 @onready var _interior_row: HBoxContainer = $VBox/ManagePanel/Margin/ManageVBox/InteriorRow
 @onready var _recruit_row: HBoxContainer = $VBox/ManagePanel/Margin/ManageVBox/RecruitRow
 @onready var _wars_label: RichTextLabel = $VBox/WarsLabel
-@onready var _siege_replay: PanelContainer = $VBox/SiegeReplayHost/SiegeReplay
+@onready var _siege_battle: PanelContainer = $VBox/SiegeBattleHost/SiegeBattle
 @onready var _refresh_btn: Button = $VBox/TopRow/RefreshButton
 @onready var _back_btn: Button = $VBox/TopRow/BackButton
 
@@ -72,6 +72,17 @@ func _render_all() -> void:
 	else:
 		_render_management()
 	_render_wars()
+	_sync_live_siege_panel()
+
+
+func _sync_live_siege_panel() -> void:
+	var live: Variant = _wars.get("siege_live")
+	if not live is Dictionary or live.is_empty():
+		return
+	if not _siege_battle.visible:
+		_siege_battle.open_live(live)
+	else:
+		_siege_battle.sync_live(live)
 
 
 func _render_summary(is_kingdom: bool) -> void:
@@ -266,12 +277,6 @@ func _barrier_max_hp() -> int:
 		var bp: Dictionary = preview.get("barrier_preview", {})
 		return int(bp.get("base_max_hp", 12000))
 	return int(charter.get("barrier", {}).get("max_hp", 12000))
-
-
-func play_last_siege_sim(sim: Dictionary) -> void:
-	if sim.is_empty():
-		return
-	_siege_replay.play_simulation(sim, _barrier_max_hp())
 
 
 func _on_apply_doctrine_pressed() -> void:

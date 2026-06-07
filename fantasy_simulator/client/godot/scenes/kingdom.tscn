@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://eldoria_kingdom"]
 
 [ext_resource type="Script" path="res://scenes/kingdom.gd" id="1_kingdom"]
-[ext_resource type="PackedScene" uid="uid://eldoria_siege_replay" path="res://scenes/siege_replay.tscn" id="2_siege"]
+[ext_resource type="PackedScene" uid="uid://eldoria_siege_battle" path="res://scenes/siege_battle.tscn" id="2_siege"]
 
 [node name="Kingdom" type="Control"]
 layout_mode = 3
@@ -159,12 +159,12 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 fit_content = true
 
-[node name="SiegeReplayHost" type="Control" parent="VBox"]
-custom_minimum_size = Vector2(0, 200)
+[node name="SiegeBattleHost" type="Control" parent="VBox"]
+custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="SiegeReplay" parent="VBox/SiegeReplayHost" instance=ExtResource("2_siege")]
+[node name="SiegeBattle" parent="VBox/SiegeBattleHost" instance=ExtResource("2_siege")]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

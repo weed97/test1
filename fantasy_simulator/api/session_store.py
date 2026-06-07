@@ -94,6 +94,13 @@ class SessionStore:
         return False
 
 
+def _siege_live_fields(session: GameSession) -> dict[str, Any]:
+    from utils.kingdom_war import active_siege_live
+
+    live = active_siege_live(session.state, base_dir=session.manager.base_dir)
+    return {"siege_live": live}
+
+
 def sim_tick_payload(session: GameSession, result: dict[str, Any]) -> dict[str, Any]:
     """Enrich sim tick result for Godot HUD binding."""
     from utils.sim_clock import sim_clock_status
@@ -121,6 +128,7 @@ def sim_tick_payload(session: GameSession, result: dict[str, Any]) -> dict[str, 
         "active_sieges": flags.get("ecology", {})
         .get("kingdom_wars", {})
         .get("active", []),
+        **_siege_live_fields(session),
     }
 
 
@@ -153,4 +161,5 @@ def turn_payload(session: GameSession, result: dict[str, Any]) -> dict[str, Any]
         "active_sieges": flags.get("ecology", {})
         .get("kingdom_wars", {})
         .get("active", []),
+        **_siege_live_fields(session),
     }

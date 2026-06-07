@@ -1,0 +1,103 @@
+[gd_scene load_steps=3 format=3 uid="uid://eldoria_siege_battle"]
+
+[ext_resource type="Script" path="res://scripts/kingdom/siege_battle.gd" id="1_battle"]
+[ext_resource type="Script" path="res://scripts/kingdom/siege_battlefield.gd" id="2_field"]
+
+[node name="SiegeBattle" type="PanelContainer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -360.0
+offset_top = -200.0
+offset_right = 360.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_battle")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TitleLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+text = "실시간 공성전"
+horizontal_alignment = 1
+
+[node name="PhaseLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+text = "—"
+horizontal_alignment = 1
+
+[node name="BattleArea" type="Control" parent="Margin/VBox"]
+custom_minimum_size = Vector2(600, 200)
+layout_mode = 2
+
+[node name="Battlefield" type="Node2D" parent="Margin/VBox/BattleArea"]
+script = ExtResource("2_field")
+
+[node name="BarrierRow" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BarrierLabel" type="Label" parent="Margin/VBox/BarrierRow"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "결계"
+
+[node name="BarrierBar" type="ProgressBar" parent="Margin/VBox/BarrierRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 12000.0
+value = 12000.0
+show_percentage = false
+
+[node name="MoraleRow" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AtkMoraleLabel" type="Label" parent="Margin/VBox/MoraleRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "공격"
+
+[node name="AtkMoraleBar" type="ProgressBar" parent="Margin/VBox/MoraleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+value = 75.0
+show_percentage = false
+
+[node name="DefMoraleLabel" type="Label" parent="Margin/VBox/MoraleRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "수비"
+
+[node name="DefMoraleBar" type="ProgressBar" parent="Margin/VBox/MoraleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+value = 80.0
+show_percentage = false
+
+[node name="StatusLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+text = "—"
+autowrap_mode = 2
+
+[node name="ButtonRow" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="CloseButton" type="Button" parent="Margin/VBox/ButtonRow"]
+layout_mode = 2
+text = "전장 접기"

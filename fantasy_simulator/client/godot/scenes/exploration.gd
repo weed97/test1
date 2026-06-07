@@ -7,8 +7,7 @@ extends Node2D
 @onready var _zone_label: Label = $CanvasLayer/ZoneLabel
 @onready var _agents_layer: Node2D = $AgentsLayer
 
-var _siege_replay: PanelContainer
-var _kingdom_status_cache: Dictionary = {}
+var _siege_battle: PanelContainer
 var _sim_tick_accum: float = 0.0
 var _sim_tick_busy: bool = false
 const SIM_TICK_INTERVAL := 1.0
@@ -40,6 +39,7 @@ func _ready() -> void:
 	if ok:
 		await ApiClient.fetch_world_agents(ApiClient.sim_map_id)
 	_setup_siege_overlay()
+	await _refresh_live_siege()
 
 
 func _process(delta: float) -> void:
@@ -64,20 +64,39 @@ func _poll_sim_tick(dt_ms: int) -> void:
 
 func _on_sim_tick_completed(payload: Dictionary) -> void:
 	_update_hud(payload)
-	var events: Array = payload.get("new_siege_events", [])
-	if events.is_empty():
-		return
-	await _maybe_play_siege(payload)
+	_sync_live_siege(payload)
 
 
 func _setup_siege_overlay() -> void:
-	var scene: PackedScene = load("res://scenes/siege_replay.tscn")
+	var scene: PackedScene = load("res://scenes/siege_battle.tscn")
 	if scene == null:
 		return
-	_siege_replay = scene.instantiate() as PanelContainer
-	_siege_replay.visible = false
-	$CanvasLayer.add_child(_siege_replay)
-	_siege_replay.set_anchors_preset(Control.PRESET_CENTER)
+	_siege_battle = scene.instantiate() as PanelContainer
+	_siege_battle.visible = false
+	$CanvasLayer.add_child(_siege_battle)
+	_siege_battle.set_anchors_preset(Control.PRESET_CENTER)
+
+
+func _sync_live_siege(payload: Dictionary) -> void:
+	if _siege_battle == null:
+		return
+	var live: Variant = payload.get("siege_live")
+	if not live is Dictionary or live.is_empty():
+		return
+	if not _siege_battle.visible:
+		_siege_battle.open_live(live)
+	else:
+		_siege_battle.sync_live(live)
+	var events: Array = payload.get("new_siege_events", [])
+	if not events.is_empty():
+		_siege_battle.pulse_events(events)
+
+
+func _refresh_live_siege() -> void:
+	var wars: Dictionary = await ApiClient.fetch_kingdom_wars()
+	var live: Variant = wars.get("siege_live")
+	if live is Dictionary and not live.is_empty():
+		_sync_live_siege({"siege_live": live, "new_siege_events": []})
 
 
 func _setup_camera() -> void:
@@ -162,24 +181,7 @@ func _on_turn_completed(payload: Dictionary) -> void:
 	for line in payload.get("lines", []):
 		_narrative.text += str(line) + "\n"
 	_update_hud(payload)
-	await _maybe_play_siege(payload)
-
-
-func _maybe_play_siege(payload: Dictionary) -> void:
-	var siege: Variant = payload.get("siege_simulation")
-	if not siege is Dictionary:
-		return
-	var wars: Array = siege.get("wars", [])
-	if wars.is_empty() or _siege_replay == null:
-		return
-	if _kingdom_status_cache.is_empty():
-		_kingdom_status_cache = await ApiClient.fetch_kingdom_status()
-	var barrier_max := 12000
-	var charter: Dictionary = _kingdom_status_cache.get("charter", {})
-	if not charter.is_empty():
-		barrier_max = int(charter.get("barrier", {}).get("max_hp", barrier_max))
-	_narrative.text += "\n[공성전] 이벤트 재생 중…\n"
-	_siege_replay.play_simulation(siege, barrier_max)
+	_sync_live_siege(payload)
 
 
 func _on_agents_loaded(payload: Dictionary) -> void:
