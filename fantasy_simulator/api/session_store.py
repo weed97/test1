@@ -118,4 +118,9 @@ def turn_payload(session: GameSession, result: dict[str, Any]) -> dict[str, Any]
         "gold": session.state.get("inventory", {}).get("party_gold", 0),
         "combat_active": bool(session.state.get("combat")),
         "main_story_phase": flags.get("main_story", {}).get("phase"),
+        "siege_simulation": result.get("siege_simulation")
+        or flags.get("ecology", {}).get("kingdom_wars", {}).get("last_simulation"),
+        "active_sieges": flags.get("ecology", {})
+        .get("kingdom_wars", {})
+        .get("active", []),
     }

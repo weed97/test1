@@ -19,6 +19,7 @@ from utils.kingdom_war import (  # noqa: E402
     defender_forces_from_charter,
     kingdom_wars_status,
     resolve_siege_round,
+    simulate_kingdom_wars_for_turn,
     simulate_siege_round,
     start_siege_war,
     tick_kingdom_wars,
@@ -98,9 +99,11 @@ class KingdomWarTests(unittest.TestCase):
                 rng=random.Random(3),
             )
             war = r["war"]
-            lines = resolve_siege_round(state, war, base_dir=root, rng=random.Random(4))
+            result = resolve_siege_round(state, war, base_dir=root, rng=random.Random(4))
+            lines = result.get("lines", [])
+            events = result.get("events", [])
             self.assertTrue(any("공성" in ln for ln in lines))
-            self.assertTrue(any("검" in ln or "궁" in ln or "마법" in ln for ln in lines))
+            self.assertGreater(len(events), 0)
 
     def test_simulate_round_api_shape(self) -> None:
         with isolated_game_root() as root:
@@ -117,7 +120,7 @@ class KingdomWarTests(unittest.TestCase):
             sim = simulate_siege_round(state, war_id, base_dir=root, rng=random.Random(6))
             self.assertTrue(sim["ok"], sim)
 
-    def test_tick_advances_active_sieges(self) -> None:
+    def test_simulate_on_turn_precision(self) -> None:
         with isolated_game_root() as root:
             state = self._state_with_kingdom(root)
             start_siege_war(
@@ -128,8 +131,42 @@ class KingdomWarTests(unittest.TestCase):
                 base_dir=root,
                 rng=random.Random(7),
             )
-            lines = tick_kingdom_wars(state, base_dir=root, rng=random.Random(8))
-            self.assertTrue(lines)
+            sim = simulate_kingdom_wars_for_turn(
+                state,
+                turn=5,
+                temporal_mode="precision",
+                minutes_advanced=60,
+                base_dir=root,
+                rng=random.Random(8),
+            )
+            self.assertIsNotNone(sim["simulation"])
+            self.assertGreaterEqual(sim["simulation"]["rounds_per_war"], 1)
+            self.assertTrue(sim["lines"])
+
+    def test_explore_turn_includes_siege_simulation(self) -> None:
+        with isolated_game_root() as root:
+            session = GameSession.from_root(root, mode="rule", seed=9)
+            session.state.setdefault("flags", {})["game_mode"] = "ecology"
+            session.state.setdefault("inventory", {})["party_gold"] = 500_000
+            complete_kingdom_founding(
+                session.state,
+                map_id="ashpoint_01",
+                x=1,
+                y=1,
+                name="시뮬 왕국",
+                base_dir=root,
+            )
+            start_siege_war(
+                session.state,
+                attacker_civ="goblin_tribe",
+                goal_id="plunder",
+                goal_label="약탈",
+                base_dir=root,
+                rng=random.Random(10),
+            )
+            result = session.run_turn("explore", temporal_mode="precision")
+            self.assertIn("lines", result)
+            self.assertIsNotNone(result.get("siege_simulation"))
 
 
 if __name__ == "__main__":

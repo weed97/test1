@@ -85,6 +85,15 @@
     "wall_archer": "bow",
     "mage_per_city_level": 3
   },
+  "simulation": {
+    "auto_on_every_turn": true,
+    "rounds_per_turn_classic": 1,
+    "rounds_per_turn_nex": 2,
+    "rounds_per_turn_precision": 3,
+    "minutes_per_round": 20,
+    "micro_events_per_round": true,
+    "stagger_ms_per_event": 90
+  },
   "outcomes": {
     "siege_repelled": { "attacker_morale_loss": 40, "defender_stability_gain": 8 },
     "breach_failed": { "attacker_morale_loss": 25, "barrier_damage_mult": 0.6 },

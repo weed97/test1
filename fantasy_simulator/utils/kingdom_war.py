@@ -177,17 +177,92 @@ def start_siege_war(
     return {"ok": True, "war": war, "lines": [line]}
 
 
+def _rounds_for_turn(
+    sim_cfg: dict[str, Any],
+    *,
+    temporal_mode: str,
+    minutes_advanced: int,
+) -> int:
+    if minutes_advanced > 0:
+        mpr = max(1, int(sim_cfg.get("minutes_per_round", 20)))
+        return max(1, min(6, minutes_advanced // mpr))
+    key = f"rounds_per_turn_{temporal_mode}"
+    return max(1, int(sim_cfg.get(key, sim_cfg.get("rounds_per_turn_classic", 1))))
+
+
+def _micro_events(
+    atk_br: dict[str, int],
+    def_br: dict[str, int],
+    phase: dict[str, Any],
+    wcfg: dict[str, Any],
+    *,
+    t0_ms: int,
+    stagger_ms: int,
+    rng: random.Random,
+) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    t = t0_ms
+    templates = {
+        "sword": ("돌격", "방어선"),
+        "bow": ("일제 사격", "성벽 반격"),
+        "magic": ("마법 포격", "결계 강화"),
+        "beast": ("야수 돌진", "창쇠 방어"),
+    }
+    for cls, power in atk_br.items():
+        if power <= 0:
+            continue
+        verb, _ = templates.get(cls, ("공격", ""))
+        label = _class_cfg(wcfg, cls).get("label", cls)
+        events.append(
+            {
+                "t_ms": t,
+                "phase": phase.get("id"),
+                "side": "attacker",
+                "class": cls,
+                "kind": "strike",
+                "label": label,
+                "power": power,
+                "text": f"공격군 {label} {verb} (위력 {power})",
+            }
+        )
+        t += stagger_ms + rng.randint(0, 30)
+    for cls, power in def_br.items():
+        if power <= 0:
+            continue
+        _, verb = templates.get(cls, ("", "방어"))
+        label = _class_cfg(wcfg, cls).get("label", cls)
+        events.append(
+            {
+                "t_ms": t,
+                "phase": phase.get("id"),
+                "side": "defender",
+                "class": cls,
+                "kind": "defend",
+                "label": label,
+                "power": power,
+                "text": f"수성군 {label} {verb} (방어 {power})",
+            }
+        )
+        t += stagger_ms + rng.randint(0, 30)
+    return events
+
+
 def resolve_siege_round(
     state: dict[str, Any],
     war: dict[str, Any],
     *,
     base_dir: str | Path,
     rng: random.Random,
-) -> list[str]:
+    sim_t0_ms: int = 0,
+) -> dict[str, Any]:
     charter = get_kingdom_charter(state)
     if not charter:
         war["status"] = "aborted"
-        return ["[공성전] 왕국 소멸 — 전투 중단"]
+        return {
+            "lines": ["[공성전] 왕국 소멸 — 전투 중단"],
+            "events": [],
+            "round": war.get("round", 0),
+        }
 
     wcfg = load_war_config(base_dir)
     kcfg = load_kingdom_config(base_dir)
@@ -221,19 +296,19 @@ def resolve_siege_round(
     def_power = int(def_power * (1.0 + walls * float(siege_cfg.get("defender_wall_bonus_per_level", 0.12))))
     def_power = int(def_power * float(fx.get("garrison_defense_mult", 1.0)))
 
+    wcfg_full = wcfg
+    sim_cfg = wcfg_full.get("simulation", {})
+    stagger = int(sim_cfg.get("stagger_ms_per_event", 90))
+    events: list[dict[str, Any]] = []
+    if sim_cfg.get("micro_events_per_round", True):
+        events = _micro_events(
+            atk_br, def_br, phase, wcfg, t0_ms=sim_t0_ms, stagger_ms=stagger, rng=rng
+        )
+
     lines: list[str] = []
     lines.append(f"[공성 {rnd}라운드·{phase.get('label', '?')}]")
-
-    # Class-flavored log
-    for cls, p in atk_br.items():
-        if p > 0:
-            label = _class_cfg(wcfg, cls).get("label", cls)
-            lines.append(f"  공격 {label}: 위력 {p}")
-    for cls, p in def_br.items():
-        if p > 0:
-            label = _class_cfg(wcfg, cls).get("label", cls)
-            suffix = " (성벽)" if cls == "bow" and walls > 0 else ""
-            lines.append(f"  수성 {label}: 방어 {p}{suffix}")
+    for ev in events:
+        lines.append(f"  {ev['text']}")
 
     net = atk_power - def_power
     if net > 0:
@@ -251,6 +326,13 @@ def resolve_siege_round(
         atk["morale"] = min(100, int(atk.get("morale", 75)) + 2)
         if siege_result.get("barrier_broken"):
             lines.append("  ⚠ 왕국 결계 붕괴 — 물리적 함락 위험!")
+            events.append(
+                {
+                    "t_ms": sim_t0_ms + stagger * (len(events) + 1),
+                    "kind": "barrier_break",
+                    "text": "왕국 결계가 산산조각났다!",
+                }
+            )
     else:
         repel = abs(net)
         lines.append(f"  수성 성공 — 공격군 퇴각 압박 ({repel})")
@@ -304,7 +386,22 @@ def resolve_siege_round(
         charter["stability"] = min(100, int(charter.get("stability", 75)) + 8)
         _finalize_siege(state, war, base_dir=base_dir)
 
-    return lines
+    charter = get_kingdom_charter(state)
+    barrier_hp = int(charter.get("barrier", {}).get("hp", 0)) if charter else 0
+    return {
+        "lines": lines,
+        "events": events,
+        "round": rnd,
+        "phase": phase.get("id"),
+        "attack_power": atk_power,
+        "defense_power": def_power,
+        "net": net,
+        "attacker_morale": int(atk.get("morale", 0)),
+        "defender_morale": int(dfn.get("morale", 0)),
+        "barrier_hp": barrier_hp,
+        "war_status": war.get("status"),
+        "outcome": war.get("outcome"),
+    }
 
 
 def _finalize_siege(
@@ -333,25 +430,115 @@ def _finalize_siege(
         cs["prosperity"] = int(cs.get("prosperity", 0)) + 8
 
 
+def simulate_kingdom_wars_for_turn(
+    state: dict[str, Any],
+    *,
+    turn: int,
+    temporal_mode: str = "classic",
+    minutes_advanced: int = 0,
+    base_dir: str | Path,
+    rng: random.Random | None = None,
+) -> dict[str, Any]:
+    """Auto-simulate active sieges for one player turn (no manual API step)."""
+    empty: dict[str, Any] = {"lines": [], "simulation": None}
+    if not ecology_enabled(state):
+        return empty
+    if not get_kingdom_charter(state):
+        return empty
+
+    bucket = _war_bucket(state)
+    active = [w for w in bucket.get("active", []) if w.get("status") == "active"]
+    if not active:
+        return empty
+
+    wcfg = load_war_config(base_dir)
+    sim_cfg = wcfg.get("simulation", {})
+    if not sim_cfg.get("auto_on_every_turn", True):
+        return empty
+
+    rng = rng or random.Random()
+    rounds = _rounds_for_turn(
+        sim_cfg, temporal_mode=temporal_mode, minutes_advanced=minutes_advanced
+    )
+    stagger = int(sim_cfg.get("stagger_ms_per_event", 90))
+
+    all_lines: list[str] = []
+    war_sims: list[dict[str, Any]] = []
+    t_cursor = 0
+
+    for war in active:
+        if war.get("status") != "active":
+            continue
+        war_events: list[dict[str, Any]] = []
+        war_rounds: list[dict[str, Any]] = []
+        for _ in range(rounds):
+            if war.get("status") != "active":
+                break
+            result = resolve_siege_round(
+                state,
+                war,
+                base_dir=base_dir,
+                rng=rng,
+                sim_t0_ms=t_cursor,
+            )
+            all_lines.extend(result.get("lines", []))
+            war_events.extend(result.get("events", []))
+            war_rounds.append(
+                {
+                    "round": result.get("round"),
+                    "phase": result.get("phase"),
+                    "attack_power": result.get("attack_power"),
+                    "defense_power": result.get("defense_power"),
+                    "net": result.get("net"),
+                    "barrier_hp": result.get("barrier_hp"),
+                }
+            )
+            t_cursor += stagger * max(1, len(result.get("events", []))) + 200
+
+        charter = get_kingdom_charter(state)
+        war_sims.append(
+            {
+                "war_id": war.get("war_id"),
+                "attacker_label": war.get("attacker", {}).get("label"),
+                "defender_name": war.get("defender", {}).get("kingdom_name"),
+                "status": war.get("status"),
+                "outcome": war.get("outcome"),
+                "rounds_simulated": len(war_rounds),
+                "rounds": war_rounds,
+                "events": war_events,
+                "barrier_hp": int(charter.get("barrier", {}).get("hp", 0)) if charter else 0,
+            }
+        )
+
+    simulation = {
+        "turn": turn,
+        "temporal_mode": temporal_mode,
+        "minutes_advanced": minutes_advanced,
+        "rounds_per_war": rounds,
+        "wars": war_sims,
+    }
+    bucket["last_simulation"] = simulation
+    return {"lines": all_lines, "simulation": simulation}
+
+
 def tick_kingdom_wars(
     state: dict[str, Any],
     *,
     base_dir: str | Path,
     rng: random.Random | None = None,
+    temporal_mode: str = "classic",
+    minutes_advanced: int = 0,
 ) -> list[str]:
-    if not ecology_enabled(state):
-        return []
-    if not get_kingdom_charter(state):
-        return []
-
-    rng = rng or random.Random()
-    lines: list[str] = []
-    bucket = _war_bucket(state)
-    for war in list(bucket.get("active", [])):
-        if war.get("status") != "active":
-            continue
-        lines.extend(resolve_siege_round(state, war, base_dir=base_dir, rng=rng))
-    return lines
+    """Backward-compatible wrapper — prefer simulate_kingdom_wars_for_turn."""
+    result = simulate_kingdom_wars_for_turn(
+        state,
+        turn=int(state.get("turn", 0)),
+        temporal_mode=temporal_mode,
+        minutes_advanced=minutes_advanced,
+        base_dir=base_dir,
+        rng=rng,
+    )
+    return result.get("lines", [])
 
 
 def kingdom_wars_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
@@ -382,5 +569,11 @@ def simulate_siege_round(
     if war.get("status") != "active":
         return {"ok": False, "error": "siege already ended"}
     rng = rng or random.Random()
-    lines = resolve_siege_round(state, war, base_dir=base_dir, rng=rng)
-    return {"ok": True, "war": war, "lines": lines}
+    result = resolve_siege_round(state, war, base_dir=base_dir, rng=rng)
+    return {
+        "ok": True,
+        "war": war,
+        "lines": result.get("lines", []),
+        "events": result.get("events", []),
+        "round_summary": result,
+    }

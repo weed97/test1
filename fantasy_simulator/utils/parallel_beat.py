@@ -530,7 +530,6 @@ def run_macro_parallel_lanes(
     )
 
     from utils.kingdom_system import tick_kingdom
-    from utils.kingdom_war import tick_kingdom_wars
     from utils.settlement_build import tick_player_build_projects
     from utils.civilization_coupling import tick_civilization_coupling
     from utils.world_conflicts import tick_world_conflicts
@@ -539,7 +538,6 @@ def run_macro_parallel_lanes(
     lines.extend(tick_kingdom(state, base_dir=base_dir))
     lines.extend(tick_civilization_coupling(state, base_dir=base_dir, rng=r))
     lines.extend(tick_world_conflicts(state, base_dir=base_dir, rng=r))
-    lines.extend(tick_kingdom_wars(state, base_dir=base_dir, rng=r))
 
     eco = state.setdefault("flags", {}).setdefault("ecology", {})
     eco["last_macro_parallel"] = {"lanes": 3, "civ_keys_at_plan": len(civ_snapshot)}

@@ -43,6 +43,7 @@ class TurnResult:
     time_steps: int = 1
     minutes_advanced: int = 0
     clock: str | None = None
+    siege_simulation: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -58,4 +59,6 @@ class TurnResult:
         }
         if self.clock:
             out["clock"] = self.clock
+        if self.siege_simulation:
+            out["siege_simulation"] = self.siege_simulation
         return out
