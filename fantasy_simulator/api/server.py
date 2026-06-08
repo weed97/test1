@@ -254,6 +254,10 @@ class SimTickRequest(BaseModel):
     dt_real_ms: int = Field(..., ge=0, le=30_000)
 
 
+class DemoBootstrapRequest(BaseModel):
+    session_id: str
+
+
 class HealthResponse(BaseModel):
     api_version: int
     status: str
@@ -267,6 +271,70 @@ def health() -> HealthResponse:
         status="ok",
         package_root=str(package_root()),
     )
+
+
+def _demo_mode_enabled() -> bool:
+    import os
+
+    return os.environ.get("ELDORIA_DEMO", "").strip() in ("1", "true", "yes")
+
+
+@app.post("/v1/demo/bootstrap")
+def demo_bootstrap(body: DemoBootstrapRequest) -> dict[str, Any]:
+    """Dev/demo: kingdom + military + active siege for playtesting (ELDORIA_DEMO=1)."""
+    if not _demo_mode_enabled():
+        raise HTTPException(status_code=403, detail="set ELDORIA_DEMO=1 on API server")
+    from tests.test_kingdom_system import _ready_for_kingdom
+    from utils.kingdom_system import complete_kingdom_founding, recruit_military
+    from utils.kingdom_war import start_siege_war
+    from utils.sim_clock import enable_sim_clock
+
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    root = package_root()
+    state = session.state
+    state.setdefault("flags", {})["game_mode"] = "hybrid"
+    _ready_for_kingdom(state, root)
+    state.setdefault("inventory", {})["party_gold"] = 500_000
+    enable_sim_clock(state, base_dir=root)
+    complete_kingdom_founding(
+        state,
+        map_id="ashpoint_01",
+        x=40,
+        y=48,
+        name="데모 왕국",
+        doctrine_id="martial_ascendancy",
+        base_dir=root,
+    )
+    recruit_military(state, "guard", 8, base_dir=root)
+    recruit_military(state, "wall_archer", 6, base_dir=root)
+    recruit_military(state, "elite", 4, base_dir=root)
+    import random
+
+    siege = start_siege_war(
+        state,
+        attacker_civ="goblin_tribe",
+        goal_id="plunder",
+        goal_label="약탈",
+        base_dir=root,
+        rng=random.Random(42),
+    )
+    if not siege.get("ok"):
+        raise HTTPException(status_code=400, detail=siege.get("error", "siege failed"))
+    session.manager.save(state)
+    war = siege["war"]
+    return {
+        "api_version": API_VERSION,
+        "session_id": body.session_id,
+        "ok": True,
+        "kingdom_name": "데모 왕국",
+        "war_id": war.get("war_id"),
+        "defender_commanders": len(
+            war.get("command", {}).get("defender", {}).get("commanders", [])
+        ),
+        "message": "왕국·군대·공성전 준비 완료 — Godot 탐험 또는 sim/tick으로 진행",
+    }
 
 
 @app.post("/v1/session/new", response_model=NewSessionResponse)

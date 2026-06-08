@@ -379,7 +379,7 @@ def tick_world_conflicts(
             {
                 "type": "war",
                 "war_id": war["war_id"],
-                "outcome": war["outcome"],
+                "outcome": war.get("outcome"),
                 "narrative": war.get("narrative"),
             },
             base_dir=base_dir,
