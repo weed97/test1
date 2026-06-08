@@ -190,11 +190,12 @@ def init_war_command(
     def_block["autonomous"] = False
 
 
-def set_defender_siege_command(
+def _set_side_siege_command(
     war: dict[str, Any],
     *,
+    side: str,
     doctrine: str,
-    posture: str | None = None,
+    posture: str | None,
     base_dir: str | Path,
 ) -> dict[str, Any]:
     if war.get("status") != "active":
@@ -204,9 +205,10 @@ def set_defender_siege_command(
     if doctrine not in doctrines:
         return {"ok": False, "error": f"알 수 없는 교리: {doctrine}"}
     ddef = doctrines[doctrine]
-    if ddef.get("side") == "attacker":
-        return {"ok": False, "error": "수성 교리만 설정할 수 있습니다"}
-    block = _commander_block(war, "defender")
+    expected = "defender" if side == "defender" else "attacker"
+    if ddef.get("side") != expected:
+        return {"ok": False, "error": f"{expected} 교리만 설정할 수 있습니다"}
+    block = _commander_block(war, side)
     if not command_chain_intact(block):
         return {"ok": False, "error": "지휘관 전멸 — 명령체계 붕괴, 단독 교전 중"}
     block["doctrine"] = doctrine
@@ -220,10 +222,35 @@ def set_defender_siege_command(
                 c["posture_depth"] = depth
     return {
         "ok": True,
+        "side": side,
         "doctrine": doctrine,
         "posture": block.get("posture"),
         "label": ddef.get("label", doctrine),
     }
+
+
+def set_defender_siege_command(
+    war: dict[str, Any],
+    *,
+    doctrine: str,
+    posture: str | None = None,
+    base_dir: str | Path,
+) -> dict[str, Any]:
+    return _set_side_siege_command(
+        war, side="defender", doctrine=doctrine, posture=posture, base_dir=base_dir
+    )
+
+
+def set_attacker_siege_command(
+    war: dict[str, Any],
+    *,
+    doctrine: str,
+    posture: str | None = None,
+    base_dir: str | Path,
+) -> dict[str, Any]:
+    return _set_side_siege_command(
+        war, side="attacker", doctrine=doctrine, posture=posture, base_dir=base_dir
+    )
 
 
 def _doctrine_weights(
@@ -262,6 +289,7 @@ def _apply_commander_damage(
     snipe_resistance: float,
     bodyguard_mult: float,
     rng: random.Random,
+    ccfg: dict[str, Any] | None = None,
 ) -> tuple[int, list[dict[str, Any]], list[dict[str, Any]]]:
     """Return (damage_dealt, killed_commanders, events)."""
     alive = [c for c in commanders if c.get("alive", True)]
@@ -270,12 +298,13 @@ def _apply_commander_damage(
     target = min(alive, key=lambda c: int(c.get("rank", 99)))
     if not target.get("protected_by_kingdom"):
         target = rng.choice(alive)
+    combat_cfg = (ccfg or {}).get("combat", {})
+    def_div = float(combat_cfg.get("defense_divisor", 88))
+    min_hit = int(combat_cfg.get("min_snipe_damage", 28))
     resist = max(0.1, 1.0 - snipe_resistance)
     guard = bodyguard_mult if target.get("protected_by_kingdom") else 1.0
-    mitigated = max(
-        1,
-        int(raw_damage * resist / max(1.0, int(target.get("defense", 1)) / 40.0) / guard),
-    )
+    scaled = raw_damage * resist / max(1.0, int(target.get("defense", 1)) / def_div) / guard
+    mitigated = max(min_hit, int(scaled))
     target["hp"] = int(target.get("hp", 0)) - mitigated
     events: list[dict[str, Any]] = [
         {
@@ -386,7 +415,8 @@ def resolve_command_round(
         barrier_mult = 0.15 * (atk_w["barrier_weight"] / total_w) * float(atk_w["coordination"])
         barrier_mult = max(0.05, barrier_mult * (1.0 + net / max(1, atk_power) * 0.1))
 
-        snipe_pool = int(net * atk_w["commander_snipe_weight"] / total_w * 0.25)
+        snipe_net = float(ccfg.get("combat", {}).get("snipe_net_factor", 0.58))
+        snipe_pool = int(net * atk_w["commander_snipe_weight"] / total_w * snipe_net)
         if snipe_pool > 0 and def_block.get("commanders"):
             posture = ccfg.get("postures", {}).get(str(def_block.get("posture", "behind_wall")), {})
             snipe_res = float(posture.get("snipe_resistance", 0.5))
@@ -400,6 +430,7 @@ def resolve_command_round(
                 snipe_resistance=snipe_res,
                 bodyguard_mult=bodyguard,
                 rng=rng,
+                ccfg=ccfg,
             )
             for i, ev in enumerate(evs):
                 ev["t_ms"] = sim_t0_ms + stagger_ms * (i + 1)
@@ -425,6 +456,7 @@ def resolve_command_round(
                 snipe_resistance=float(posture.get("snipe_resistance", 0)),
                 bodyguard_mult=1.0,
                 rng=rng,
+                ccfg=ccfg,
             )
             for i, ev in enumerate(evs):
                 ev["t_ms"] = sim_t0_ms + stagger_ms * (i + 3)

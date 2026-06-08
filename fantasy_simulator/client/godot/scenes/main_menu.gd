@@ -90,7 +90,7 @@ func _on_turn_completed(payload: Dictionary) -> void:
 		payload.get("clock", world.get("time_of_day", "?")),
 		world.get("tension", "?"),
 	]
-	var siege: Variant = payload.get("siege_simulation")
+	var siege: Dictionary = payload.get("siege_simulation", {})
 	if siege is Dictionary and not siege.get("wars", []).is_empty():
 		$VBox/Narrative.text += "\n[공성전] 시뮬레이션 발생 — 왕국 메뉴에서 재생 가능\n"
 

@@ -99,6 +99,34 @@ class SiegeCommandTests(unittest.TestCase):
             )
             self.assertFalse(r["ok"])
 
+    def test_focus_commander_kills_defender_over_many_rounds(self) -> None:
+        with isolated_game_root() as root:
+            state, war = self._war(root)
+            atk_block = war["command"]["attacker"]
+            atk_block["doctrine"] = "focus_commander"
+            atk_block["posture"] = "forward_command"
+            set_defender_siege_command(
+                war,
+                doctrine="coordinate_defense",
+                posture="forward_command",
+                base_dir=root,
+            )
+            supreme = war["command"]["defender"]["commanders"][0]
+            start_hp = int(supreme.get("hp", 0))
+            fallen = 0
+            for i in range(18):
+                resolve_siege_round(state, war, base_dir=root, rng=random.Random(20 + i))
+                def_cmds = war["command"]["defender"]["commanders"]
+                fallen = sum(1 for c in def_cmds if not c.get("alive", True))
+                if fallen > 0 or war.get("status") != "active":
+                    break
+            end_hp = int(supreme.get("hp", 0)) if supreme.get("alive", True) else 0
+            dmg = start_hp - end_hp
+            self.assertTrue(
+                fallen > 0 or dmg >= int(start_hp * 0.35),
+                f"지휘관 암살 doctrine 피해 부족 (fallen={fallen}, dmg={dmg}/{start_hp})",
+            )
+
     def test_resolve_round_emits_command_events(self) -> None:
         with isolated_game_root() as root:
             state, war = self._war(root)

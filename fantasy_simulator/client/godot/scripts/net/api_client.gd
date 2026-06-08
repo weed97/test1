@@ -30,7 +30,7 @@ func new_game(seed: int = -1, temporal_mode: String = "precision", game_mode: St
 	}
 	if seed >= 0:
 		body["seed"] = seed
-	var parsed := await _post_json("/v1/session/new", body)
+	var parsed: Variant = await _post_json("/v1/session/new", body)
 	if parsed == null:
 		api_error.emit("session create failed")
 		return
@@ -43,7 +43,7 @@ func new_game(seed: int = -1, temporal_mode: String = "precision", game_mode: St
 
 
 func fetch_world_maps() -> void:
-	var parsed := await _post_json("/v1/world/maps", {}, HTTPClient.METHOD_GET)
+	var parsed: Variant = await _post_json("/v1/world/maps", {}, HTTPClient.METHOD_GET)
 	if parsed == null:
 		return
 	world_maps = parsed.get("maps", {})
@@ -71,7 +71,7 @@ func sync_position(
 			"allow_map_transition": allow_transition,
 		},
 	}
-	var parsed := await _post_json("/v1/world/position", body)
+	var parsed: Variant = await _post_json("/v1/world/position", body)
 	if parsed == null:
 		return false
 	if not parsed.get("ok", true):
@@ -106,7 +106,7 @@ func run_turn(
 			"facing": sim_facing,
 			"allow_map_transition": false,
 		}
-	var parsed := await _post_json("/v1/turn", body)
+	var parsed: Variant = await _post_json("/v1/turn", body)
 	if parsed == null:
 		return false
 	_apply_position_from_payload(parsed)
@@ -127,7 +127,7 @@ func fetch_progression_status() -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/progression/status?session_id=%s" % session_id.uri_encode(),
 		{},
 		HTTPClient.METHOD_GET,
@@ -139,7 +139,7 @@ func fetch_skill_tree(character_id: String) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {"error": "no session"}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/progression/skill_tree?session_id=%s&character_id=%s" % [
 			session_id.uri_encode(),
 			character_id.uri_encode(),
@@ -168,7 +168,7 @@ func fetch_item_catalog(
 		path += "&grade=%s" % grade.uri_encode()
 	if not search.is_empty():
 		path += "&q=%s" % search.uri_encode()
-	var parsed := await _post_json(path, {}, HTTPClient.METHOD_GET)
+	var parsed: Variant = await _post_json(path, {}, HTTPClient.METHOD_GET)
 	return parsed if parsed != null else {}
 
 
@@ -176,7 +176,7 @@ func equip_item(character_id: String, item_id: String) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/progression/equip",
 		{
 			"session_id": session_id,
@@ -191,7 +191,7 @@ func grant_item(item_id: String, count: int = 1) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/progression/grant_item",
 		{
 			"session_id": session_id,
@@ -203,7 +203,7 @@ func grant_item(item_id: String, count: int = 1) -> Dictionary:
 
 
 func fetch_item_detail(item_id: String) -> Dictionary:
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/catalog/items/%s" % item_id.uri_encode(),
 		{},
 		HTTPClient.METHOD_GET,
@@ -217,7 +217,7 @@ func use_item(character_id: String, item_id: String) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/progression/use_item",
 		{
 			"session_id": session_id,
@@ -232,7 +232,7 @@ func unlock_skill(character_id: String, skill_id: String) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/progression/unlock_skill",
 		{
 			"session_id": session_id,
@@ -249,7 +249,7 @@ func cast_sovereign_wish(edict_type: String, extra: Dictionary = {}) -> Dictiona
 		return {}
 	var body := {"session_id": session_id, "edict_type": edict_type}
 	body.merge(extra, true)
-	var parsed := await _post_json("/v1/sovereign/wish", body)
+	var parsed: Variant = await _post_json("/v1/sovereign/wish", body)
 	return parsed if parsed != null else {}
 
 
@@ -260,7 +260,7 @@ func fetch_world_agents(map_id: String = "") -> Dictionary:
 	var path := "/v1/world/agents?session_id=%s" % session_id.uri_encode()
 	if not map_id.is_empty():
 		path += "&map_id=%s" % map_id.uri_encode()
-	var parsed := await _post_json(path, {}, HTTPClient.METHOD_GET)
+	var parsed: Variant = await _post_json(path, {}, HTTPClient.METHOD_GET)
 	if parsed != null:
 		agents_loaded.emit(parsed)
 	return parsed if parsed != null else {}
@@ -270,7 +270,7 @@ func fetch_kingdom_status() -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/kingdom/status?session_id=%s" % session_id.uri_encode(),
 		{},
 		HTTPClient.METHOD_GET,
@@ -282,7 +282,7 @@ func fetch_kingdom_doctrines() -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/kingdom/doctrines?session_id=%s" % session_id.uri_encode(),
 		{},
 		HTTPClient.METHOD_GET,
@@ -294,6 +294,7 @@ func set_siege_command(
 	war_id: String,
 	doctrine: String,
 	posture: String = "",
+	side: String = "defender",
 ) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
@@ -301,11 +302,12 @@ func set_siege_command(
 	var body := {
 		"session_id": session_id,
 		"war_id": war_id,
+		"side": side,
 		"doctrine": doctrine,
 	}
 	if not posture.is_empty():
 		body["posture"] = posture
-	var parsed := await _post_json("/v1/kingdom/war/command", body)
+	var parsed: Variant = await _post_json("/v1/kingdom/war/command", body)
 	return parsed if parsed != null else {"ok": false, "error": "request failed"}
 
 
@@ -313,7 +315,7 @@ func fetch_kingdom_commanders() -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/kingdom/commanders?session_id=%s" % session_id.uri_encode(),
 		{},
 		HTTPClient.METHOD_GET,
@@ -325,7 +327,7 @@ func fetch_kingdom_wars() -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/kingdom/wars?session_id=%s" % session_id.uri_encode(),
 		{},
 		HTTPClient.METHOD_GET,
@@ -347,7 +349,7 @@ func start_kingdom_founding(
 	var mid := map_id if not map_id.is_empty() else sim_map_id
 	var tx := x if x >= 0 else sim_tile.x
 	var ty := y if y >= 0 else sim_tile.y
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/settlement/kingdom",
 		{
 			"session_id": session_id,
@@ -366,7 +368,7 @@ func set_kingdom_doctrine(doctrine_id: String, custom_decree: String = "") -> Di
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/kingdom/doctrine",
 		{
 			"session_id": session_id,
@@ -381,7 +383,7 @@ func fortify_kingdom(upgrade_type: String) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/kingdom/fortify",
 		{"session_id": session_id, "upgrade_type": upgrade_type},
 	)
@@ -392,7 +394,7 @@ func build_kingdom_interior(build_type: String) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/kingdom/build_interior",
 		{"session_id": session_id, "build_type": build_type},
 	)
@@ -403,7 +405,7 @@ func recruit_kingdom_military(unit_type: String, count: int = 1) -> Dictionary:
 	if session_id.is_empty():
 		api_error.emit("no session")
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/kingdom/recruit",
 		{
 			"session_id": session_id,
@@ -417,7 +419,7 @@ func recruit_kingdom_military(unit_type: String, count: int = 1) -> Dictionary:
 func fetch_sim_status() -> Dictionary:
 	if session_id.is_empty():
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/sim/status?session_id=%s" % session_id.uri_encode(),
 		{},
 		HTTPClient.METHOD_GET,
@@ -435,7 +437,7 @@ func sim_tick(dt_real_ms: int) -> Dictionary:
 		return {}
 	if not sim_clock_enabled:
 		return {}
-	var parsed := await _post_json(
+	var parsed: Variant = await _post_json(
 		"/v1/sim/tick",
 		{
 			"session_id": session_id,
@@ -452,7 +454,7 @@ func sim_tick(dt_real_ms: int) -> Dictionary:
 
 
 func health_check() -> bool:
-	var parsed := await _post_json("/v1/health", {}, HTTPClient.METHOD_GET)
+	var parsed: Variant = await _post_json("/v1/health", {}, HTTPClient.METHOD_GET)
 	return parsed != null and parsed.get("status") == "ok"
 
 
@@ -477,11 +479,15 @@ func _post_json_impl(path: String, body: Dictionary, method: int) -> Variant:
 		api_error.emit("request failed: %s" % error_string(err))
 		return null
 
-	var args: Array = await http.request_completed
+	var completed: Variant = await http.request_completed
 	http.queue_free()
+	if completed is not Array:
+		api_error.emit("network error: invalid response")
+		return null
+	var args: Array = completed
 
-	var req_result: int = args[0]
-	var code: int = args[1]
+	var req_result: int = int(args[0])
+	var code: int = int(args[1])
 	var raw: PackedByteArray = args[3]
 	if req_result != HTTPRequest.RESULT_SUCCESS:
 		api_error.emit("network error: %s" % req_result)

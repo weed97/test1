@@ -329,9 +329,13 @@ def founding_cost_preview(state: dict[str, Any], *, base_dir: str | Path) -> dic
     checks.append({"id": "materials", "ok": mats_ok, "need": materials, "have": dict(ps.get("stockpile", {}))})
     checks.append({"id": "not_kingdom", "ok": not ps.get("is_kingdom"), "error": "이미 왕국"})
     can = all(c["ok"] for c in checks)
+    from utils.tutorial_rewards import tutorial_progress_summary
+
+    tutorial = tutorial_progress_summary(state, base_dir=base_dir)
     return {
         "can_found": can,
         "checks": checks,
+        "tutorial": tutorial,
         "gold_cost_direct": direct,
         "gold_cost_ancillary": ancillary,
         "gold_cost_total": total_gold,

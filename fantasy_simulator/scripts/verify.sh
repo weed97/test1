@@ -36,4 +36,12 @@ for sk in (
 print("API smoke OK")
 PY
 
+if command -v godot >/dev/null 2>&1 || command -v godot4 >/dev/null 2>&1; then
+  GODOT_BIN="$(command -v godot4 2>/dev/null || command -v godot)"
+  echo "==> Godot headless import ($GODOT_BIN)"
+  "$GODOT_BIN" --headless --path "$ROOT/client/godot" --import --quit 2>&1 | tail -5
+else
+  echo "==> Godot not installed — skip headless import (GDScript typed in api_client.gd)"
+fi
+
 echo "==> All checks passed"

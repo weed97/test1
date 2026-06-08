@@ -174,9 +174,10 @@ class KingdomSiegeRoundRequest(BaseModel):
 class KingdomSiegeCommandRequest(BaseModel):
     session_id: str
     war_id: str
+    side: Literal["defender", "attacker"] = "defender"
     doctrine: str = Field(
         ...,
-        pattern="^(protect_commanders|coordinate_defense)$",
+        pattern="^(protect_commanders|coordinate_defense|focus_barrier|focus_gate|focus_commander)$",
     )
     posture: Optional[str] = Field(
         None,
@@ -262,6 +263,7 @@ class HealthResponse(BaseModel):
     api_version: int
     status: str
     package_root: str
+    demo_mode: bool = False
 
 
 @app.get("/v1/health", response_model=HealthResponse)
@@ -270,6 +272,7 @@ def health() -> HealthResponse:
         api_version=API_VERSION,
         status="ok",
         package_root=str(package_root()),
+        demo_mode=_demo_mode_enabled(),
     )
 
 
@@ -502,7 +505,11 @@ def kingdom_war_round_route(body: KingdomSiegeRoundRequest) -> dict[str, Any]:
 @app.post("/v1/kingdom/war/command")
 def kingdom_war_command_route(body: KingdomSiegeCommandRequest) -> dict[str, Any]:
     from utils.kingdom_war import find_active_siege
-    from utils.siege_command import command_live_view, set_defender_siege_command
+    from utils.siege_command import (
+        command_live_view,
+        set_attacker_siege_command,
+        set_defender_siege_command,
+    )
 
     session = _store.get(body.session_id)
     if session is None:
@@ -511,12 +518,20 @@ def kingdom_war_command_route(body: KingdomSiegeCommandRequest) -> dict[str, Any
     war = find_active_siege(session.state, body.war_id)
     if war is None:
         raise HTTPException(status_code=404, detail="active siege not found")
-    result = set_defender_siege_command(
-        war,
-        doctrine=body.doctrine,
-        posture=body.posture,
-        base_dir=root,
-    )
+    if body.side == "attacker":
+        result = set_attacker_siege_command(
+            war,
+            doctrine=body.doctrine,
+            posture=body.posture,
+            base_dir=root,
+        )
+    else:
+        result = set_defender_siege_command(
+            war,
+            doctrine=body.doctrine,
+            posture=body.posture,
+            base_dir=root,
+        )
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail=result.get("error", "command failed"))
     session.manager.save(session.state)

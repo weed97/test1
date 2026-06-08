@@ -76,7 +76,7 @@ func _render_all() -> void:
 
 
 func _sync_live_siege_panel() -> void:
-	var live: Variant = _wars.get("siege_live")
+	var live: Dictionary = _wars.get("siege_live", {})
 	if not live is Dictionary or live.is_empty():
 		return
 	if not _siege_battle.visible:
@@ -140,6 +140,15 @@ func _render_founding() -> void:
 			continue
 		var mark := "✓" if c.get("ok", false) else "✗"
 		check_lines.append("%s %s" % [mark, _check_label(c)])
+	var tutorial: Dictionary = preview.get("tutorial", {})
+	if tutorial.get("active", false):
+		var path_lines: PackedStringArray = []
+		for step in tutorial.get("progress_path", []):
+			path_lines.append("· %s" % str(step))
+		if not path_lines.is_empty():
+			check_lines.append("")
+			check_lines.append("[진행 경로]")
+			check_lines.append_array(path_lines)
 	_founding_checks.text = "\n".join(check_lines)
 	_found_btn.disabled = not bool(preview.get("can_found", false)) or _busy
 

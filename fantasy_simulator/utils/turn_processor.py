@@ -324,6 +324,11 @@ def execute_turn(
     lines.extend(proc["lines"])
 
     action_lower = action.lower().strip()
+    from utils.tutorial_rewards import apply_tutorial_reward
+
+    lines.extend(
+        apply_tutorial_reward(ctx.state, action, base_dir=loader.base_dir)
+    )
     if "explore" in action_lower or "탐험" in action:
         from utils.field_agents import ecology_enabled
         from utils.progression import on_explore_progression

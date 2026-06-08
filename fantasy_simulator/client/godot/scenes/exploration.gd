@@ -80,7 +80,7 @@ func _setup_siege_overlay() -> void:
 func _sync_live_siege(payload: Dictionary) -> void:
 	if _siege_battle == null:
 		return
-	var live: Variant = payload.get("siege_live")
+	var live: Dictionary = payload.get("siege_live", {})
 	if not live is Dictionary or live.is_empty():
 		return
 	if not _siege_battle.visible:
@@ -94,7 +94,7 @@ func _sync_live_siege(payload: Dictionary) -> void:
 
 func _refresh_live_siege() -> void:
 	var wars: Dictionary = await ApiClient.fetch_kingdom_wars()
-	var live: Variant = wars.get("siege_live")
+	var live: Dictionary = wars.get("siege_live", {})
 	if live is Dictionary and not live.is_empty():
 		_sync_live_siege({"siege_live": live, "new_siege_events": []})
 

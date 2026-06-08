@@ -108,9 +108,9 @@ class SimClockTests(unittest.TestCase):
             )
             self.assertTrue(start["ok"])
             war = start["war"]
-            # 20 sim min per round; 20 ticks × 5s real × 12 / 60 = 20 sim min
+            # first round: 5 sim min; 5 ticks × 5s real × 12 / 60 = 5 sim min
             result: dict = {}
-            for _ in range(20):
+            for _ in range(5):
                 result = tick_simulation(
                     state, dt_real_seconds=5.0, base_dir=root, rng=session.rng
                 )

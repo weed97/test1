@@ -8,6 +8,7 @@
   "main_story_tick_minutes": 60,
   "siege": {
     "minutes_per_round": 20,
+    "first_round_minutes": 5,
     "stagger_ms_per_event": 90
   }
 }

@@ -218,7 +218,7 @@ func _spawn_armies(live: Dictionary) -> void:
 	_spawn_side_forces("defender", dfn.get("forces", {}), WALL_X - 40.0)
 
 
-func _spawn_side_forces(side: String, forces: Variant, base_x: float) -> void:
+func _spawn_side_forces(side: String, forces: Dictionary, base_x: float) -> void:
 	if not forces is Dictionary:
 		return
 	for cls in forces.keys():

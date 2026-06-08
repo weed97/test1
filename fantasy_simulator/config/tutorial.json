@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "rewards": {
+    "explore": { "max_count": 20, "gold_each": 150, "label": "탐험 발견" },
+    "investigate": { "max_count": 8, "gold_each": 200, "label": "조사 보상" },
+    "rest": { "max_count": 5, "gold_each": 50, "label": "휴식 여비" }
+  },
+  "progress_path": [
+    "정착지에서 건물·고용으로 건축 레벨을 올린다",
+    "시장·대장간·병영·홀을 완공한 뒤 왕국 선포 의식을 준비한다",
+    "탐험·조사로 추가 자금을 모은다 (튜토리얼 보상)"
+  ]
+}

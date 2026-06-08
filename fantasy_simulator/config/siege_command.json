@@ -84,6 +84,11 @@
       "snipe_resistance": 0.78
     }
   },
+  "combat": {
+    "snipe_net_factor": 1.35,
+    "defense_divisor": 58,
+    "min_snipe_damage": 95
+  },
   "command_lost": {
     "morale_loss": 20,
     "defense_coordination_penalty": 0.38,

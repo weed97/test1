@@ -528,7 +528,7 @@ def tick_siege_for_sim_minutes(
     wcfg = load_war_config(base_dir)
     sc = state.setdefault("meta", {}).setdefault("sim_clock", {})
     siege_cfg = (sim_clock_cfg or {}).get("siege", {})
-    mpr = max(
+    base_mpr = max(
         1.0,
         float(
             siege_cfg.get(
@@ -537,6 +537,7 @@ def tick_siege_for_sim_minutes(
             )
         ),
     )
+    first_mpr = float(siege_cfg.get("first_round_minutes", min(5.0, base_mpr)))
     sc["siege_accum"] = float(sc.get("siege_accum", 0.0)) + float(sim_minutes)
     stagger = int(
         siege_cfg.get(
@@ -552,7 +553,10 @@ def tick_siege_for_sim_minutes(
     war_sims: list[dict[str, Any]] = []
     rounds_done = 0
 
-    while sc["siege_accum"] >= mpr:
+    while True:
+        mpr = first_mpr if any(int(w.get("round", 0)) == 0 for w in active) else base_mpr
+        if sc["siege_accum"] < mpr:
+            break
         sc["siege_accum"] -= mpr
         rounds_done += 1
         for war in list(active):

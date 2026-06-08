@@ -159,11 +159,16 @@ def main() -> int:
         issue("MINOR", "신규 세션에 이미 왕국 있음 (비정상)")
     gold = int(kstatus.get("party_gold", 0))
     preview = kstatus.get("founding_preview", {})
-    if gold < 1000:
+    tut = preview.get("tutorial", {})
+    if gold < 1000 and not tut.get("active"):
         issue(
             "UX",
             f"신규 플레이 골드 {gold}G — 왕국 선포 비용 {preview.get('gold_cost_total', '?')} "
             "→ 정식 플레이까지 그라인딩 매우 김",
+        )
+    elif gold < 1000:
+        print(
+            f"   OK 튜토리얼 경로 활성 (80G 시작, 선포 {preview.get('gold_cost_total', '?')}G)"
         )
     sim2 = req("GET", f"/v1/sim/status?session_id={sid2}")
     if not sim2.get("sim_clock", {}).get("enabled"):
@@ -171,14 +176,18 @@ def main() -> int:
 
     # 6. bootstrap without demo flag
     print("\n6) ELDORIA_DEMO 없이 bootstrap 차단")
-    try:
-        req("POST", "/v1/demo/bootstrap", {"session_id": sid2})
-        issue("MINOR", "ELDORIA_DEMO 없이 bootstrap 허용됨")
-    except RuntimeError as exc:
-        if "403" in str(exc):
-            print("   OK 403 차단")
-        else:
-            issue("MINOR", f"bootstrap 예상외 오류: {exc}")
+    demo_on = bool(req("GET", "/v1/health").get("demo_mode", False))
+    if demo_on:
+        print("   SKIP 서버 demo_mode=1 — 로컬은 ELDORIA_DEMO=0 으로 재검증")
+    else:
+        try:
+            req("POST", "/v1/demo/bootstrap", {"session_id": sid2})
+            issue("MINOR", "ELDORIA_DEMO 없이 bootstrap 허용됨")
+        except RuntimeError as exc:
+            if "403" in str(exc):
+                print("   OK 403 차단")
+            else:
+                issue("MINOR", f"bootstrap 예상외 오류: {exc}")
 
     # 7. Commander kill simulation via many ticks on fresh war
     print("\n7) 장기 sim — 지휘관/명령체계")
@@ -188,18 +197,33 @@ def main() -> int:
         {"mode": "rule", "temporal_mode": "precision", "game_mode": "hybrid", "seed": 77},
     )["session_id"]
     req("POST", "/v1/demo/bootstrap", {"session_id": sid3})
+    war_id3 = req("GET", f"/v1/kingdom/wars?session_id={sid3}").get("siege_live", {}).get(
+        "war_id", ""
+    )
     req(
         "POST",
         "/v1/kingdom/war/command",
         {
             "session_id": sid3,
-            "war_id": req("GET", f"/v1/kingdom/wars?session_id={sid3}")
-            .get("siege_live", {})
-            .get("war_id", ""),
-            "doctrine": "protect_commanders",
+            "war_id": war_id3,
+            "side": "attacker",
+            "doctrine": "focus_commander",
             "posture": "forward_command",
         },
     )
+    req(
+        "POST",
+        "/v1/kingdom/war/command",
+        {
+            "session_id": sid3,
+            "war_id": war_id3,
+            "doctrine": "coordinate_defense",
+            "posture": "forward_command",
+        },
+    )
+    live_before7 = req("GET", f"/v1/kingdom/wars?session_id={sid3}").get("siege_live", {})
+    def_cmds = (live_before7.get("command") or {}).get("defender", {}).get("commanders", [])
+    cmd_hp_start = int(def_cmds[0].get("hp", 0)) if def_cmds else 0
     autonomous = False
     for _ in range(80):
         tick = req("POST", "/v1/sim/tick", {"session_id": sid3, "dt_real_ms": 5000})
@@ -212,12 +236,21 @@ def main() -> int:
         if live.get("status") != "active":
             print(f"   공성 종료: {live.get('outcome')} 라운드 {live.get('round')}")
             break
-    if not autonomous:
-        issue(
-            "BALANCE/UX",
-            "80틱(400초) + 전선 지휘(취약)에도 지휘관 전멸/명령 붕괴 미발생 — "
-            "지휘관 암살·붕괴 체감 낮을 수 있음",
-        )
+    if not autonomous and cmd_hp_start > 0:
+        live_after7 = req("GET", f"/v1/kingdom/wars?session_id={sid3}").get("siege_live", {})
+        def_after = (live_after7.get("command") or {}).get("defender", {}).get("commanders", [])
+        cmd_hp_end = int(def_after[0].get("hp", 0)) if def_after else 0
+        if cmd_hp_end >= cmd_hp_start * 0.92:
+            issue(
+                "BALANCE/UX",
+                "80틱(400초) + 암살 doctrine에도 최고 지휘관 HP 거의 무손 — "
+                "피해 튜닝 재확인",
+            )
+        else:
+            print(
+                f"   OK 지휘관 피해 {cmd_hp_start}→{cmd_hp_end} "
+                f"({100 - int(100 * cmd_hp_end / cmd_hp_start)}%)"
+            )
 
     # 8. Non-siege gameplay loop
     print("\n8) 공성 외 플레이 — 탐험·이동·성장·도감")
@@ -256,6 +289,12 @@ def main() -> int:
     if agent_count == 0:
         issue("UX", "탐험 맵에 ecology agent 0 — 필드가 빈 느낌")
 
+    kstatus4 = req("GET", f"/v1/kingdom/status?session_id={sid4}")
+    tut = kstatus4.get("founding_preview", {}).get("tutorial", {})
+    if not tut.get("active"):
+        issue("MINOR", "신규 세션 tutorial 경로 비활성")
+    gold_before = int(kstatus4.get("party_gold", 0))
+
     for action in ("explore", "explore", "investigate forest", "rest"):
         t = req(
             "POST",
@@ -275,6 +314,13 @@ def main() -> int:
         )
         if not t.get("lines"):
             issue("MINOR", f"턴 '{action}' lines 없음")
+
+    kstatus4b = req("GET", f"/v1/kingdom/status?session_id={sid4}")
+    gold_after = int(kstatus4b.get("party_gold", 0))
+    if gold_after <= gold_before:
+        issue("MAJOR", "탐험·조사·휴식 후 튜토리얼 골드 미지급")
+    else:
+        print(f"   tutorial gold {gold_before}→{gold_after}G")
 
     prog = req("GET", f"/v1/progression/status?session_id={sid4}")
     heroes = prog.get("heroes", {})
