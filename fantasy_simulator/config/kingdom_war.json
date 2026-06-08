@@ -6,6 +6,10 @@
     "defender_wall_bonus_per_level": 0.12,
     "tower_raid_reduction": 0.08,
     "barrier_damage_from_magic_mult": 1.35,
+    "barrier_damage_net_factor": 0.36,
+    "barrier_lane_magic_factor": 0.14,
+    "barrier_lane_sword_factor": 0.1,
+    "barrier_damage_min_ratio": 0.028,
     "phases": [
       { "id": "ranged_duel", "label": "원거리 교전", "bow_weight": 1.4, "magic_weight": 0.6 },
       { "id": "magic_bombardment", "label": "마법 포격", "bow_weight": 0.5, "magic_weight": 1.5 },

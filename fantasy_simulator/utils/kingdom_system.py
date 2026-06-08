@@ -934,10 +934,15 @@ def tick_kingdom(state: dict[str, Any], *, base_dir: str | Path) -> list[str]:
         names = [labels.get(u, {}).get("label", u) for u in done_units]
         lines.append(f"[왕국·훈련] 병력 편성: {', '.join(names)}")
 
-    # Barrier regen
+    # Barrier regen — paused during active kingdom siege
     barrier = charter.setdefault("barrier", {})
-    if int(charter.get("unpaid_beats", 0)) < int(
-        kcfg.get("upkeep", {}).get("barrier_offline_if_unpaid_beats", 3)
+    from utils.kingdom_war import has_active_kingdom_siege
+
+    siege_active = has_active_kingdom_siege(state)
+    if (
+        not siege_active
+        and int(charter.get("unpaid_beats", 0))
+        < int(kcfg.get("upkeep", {}).get("barrier_offline_if_unpaid_beats", 3))
     ):
         regen = int(barrier.get("regen_per_beat", 80))
         regen = int(regen * float(fx.get("barrier_regen_mult", 1.0)))

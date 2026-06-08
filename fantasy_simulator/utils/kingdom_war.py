@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import random
 import uuid
 from pathlib import Path
@@ -31,6 +32,11 @@ def _eco(state: dict[str, Any]) -> dict[str, Any]:
 
 def _war_bucket(state: dict[str, Any]) -> dict[str, Any]:
     return _eco(state).setdefault("kingdom_wars", {"active": [], "history": []})
+
+
+def has_active_kingdom_siege(state: dict[str, Any]) -> bool:
+    bucket = _war_bucket(state)
+    return any(w.get("status") == "active" for w in bucket.get("active", []))
 
 
 def find_active_siege(state: dict[str, Any], war_id: str) -> dict[str, Any] | None:
@@ -360,13 +366,32 @@ def resolve_siege_round(
             lines.append(f"  {ev['text']}")
 
     if net > 0:
+        net_factor = float(siege_cfg.get("barrier_damage_net_factor", 0.36))
+        magic_lane = float(siege_cfg.get("barrier_lane_magic_factor", 0.14))
+        sword_lane = float(siege_cfg.get("barrier_lane_sword_factor", 0.1))
         barrier_dmg = int(
             net
             * float(siege_cfg.get("barrier_damage_from_magic_mult", 1.0))
-            * barrier_mult
+            * net_factor
+            * max(0.35, barrier_mult)
         )
-        barrier_dmg += int(atk_br.get("magic", 0) * float(_class_cfg(wcfg, "magic").get("vs_barrier", 1.0)) * 0.08)
-        barrier_dmg += int(atk_br.get("sword", 0) * 0.05)
+        barrier_dmg += int(
+            atk_br.get("magic", 0)
+            * float(_class_cfg(wcfg, "magic").get("vs_barrier", 1.0))
+            * magic_lane
+        )
+        barrier_dmg += int(atk_br.get("sword", 0) * sword_lane)
+        charter_pre = get_kingdom_charter(state)
+        if charter_pre:
+            reduction = float(
+                kcfg.get("barrier", {}).get("siege_damage_reduction", 0.65)
+            )
+            min_effective = int(
+                int(charter_pre.get("barrier", {}).get("max_hp", 12000))
+                * float(siege_cfg.get("barrier_damage_min_ratio", 0.028))
+            )
+            min_gross = math.ceil(min_effective / max(0.05, 1.0 - reduction))
+            barrier_dmg = max(min_gross, barrier_dmg)
         siege_result = apply_siege_damage(
             state, barrier_dmg, base_dir=base_dir, siege_type="magical"
         )
