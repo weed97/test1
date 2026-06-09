@@ -153,7 +153,10 @@ def turn_payload(session: GameSession, result: dict[str, Any]) -> dict[str, Any]
         "position": position_snapshot(world),
         "godot_position": godot_pixel_position(world),
         "party": list(session.state.get("party", [])),
-        "gold": session.state.get("inventory", {}).get("party_gold", 0),
+        "wallet": session.state.get("inventory", {}).get("wallet", {}),
+        "gold": session.state.get("inventory", {})
+        .get("wallet", {})
+        .get("gold", session.state.get("inventory", {}).get("party_gold", 0)),
         "combat_active": bool(session.state.get("combat")),
         "main_story_phase": flags.get("main_story", {}).get("phase"),
         "siege_simulation": result.get("siege_simulation")

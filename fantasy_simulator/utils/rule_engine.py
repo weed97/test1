@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import random
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 from utils.dice import roll_d20
@@ -243,6 +244,22 @@ class RuleEngine:
             self.state["combat"] = None
             if winner == "allies":
                 self._adjust_tension(-8)
+                from utils.currency import grant
+                from utils.regional_resources import combat_loot_for_zone, zone_id_from_state
+                from utils.spatial import resolve_zone_from_world
+
+                base_dir = (
+                    self.event_engine.content.base_dir
+                    if self.event_engine
+                    else Path(__file__).resolve().parent.parent
+                )
+                zone = resolve_zone_from_world(self.state.get("world", {}))
+                threat = int(combat.get("threat_level", 1))
+                copper, silver = combat_loot_for_zone(
+                    zone, base_dir=base_dir, rng=self.rng, threat_level=threat
+                )
+                grant(self.state, copper=copper, silver=silver, base_dir=base_dir)
+                lines.append(f"전리품: {copper}쿠퍼" + (f", {silver}실버" if silver else ""))
                 enemy_id = combat.get("enemy_id", "")
                 flags = self.state.setdefault("flags", {})
                 if enemy_id == "rune_sentinel":
@@ -304,9 +321,16 @@ class RuleEngine:
             summary = "정찰 중 숲 쪽에서 검은 연기와 발자국을 발견했다."
             self.state.setdefault("flags", {})["smoke_trail_spotted"] = True
         elif natural <= 5:
-            gold = self.rng.randint(8, 30)
-            self.state["inventory"]["party_gold"] = self.state["inventory"].get("party_gold", 0) + gold
-            summary = f"버려진 상자에서 {gold} 골드를 획득했다."
+            from utils.currency import grant
+            from utils.regional_resources import combat_loot_for_zone, zone_id_from_state
+
+            zone = zone_id_from_state(self.state)
+            copper, silver = combat_loot_for_zone(
+                zone, base_dir=self.event_engine.content.base_dir if self.event_engine else ".", rng=self.rng, threat_level=1
+            )
+            base_dir = self.event_engine.content.base_dir if self.event_engine else Path(__file__).resolve().parent.parent
+            grant(self.state, copper=copper, silver=silver, base_dir=base_dir)
+            summary = f"버려진 상자에서 {copper}쿠퍼" + (f", {silver}실버" if silver else "") + "."
         elif tension >= 60:
             summary = "마을 사람들이 불안한 눈으로 숲 쪽을 바라본다. 긴장감이 감돈다."
         else:

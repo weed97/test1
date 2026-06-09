@@ -38,12 +38,32 @@ def get_player_settlement(state: dict[str, Any]) -> dict[str, Any]:
     return ps
 
 
-def _party_gold(state: dict[str, Any]) -> int:
-    return int(state.get("inventory", {}).get("party_gold", 0))
+def _party_gold(state: dict[str, Any], *, base_dir: str | Path) -> int:
+    from utils.currency import party_gold
+
+    return party_gold(state, base_dir=base_dir)
 
 
-def _set_party_gold(state: dict[str, Any], amount: int) -> None:
-    state.setdefault("inventory", {})["party_gold"] = max(0, int(amount))
+def _set_party_gold(state: dict[str, Any], amount: int, *, base_dir: str | Path) -> None:
+    from utils.currency import set_party_gold
+
+    set_party_gold(state, amount, base_dir=base_dir)
+
+
+def _spend_build_cost(
+    state: dict[str, Any], cost_spec: int | dict[str, Any], *, base_dir: str | Path
+) -> bool:
+    from utils.currency import normalize_cost, spend
+
+    return spend(state, normalize_cost(cost_spec, base_dir=base_dir), base_dir=base_dir)
+
+
+def _can_afford_build_cost(
+    state: dict[str, Any], cost_spec: int | dict[str, Any], *, base_dir: str | Path
+) -> bool:
+    from utils.currency import can_afford, normalize_cost
+
+    return can_afford(state, normalize_cost(cost_spec, base_dir=base_dir), base_dir=base_dir)
 
 
 def construction_level_info(cfg: dict[str, Any], level: int) -> dict[str, Any]:
@@ -71,11 +91,12 @@ def list_buildable(
     cfg = load_buildings_config(base_dir)
     ps = get_player_settlement(state)
     lvl = int(ps.get("construction_level", 1))
-    gold = _party_gold(state)
     result: list[dict[str, Any]] = []
     for bid in unlocked_building_ids(state, base_dir):
         bdef = cfg["buildings"][bid]
-        afford_gold = gold >= int(bdef.get("gold_cost", 0))
+        afford_gold = _can_afford_build_cost(
+            state, int(bdef.get("gold_cost", 0)), base_dir=base_dir
+        )
         mats_ok = _materials_available(ps, bdef.get("materials", {}))
         result.append(
             {
@@ -150,10 +171,14 @@ def hire_workers(
     if current + count > max_h:
         return {"ok": False, "error": f"고용 한도 {max_h}명"}
     cost = int(hire.get("gold_per_worker", 120)) * count
-    gold = _party_gold(state)
-    if gold < cost:
-        return {"ok": False, "error": f"골드 부족 (필요 {cost}, 보유 {gold})"}
-    _set_party_gold(state, gold - cost)
+    if not _can_afford_build_cost(state, cost, base_dir=base_dir):
+        from utils.currency import format_wallet, get_wallet
+
+        return {
+            "ok": False,
+            "error": f"화폐 부족 (필요 {cost}쿠퍼 상당, 보유 {format_wallet(get_wallet(state, base_dir=base_dir), base_dir=base_dir)})",
+        }
+    _spend_build_cost(state, cost, base_dir=base_dir)
     ps["hired_workers"] = current + count
     return {
         "ok": True,
@@ -200,8 +225,8 @@ def start_build(
             return {"ok": False, "error": "고용 인력 없음 — hire_workers 먼저"}
 
     gold_cost = int(bdef.get("gold_cost", 0))
-    if _party_gold(state) < gold_cost:
-        return {"ok": False, "error": "골드 부족"}
+    if not _can_afford_build_cost(state, gold_cost, base_dir=base_dir):
+        return {"ok": False, "error": "화폐 부족 (쿠퍼/실버)"}
     if not _materials_available(ps, bdef.get("materials", {})):
         return {"ok": False, "error": "자재 부족", "need": bdef.get("materials")}
 
@@ -209,7 +234,7 @@ def start_build(
     if site.get("active_project"):
         return {"ok": False, "error": "이 타일에 이미 건설 중"}
 
-    _set_party_gold(state, _party_gold(state) - gold_cost)
+    _spend_build_cost(state, gold_cost, base_dir=base_dir)
     _deduct_materials(ps, bdef.get("materials", {}))
 
     site["active_project"] = {
@@ -263,12 +288,11 @@ def tick_player_build_projects(
     hire_cfg = cfg.get("hire", {})
     wages = int(ps.get("hired_workers", 0)) * int(hire_cfg.get("wage_gold_per_beat", 8))
     if wages > 0:
-        gold = _party_gold(state)
-        if gold < wages:
+        if not _can_afford_build_cost(state, wages, base_dir=base_dir):
             lines.append("[건설] 임금 지불 실패 — 일꾼들이 작업을 멈췄다.")
         else:
-            _set_party_gold(state, gold - wages)
-            lines.append(f"[건설] 임금 -{wages}G ({ps['hired_workers']}명)")
+            _spend_build_cost(state, wages, base_dir=base_dir)
+            lines.append(f"[건설] 임금 -{wages}쿠퍼 ({ps['hired_workers']}명)")
 
     labor_self = int(level_info.get("self_labor_per_beat", 2))
     labor_hire = int(ps.get("hired_workers", 0)) * int(
@@ -332,16 +356,23 @@ def tick_player_build_projects(
 
 
 def settlement_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
+    from utils.currency import wallet_summary
+    from utils.regional_resources import regional_status
+
     ps = get_player_settlement(state)
     cfg = load_buildings_config(base_dir)
     lvl = int(ps.get("construction_level", 1))
     next_lvl = construction_level_info(cfg, min(lvl + 1, 5))
+    money = wallet_summary(state, base_dir=base_dir)
     return {
         "construction_level": lvl,
         "construction_title": construction_level_info(cfg, lvl).get("title"),
         "construction_xp": int(ps.get("construction_xp", 0)),
         "next_level_xp": int(next_lvl.get("xp_required", 0)) if lvl < 5 else None,
-        "party_gold": _party_gold(state),
+        "wallet": money["wallet"],
+        "wallet_formatted": money["formatted"],
+        "party_gold": money["party_gold"],
+        "regional_resources": regional_status(state, base_dir=base_dir),
         "hired_workers": int(ps.get("hired_workers", 0)),
         "self_labor_per_beat": construction_level_info(cfg, lvl).get("self_labor_per_beat"),
         "stockpile": dict(ps.get("stockpile", {})),

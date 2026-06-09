@@ -8,13 +8,46 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from utils.currency import (
+    can_afford,
+    can_afford_gold_coins,
+    grant,
+    normalize_cost,
+    party_gold,
+    spend,
+    spend_gold_coins,
+    wallet_summary,
+)
 from utils.settlement_build import (
     _deduct_materials,
     _materials_available,
-    _party_gold,
-    _set_party_gold,
     get_player_settlement,
 )
+
+
+def _wallet_gold(state: dict[str, Any], *, base_dir: str | Path) -> int:
+    return party_gold(state, base_dir=base_dir)
+
+
+def _pay_kingdom_cost(state: dict[str, Any], cost: int, *, base_dir: str | Path) -> bool:
+    """Kingdom-scale: large values spend gold coins; mid costs spend silver."""
+    amount = int(cost)
+    if amount >= 5000:
+        return spend_gold_coins(state, amount, base_dir=base_dir)
+    if amount >= 100:
+        silver = max(1, amount // 10)
+        return spend(state, {"copper": 0, "silver": silver, "gold": 0}, base_dir=base_dir)
+    return spend(state, normalize_cost(amount, base_dir=base_dir), base_dir=base_dir)
+
+
+def _can_pay_kingdom_cost(state: dict[str, Any], cost: int, *, base_dir: str | Path) -> bool:
+    amount = int(cost)
+    if amount >= 5000:
+        return can_afford_gold_coins(state, amount, base_dir=base_dir)
+    if amount >= 100:
+        silver = max(1, amount // 10)
+        return can_afford(state, {"copper": 0, "silver": silver, "gold": 0}, base_dir=base_dir)
+    return can_afford(state, normalize_cost(amount, base_dir=base_dir), base_dir=base_dir)
 
 
 def load_kingdom_config(base_dir: str | Path) -> dict[str, Any]:
@@ -155,6 +188,8 @@ def _implied_authority_rank(
     charter: dict[str, Any],
     cfg: dict[str, Any],
     state: dict[str, Any],
+    *,
+    base_dir: str | Path,
 ) -> dict[str, Any]:
     """Which rank ladder step the ruler/player roughly holds under current doctrine."""
     active = get_active_doctrine(charter, cfg)
@@ -168,7 +203,7 @@ def _implied_authority_rank(
     if basis == "might":
         score = int(mil.get("elite", 0)) * 30 + _military_total(charter) * 5
     elif basis == "wealth":
-        score = _party_gold(state) // 1000
+        score = _wallet_gold(state, base_dir=base_dir) // 1000
     elif basis == "knowledge":
         score = int(interior.get("training_ground_level", 0)) * 25 + int(
             interior.get("city_level", 0)
@@ -184,7 +219,7 @@ def _implied_authority_rank(
     else:
         score = (
             _military_total(charter) * 4
-            + _party_gold(state) // 2000
+            + _wallet_gold(state, base_dir=base_dir) // 2000
             + int(interior.get("city_level", 0)) * 10
         )
     rank_idx = 0
@@ -207,10 +242,12 @@ def monarchy_summary(
     charter: dict[str, Any],
     cfg: dict[str, Any],
     state: dict[str, Any],
+    *,
+    base_dir: str | Path,
 ) -> dict[str, Any]:
     active = get_active_doctrine(charter, cfg)
     effects = active.get("effects", {})
-    rank = _implied_authority_rank(charter, cfg, state)
+    rank = _implied_authority_rank(charter, cfg, state, base_dir=base_dir)
     return {
         "doctrine": active,
         "active_effects": effects,
@@ -237,15 +274,19 @@ def set_kingdom_doctrine(
     mon = charter.setdefault("monarchy", _default_monarchy(cfg))
     old_id = str(mon.get("doctrine_id", ""))
     if old_id == doctrine_id and not custom_decree and not is_founding:
-        return {"ok": True, "monarchy": monarchy_summary(charter, cfg, state), "unchanged": True}
+        return {
+            "ok": True,
+            "monarchy": monarchy_summary(charter, cfg, state, base_dir=base_dir),
+            "unchanged": True,
+        }
 
     if not is_founding and old_id and old_id != doctrine_id:
         mcfg = _monarchy_cfg(cfg)
         cost = int(mcfg.get("change_gold_cost", 8000))
         stab_cost = int(mcfg.get("change_stability_cost", 12))
-        if _party_gold(state) < cost:
-            return {"ok": False, "error": f"왕정 개혁 비용 {cost}G 부족"}
-        _set_party_gold(state, _party_gold(state) - cost)
+        if not _can_pay_kingdom_cost(state, cost, base_dir=base_dir):
+            return {"ok": False, "error": f"왕정 개혁 비용 부족 (실버/골드)"}
+        _pay_kingdom_cost(state, cost, base_dir=base_dir)
         charter["stability"] = max(
             0, int(charter.get("stability", 75)) - stab_cost
         )
@@ -272,7 +313,7 @@ def set_kingdom_doctrine(
 
     return {
         "ok": True,
-        "monarchy": monarchy_summary(charter, cfg, state),
+        "monarchy": monarchy_summary(charter, cfg, state, base_dir=base_dir),
         "doctrine_id": doctrine_id,
     }
 
@@ -286,7 +327,7 @@ def founding_cost_preview(state: dict[str, Any], *, base_dir: str | Path) -> dic
     kcfg = load_kingdom_config(base_dir)
     fdef = _founding_cfg(kcfg)
     ps = get_player_settlement(state)
-    gold = _party_gold(state)
+    gold = _wallet_gold(state, base_dir=base_dir)
     direct = int(fdef.get("gold_cost", 0))
     ancillary = int(fdef.get("ancillary_gold", 0))
     total_gold = direct + ancillary
@@ -318,7 +359,7 @@ def founding_cost_preview(state: dict[str, Any], *, base_dir: str | Path) -> dic
     checks.append(
         {
             "id": "gold",
-            "ok": gold >= total_gold,
+            "ok": can_afford_gold_coins(state, total_gold, base_dir=base_dir),
             "need": total_gold,
             "direct": direct,
             "ancillary": ancillary,
@@ -375,12 +416,14 @@ def deduct_founding_costs(state: dict[str, Any], *, base_dir: str | Path) -> dic
     direct = int(fdef.get("gold_cost", 0))
     ancillary = int(fdef.get("ancillary_gold", 0))
     total = direct + ancillary
-    gold = _party_gold(state)
-    if gold < total:
-        return {"ok": False, "error": f"골드 부족 (필요 {total}, 보유 {gold})"}
+    if not can_afford_gold_coins(state, total, base_dir=base_dir):
+        return {
+            "ok": False,
+            "error": f"골드 부족 (필요 {total}, 보유 {_wallet_gold(state, base_dir=base_dir)})",
+        }
     if not _materials_available(ps, fdef.get("materials", {})):
         return {"ok": False, "error": "자재 부족"}
-    _set_party_gold(state, gold - total)
+    spend_gold_coins(state, total, base_dir=base_dir)
     _deduct_materials(ps, fdef.get("materials", {}))
     return {
         "ok": True,
@@ -514,7 +557,7 @@ def kingdom_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, 
     payload: dict[str, Any] = {
         "is_kingdom": bool(ps.get("is_kingdom")),
         "founding_preview": preview,
-        "party_gold": _party_gold(state),
+        **wallet_summary(state, base_dir=base_dir),
         "stockpile": dict(ps.get("stockpile", {})),
         "available_doctrines": doctrines,
     }
@@ -547,7 +590,7 @@ def kingdom_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, 
                 kcfg.get("siege", {}).get("barrier_must_break_before_physical_destroy", True)
             )
             or int(charter["barrier"]["hp"]) <= 0,
-            "monarchy": monarchy_summary(charter, kcfg, state),
+            "monarchy": monarchy_summary(charter, kcfg, state, base_dir=base_dir),
         }
     )
     return payload
@@ -631,11 +674,11 @@ def upgrade_fortification(
             return {"ok": False, "error": "성벽 레벨 정의 없음"}
         cost = int(row.get("gold", 0))
         mats = dict(row.get("materials", {}))
-        if _party_gold(state) < cost:
-            return {"ok": False, "error": "골드 부족"}
+        if not _can_pay_kingdom_cost(state, cost, base_dir=base_dir):
+            return {"ok": False, "error": "화폐 부족 (실버/골드)"}
         if not _materials_available(ps, mats):
             return {"ok": False, "error": "자재 부족"}
-        _set_party_gold(state, _party_gold(state) - cost)
+        _pay_kingdom_cost(state, cost, base_dir=base_dir)
         _deduct_materials(ps, mats)
         fort["walls_level"] = nxt
         fort["wall_defense"] = int(row.get("wall_defense", 0))
@@ -649,11 +692,11 @@ def upgrade_fortification(
             return {"ok": False, "error": "포탑 최대 수량"}
         cost = int(tcfg.get("gold_each", 0))
         mats = dict(tcfg.get("materials_each", {}))
-        if _party_gold(state) < cost:
-            return {"ok": False, "error": "골드 부족"}
+        if not _can_pay_kingdom_cost(state, cost, base_dir=base_dir):
+            return {"ok": False, "error": "화폐 부족 (실버/골드)"}
         if not _materials_available(ps, mats):
             return {"ok": False, "error": "자재 부족"}
-        _set_party_gold(state, _party_gold(state) - cost)
+        _pay_kingdom_cost(state, cost, base_dir=base_dir)
         _deduct_materials(ps, mats)
         fort["tower_count"] = cur + 1
         fort["tower_attack"] = fort["tower_count"] * int(tcfg.get("attack_per_tower", 25))
@@ -670,11 +713,11 @@ def upgrade_fortification(
             return {"ok": False, "error": "결계 레벨 정의 없음"}
         cost = int(row.get("gold", 0))
         mats = dict(row.get("materials", {}))
-        if _party_gold(state) < cost:
-            return {"ok": False, "error": "골드 부족"}
+        if not _can_pay_kingdom_cost(state, cost, base_dir=base_dir):
+            return {"ok": False, "error": "화폐 부족 (실버/골드)"}
         if not _materials_available(ps, mats):
             return {"ok": False, "error": "자재 부족"}
-        _set_party_gold(state, _party_gold(state) - cost)
+        _pay_kingdom_cost(state, cost, base_dir=base_dir)
         _deduct_materials(ps, mats)
         charter["barrier"]["ritual_level"] = nxt
         _recalc_barrier_max(charter, kcfg)
@@ -706,11 +749,11 @@ def build_interior(
             return {"ok": False, "error": "농경지 최대"}
         cost = int(fcfg.get("gold_each", 0))
         mats = dict(fcfg.get("materials_each", {}))
-        if _party_gold(state) < cost:
-            return {"ok": False, "error": "골드 부족"}
+        if not _can_pay_kingdom_cost(state, cost, base_dir=base_dir):
+            return {"ok": False, "error": "화폐 부족 (실버/골드)"}
         if not _materials_available(ps, mats):
             return {"ok": False, "error": "자재 부족"}
-        _set_party_gold(state, _party_gold(state) - cost)
+        _pay_kingdom_cost(state, cost, base_dir=base_dir)
         _deduct_materials(ps, mats)
         interior["farmland_plots"] = cur + 1
         return {"ok": True, "farmland_plots": interior["farmland_plots"], "gold_spent": cost}
@@ -724,11 +767,11 @@ def build_interior(
             return {"ok": False, "error": "도시 최대 레벨"}
         cost = int(row.get("gold", 0))
         mats = dict(row.get("materials", {}))
-        if _party_gold(state) < cost:
-            return {"ok": False, "error": "골드 부족"}
+        if not _can_pay_kingdom_cost(state, cost, base_dir=base_dir):
+            return {"ok": False, "error": "화폐 부족 (실버/골드)"}
         if not _materials_available(ps, mats):
             return {"ok": False, "error": "자재 부족"}
-        _set_party_gold(state, _party_gold(state) - cost)
+        _pay_kingdom_cost(state, cost, base_dir=base_dir)
         _deduct_materials(ps, mats)
         interior["city_level"] = nxt
         interior["population_cap"] = int(row.get("population_cap", 0))
@@ -746,11 +789,11 @@ def build_interior(
             return {"ok": False, "error": "훈련소 최대 레벨"}
         cost = int(row.get("gold", 0))
         mats = dict(row.get("materials", {}))
-        if _party_gold(state) < cost:
-            return {"ok": False, "error": "골드 부족"}
+        if not _can_pay_kingdom_cost(state, cost, base_dir=base_dir):
+            return {"ok": False, "error": "화폐 부족 (실버/골드)"}
         if not _materials_available(ps, mats):
             return {"ok": False, "error": "자재 부족"}
-        _set_party_gold(state, _party_gold(state) - cost)
+        _pay_kingdom_cost(state, cost, base_dir=base_dir)
         _deduct_materials(ps, mats)
         interior["training_ground_level"] = nxt
         return {"ok": True, "training_ground_level": nxt, "gold_spent": cost}
@@ -792,12 +835,12 @@ def recruit_military(
     food_each = int(udef.get("food", 0))
     cost = gold_each * count
     food_need = food_each * count
-    if _party_gold(state) < cost:
-        return {"ok": False, "error": "골드 부족"}
+    if not _can_pay_kingdom_cost(state, cost, base_dir=base_dir):
+        return {"ok": False, "error": "화폐 부족 (실버)"}
     interior_store = charter.setdefault("interior", {})
     if int(interior_store.get("food_store", 0)) < food_need:
         return {"ok": False, "error": "군량 부족"}
-    _set_party_gold(state, _party_gold(state) - cost)
+    _pay_kingdom_cost(state, cost, base_dir=base_dir)
     interior_store["food_store"] = int(interior_store.get("food_store", 0)) - food_need
     mil = charter.setdefault("military", {})
     queue = mil.setdefault("in_training", [])
@@ -871,7 +914,6 @@ def tick_kingdom(state: dict[str, Any], *, base_dir: str | Path) -> list[str]:
     fx = doctrine_effects(charter, kcfg)
     lines: list[str] = []
     upkeep = compute_upkeep(charter, kcfg)
-    gold = _party_gold(state)
     interior = charter.setdefault("interior", {})
     food_store = int(interior.get("food_store", 0))
 
@@ -889,7 +931,7 @@ def tick_kingdom(state: dict[str, Any], *, base_dir: str | Path) -> list[str]:
             + int(fx["stability_per_city_level"]) * city_lvl,
         )
     if fx.get("stability_per_10k_gold"):
-        bonus = (_party_gold(state) // 10000) * int(fx["stability_per_10k_gold"])
+        bonus = (_wallet_gold(state, base_dir=base_dir) // 10000) * int(fx["stability_per_10k_gold"])
         if bonus > 0:
             charter["stability"] = min(100, int(charter.get("stability", 75)) + bonus)
 
@@ -907,12 +949,16 @@ def tick_kingdom(state: dict[str, Any], *, base_dir: str | Path) -> list[str]:
     gold_need = upkeep["gold"]
     unpaid = int(charter.get("unpaid_beats", 0))
 
-    if gold >= gold_need and food_store >= food_need:
-        _set_party_gold(state, gold - gold_need)
+    silver_need = int(gold_need)
+    paid_silver = can_afford(
+        state, {"copper": 0, "silver": silver_need, "gold": 0}, base_dir=base_dir
+    )
+    if paid_silver and food_store >= food_need:
+        spend(state, {"copper": 0, "silver": silver_need, "gold": 0}, base_dir=base_dir)
         interior["food_store"] = food_store - food_need
         charter["unpaid_beats"] = 0
-        if gold_need > 0 or food_need > 0:
-            lines.append(f"[왕국·유지] -{gold_need}G, -{food_need} 식량")
+        if silver_need > 0 or food_need > 0:
+            lines.append(f"[왕국·유지] -{silver_need}실버, -{food_need} 식량")
     else:
         charter["unpaid_beats"] = unpaid + 1
         penalty = int(kcfg.get("upkeep", {}).get("stability_penalty_if_unpaid", 8))

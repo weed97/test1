@@ -28,7 +28,9 @@ class SiegeLiveTests(unittest.TestCase):
         session = GameSession.from_root(root, mode="rule", seed=3)
         state = session.state
         state.setdefault("flags", {})["game_mode"] = "ecology"
-        state.setdefault("inventory", {})["party_gold"] = 500_000
+        from utils.currency import grant
+
+        grant(state, gold=500, base_dir=root)
         _ready_for_kingdom(state, root)
         complete_kingdom_founding(
             state,

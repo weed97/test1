@@ -558,6 +558,9 @@ def run_world_parallel_beat(
     r = ecology_rng(state, rng)
     lines: list[str] = []
     lines.extend(tick_field_ecology(state, base_dir=base_dir, rng=r))
+    from utils.regional_resources import tick_regional_regen
+
+    lines.extend(tick_regional_regen(state, base_dir=base_dir))
     lines.extend(run_macro_parallel_lanes(state, base_dir=base_dir, turn=turn, rng=r))
     persist_ecology_rng(state, r)
     world = state.get("world", {})

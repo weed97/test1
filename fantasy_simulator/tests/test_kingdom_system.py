@@ -33,11 +33,13 @@ from utils.settlement_build import (  # noqa: E402
 
 
 def _ready_for_kingdom(state: dict, root: Path) -> None:
+    from utils.currency import grant
+
     ps = get_player_settlement(state)
     ps["construction_level"] = 5
     ps["hired_workers"] = 10
     ps["stockpile"] = {"wood": 2000, "stone": 3000, "iron": 1000, "crystal": 200}
-    state.setdefault("inventory", {})["party_gold"] = 200_000
+    grant(state, gold=200_000, base_dir=root)
     for bid in ("hall", "blacksmith", "barracks", "market"):
         ps.setdefault("completed_buildings", []).append(
             {"building_id": bid, "label": bid}
@@ -48,7 +50,11 @@ class KingdomSystemTests(unittest.TestCase):
     def _ecology_state(self, root: Path) -> dict:
         session = GameSession.from_root(root, mode="rule", seed=1)
         session.state.setdefault("flags", {})["game_mode"] = "ecology"
-        session.state.setdefault("inventory", {})["party_gold"] = 0
+        session.state.setdefault("inventory", {})["wallet"] = {
+            "copper": 0,
+            "silver": 0,
+            "gold": 0,
+        }
         return session.state
 
     def test_founding_cost_is_massive(self) -> None:
@@ -69,7 +75,9 @@ class KingdomSystemTests(unittest.TestCase):
         with isolated_game_root() as root:
             state = self._ecology_state(root)
             _ready_for_kingdom(state, root)
-            before = state["inventory"]["party_gold"]
+            from utils.currency import party_gold
+
+            before = party_gold(state, base_dir=root)
             r = try_start_kingdom(
                 state,
                 map_id="ashpoint_01",
@@ -81,7 +89,7 @@ class KingdomSystemTests(unittest.TestCase):
             self.assertTrue(r["ok"], r)
             spent = r["costs"]["gold_spent_total"]
             self.assertGreaterEqual(spent, 100_000)
-            self.assertEqual(state["inventory"]["party_gold"], before - spent)
+            self.assertEqual(party_gold(state, base_dir=root), before - spent)
 
     def test_kingdom_completion_creates_charter_with_barrier(self) -> None:
         with isolated_game_root() as root:
@@ -124,7 +132,9 @@ class KingdomSystemTests(unittest.TestCase):
             )
             ps = get_player_settlement(state)
             ps["stockpile"] = {"wood": 500, "stone": 2000, "iron": 500, "crystal": 100}
-            state["inventory"]["party_gold"] = 500_000
+            from utils.currency import grant
+
+            grant(state, gold=500, silver=500, base_dir=root)
             w = upgrade_fortification(state, "walls", base_dir=root)
             self.assertTrue(w["ok"], w)
             ps["stockpile"]["food_store"] = 500
@@ -144,7 +154,9 @@ class KingdomSystemTests(unittest.TestCase):
             assert charter is not None
             charter["interior"]["farmland_plots"] = 2
             charter["interior"]["food_store"] = 200
-            state["inventory"]["party_gold"] = 50_000
+            from utils.currency import grant
+
+            grant(state, silver=500, base_dir=root)
             charter["military"]["in_training"] = [{"unit": "scout", "beats_left": 1}]
             lines = tick_kingdom(state, base_dir=root)
             self.assertTrue(any("농경" in ln for ln in lines))
@@ -194,13 +206,16 @@ class KingdomSystemTests(unittest.TestCase):
             complete_kingdom_founding(
                 state, map_id="m", x=1, y=1, name="K", base_dir=root
             )
-            state["inventory"]["party_gold"] = 50_000
-            before = state["inventory"]["party_gold"]
+            from utils.currency import grant, party_gold, wallet_to_copper, get_wallet
+
+            grant(state, gold=50_000, base_dir=root)
+            before = wallet_to_copper(get_wallet(state, base_dir=root), base_dir=root)
             r = set_kingdom_doctrine(
                 state, "plutocracy", base_dir=root, custom_decree="부자가 법이다."
             )
             self.assertTrue(r["ok"], r)
-            self.assertLess(state["inventory"]["party_gold"], before)
+            after = wallet_to_copper(get_wallet(state, base_dir=root), base_dir=root)
+            self.assertLess(after, before)
             charter = get_kingdom_charter(state)
             assert charter is not None
             self.assertEqual(charter["monarchy"]["doctrine_id"], "plutocracy")

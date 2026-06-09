@@ -157,7 +157,8 @@ def main() -> int:
     kstatus = req("GET", f"/v1/kingdom/status?session_id={sid2}")
     if kstatus.get("is_kingdom"):
         issue("MINOR", "신규 세션에 이미 왕국 있음 (비정상)")
-    gold = int(kstatus.get("party_gold", 0))
+    wallet = kstatus.get("wallet", {})
+    gold = int(wallet.get("gold", kstatus.get("party_gold", 0)))
     preview = kstatus.get("founding_preview", {})
     tut = preview.get("tutorial", {})
     if gold < 1000 and not tut.get("active"):
@@ -293,7 +294,8 @@ def main() -> int:
     tut = kstatus4.get("founding_preview", {}).get("tutorial", {})
     if not tut.get("active"):
         issue("MINOR", "신규 세션 tutorial 경로 비활성")
-    gold_before = int(kstatus4.get("party_gold", 0))
+    w4 = kstatus4.get("wallet", {})
+    copper_before = int(w4.get("copper", 0))
 
     for action in ("explore", "explore", "investigate forest", "rest"):
         t = req(
@@ -316,11 +318,14 @@ def main() -> int:
             issue("MINOR", f"턴 '{action}' lines 없음")
 
     kstatus4b = req("GET", f"/v1/kingdom/status?session_id={sid4}")
-    gold_after = int(kstatus4b.get("party_gold", 0))
-    if gold_after <= gold_before:
-        issue("MAJOR", "탐험·조사·휴식 후 튜토리얼 골드 미지급")
+    w4b = kstatus4b.get("wallet", {})
+    copper_after = int(w4b.get("copper", 0))
+    if copper_after <= copper_before:
+        issue("MAJOR", "탐험·조사·휴식 후 튜토리얼 쿠퍼 미지급")
     else:
-        print(f"   tutorial gold {gold_before}→{gold_after}G")
+        print(f"   tutorial copper {copper_before}→{copper_after} (no free gold)")
+    if int(w4b.get("gold", 0)) > 0:
+        issue("MAJOR", "튜토리얼에서 골드 지급됨 — 경제 붕괴")
 
     prog = req("GET", f"/v1/progression/status?session_id={sid4}")
     heroes = prog.get("heroes", {})

@@ -1,4 +1,4 @@
-"""Early-game gold path before kingdom founding — explore/investigate/rest stipends."""
+"""Early-game copper stipends — no free gold; silver/gold come from danger."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from utils.currency import format_wallet, get_wallet, grant, wallet_summary
 from utils.kingdom_system import get_kingdom_charter
-from utils.settlement_build import _party_gold, _set_party_gold
 
 
 def load_tutorial_config(base_dir: str | Path) -> dict[str, Any]:
@@ -37,7 +37,7 @@ def apply_tutorial_reward(
     *,
     base_dir: str | Path,
 ) -> list[str]:
-    """Grant modest gold on field actions until kingdom is founded."""
+    """Grant small copper on field actions until kingdom is founded."""
     if get_kingdom_charter(state):
         return []
     key = _action_key(action)
@@ -56,17 +56,23 @@ def apply_tutorial_reward(
     if used >= max_count:
         return []
 
-    gold_each = int(rdef.get("gold_each", 0))
-    if gold_each <= 0:
+    copper = int(rdef.get("copper_each", 0))
+    silver = int(rdef.get("silver_each", 0))
+    if copper <= 0 and silver <= 0:
         return []
 
     counts[key] = used + 1
-    before = _party_gold(state)
-    _set_party_gold(state, before + gold_each)
+    grant(state, copper=copper, silver=silver, gold=0, base_dir=base_dir)
     label = str(rdef.get("label", key))
+    wallet = get_wallet(state, base_dir=base_dir)
+    parts = []
+    if copper:
+        parts.append(f"+{copper}쿠퍼")
+    if silver:
+        parts.append(f"+{silver}실버")
     return [
-        f"[튜토리얼] {label} +{gold_each}G "
-        f"({counts[key]}/{max_count}) · 보유 {before + gold_each}G"
+        f"[튜토리얼] {label} {' '.join(parts)} "
+        f"({counts[key]}/{max_count}) · 보유 {format_wallet(wallet, base_dir=base_dir)}"
     ]
 
 
@@ -84,9 +90,12 @@ def tutorial_progress_summary(
     for key, rdef in rewards.items():
         max_count = int(rdef.get("max_count", 0))
         remaining[key] = max(0, max_count - int(counts.get(key, 0)))
+    money = wallet_summary(state, base_dir=base_dir)
     return {
         "active": True,
-        "party_gold": _party_gold(state),
+        "wallet": money["wallet"],
+        "wallet_formatted": money["formatted"],
+        "party_gold": money["party_gold"],
         "remaining_rewards": remaining,
         "progress_path": list(cfg.get("progress_path", [])),
     }

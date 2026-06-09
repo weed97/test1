@@ -52,9 +52,16 @@ func _reload_all() -> void:
 
 func _render_all() -> void:
 	var is_kingdom: bool = bool(_status.get("is_kingdom", false))
-	var gold: int = int(_status.get("party_gold", 0))
-	_status_label.text = "보유 골드 %sG · %s" % [
-		_format_num(gold),
+	var wallet_text: String = str(_status.get("wallet_formatted", _status.get("formatted", "")))
+	if wallet_text.is_empty():
+		var w: Dictionary = _status.get("wallet", {})
+		wallet_text = "%s쿠퍼 %s실버 %s골드" % [
+			_format_num(int(w.get("copper", 0))),
+			_format_num(int(w.get("silver", 0))),
+			_format_num(int(w.get("gold", 0))),
+		]
+	_status_label.text = "보유 %s · %s" % [
+		wallet_text,
 		"왕국 운영 중" if is_kingdom else "왕국 미건설",
 	]
 	_render_summary(is_kingdom)

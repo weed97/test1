@@ -299,7 +299,9 @@ def demo_bootstrap(body: DemoBootstrapRequest) -> dict[str, Any]:
     state = session.state
     state.setdefault("flags", {})["game_mode"] = "hybrid"
     _ready_for_kingdom(state, root)
-    state.setdefault("inventory", {})["party_gold"] = 500_000
+    from utils.currency import grant
+
+    grant(state, gold=500, silver=200, copper=0, base_dir=root)
     enable_sim_clock(state, base_dir=root)
     complete_kingdom_founding(
         state,

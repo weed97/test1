@@ -46,7 +46,9 @@ class SimClockTests(unittest.TestCase):
         with isolated_game_root() as root:
             session = self._ecology_session(root)
             state = session.state
-            state.setdefault("inventory", {})["party_gold"] = 500_000
+            from utils.currency import grant
+
+            grant(state, gold=500, base_dir=root)
             _ready_for_kingdom(state, root)
             complete_kingdom_founding(
                 state,
@@ -87,7 +89,9 @@ class SimClockTests(unittest.TestCase):
         with isolated_game_root() as root:
             session = self._ecology_session(root)
             state = session.state
-            state.setdefault("inventory", {})["party_gold"] = 500_000
+            from utils.currency import grant
+
+            grant(state, gold=500, base_dir=root)
             _ready_for_kingdom(state, root)
             complete_kingdom_founding(
                 state,

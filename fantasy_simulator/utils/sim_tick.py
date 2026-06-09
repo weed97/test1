@@ -34,6 +34,9 @@ def _run_ecology_beat(
 
     lines.extend(tick_civilization_coupling(state, base_dir=base_dir, rng=rng))
     lines.extend(tick_world_conflicts(state, base_dir=base_dir, rng=rng))
+    from utils.regional_resources import tick_regional_regen
+
+    lines.extend(tick_regional_regen(state, base_dir=base_dir))
     return lines
 
 

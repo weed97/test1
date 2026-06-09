@@ -32,7 +32,9 @@ class KingdomWarTests(unittest.TestCase):
         session = GameSession.from_root(root, mode="rule", seed=7)
         state = session.state
         state.setdefault("flags", {})["game_mode"] = "ecology"
-        state.setdefault("inventory", {})["party_gold"] = 500_000
+        from utils.currency import grant
+
+        grant(state, gold=500, base_dir=root)
         complete_kingdom_founding(
             state,
             map_id="ashpoint_01",
@@ -147,7 +149,9 @@ class KingdomWarTests(unittest.TestCase):
         with isolated_game_root() as root:
             session = GameSession.from_root(root, mode="rule", seed=9)
             session.state.setdefault("flags", {})["game_mode"] = "ecology"
-            session.state.setdefault("inventory", {})["party_gold"] = 500_000
+            from utils.currency import grant
+
+            grant(session.state, gold=500, base_dir=root)
             complete_kingdom_founding(
                 session.state,
                 map_id="ashpoint_01",

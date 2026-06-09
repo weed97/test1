@@ -21,7 +21,7 @@ def format_summary(state: dict[str, Any]) -> str:
         f"({world.get('time_of_day', '?')}{clock})",
         f"Location: {world.get('location', '?')}",
         f"Weather: {world.get('weather', '?')} | {format_tension_line(state)}",
-        f"Gold: {state.get('inventory', {}).get('party_gold', 0)}",
+        f"Money: {state.get('inventory', {}).get('wallet', state.get('inventory', {}))}",
     ]
     party = state.get("party", [])
     if party:

@@ -48,6 +48,9 @@ def tick_world_systems(
             )
         else:
             lines.extend(tick_field_ecology(state, base_dir=base_dir, rng=rng))
+            from utils.regional_resources import tick_regional_regen
+
+            lines.extend(tick_regional_regen(state, base_dir=base_dir))
             lines.extend(tick_player_build_projects(state, base_dir=base_dir))
             from utils.civilization_coupling import tick_civilization_coupling
             from utils.world_conflicts import tick_world_conflicts

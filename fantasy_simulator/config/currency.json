@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "copper_per_silver": 100,
+  "silver_per_gold": 100,
+  "starting_wallet": { "copper": 45, "silver": 0, "gold": 0 },
+  "legacy_party_gold_to_copper": 1,
+  "legacy_party_gold_cap_copper": 120,
+  "display": {
+    "copper": "쿠퍼",
+    "silver": "실버",
+    "gold": "골드"
+  },
+  "settlement_cost_tiers": {
+    "_note": "gold_cost in settlement_buildings.json is interpreted as copper below this threshold",
+    "copper_max": 99,
+    "silver_threshold": 100
+  }
+}
