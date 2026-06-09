@@ -2,33 +2,21 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
+from utils.action_keys import action_key
+from utils.config_loader import load_config
 from utils.currency import format_wallet, get_wallet, grant, wallet_summary
 from utils.kingdom_system import get_kingdom_charter
 
 
 def load_tutorial_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "tutorial.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "tutorial.json")
 
 
 def _tutorial_bucket(state: dict[str, Any]) -> dict[str, Any]:
     return state.setdefault("flags", {}).setdefault("tutorial", {"counts": {}})
-
-
-def _action_key(action: str) -> str | None:
-    lower = action.lower().strip()
-    if "explore" in lower or "탐험" in action:
-        return "explore"
-    if lower.startswith("investigate") or lower.startswith("inspect") or "조사" in action:
-        return "investigate"
-    if lower == "rest" or "휴식" in action:
-        return "rest"
-    return None
 
 
 def apply_tutorial_reward(
@@ -40,7 +28,7 @@ def apply_tutorial_reward(
     """Grant small copper on field actions until kingdom is founded."""
     if get_kingdom_charter(state):
         return []
-    key = _action_key(action)
+    key = action_key(action)
     if not key:
         return []
 

@@ -2,24 +2,20 @@
 
 from __future__ import annotations
 
-import json
 import uuid
 from pathlib import Path
 from typing import Any
 
+from utils.config_loader import load_config
 from utils.progression import load_progression_config
 
 
 def load_ecology_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "field_ecology.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "field_ecology.json")
 
 
 def load_intelligence_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "agent_intelligence.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "agent_intelligence.json")
 
 
 def skill_definition(skill_id: str, *, base_dir: str | Path) -> dict[str, Any]:

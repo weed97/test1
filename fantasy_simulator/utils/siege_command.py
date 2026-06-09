@@ -2,19 +2,17 @@
 
 from __future__ import annotations
 
-import json
 import random
 import uuid
 from pathlib import Path
 from typing import Any
 
+from utils.config_loader import load_config
 from utils.kingdom_system import get_kingdom_charter, load_kingdom_config
 
 
 def load_command_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "siege_command.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "siege_command.json")
 
 
 def _commander_block(war: dict[str, Any], side: str) -> dict[str, Any]:

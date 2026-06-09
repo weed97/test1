@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import random
 import uuid
 from pathlib import Path
@@ -10,22 +9,18 @@ from typing import Any
 
 from utils.agent_competition import get_civilization_state, load_civ_config
 from utils.civilization_coupling import _append_event, _civ_stage, _all_civ_defs
+from utils.config_loader import load_config
+from utils.ecology_state import ecology_flags
 from utils.field_agents import ecology_enabled
 from utils.settlement_build import get_player_settlement
 
 
 def load_conflicts_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "world_conflicts.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _eco(state: dict[str, Any]) -> dict[str, Any]:
-    return state.setdefault("flags", {}).setdefault("ecology", {})
+    return load_config(base_dir, "world_conflicts.json")
 
 
 def _wars(state: dict[str, Any]) -> dict[str, Any]:
-    eco = _eco(state)
+    eco = ecology_flags(state)
     return eco.setdefault(
         "world_wars",
         {"active": [], "history": [], "apex_cooldown": {}},
@@ -63,7 +58,7 @@ def _military_power(
 def _player_alliance_bonus(
     state: dict[str, Any], conflicts_cfg: dict[str, Any], *, base_dir: str | Path
 ) -> int:
-    profile = _eco(state).get("player_profile") or {}
+    profile = ecology_flags(state).get("player_profile") or {}
     realm = profile.get("realm_id")
     if not realm:
         return 0
@@ -124,7 +119,7 @@ def _apply_loss(
 def _enforce_world_floor(state: dict[str, Any], base_dir: str | Path) -> None:
     wcfg = load_conflicts_config(base_dir)
     floor = int(wcfg.get("balance", {}).get("world_prosperity_floor", 8))
-    for cid in list(_eco(state).get("civilizations", {})):
+    for cid in list(ecology_flags(state).get("civilizations", {})):
         cs = get_civilization_state(state, cid)
         if int(cs.get("prosperity", 0)) < floor:
             cs["prosperity"] = floor
@@ -168,7 +163,7 @@ def _maybe_start_invasion(
     kingdom = pair["defender_kingdom"]
     goal_id, goal_label = _pick_war_goal(conflicts, rng)
 
-    profile = _eco(state).get("player_profile") or {}
+    profile = ecology_flags(state).get("player_profile") or {}
     if profile.get("realm_id") == realm:
         from utils.kingdom_system import get_kingdom_charter
         from utils.kingdom_war import start_siege_war

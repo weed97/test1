@@ -2,26 +2,22 @@
 
 from __future__ import annotations
 
-import json
 import uuid
 from pathlib import Path
 from typing import Any, Literal
+
+from utils.config_loader import load_config
+from utils.ecology_state import ecology_flags
 
 BuildMode = Literal["self", "hire"]
 
 
 def load_buildings_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "settlement_buildings.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _eco(state: dict[str, Any]) -> dict[str, Any]:
-    return state.setdefault("flags", {}).setdefault("ecology", {})
+    return load_config(base_dir, "settlement_buildings.json")
 
 
 def get_player_settlement(state: dict[str, Any]) -> dict[str, Any]:
-    eco = _eco(state)
+    eco = ecology_flags(state)
     ps = eco.setdefault(
         "player_settlement",
         {

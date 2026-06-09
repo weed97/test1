@@ -5,39 +5,13 @@ from __future__ import annotations
 import random
 from typing import Any
 
+from utils.ecology_beat import run_ecology_beat
 from utils.faction_engine import FactionEngine
-from utils.field_agents import ecology_enabled, tick_field_ecology
 from utils.main_story_engine import MainStoryEngine
-from utils.parallel_beat import parallel_beat_enabled, run_world_parallel_beat
-from utils.settlement_build import tick_player_build_projects
 from utils.sim_clock import load_sim_clock_config, sim_clock_enabled
 from utils.temporal import format_clock_line
 from utils.world_clock import advance_world_minutes, ensure_world_clock
 from utils.world_tension import passive_drift
-
-
-def _run_ecology_beat(
-    state: dict[str, Any],
-    *,
-    base_dir: Any,
-    turn: int,
-    rng: random.Random | None,
-) -> list[str]:
-    if not ecology_enabled(state):
-        return []
-    if parallel_beat_enabled(state, base_dir=base_dir):
-        return run_world_parallel_beat(state, base_dir=base_dir, turn=turn, rng=rng)
-    lines = list(tick_field_ecology(state, base_dir=base_dir, rng=rng))
-    lines.extend(tick_player_build_projects(state, base_dir=base_dir))
-    from utils.civilization_coupling import tick_civilization_coupling
-    from utils.world_conflicts import tick_world_conflicts
-
-    lines.extend(tick_civilization_coupling(state, base_dir=base_dir, rng=rng))
-    lines.extend(tick_world_conflicts(state, base_dir=base_dir, rng=rng))
-    from utils.regional_resources import tick_regional_regen
-
-    lines.extend(tick_regional_regen(state, base_dir=base_dir))
-    return lines
 
 
 def tick_simulation(
@@ -92,7 +66,7 @@ def tick_simulation(
     turn = int(state.get("turn", 0))
     while sc["ecology_accum"] >= eco_interval:
         sc["ecology_accum"] -= eco_interval
-        lines.extend(_run_ecology_beat(state, base_dir=base_dir, turn=turn, rng=rng))
+        lines.extend(run_ecology_beat(state, base_dir=base_dir, turn=turn, rng=rng))
         ecology_beat = True
 
     tension_interval = float(cfg.get("tension_drift_minutes", 30))

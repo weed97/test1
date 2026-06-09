@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import copy
-import json
 import random
 from pathlib import Path
 from typing import Any
+
+from utils.config_loader import load_config
 
 from utils.agent_mind import (
     _iq,
@@ -26,9 +27,7 @@ from utils.spatial import load_world_maps, resolve_zone_from_world
 
 
 def load_parallel_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "parallel_beat.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "parallel_beat.json")
 
 
 def parallel_beat_enabled(state: dict[str, Any], *, base_dir: str | Path) -> bool:

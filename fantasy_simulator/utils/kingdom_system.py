@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import math
 import uuid
 from pathlib import Path
 from typing import Any
 
+from utils.config_loader import load_config
 from utils.currency import (
     can_afford,
     can_afford_gold_coins,
@@ -18,6 +18,7 @@ from utils.currency import (
     spend_gold_coins,
     wallet_summary,
 )
+from utils.ecology_state import ecology_flags
 from utils.settlement_build import (
     _deduct_materials,
     _materials_available,
@@ -51,17 +52,11 @@ def _can_pay_kingdom_cost(state: dict[str, Any], cost: int, *, base_dir: str | P
 
 
 def load_kingdom_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "kingdom_system.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _eco(state: dict[str, Any]) -> dict[str, Any]:
-    return state.setdefault("flags", {}).setdefault("ecology", {})
+    return load_config(base_dir, "kingdom_system.json")
 
 
 def get_kingdom_charter(state: dict[str, Any]) -> dict[str, Any] | None:
-    charter = _eco(state).get("kingdom_charter")
+    charter = ecology_flags(state).get("kingdom_charter")
     return charter if isinstance(charter, dict) else None
 
 
@@ -448,7 +443,7 @@ def complete_kingdom_founding(
     """Create charter after kingdom construction project completes."""
     kcfg = load_kingdom_config(base_dir)
     ps = get_player_settlement(state)
-    eco = _eco(state)
+    eco = ecology_flags(state)
     kingdom_id = f"kr_{uuid.uuid4().hex[:10]}"
     charter = _default_charter(
         kingdom_id=kingdom_id,

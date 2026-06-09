@@ -8,7 +8,21 @@ from utils.state_loader import StateLoader, event_entries
 from utils.world_tension import format_tension_line
 
 
-def format_summary(state: dict[str, Any]) -> str:
+def _format_money_line(state: dict[str, Any], *, base_dir: Any | None = None) -> str:
+    wallet = state.get("inventory", {}).get("wallet")
+    if base_dir is not None:
+        from utils.currency import get_wallet
+
+        wallet = get_wallet(state, base_dir=base_dir)
+    if not isinstance(wallet, dict):
+        return "Money: ?"
+    gold = int(wallet.get("gold", 0))
+    silver = int(wallet.get("silver", 0))
+    copper = int(wallet.get("copper", 0))
+    return f"Gold: {gold} | Silver: {silver} | Copper: {copper}"
+
+
+def format_summary(state: dict[str, Any], *, base_dir: Any | None = None) -> str:
     """One-page status summary."""
     world = state.get("world", {})
     clock = ""
@@ -21,7 +35,7 @@ def format_summary(state: dict[str, Any]) -> str:
         f"({world.get('time_of_day', '?')}{clock})",
         f"Location: {world.get('location', '?')}",
         f"Weather: {world.get('weather', '?')} | {format_tension_line(state)}",
-        f"Money: {state.get('inventory', {}).get('wallet', state.get('inventory', {}))}",
+        _format_money_line(state, base_dir=base_dir),
     ]
     party = state.get("party", [])
     if party:
@@ -42,10 +56,11 @@ def format_status_report(
 ) -> str:
     """Full status screen for CLI / interactive mode."""
     world = state.get("world", {})
+    root = base_dir or getattr(loader, "base_dir", None)
     lines = [
         f"=== {world.get('name', 'Eldoria')} | Day {world.get('day', '?')} ({world.get('time_of_day', '?')}) ===",
         f"모드: {mode} | 저장: state/ (sharded)",
-        format_summary(state),
+        format_summary(state, base_dir=root),
         "",
         "파티:",
     ]
@@ -68,7 +83,6 @@ def format_status_report(
         if faction_rep:
             from utils.faction_engine import FactionEngine
 
-            root = base_dir or getattr(loader, "base_dir", None)
             if root:
                 lines.extend(FactionEngine(root).format_summary(state))
         elif rep:
@@ -78,7 +92,6 @@ def format_status_report(
     if main_story and main_story.get("id"):
         from utils.main_story_engine import MainStoryEngine
 
-        root = base_dir or getattr(loader, "base_dir", None)
         if root:
             engine = MainStoryEngine(root)
             lines.extend(["", f"장기 스토리: {engine.format_summary(state)}"])

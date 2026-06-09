@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
+
+from utils.config_loader import load_config
 
 Wallet = dict[str, int]
 
 
 def load_currency_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "currency.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "currency.json")
 
 
 def _rates(cfg: dict[str, Any]) -> tuple[int, int]:

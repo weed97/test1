@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
+from utils.config_loader import load_config
+
 
 def load_arthur_coalition_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "arthur_coalition.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "arthur_coalition.json")
 
 
 def load_arthur_siege_math_config(base_dir: str | Path) -> dict[str, Any]:

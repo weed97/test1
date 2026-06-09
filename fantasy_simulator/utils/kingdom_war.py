@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import math
 import random
 import uuid
@@ -10,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from utils.agent_competition import get_civilization_state
+from utils.config_loader import load_config
+from utils.ecology_state import ecology_flags
 from utils.field_agents import ecology_enabled
 from utils.kingdom_system import (
     apply_siege_damage,
@@ -21,17 +22,23 @@ from utils.kingdom_system import (
 
 
 def load_war_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "kingdom_war.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _eco(state: dict[str, Any]) -> dict[str, Any]:
-    return state.setdefault("flags", {}).setdefault("ecology", {})
+    return load_config(base_dir, "kingdom_war.json")
 
 
 def _war_bucket(state: dict[str, Any]) -> dict[str, Any]:
-    return _eco(state).setdefault("kingdom_wars", {"active": [], "history": []})
+    return ecology_flags(state).setdefault("kingdom_wars", {"active": [], "history": []})
+
+
+def _persist_siege_simulation(state: dict[str, Any], simulation: dict[str, Any] | None) -> None:
+    if not simulation:
+        return
+    _war_bucket(state)["last_simulation"] = simulation
+    ecology_flags(state)["_last_siege_sim"] = simulation
+
+
+def _barrier_hp_snapshot(state: dict[str, Any]) -> int:
+    charter = get_kingdom_charter(state)
+    return int(charter.get("barrier", {}).get("hp", 0)) if charter else 0
 
 
 def has_active_kingdom_siege(state: dict[str, Any]) -> bool:
@@ -593,17 +600,14 @@ def tick_siege_for_sim_minutes(
     if rounds_done == 0:
         return empty
 
-    charter = get_kingdom_charter(state)
     simulation = {
         "source": "sim_clock",
         "rounds_simulated": rounds_done,
         "sim_minutes": sim_minutes,
         "wars": war_sims,
-        "barrier_hp": int(charter.get("barrier", {}).get("hp", 0)) if charter else 0,
+        "barrier_hp": _barrier_hp_snapshot(state),
     }
-    bucket["last_simulation"] = simulation
-    if new_events:
-        state.setdefault("flags", {}).setdefault("ecology", {})["_last_siege_sim"] = simulation
+    _persist_siege_simulation(state, simulation)
     return {"lines": all_lines, "simulation": simulation, "new_events": new_events}
 
 
@@ -679,7 +683,6 @@ def simulate_kingdom_wars_for_turn(
             )
             t_cursor += stagger * max(1, len(result.get("events", []))) + 200
 
-        charter = get_kingdom_charter(state)
         war_sims.append(
             {
                 "war_id": war.get("war_id"),
@@ -690,7 +693,7 @@ def simulate_kingdom_wars_for_turn(
                 "rounds_simulated": len(war_rounds),
                 "rounds": war_rounds,
                 "events": war_events,
-                "barrier_hp": int(charter.get("barrier", {}).get("hp", 0)) if charter else 0,
+                "barrier_hp": _barrier_hp_snapshot(state),
             }
         )
 
@@ -700,8 +703,9 @@ def simulate_kingdom_wars_for_turn(
         "minutes_advanced": minutes_advanced,
         "rounds_per_war": rounds,
         "wars": war_sims,
+        "barrier_hp": _barrier_hp_snapshot(state),
     }
-    bucket["last_simulation"] = simulation
+    _persist_siege_simulation(state, simulation)
     return {"lines": all_lines, "simulation": simulation}
 
 

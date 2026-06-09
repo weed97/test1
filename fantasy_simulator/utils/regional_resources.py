@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-import json
 import random
 from pathlib import Path
 from typing import Any
 
+from utils.action_keys import action_key
+from utils.config_loader import load_config
 from utils.settlement_build import get_player_settlement
 from utils.spatial import resolve_zone_from_world
 
 
 def load_regional_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "regional_resources.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "regional_resources.json")
 
 
 def _pools(state: dict[str, Any]) -> dict[str, Any]:
@@ -80,17 +79,6 @@ def regional_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str,
     }
 
 
-def _action_key(action: str) -> str | None:
-    lower = action.lower().strip()
-    if "explore" in lower or "탐험" in action:
-        return "explore"
-    if lower.startswith("investigate") or lower.startswith("inspect") or "조사" in action:
-        return "investigate"
-    if lower == "rest" or "휴식" in action:
-        return "rest"
-    return None
-
-
 def try_regional_gather(
     state: dict[str, Any],
     action: str,
@@ -99,7 +87,7 @@ def try_regional_gather(
     rng: random.Random | None = None,
 ) -> list[str]:
     """Gather materials/food from the current zone pool into player stockpile."""
-    key = _action_key(action)
+    key = action_key(action)
     if not key:
         return []
 

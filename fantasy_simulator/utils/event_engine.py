@@ -9,6 +9,7 @@ from typing import Any
 from utils.content_loader import ContentLoader
 from utils.faction_engine import FactionEngine
 from utils.main_story_engine import MainStoryEngine
+from utils.spatial import FRONTIER_ZONES
 from utils.world_tension import adjust_tension, event_weight_multiplier, get_tension
 
 TIME_ALIASES: dict[str, list[str]] = {
@@ -34,9 +35,6 @@ NPC_ALIASES: dict[str, str] = {
     "finn": "merchant_finn",
     "상인": "merchant_finn",
 }
-
-FRONTIER_ZONES = frozenset({"ashpoint", "forest", "tower"})
-
 
 def _seed_location_zones(seed: dict[str, Any]) -> frozenset[str]:
     explicit = seed.get("location_zones")

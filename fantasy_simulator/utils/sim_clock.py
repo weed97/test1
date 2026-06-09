@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
+
+from utils.config_loader import load_config
 
 from utils.field_agents import ecology_enabled
 
 
 def load_sim_clock_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "sim_clock.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "sim_clock.json")
 
 
 def _sim_meta(state: dict[str, Any]) -> dict[str, Any]:
