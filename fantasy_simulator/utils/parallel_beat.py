@@ -9,16 +9,12 @@ from typing import Any
 
 from utils.config_loader import load_config
 
-from utils.agent_mind import (
+from utils.ecology.agent_mind import (
     _iq,
-    _manhattan,
-    _pick_skill,
-    _pick_target,
-    _should_flee,
     commit_skill_costs,
-    decay_skill_cooldowns,
+    plan_agent_action,
     preview_skill_damage,
-    update_relations,
+    use_skill,
 )
 from utils.ecology_objects import load_ecology_config, normalize_agent
 from utils.field_agents import ecology_enabled, ensure_ecology_seeds, get_agents
@@ -35,11 +31,6 @@ def parallel_beat_enabled(state: dict[str, Any], *, base_dir: str | Path) -> boo
     if "parallel_beat" in eco:
         return bool(eco["parallel_beat"])
     return bool(load_parallel_config(base_dir).get("enabled_by_default_in_ecology", True))
-
-
-def _plan_priority(agent: dict[str, Any], *, base_dir: str | Path) -> int:
-    pack = agent.get("pack", {})
-    return _iq(agent) + int(pack.get("dominance", 0)) + int(agent.get("evolution_tier", 1)) * 5
 
 
 def _is_sovereign_holder(agent: dict[str, Any] | None, *, base_dir: str | Path) -> bool:
@@ -174,66 +165,10 @@ def plan_agent_beat(
     rng: random.Random,
     eco_cfg: dict[str, Any],
 ) -> dict[str, Any] | None:
-    """Plan only — no world mutation."""
-    decay_skill_cooldowns(agent)
+    """Plan only — delegates to agent_mind.plan_agent_action."""
+    del maps, eco_cfg  # parallel resolve uses maps; eco_cfg used at commit
     others = [a for i, a in agents_by_id.items() if i != agent["instance_id"]]
-    update_relations(agent, others, base_dir=base_dir, rng=rng)
-
-    label = agent.get("label") or agent.get("archetype_id", "agent")
-    plan: dict[str, Any] = {
-        "actor_id": agent["instance_id"],
-        "actor_label": label,
-        "priority": _plan_priority(agent, base_dir=base_dir),
-    }
-
-    if _should_flee(agent, base_dir=base_dir):
-        preds = [o for o in others if o.get("kind") == "monster"]
-        if preds:
-            p = preds[0]
-            plan["action"] = "flee"
-            plan["flee_from"] = p["instance_id"]
-            return plan
-        plan["action"] = "wander"
-        return plan
-
-    if agent.get("ai") == "builder" and agent.get("settlement"):
-        plan["action"] = "build"
-        return plan
-
-    target = _pick_target(agent, others, base_dir=base_dir)
-    if not target:
-        plan["action"] = "wander"
-        plan["dx"] = rng.choice([-1, 0, 1])
-        plan["dy"] = rng.choice([-1, 0, 1])
-        return plan
-
-    dist = _manhattan(agent, target)
-    plan["target_id"] = target["instance_id"]
-    plan["target_label"] = target.get("label") or target.get("archetype_id", "target")
-
-    if dist > 1:
-        plan["action"] = "move"
-        plan["move_to"] = [int(target["x"]), int(target["y"])]
-        return plan
-
-    enemies_near = sum(
-        1
-        for o in others
-        if o.get("instance_id") != agent.get("instance_id")
-        and _manhattan(agent, o) <= 3
-        and agent.get("relations", {}).get(o.get("instance_id"), "hostile") != "ally"
-    )
-    sk = _pick_skill(
-        agent, target, base_dir=base_dir, distance=dist, enemy_count=max(1, enemies_near), rng=rng
-    )
-    if sk:
-        plan["action"] = "skill"
-        plan["skill_id"] = sk
-    else:
-        plan["action"] = "attack"
-        plan["base_damage"] = 8 + int(agent.get("stats", {}).get("str", 10) // 3)
-        plan["base_damage"] += int(agent.get("plunder", {}).get("power_bonus", 0))
-    return plan
+    return plan_agent_action(agent, others, base_dir=base_dir, rng=rng)
 
 
 def _apply_move(
@@ -430,6 +365,13 @@ def resolve_and_commit_field_beat(
         elif act == "build":
             settle = actor.get("settlement")
             if settle:
+                ally_id = pl.get("builder_ally_id")
+                sk = pl.get("builder_skill_id")
+                if sk and ally_id:
+                    ally = agents_by_id.get(str(ally_id))
+                    if ally:
+                        _, sid = use_skill(actor, ally, str(sk), base_dir=base_dir, rng=rng)
+                        lines.append(f"[스킬] {label} → {ally.get('label', 'ally')} : {sid}")
                 settle["build_points"] = int(settle.get("build_points", 0)) + 5 + _iq(actor) // 20
                 for st in eco_cfg.get("settlement_stages", []):
                     if int(settle["build_points"]) >= int(st.get("build_points", 9999)):
