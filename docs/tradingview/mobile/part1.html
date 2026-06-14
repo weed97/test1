@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CPE Pine Part 1</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #0d1117; color: #e6edf3; }
+  h1 { font-size: 1.1rem; margin: 0 0 8px; }
+  p { font-size: 0.9rem; color: #8b949e; margin: 0 0 12px; line-height: 1.5; }
+  .btn { display: block; width: 100%; padding: 14px; font-size: 1rem; font-weight: 600;
+    border: none; border-radius: 8px; background: #238636; color: #fff; cursor: pointer; margin-bottom: 12px; }
+  .btn:active { background: #2ea043; }
+  .btn.done { background: #1f6feb; }
+  pre { display: none; }
+  .warn { background: #3d1f00; border: 1px solid #9e6a03; padding: 10px; border-radius: 8px;
+    font-size: 0.85rem; margin-bottom: 12px; }
+  .step { background: #161b22; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<h1>CPE Engine — Part 1 / 6</h1>
+<div class="warn">Raw GitHub는 모바일에서 한 줄로 보일 수 있습니다. <b>아래 초록 버튼</b>으로 복사하면 줄바꿈이 유지됩니다.</div>
+<p>확인: <code>맨 위 //@version=6 로 시작</code></p>
+<button class="btn" data-label="Part 1 복사 (231줄)" onclick="copyCode('code1', this)">Part 1 복사 (231줄)</button>
+<pre id="code1">//@version=6
+// ══════════════════════════════════════════════════════════════════════════════
+// Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones
+// BTC/ETH 정밀 트레이딩 통합 인디케이터 (Pine Script v6)
+// ══════════════════════════════════════════════════════════════════════════════
+indicator(
+     title=&quot;Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones [BTC/ETH]&quot;,
+     shorttitle=&quot;CPE Engine&quot;,
+     overlay=true,
+     behind_chart=false,
+     precision=2,
+     max_bars_back=2100,
+     max_lines_count=500,
+     max_labels_count=500,
+     max_boxes_count=100)
+
+// ══════════ SECTION 8: USER INPUTS ══════════
+// ⚡ VWAP Settings / VWAP 설정
+groupVwap   = &quot;⚡ VWAP Settings&quot;
+showVwapBands    = input.bool(true,  &quot;Show VWAP Bands&quot;,           group=groupVwap)
+showWeeklyVwap   = input.bool(false, &quot;Show Weekly VWAP&quot;,          group=groupVwap)
+showMonthlyVwap  = input.bool(false, &quot;Show Monthly VWAP&quot;,           group=groupVwap)
+vwapBandMult     = input.float(1.0, &quot;Band Multiplier&quot;, minval=0.1, step=0.1, group=groupVwap)
+showVwapZones    = input.bool(true,  &quot;Show VWAP S/R Zones&quot;,       group=groupVwap)
+vwapZoneAtrMult  = input.float(0.5, &quot;VWAP Zone ATR Mult&quot;, minval=0.1, step=0.1, group=groupVwap)
+vwapZoneLookback = input.int(100,   &quot;VWAP Zone Touch Lookback&quot;, minval=20, group=groupVwap)
+
+// 📊 Volume Profile / POC / 거래량 프로파일
+groupVp     = &quot;📊 Volume Profile / POC&quot;
+vpLookback  = input.int(300,  &quot;VP Lookback Bars&quot;, minval=50, maxval=500, group=groupVp)
+vpBins      = input.int(48,   &quot;VP Bins&quot;, minval=10, maxval=100, group=groupVp)
+valueAreaPct= input.float(70.0,&quot;Value Area %&quot;, minval=50, maxval=95, group=groupVp)
+vpExtend    = input.int(50,    &quot;Extend Lines Right (bars)&quot;, minval=0, group=groupVp)
+showHvn     = input.bool(true, &quot;Show HVN Zones&quot;, group=groupVp)
+showLvn     = input.bool(true, &quot;Show LVN Lines&quot;, group=groupVp)
+
+// 🧱 Wall Detection / 매수·매도벽
+groupWall   = &quot;🧱 Wall Detection&quot;
+volMaLen    = input.int(20,   &quot;Volume MA Length&quot;, minval=5, group=groupWall)
+buyWallMult = input.float(2.5,&quot;Buy Wall Multiplier&quot;, minval=1.0, step=0.1, group=groupWall)
+sellWallMult= input.float(2.5,&quot;Sell Wall Multiplier&quot;, minval=1.0, step=0.1, group=groupWall)
+strongWallMult = input.float(5.0, &quot;Strong Wall Mult&quot;, minval=2.0, step=0.5, group=groupWall)
+modWallMult    = input.float(3.5, &quot;Moderate Wall Mult&quot;, minval=2.0, step=0.5, group=groupWall)
+wallExpiryBars = input.int(100,&quot;Wall Expiry Bars&quot;, minval=10, group=groupWall)
+wallZoneAtrMult= input.float(0.4,&quot;Wall Zone ATR Mult&quot;, minval=0.1, step=0.1, group=groupWall)
+
+// 🎯 Support / Resistance / 지지·저항 구간
+groupSr     = &quot;🎯 Support / Resistance Zones&quot;
+srLookback  = input.int(200,  &quot;S/R Lookback&quot;, minval=50, group=groupSr)
+pivotLeft   = input.int(10,   &quot;Pivot Left&quot;, minval=2, group=groupSr)
+pivotRight  = input.int(10,   &quot;Pivot Right&quot;, minval=2, group=groupSr)
+clusterAtrMult = input.float(0.5, &quot;Cluster ATR Mult&quot;, minval=0.1, step=0.1, group=groupSr)
+minTouches  = input.int(2,    &quot;Min Touches&quot;, minval=1, group=groupSr)
+showMajorOnly = input.bool(false, &quot;Show Major Zones Only&quot;, group=groupSr)
+showDistLabels= input.bool(true,  &quot;Show Distance Labels&quot;, group=groupSr)
+
+// 📖 Wall Pressure (무료·캔들 기반) / 실제 호가는 터미널 스크립트 사용
+groupOb     = &quot;📖 Wall Pressure (Free)&quot;
+showOrderbook = input.bool(false, &quot;Show Wall Pressure Table&quot;, group=groupOb,
+     tooltip=&quot;실제 오더북: python3 scripts/tradingview_orderbook_feed.py&quot;)
+obLevels    = input.int(5, &quot;Levels (each side)&quot;, minval=1, maxval=5, group=groupOb)
+obAtrSpacing= input.float(0.15, &quot;ATR Spacing&quot;, minval=0.05, step=0.05, group=groupOb)
+
+// 📡 Signals / 진입 시그널
+groupSig    = &quot;📡 Signals&quot;
+showMarks   = input.bool(true, &quot;Show Signal Markers&quot;, inline=&quot;sigshow&quot;, group=groupSig,
+     tooltip=&quot;LONG/SHORT 플립 시점에만 차트 마커 표시 (확정봉·쿨다운 적용)&quot;)
+sigCoolBars = input.int(5, &quot;Signal Cooldown (bars)&quot;, minval=1, maxval=50, group=groupSig,
+     tooltip=&quot;연속 시그널 방지 — 최소 대기 봉 수&quot;)
+sigBull     = input.color(color.lime, &quot;Long&quot;, inline=&quot;sigcol&quot;, group=groupSig)
+sigBear     = input.color(color.red, &quot;Short&quot;, inline=&quot;sigcol&quot;, group=groupSig)
+
+// 🖥 Dashboard / 대시보드
+groupDash   = &quot;🖥 Dashboard&quot;
+showDashboard = input.bool(true, &quot;Show Dashboard&quot;, group=groupDash)
+dashPosition  = input.string(&quot;top_right&quot;, &quot;Dashboard Position&quot;,
+     options=[&quot;top_right&quot;, &quot;top_left&quot;, &quot;bottom_right&quot;, &quot;bottom_left&quot;], group=groupDash)
+tableSize     = input.string(&quot;small&quot;, &quot;Table Size&quot;,
+     options=[&quot;tiny&quot;, &quot;small&quot;, &quot;normal&quot;], group=groupDash)
+
+// ══════════ SHARED CALCULATIONS ══════════
+atr14   = ta.atr(14)
+volMa   = ta.sma(volume, volMaLen)
+volStd  = ta.stdev(volume, volMaLen)
+confirmed = barstate.isconfirmed
+
+// ══════════ SECTION 1: VWAP + BANDS ══════════
+// 1-1 Session VWAP — 일일 세션 기준 VWAP
+var float sCumVol  = 0.0
+var float sCumPV   = 0.0
+var float sSumDev  = 0.0
+var float sSumDev2 = 0.0
+var int   sBars    = 0
+
+newDay = ta.change(time(&quot;1D&quot;)) != 0
+if newDay
+    sCumVol  := 0.0
+    sCumPV   := 0.0
+    sSumDev  := 0.0
+    sSumDev2 := 0.0
+    sBars    := 0
+
+tp = hlc3
+sCumVol  += volume
+sCumPV   += tp * volume
+sessionVwap = sCumVol &gt; 0 ? sCumPV / sCumVol : tp
+
+dev = close - sessionVwap
+sSumDev  += dev
+sSumDev2 += dev * dev
+sBars    += 1
+sessionStd = sBars &gt; 1 ? math.sqrt(math.max((sSumDev2 - sSumDev * sSumDev / sBars) / (sBars - 1), 0.0)) : 0.0
+
+band1U = sessionVwap + sessionStd * vwapBandMult
+band2U = sessionVwap + sessionStd * 2.0 * vwapBandMult
+band3U = sessionVwap + sessionStd * 3.0 * vwapBandMult
+band1D = sessionVwap - sessionStd * vwapBandMult
+band2D = sessionVwap - sessionStd * 2.0 * vwapBandMult
+band3D = sessionVwap - sessionStd * 3.0 * vwapBandMult
+
+vwapColor = close &gt;= sessionVwap ? color.new(color.green, 0) : color.new(color.red, 0)
+plot(sessionVwap, &quot;Session VWAP&quot;, color=vwapColor, linewidth=2)
+
+// 1-2 VWAP Standard Deviation Bands — 표준편차 밴드
+pB1U = plot(showVwapBands ? band1U : na, &quot;+1σ&quot;, color=color.new(color.blue, 40), linewidth=1)
+pB1D = plot(showVwapBands ? band1D : na, &quot;-1σ&quot;, color=color.new(color.blue, 40), linewidth=1)
+plot(showVwapBands ? band2U : na, &quot;+2σ&quot;, color=color.new(color.orange, 40), linewidth=1)
+plot(showVwapBands ? band2D : na, &quot;-2σ&quot;, color=color.new(color.orange, 40), linewidth=1)
+plot(showVwapBands ? band3U : na, &quot;+3σ&quot;, color=color.new(color.red, 20), linewidth=1)
+plot(showVwapBands ? band3D : na, &quot;-3σ&quot;, color=color.new(color.lime, 20), linewidth=1)
+fill(pB1U, pB1D, color=color.new(color.blue, 90), title=&quot;±1σ Fill&quot;)
+
+// 1-3 Weekly + Monthly VWAP — 주간·월간 VWAP
+var float wCumVol = 0.0, wCumPV = 0.0
+var float mCumVol = 0.0, mCumPV = 0.0
+newWeek  = ta.change(time(&quot;1W&quot;)) != 0
+newMonth = ta.change(time(&quot;1M&quot;)) != 0
+if newWeek
+    wCumVol := 0.0
+    wCumPV  := 0.0
+if newMonth
+    mCumVol := 0.0
+    mCumPV  := 0.0
+wCumVol += volume
+wCumPV  += tp * volume
+mCumVol += volume
+mCumPV  += tp * volume
+weeklyVwap  = wCumVol &gt; 0 ? wCumPV / wCumVol : tp
+monthlyVwap = mCumVol &gt; 0 ? mCumPV / mCumVol : tp
+
+plot(showWeeklyVwap  ? weeklyVwap  : na, &quot;Weekly VWAP&quot;,  color=color.new(color.purple, 0), linewidth=1, style=plot.style_linebr)
+plot(showMonthlyVwap ? monthlyVwap : na, &quot;Monthly VWAP&quot;, color=color.new(color.orange, 0), linewidth=1, style=plot.style_linebr)
+
+var label wLbl = na
+var label mLbl = na
+if barstate.islast
+    if showWeeklyVwap
+        label.delete(wLbl)
+        wLbl := label.new(bar_index, weeklyVwap, &quot;W-VWAP&quot;, style=label.style_label_left,
+             color=color.new(color.purple, 70), textcolor=color.white, size=size.small)
+    if showMonthlyVwap
+        label.delete(mLbl)
+        mLbl := label.new(bar_index, monthlyVwap, &quot;M-VWAP&quot;, style=label.style_label_left,
+             color=color.new(color.orange, 70), textcolor=color.white, size=size.small)
+
+// 1-4 VWAP Zone touch analysis — VWAP 밴드 존 분석
+f_zoneTouches(float level, float halfH, int lb) =&gt;
+    int touches = 0
+    float touchVol = 0.0
+    int bounces = 0
+    bool broken = false
+    for i = 1 to lb
+        if bar_index &gt;= i
+            float zTop = level + halfH
+            float zBot = level - halfH
+            bool touched = high[i] &gt;= zBot and low[i] &lt;= zTop
+            if touched
+                touches += 1
+                touchVol += volume[i]
+                bool bouncedUp = false
+                bool bouncedDn = false
+                for j = 0 to 2
+                    if i - j &gt;= 0
+                        if close[i - j] &gt; zTop
+                            bouncedUp := true
+                        if close[i - j] &lt; zBot
+                            bouncedDn := true
+                if bouncedUp or bouncedDn
+                    bounces += 1
+            // broken through
+            if close[i] &gt; zTop + halfH or close[i] &lt; zBot - halfH
+                broken := true
+    float strength = touches &gt; 0 ? math.min(100, int(touches * 15 + touchVol / math.max(volMa, 1) * 5)) : 0
+    [touches, bounces, broken, strength]
+
+vwapHalfH = atr14 * vwapZoneAtrMult
+var box[] vwapZoneBoxes = array.new_box()
+var label[] vwapZoneLabels = array.new_label()
+
+f_drawVwapZone(float lvl, string name, bool isUpper) =&gt;
+    if showVwapZones and barstate.islast
+        [tch, bnc, brk, str] = f_zoneTouches(lvl, vwapHalfH, vwapZoneLookback)
+        isSupport = not isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk
+        isResist  = isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk
+        bgCol = brk ? color.new(color.gray, 75) :
+             isSupport ? color.new(color.green, 80) :
+             isResist  ? color.new(color.red, 80) :
+             color.new(color.gray, 90)
+        b = box.new(bar_index - vwapZoneLookback, lvl + vwapHalfH, bar_index + 20, lvl - vwapHalfH,
+             border_color=color.new(color.gray, 60), bgcolor=bgCol, border_width=1)
+        array.push(vwapZoneBoxes, b)
+        lblTxt = name + &quot;\nTouches: &quot; + str.tostring(tch) + &quot;\nStrength: &quot; + str.tostring(str)
+        l = label.new(bar_index + 5, lvl, lblTxt, style=label.style_label_left,
+             color=color.new(color.black, 40), textcolor=color.white, size=size.tiny)
+        array.push(vwapZoneLabels, l)
+
+if barstate.islast
+    for b in vwapZoneBoxes
+        box.delete(b)
+    for l in vwapZoneLabels
+        label.delete(l)
+    array.clear(vwapZoneBoxes)
+    array.clear(vwapZoneLabels)
+    if showVwapZones
+        f_drawVwapZone(band1U, &quot;VWAP +1σ Zone&quot;, true)
+        f_drawVwapZone(band1D, &quot;VWAP -1σ Zone&quot;, false)
+        f_drawVwapZone(band2U, &quot;VWAP +2σ Zone&quot;, true)
+        f_drawVwapZone(band2D, &quot;VWAP -2σ Zone&quot;, false)
+        f_drawVwapZone(band3U, &quot;VWAP +3σ Zone&quot;, true)
+        f_drawVwapZone(band3D, &quot;VWAP -3σ Zone&quot;, false)
+
+</pre>
+
+<script>
+function copyCode(id, btn) {
+  var el = document.getElementById(id);
+  var text = el.textContent;
+  function ok() {
+    btn.textContent = '✓ 복사됨 — TradingView Pine Editor에 붙여넣기';
+    btn.classList.add('done');
+    setTimeout(function() {
+      btn.textContent = btn.dataset.label;
+      btn.classList.remove('done');
+    }, 3000);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(fallback);
+  } else {
+    fallback();
+  }
+  function fallback() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); ok(); } catch (e) { alert('복사 실패 — 아래 코드 영역을 길게 눌러 직접 복사하세요.'); }
+    document.body.removeChild(ta);
+  }
+}
+</script>
+</body>
+</html>

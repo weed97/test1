@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CPE Pine Part 5</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #0d1117; color: #e6edf3; }
+  h1 { font-size: 1.1rem; margin: 0 0 8px; }
+  p { font-size: 0.9rem; color: #8b949e; margin: 0 0 12px; line-height: 1.5; }
+  .btn { display: block; width: 100%; padding: 14px; font-size: 1rem; font-weight: 600;
+    border: none; border-radius: 8px; background: #238636; color: #fff; cursor: pointer; margin-bottom: 12px; }
+  .btn:active { background: #2ea043; }
+  .btn.done { background: #1f6feb; }
+  pre { display: none; }
+  .warn { background: #3d1f00; border: 1px solid #9e6a03; padding: 10px; border-radius: 8px;
+    font-size: 0.85rem; margin-bottom: 12px; }
+  .step { background: #161b22; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<h1>CPE Engine — Part 5 / 6</h1>
+<div class="warn">Raw GitHub는 모바일에서 한 줄로 보일 수 있습니다. <b>아래 초록 버튼</b>으로 복사하면 줄바꿈이 유지됩니다.</div>
+<p>확인: <code>SECTION 5: WALL PRESSURE</code></p>
+<button class="btn" data-label="Part 5 복사 (116줄)" onclick="copyCode('code5', this)">Part 5 복사 (116줄)</button>
+<pre id="code5">// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
+// 실제 호가는 Binance/Bybit 무료 API → tradingview_orderbook_feed.py
+// Pine: 매수·매도벽 + S/R 태그만으로 Bid/Ask 압력 추정 (유료 API·랜덤 없음)
+
+f_wallSizeAt(float price, float pct) =&gt;
+    float sz = 0.0
+    for w in walls
+        if not w.broken and math.abs(w.level - price) / price * 100.0 &lt; pct
+            sz += w.vol / math.max(volMa, 1) * 50.0
+    sz
+
+f_obTag(float price, bool isAsk) =&gt;
+    string tag = &quot;&quot;
+    if isAsk
+        if f_wallNear(price, 0.3, false)
+            tag += &quot;SW🧱 &quot;
+        if not na(nearMajorRes) and math.abs(price - nearMajorRes) / price * 100.0 &lt; 0.3
+            tag += &quot;MR🔴 &quot;
+        if math.abs(price - band2U) / price * 100.0 &lt; 0.3
+            tag += &quot;V+2σ &quot;
+    else
+        if f_wallNear(price, 0.3, true)
+            tag += &quot;BW🧱 &quot;
+        if not na(nearMajorSup) and math.abs(price - nearMajorSup) / price * 100.0 &lt; 0.3
+            tag += &quot;MS🟢 &quot;
+        if math.abs(price - poc) / price * 100.0 &lt; 0.3
+            tag += &quot;POC⭐ &quot;
+        if math.abs(price - band1D) / price * 100.0 &lt; 0.3
+            tag += &quot;V-1σ &quot;
+    tag
+
+// 매 바 Bid/Ask 압력 (벽 기반만 — 테이블 꺼져도 대시보드·시그널 동작)
+float bidTotal = 0.0
+float askTotal = 0.0
+float imbRatio = 1.0
+float spacing = atr14 * obAtrSpacing
+for n = 1 to obLevels
+    askTotal += f_wallSizeAt(close + spacing * n, 0.25)
+    bidTotal += f_wallSizeAt(close - spacing * n, 0.25)
+for w in walls
+    if not w.broken
+        if w.isBuy
+            bidTotal += w.vol / math.max(volMa, 1) * 10.0
+        else
+            askTotal += w.vol / math.max(volMa, 1) * 10.0
+imbRatio := askTotal &gt; 0 ? bidTotal / askTotal : 1.0
+
+f_sizeBar(float sz, float maxSz) =&gt;
+    int blocks = int(math.round(sz / math.max(maxSz, 1) * 8))
+    string s = &quot;&quot;
+    for i = 0 to 7
+        s += i &lt; blocks ? &quot;█&quot; : &quot;░&quot;
+    s
+
+var table obTable = na
+
+tblPos(pos) =&gt;
+    pos == &quot;top_left&quot; ? position.top_left :
+     pos == &quot;bottom_right&quot; ? position.bottom_right :
+     pos == &quot;bottom_left&quot; ? position.bottom_left : position.top_right
+
+tblSz(sz) =&gt;
+    sz == &quot;tiny&quot; ? size.tiny : sz == &quot;normal&quot; ? size.normal : size.small
+
+if showOrderbook and barstate.islast
+  if na(obTable)
+    obTable := table.new(position.bottom_right, 4, 12, border_width=1)
+  else
+    table.clear(obTable, 0, 0, 3, 11)
+
+  table.cell(obTable, 0, 0, &quot;Price&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+  table.cell(obTable, 1, 0, &quot;Wall&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+  table.cell(obTable, 2, 0, &quot;Lvl&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+  table.cell(obTable, 3, 0, &quot;Tag&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+
+  float maxSz = math.max(math.max(bidTotal, askTotal), 1.0)
+
+  for n = obLevels to 1
+    int row = obLevels - n + 1
+    float askP = close + spacing * n
+    float sz = f_wallSizeAt(askP, 0.25)
+    string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
+    string bar = f_sizeBar(sz, maxSz)
+    string tags = f_obTag(askP, true)
+    bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
+    table.cell(obTable, 0, row, str.tostring(askP, format.mintick), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+    table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+    table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+    table.cell(obTable, 3, row, &quot;ASK &quot; + tags, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+
+  table.cell(obTable, 0, 6, str.tostring(close, format.mintick), bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+  table.cell(obTable, 1, 6, &quot;▶ CURRENT&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+  table.cell(obTable, 2, 6, &quot;—&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+  table.cell(obTable, 3, 6, &quot;캔들·벽 기반&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+
+  for n = 1 to obLevels
+    int row = 6 + n
+    float bidP = close - spacing * n
+    float sz = f_wallSizeAt(bidP, 0.25)
+    string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
+    string bar = f_sizeBar(sz, maxSz)
+    string tags = f_obTag(bidP, false)
+    bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
+    table.cell(obTable, 0, row, str.tostring(bidP, format.mintick), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+    table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+    table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+    table.cell(obTable, 3, row, &quot;BID &quot; + tags, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+
+  string imbTxt = imbRatio &gt; 1.5 ? &quot;📈 BID (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; :
+       imbRatio &lt; 0.67 ? &quot;📉 ASK (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; : &quot;⚖ BALANCED&quot;
+  color imbCol = imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray
+  table.cell(obTable, 0, 11, &quot;Wall Imb&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
+  table.cell(obTable, 1, 11, str.tostring(bidTotal, &quot;#.#&quot;) + &quot;/&quot; + str.tostring(askTotal, &quot;#.#&quot;), bgcolor=color.new(color.black, 30), text_size=size.tiny)
+  table.cell(obTable, 2, 11, imbTxt, bgcolor=color.new(imbCol, 50), text_color=color.white, text_size=size.tiny)
+  table.cell(obTable, 3, 11, &quot;FREE&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
+
+</pre>
+
+<script>
+function copyCode(id, btn) {
+  var el = document.getElementById(id);
+  var text = el.textContent;
+  function ok() {
+    btn.textContent = '✓ 복사됨 — TradingView Pine Editor에 붙여넣기';
+    btn.classList.add('done');
+    setTimeout(function() {
+      btn.textContent = btn.dataset.label;
+      btn.classList.remove('done');
+    }, 3000);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(fallback);
+  } else {
+    fallback();
+  }
+  function fallback() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); ok(); } catch (e) { alert('복사 실패 — 아래 코드 영역을 길게 눌러 직접 복사하세요.'); }
+    document.body.removeChild(ta);
+  }
+}
+</script>
+</body>
+</html>

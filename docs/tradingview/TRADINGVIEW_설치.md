@@ -2,8 +2,9 @@
 
 ## 모바일 사용자
 
-휴대폰에서 **한 번에 붙여넣기가 안 되거나 코드가 한 줄로 합쳐지면** →  
-**[모바일_설치가이드.md](./모바일_설치가이드.md)** (6조각 나눠 붙이기 포함)
+휴대폰 **Raw GitHub는 한 줄로 보입니다** (줄바꿈 깨짐).  
+→ **[모바일 복사 버튼 페이지](https://cdn.jsdelivr.net/gh/weed97/test1@cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/index.html)**  
+상세: **[모바일_설치가이드.md](./모바일_설치가이드.md)**
 
 ---
 

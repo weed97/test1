@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CPE Pine Part 6</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #0d1117; color: #e6edf3; }
+  h1 { font-size: 1.1rem; margin: 0 0 8px; }
+  p { font-size: 0.9rem; color: #8b949e; margin: 0 0 12px; line-height: 1.5; }
+  .btn { display: block; width: 100%; padding: 14px; font-size: 1rem; font-weight: 600;
+    border: none; border-radius: 8px; background: #238636; color: #fff; cursor: pointer; margin-bottom: 12px; }
+  .btn:active { background: #2ea043; }
+  .btn.done { background: #1f6feb; }
+  pre { display: none; }
+  .warn { background: #3d1f00; border: 1px solid #9e6a03; padding: 10px; border-radius: 8px;
+    font-size: 0.85rem; margin-bottom: 12px; }
+  .step { background: #161b22; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<h1>CPE Engine — Part 6 / 6</h1>
+<div class="warn">Raw GitHub는 모바일에서 한 줄로 보일 수 있습니다. <b>아래 초록 버튼</b>으로 복사하면 줄바꿈이 유지됩니다.</div>
+<p>확인: <code>SECTION 6: DASHBOARD + ALERTS</code></p>
+<button class="btn" data-label="Part 6 복사 (149줄)" onclick="copyCode('code6', this)">Part 6 복사 (149줄)</button>
+<pre id="code6">// ══════════ SECTION 6: MASTER DASHBOARD ══════════
+// 6 Master dashboard — 통합 대시보드
+f_distPct(float price) =&gt;
+    price &gt; 0 ? (close - price) / price * 100.0 : 0.0
+
+f_session() =&gt;
+    int h = hour(time, &quot;UTC&quot;)
+    h &gt;= 0 and h &lt; 8 ? &quot;Asian&quot; : h &gt;= 8 and h &lt; 16 ? &quot;London&quot; : h &gt;= 16 and h &lt; 22 ? &quot;New York&quot; : &quot;Off-hours&quot;
+
+vwapSlope = sessionVwap - sessionVwap[5]
+trendTxt  = vwapSlope &gt; 0 ? &quot;↑ Bullish VWAP&quot; : vwapSlope &lt; 0 ? &quot;↓ Bearish VWAP&quot; : &quot;→ Flat VWAP&quot;
+volRatio  = volMa &gt; 0 ? volume / volMa : 1.0
+volRatioTxt = str.tostring(volRatio, &quot;#.#&quot;) + &quot;x&quot; + (volRatio &gt; 2.5 ? &quot; 🔥&quot; : &quot;&quot;)
+
+nearSupPct = not na(nearMajorSup) ? (close - nearMajorSup) / close * 100.0 : na
+nearResPct = not na(nearMajorRes) ? (nearMajorRes - close) / close * 100.0 : na
+priceNearSup = not na(nearMajorSup) and math.abs(close - nearMajorSup) / close * 100.0 &lt; 1.5
+priceNearRes = not na(nearMajorRes) and math.abs(nearMajorRes - close) / close * 100.0 &lt; 1.5
+
+longSetup  = close &gt; sessionVwap and priceNearSup and imbRatio &gt; 1.5 and volRatio &gt; 2.0
+shortSetup = close &lt; sessionVwap and priceNearRes and imbRatio &lt; 0.67 and volRatio &gt; 2.0
+signalTxt  = longSetup ? &quot;LONG SETUP 🟢&quot; : shortSetup ? &quot;SHORT SETUP 🔴&quot; : &quot;NEUTRAL ⚪&quot;
+
+// — Flip-only triggers (Zeiierman-style: fire once on setup onset, not every bar)
+flipLong  = longSetup and not longSetup[1]
+flipShort = shortSetup and not shortSetup[1]
+var int lastEntryBar = na
+barOK     = confirmed
+coolOK    = na(lastEntryBar) or bar_index - lastEntryBar &gt;= sigCoolBars
+triggerLong  = flipLong and coolOK and barOK
+triggerShort = flipShort and coolOK and barOK
+if triggerLong or triggerShort
+    lastEntryBar := bar_index
+
+// — Chart markers at recent swing low/high (absolute placement)
+placeBuy  = ta.lowest(low, 5)
+placeSell = ta.highest(high, 5)
+plotshape(showMarks and triggerLong ? placeBuy : na, &quot;Long&quot;, shape.triangleup, location.absolute, sigBull, size=size.tiny)
+plotshape(showMarks and triggerShort ? placeSell : na, &quot;Short&quot;, shape.triangledown, location.absolute, sigBear, size=size.tiny)
+plotshape(showMarks and triggerLong ? placeBuy : na, &quot;Long Glow&quot;, shape.triangleup, location.absolute, color.new(sigBull, 50), size=size.small)
+plotshape(showMarks and triggerShort ? placeSell : na, &quot;Short Glow&quot;, shape.triangledown, location.absolute, color.new(sigBear, 50), size=size.small)
+
+var table dash = na
+if showDashboard and barstate.islast
+  if na(dash)
+    dash := table.new(tblPos(dashPosition), 2, 16, border_width=1)
+  else
+    table.clear(dash, 0, 0, 1, 15)
+
+  sz = tblSz(tableSize)
+  vwapDist = f_distPct(sessionVwap)
+  vwapArrow = vwapDist &gt;= 0 ? &quot;▲&quot; : &quot;▼&quot;
+  vwapCol = vwapDist &gt;= 0 ? color.green : color.red
+
+  table.cell(dash, 0, 0, &quot;VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 0, str.tostring(sessionVwap, format.mintick) + &quot; (&quot; + str.tostring(vwapDist, &quot;#.##&quot;) + &quot;% &quot; + vwapArrow + &quot;)&quot;,
+       text_size=sz, text_color=vwapCol)
+
+  table.cell(dash, 0, 1, &quot;W-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 1, str.tostring(weeklyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(weeklyVwap), &quot;#.##&quot;) + &quot;%)&quot;,
+       text_size=sz)
+
+  table.cell(dash, 0, 2, &quot;M-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 2, str.tostring(monthlyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(monthlyVwap), &quot;#.##&quot;) + &quot;%)&quot;,
+       text_size=sz)
+
+  table.cell(dash, 0, 3, &quot;POC&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 3, str.tostring(poc, format.mintick) + &quot; &quot; + str.tostring(pocDistPct, &quot;#.##&quot;) + &quot;% | &quot; +
+       pocStrengthLbl + &quot; (&quot; + str.tostring(pocStrength, &quot;#.#&quot;) + &quot;%)&quot;, text_size=sz, text_color=pocStrengthCol)
+
+  table.cell(dash, 0, 4, &quot;VAH&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 4, str.tostring(vah, format.mintick) + &quot; (+&quot; + str.tostring((vah - close) / close * 100.0, &quot;#.##&quot;) + &quot;% above)&quot;, text_size=sz)
+
+  table.cell(dash, 0, 5, &quot;VAL&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 5, str.tostring(val, format.mintick) + &quot; (-&quot; + str.tostring((close - val) / close * 100.0, &quot;#.##&quot;) + &quot;% below)&quot;, text_size=sz)
+
+  table.cell(dash, 0, 6, &quot;Buy Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 6, str.tostring(activeBuyWalls) + &quot; active | Nearest: &quot; +
+       (na(nearestBw) ? &quot;—&quot; : str.tostring(nearestBw, format.mintick)), text_size=sz, text_color=color.lime)
+
+  table.cell(dash, 0, 7, &quot;Sell Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 7, str.tostring(activeSellWalls) + &quot; active | Nearest: &quot; +
+       (na(nearestSw) ? &quot;—&quot; : str.tostring(nearestSw, format.mintick)), text_size=sz, text_color=color.red)
+
+  table.cell(dash, 0, 8, &quot;Major Sup&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 8, na(nearMajorSup) ? &quot;—&quot; : &quot;↓&quot; + str.tostring(nearSupPct, &quot;#.##&quot;) + &quot;% | 순지지 &quot; +
+       str.tostring(nearSupNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.lime)
+
+  table.cell(dash, 0, 9, &quot;Major Res&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 9, na(nearMajorRes) ? &quot;—&quot; : &quot;↑&quot; + str.tostring(nearResPct, &quot;#.##&quot;) + &quot;% | 순저항 &quot; +
+       str.tostring(nearResNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.red)
+
+  table.cell(dash, 0, 10, &quot;Vol Ratio&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 10, volRatioTxt, text_size=sz, text_color=volRatio &gt; 2.5 ? color.orange : color.white)
+
+  table.cell(dash, 0, 11, &quot;Wall Imb&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 11, str.tostring(imbRatio, &quot;#.##&quot;) + &quot;x&quot;, text_size=sz,
+       text_color=imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray)
+
+  table.cell(dash, 0, 12, &quot;Session&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 12, f_session(), text_size=sz)
+
+  table.cell(dash, 0, 13, &quot;Trend&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 13, trendTxt, text_size=sz, text_color=vwapSlope &gt;= 0 ? color.green : color.red)
+
+  table.cell(dash, 0, 14, &quot;ATR&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 14, str.tostring(atr14, format.mintick) + &quot; (&quot; + str.tostring(atr14 / close * 100.0, &quot;#.##&quot;) + &quot;%)&quot;, text_size=sz)
+
+  table.cell(dash, 0, 15, &quot;Signal&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 15, signalTxt, text_size=sz,
+       text_color=longSetup ? color.lime : shortSetup ? color.red : color.gray)
+
+// ══════════ SECTION 7: ALERTS ══════════
+// 7 Alert conditions — 알림 조건
+crossAboveVwap = ta.crossover(close, sessionVwap)
+crossBelowVwap = ta.crossunder(close, sessionVwap)
+inPocZone      = math.abs(close - poc) &lt;= atr14 * 0.3
+buyWallDet     = buyCond
+sellWallDet    = sellCond
+inMajorSup     = not na(nearMajorSup) and low &lt;= nearMajorSup + atr14 * 0.3 and high &gt;= nearMajorSup - atr14 * 0.3
+inMajorRes     = not na(nearMajorRes) and low &lt;= nearMajorRes + atr14 * 0.3 and high &gt;= nearMajorRes - atr14 * 0.3
+strongBidImb   = imbRatio &gt; 2.0
+strongAskImb   = imbRatio &lt; 0.5
+
+alertcondition(crossAboveVwap,  &quot;VWAP Cross Above&quot;,  &quot;Price crossed above Session VWAP&quot;)
+alertcondition(crossBelowVwap,  &quot;VWAP Cross Below&quot;,  &quot;Price crossed below Session VWAP&quot;)
+alertcondition(inPocZone,       &quot;POC Zone Entry&quot;,    &quot;Price entered POC Zone&quot;)
+alertcondition(buyWallDet,      &quot;Buy Wall Detected&quot;, &quot;Buy Wall detected&quot;)
+alertcondition(sellWallDet,     &quot;Sell Wall Detected&quot;,&quot;Sell Wall detected&quot;)
+alertcondition(buyWallBroken,   &quot;Buy Wall Broken&quot;,   &quot;Buy Wall BROKEN&quot;)
+alertcondition(sellWallBroken,  &quot;Sell Wall Broken&quot;,  &quot;Sell Wall BROKEN&quot;)
+alertcondition(inMajorSup,      &quot;Major Support&quot;,     &quot;Price entered Major Support Zone&quot;)
+alertcondition(inMajorRes,      &quot;Major Resistance&quot;,  &quot;Price entered Major Resistance Zone&quot;)
+alertcondition(strongBidImb,    &quot;Strong Bid Pressure&quot;,&quot;Bid/Ask imbalance &gt; 2.0&quot;)
+alertcondition(strongAskImb,    &quot;Strong Ask Pressure&quot;,&quot;Bid/Ask imbalance &lt; 0.5&quot;)
+alertcondition(triggerLong,     &quot;LONG SETUP&quot;,        &quot;CPE: Composite LONG setup flip (confirmed bar)&quot;)
+alertcondition(triggerShort,    &quot;SHORT SETUP&quot;,       &quot;CPE: Composite SHORT setup flip (confirmed bar)&quot;)
+alertcondition(triggerLong or triggerShort, &quot;Any Setup Signal&quot;, &quot;CPE: New LONG or SHORT setup flip&quot;)
+
+// — Dynamic alert() with ticker + timeframe (fires once per confirmed bar)
+if confirmed
+    if triggerLong
+        alert(&quot;🟢 LONG  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)  VWAP+Sup+Imb+Vol&quot;, alert.freq_once_per_bar_close)
+    if triggerShort
+        alert(&quot;🔴 SHORT |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)  VWAP+Res+Imb+Vol&quot;, alert.freq_once_per_bar_close)
+    if crossAboveVwap
+        alert(&quot;▲ VWAP Cross Above  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)&quot;, alert.freq_once_per_bar_close)
+    if crossBelowVwap
+        alert(&quot;▼ VWAP Cross Below  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)&quot;, alert.freq_once_per_bar_close)
+</pre>
+
+<script>
+function copyCode(id, btn) {
+  var el = document.getElementById(id);
+  var text = el.textContent;
+  function ok() {
+    btn.textContent = '✓ 복사됨 — TradingView Pine Editor에 붙여넣기';
+    btn.classList.add('done');
+    setTimeout(function() {
+      btn.textContent = btn.dataset.label;
+      btn.classList.remove('done');
+    }, 3000);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(fallback);
+  } else {
+    fallback();
+  }
+  function fallback() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); ok(); } catch (e) { alert('복사 실패 — 아래 코드 영역을 길게 눌러 직접 복사하세요.'); }
+    document.body.removeChild(ta);
+  }
+}
+</script>
+</body>
+</html>
