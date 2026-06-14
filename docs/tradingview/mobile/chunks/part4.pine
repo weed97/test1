@@ -1,0 +1,234 @@
+// ══════════ SECTION 4: SUPPORT & RESISTANCE ZONES ══════════
+// 4-1 ~ 4-3 S/R zone detection + classification — 지지·저항 구간 탐지
+type SrZone
+    float center
+    float top
+    float bot
+    int   touches
+    int   bullBounce
+    int   bearReject
+    bool  isSupport
+    float avgVol
+
+var float[] pivotPrices = array.new_float()
+var bool[]  pivotIsHigh  = array.new_bool()
+
+ph = ta.pivothigh(high, pivotLeft, pivotRight)
+pl = ta.pivotlow(low, pivotLeft, pivotRight)
+
+if confirmed and not na(ph)
+    array.push(pivotPrices, ph)
+    array.push(pivotIsHigh, true)
+if confirmed and not na(pl)
+    array.push(pivotPrices, pl)
+    array.push(pivotIsHigh, false)
+
+// trim old pivots
+while array.size(pivotPrices) > 50
+    array.shift(pivotPrices)
+    array.shift(pivotIsHigh)
+
+f_buildZones() =>
+    SrZone[] zones = array.new<SrZone>()
+    float clusterR = atr14 * clusterAtrMult
+    int pSize = array.size(pivotPrices)
+    bool[] used = array.new_bool(pSize, false)
+    for i = 0 to pSize - 1
+        if not array.get(used, i)
+            float pc = array.get(pivotPrices, i)
+            bool isH = array.get(pivotIsHigh, i)
+            float sumP = pc
+            int cnt = 1
+            int hiCnt = isH ? 1 : 0
+            int loCnt = isH ? 0 : 1
+            array.set(used, i, true)
+            for j = i + 1 to pSize - 1
+                if not array.get(used, j)
+                    float pj = array.get(pivotPrices, j)
+                    if math.abs(pj - pc) <= clusterR
+                        sumP += pj
+                        cnt += 1
+                        if array.get(pivotIsHigh, j)
+                            hiCnt += 1
+                        else
+                            loCnt += 1
+                        array.set(used, j, true)
+            float center = sumP / cnt
+            float halfZ = atr14 * 0.3
+            // count touches in lookback
+            int tch = 0
+            int bull = 0
+            int bear = 0
+            float tVol = 0.0
+            for k = 0 to srLookback - 1
+                if bar_index >= k
+                    if high[k] >= center - halfZ and low[k] <= center + halfZ
+                        tch += 1
+                        tVol += volume[k]
+                        bool bUp = false
+                        bool bDn = false
+                        for m = 0 to 2
+                            if k - m >= 0
+                                if close[k - m] > center + halfZ
+                                    bUp := true
+                                if close[k - m] < center - halfZ
+                                    bDn := true
+                        if bUp
+                            bull += 1
+                        if bDn
+                            bear += 1
+            float avgV = tch > 0 ? tVol / tch : 0.0
+            bool sup = loCnt >= hiCnt
+            SrZone z = SrZone.new(center, center + halfZ, center - halfZ, tch, bull, bear, sup, avgV)
+            if tch >= minTouches
+                array.push(zones, z)
+    zones
+
+SrZone[] srZones = f_buildZones()
+
+// Per-bar major zone levels for alerts / 알림용 대형 구간 가격
+float nearMajorSup = na
+float nearMajorRes = na
+float nearSupNet   = na
+float nearResNet   = na
+for z in srZones
+    float netSup = z.touches > 0 ? z.bullBounce * 100.0 / z.touches : 0.0
+    float netRes = z.touches > 0 ? z.bearReject * 100.0 / z.touches : 0.0
+    bool majorSup = netSup >= 70 and z.touches >= 3 and z.avgVol > volMa * 2
+    bool majorRes = netRes >= 70 and z.touches >= 3 and z.avgVol > volMa * 2
+    if majorSup and z.center < close and (na(nearMajorSup) or z.center > nearMajorSup)
+        nearMajorSup := z.center
+        nearSupNet := netSup
+    if majorRes and z.center > close and (na(nearMajorRes) or z.center < nearMajorRes)
+        nearMajorRes := z.center
+        nearResNet := netRes
+
+var box[]   srBoxes  = array.new_box()
+var label[] srLabels = array.new_label()
+var line[]  distLines = array.new_line()
+var label[] distLabels = array.new_label()
+
+if barstate.islast
+    for b in srBoxes
+        box.delete(b)
+    for l in srLabels
+        label.delete(l)
+    for ln in distLines
+        line.delete(ln)
+    for l in distLabels
+        label.delete(l)
+    array.clear(srBoxes)
+    array.clear(srLabels)
+    array.clear(distLines)
+    array.clear(distLabels)
+
+    SrZone[] supBelow = array.new<SrZone>()
+    SrZone[] resAbove = array.new<SrZone>()
+
+    for z in srZones
+        float netSup = z.touches > 0 ? z.bullBounce * 100.0 / z.touches : 0.0
+        float netRes = z.touches > 0 ? z.bearReject * 100.0 / z.touches : 0.0
+        bool majorSup = netSup >= 70 and z.touches >= 3 and z.avgVol > volMa * 2
+        bool minorSup = netSup >= 50 and z.touches >= 2 and not majorSup
+        bool majorRes = netRes >= 70 and z.touches >= 3 and z.avgVol > volMa * 2
+        bool minorRes = netRes >= 50 and z.touches >= 2 and not majorRes
+        bool neutral  = netSup >= 40 and netSup <= 60 and not majorSup and not majorRes
+
+        if showMajorOnly and not majorSup and not majorRes
+            continue
+
+        color bg = color.new(color.gray, 92)
+        string txt = ""
+        int bWidth = 1
+        if majorSup and z.center < close
+            bg := color.new(color.lime, 75)
+            txt := "🟢 Major Support | 순지지: " + str.tostring(netSup, "#.#") + "% | Touches: " + str.tostring(z.touches)
+            bWidth := 3
+        else if minorSup and z.center < close
+            bg := color.new(color.green, 88)
+            txt := "Minor Support | 순지지: " + str.tostring(netSup, "#.#") + "%"
+        else if majorRes and z.center > close
+            bg := color.new(color.red, 75)
+            txt := "🔴 Major Resistance | 순저항: " + str.tostring(netRes, "#.#") + "% | Touches: " + str.tostring(z.touches)
+            bWidth := 3
+        else if minorRes and z.center > close
+            bg := color.new(color.red, 88)
+            txt := "Minor Resistance | 순저항: " + str.tostring(netRes, "#.#") + "%"
+        else if neutral
+            bg := color.new(color.gray, 92)
+            txt := "Neutral Zone | S: " + str.tostring(netSup, "#.#") + "% / R: " + str.tostring(netRes, "#.#") + "%"
+        else
+            continue
+
+        box sb = box.new(bar_index - srLookback, z.top, bar_index + 30, z.bot,
+             bgcolor=bg, border_width=bWidth)
+        array.push(srBoxes, sb)
+        label sl = label.new(bar_index + 5, z.center, txt, style=label.style_label_left,
+             color=color.new(color.black, 50), textcolor=color.white, size=size.tiny)
+        array.push(srLabels, sl)
+
+        if z.center < close
+            array.push(supBelow, z)
+        else
+            array.push(resAbove, z)
+
+    // 4-3 Distance labels — 거리 라벨
+    if showDistLabels
+        // nearest 3 support below
+        for n = 0 to 2
+            float bestD = na
+            float bestC = na
+            int bestT = 0
+            int bestB = 0
+            for z in supBelow
+                float d = (close - z.center) / close * 100.0
+                if d > 0 and (na(bestD) or d < bestD)
+                    bestD := d
+                    bestC := z.center
+                    bestT := z.touches
+                    bestB := z.bullBounce
+            if not na(bestC)
+                float ns = bestT > 0 ? bestB * 100.0 / bestT : 0.0
+                bool isMaj = ns >= 70 and bestT >= 3
+                string dTxt = "↓ " + str.tostring(bestD, "#.##") + "% to " + (isMaj ? "Major" : "Minor") + " Support"
+                line dl = line.new(bar_index, close, bar_index, bestC,
+                     color=color.new(color.green, 30), style=line.style_dotted)
+                label dll = label.new(bar_index + 2, (close + bestC) / 2, dTxt,
+                     style=label.style_label_left, color=color.new(color.green, 60),
+                     textcolor=color.white, size=isMaj ? size.small : size.tiny)
+                array.push(distLines, dl)
+                array.push(distLabels, dll)
+                array.clear(supBelow)
+                for z2 in srZones
+                    if z2.center < close and z2.center != bestC
+                        array.push(supBelow, z2)
+
+        for n = 0 to 2
+            float bestD = na
+            float bestC = na
+            int bestT = 0
+            int bestBr = 0
+            for z in resAbove
+                float d = (z.center - close) / close * 100.0
+                if d > 0 and (na(bestD) or d < bestD)
+                    bestD := d
+                    bestC := z.center
+                    bestT := z.touches
+                    bestBr := z.bearReject
+            if not na(bestC)
+                float nr = bestT > 0 ? bestBr * 100.0 / bestT : 0.0
+                bool isMaj = nr >= 70 and bestT >= 3
+                string dTxt = "↑ " + str.tostring(bestD, "#.##") + "% to " + (isMaj ? "Major" : "Minor") +
+                     " Resistance (순저항 " + str.tostring(nr, "#.#") + "%)"
+                line dl = line.new(bar_index, close, bar_index, bestC,
+                     color=color.new(color.red, 30), style=line.style_dotted)
+                label dll = label.new(bar_index + 2, (close + bestC) / 2, dTxt,
+                     style=label.style_label_left, color=color.new(color.red, 60),
+                     textcolor=color.white, size=isMaj ? size.small : size.tiny)
+                array.push(distLines, dl)
+                array.push(distLabels, dll)
+                array.clear(resAbove)
+                for z2 in srZones
+                    if z2.center > close and z2.center != bestC
+                        array.push(resAbove, z2)
+
