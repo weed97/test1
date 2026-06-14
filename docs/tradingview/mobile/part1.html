@@ -9,59 +9,62 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     margin: 0; padding: 14px; background: #0d1117; color: #e6edf3;
-    -webkit-text-size-adjust: 100%;
   }
-  h1 { font-size: 1.05rem; margin: 0 0 10px; line-height: 1.35; }
-  h2 { font-size: 0.95rem; margin: 18px 0 8px; color: #c9d1d9; }
-  p, li { font-size: 0.88rem; color: #8b949e; line-height: 1.55; margin: 0 0 10px; }
+  h1 { font-size: 1.05rem; margin: 0 0 10px; }
+  h2 { font-size: 0.92rem; margin: 16px 0 8px; color: #c9d1d9; }
+  p { font-size: 0.86rem; color: #8b949e; line-height: 1.5; margin: 0 0 10px; }
+  a { color: #58a6ff; }
   .btn {
     display: block; width: 100%; padding: 13px; font-size: 0.95rem; font-weight: 600;
-    border: none; border-radius: 8px; background: #238636; color: #fff;
-    cursor: pointer; margin: 0 0 10px;
+    border: none; border-radius: 8px; background: #238636; color: #fff; margin: 0 0 12px;
   }
-  .btn:active { background: #2ea043; }
   .btn.done { background: #1f6feb; }
   .warn {
-    background: #3d1f00; border: 1px solid #9e6a03; padding: 10px 12px;
+    background: #1c2128; border: 1px solid #388bfd; padding: 10px 12px;
     border-radius: 8px; font-size: 0.84rem; margin-bottom: 12px; line-height: 1.5;
   }
   .step {
     background: #161b22; border: 1px solid #30363d; padding: 12px;
-    border-radius: 8px; margin-bottom: 14px; font-size: 0.86rem; line-height: 1.6;
+    border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem; line-height: 1.55;
   }
-  .sizes { font-size: 0.82rem; color: #8b949e; margin-bottom: 12px; }
-  .links { list-style: none; padding: 0; margin: 0 0 16px; }
-  .links li { margin: 0 0 6px; }
-  .links a { color: #58a6ff; font-size: 0.86rem; word-break: break-all; }
-  .codebox {
-    display: block;
-    margin: 0 0 16px;
-    padding: 12px 10px;
-    background: #010409;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 11px;
-    line-height: 1.55;
-    letter-spacing: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #e6edf3;
-    tab-size: 4;
+  .hint { font-size: 0.8rem; color: #6e7681; margin: -4px 0 10px; }
+  .links { list-style: none; padding: 0; margin: 0 0 14px; }
+  .links li { margin: 0 0 5px; font-size: 0.86rem; }
+  details {
+    margin: 0 0 10px; border: 1px solid #30363d; border-radius: 8px;
+    background: #0d1117; overflow: hidden;
   }
-  .part-block { margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #21262d; }
-  .hint { font-size: 0.8rem; color: #6e7681; margin: -6px 0 8px; }
+  summary {
+    padding: 10px 12px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+    background: #161b22; list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  .part-inner { padding: 0 10px 10px; }
+  /* 코드: 줄 잘림 없음(pre), 가로 스크롤, 줄번호 정렬 */
+  .code-scroll {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border: 1px solid #30363d; border-radius: 6px; background: #010409;
+  }
+  .code-table {
+    border-collapse: collapse; width: max-content; min-width: 100%;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.42; tab-size: 4;
+  }
+  .code-table tr:hover td.txt { background: #161b22; }
+  .code-table td.num {
+    color: #6e7681; text-align: right; vertical-align: top;
+    padding: 0 10px 0 6px; user-select: none; white-space: nowrap;
+    border-right: 1px solid #21262d; width: 1%;
+  }
+  .code-table td.txt {
+    vertical-align: top; padding: 0 14px 0 10px;
+    white-space: pre; color: #e6edf3;
+  }
+  .code-table td.txt.empty { min-height: 1.42em; }
 </style>
 </head>
 <body>
-<h1>Part 1 / 7</h1>
-<div class="warn">모바일 <b>Raw</b>는 한 줄 → 이 페이지에서 <b>복사 버튼</b> 또는 아래 코드 블록 사용.</div>
-<p><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/index.html" style="color:#58a6ff">전체 목록</a> · <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part2.html" style="color:#58a6ff">Part 2 →</a></p>
-<p class="hint">//@version=6 · Inputs · Session VWAP · σ Bands</p>
-<button class="btn" data-label="Part 1 전체 복사 (132줄)" onclick="copyCode('code1', this)">Part 1 전체 복사 (132줄)</button>
-<pre class="codebox" id="code1">//@version=6
+<h1>Part 1 / 7</h1><div class="warn"><b>복사 버튼</b>만 사용하세요. 코드는 줄번호·정렬용 표시 — 가로로 스크롤 가능.</div><p><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/index.html">전체</a> · <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part2.html">Part 2 →</a></p><p class="hint">//@version=6 · Inputs · Session VWAP · σ Bands</p><button class="btn" data-label="Part 1 복사 (132줄)" onclick="copyCode('code1', this)">Part 1 복사 (132줄)</button><textarea id="code1" readonly aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0">//@version=6
 // ══════════════════════════════════════════════════════════════════════════════
 // Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones
 // BTC/ETH 정밀 트레이딩 통합 인디케이터 (Pine Script v6)
@@ -193,12 +196,11 @@ plot(showVwapBands ? band3U : na, &quot;+3σ&quot;, color=color.new(color.red, 2
 plot(showVwapBands ? band3D : na, &quot;-3σ&quot;, color=color.new(color.lime, 20), linewidth=1)
 fill(pB1U, pB1D, color=color.new(color.blue, 90), title=&quot;±1σ Fill&quot;)
 
-</pre>
-
+</textarea><div class="code-scroll"><table class="code-table"><tbody><tr><td class="num">1</td><td class="txt">//@version=6</td></tr><tr><td class="num">2</td><td class="txt">// ══════════════════════════════════════════════════════════════════════════════</td></tr><tr><td class="num">3</td><td class="txt">// Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones</td></tr><tr><td class="num">4</td><td class="txt">// BTC/ETH 정밀 트레이딩 통합 인디케이터 (Pine Script v6)</td></tr><tr><td class="num">5</td><td class="txt">// ══════════════════════════════════════════════════════════════════════════════</td></tr><tr><td class="num">6</td><td class="txt">indicator(</td></tr><tr><td class="num">7</td><td class="txt">     title=&quot;Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones [BTC/ETH]&quot;,</td></tr><tr><td class="num">8</td><td class="txt">     shorttitle=&quot;CPE Engine&quot;,</td></tr><tr><td class="num">9</td><td class="txt">     overlay=true,</td></tr><tr><td class="num">10</td><td class="txt">     behind_chart=false,</td></tr><tr><td class="num">11</td><td class="txt">     precision=2,</td></tr><tr><td class="num">12</td><td class="txt">     max_bars_back=2100,</td></tr><tr><td class="num">13</td><td class="txt">     max_lines_count=500,</td></tr><tr><td class="num">14</td><td class="txt">     max_labels_count=500,</td></tr><tr><td class="num">15</td><td class="txt">     max_boxes_count=100)</td></tr><tr><td class="num">16</td><td class="txt empty"> </td></tr><tr><td class="num">17</td><td class="txt">// ══════════ SECTION 8: USER INPUTS ══════════</td></tr><tr><td class="num">18</td><td class="txt">// ⚡ VWAP Settings / VWAP 설정</td></tr><tr><td class="num">19</td><td class="txt">groupVwap   = &quot;⚡ VWAP Settings&quot;</td></tr><tr><td class="num">20</td><td class="txt">showVwapBands    = input.bool(true,  &quot;Show VWAP Bands&quot;,           group=groupVwap)</td></tr><tr><td class="num">21</td><td class="txt">showWeeklyVwap   = input.bool(false, &quot;Show Weekly VWAP&quot;,          group=groupVwap)</td></tr><tr><td class="num">22</td><td class="txt">showMonthlyVwap  = input.bool(false, &quot;Show Monthly VWAP&quot;,           group=groupVwap)</td></tr><tr><td class="num">23</td><td class="txt">vwapBandMult     = input.float(1.0, &quot;Band Multiplier&quot;, minval=0.1, step=0.1, group=groupVwap)</td></tr><tr><td class="num">24</td><td class="txt">showVwapZones    = input.bool(true,  &quot;Show VWAP S/R Zones&quot;,       group=groupVwap)</td></tr><tr><td class="num">25</td><td class="txt">vwapZoneAtrMult  = input.float(0.5, &quot;VWAP Zone ATR Mult&quot;, minval=0.1, step=0.1, group=groupVwap)</td></tr><tr><td class="num">26</td><td class="txt">vwapZoneLookback = input.int(100,   &quot;VWAP Zone Touch Lookback&quot;, minval=20, group=groupVwap)</td></tr><tr><td class="num">27</td><td class="txt empty"> </td></tr><tr><td class="num">28</td><td class="txt">// 📊 Volume Profile / POC / 거래량 프로파일</td></tr><tr><td class="num">29</td><td class="txt">groupVp     = &quot;📊 Volume Profile / POC&quot;</td></tr><tr><td class="num">30</td><td class="txt">vpLookback  = input.int(300,  &quot;VP Lookback Bars&quot;, minval=50, maxval=500, group=groupVp)</td></tr><tr><td class="num">31</td><td class="txt">vpBins      = input.int(48,   &quot;VP Bins&quot;, minval=10, maxval=100, group=groupVp)</td></tr><tr><td class="num">32</td><td class="txt">valueAreaPct= input.float(70.0,&quot;Value Area %&quot;, minval=50, maxval=95, group=groupVp)</td></tr><tr><td class="num">33</td><td class="txt">vpExtend    = input.int(50,    &quot;Extend Lines Right (bars)&quot;, minval=0, group=groupVp)</td></tr><tr><td class="num">34</td><td class="txt">showHvn     = input.bool(true, &quot;Show HVN Zones&quot;, group=groupVp)</td></tr><tr><td class="num">35</td><td class="txt">showLvn     = input.bool(true, &quot;Show LVN Lines&quot;, group=groupVp)</td></tr><tr><td class="num">36</td><td class="txt empty"> </td></tr><tr><td class="num">37</td><td class="txt">// 🧱 Wall Detection / 매수·매도벽</td></tr><tr><td class="num">38</td><td class="txt">groupWall   = &quot;🧱 Wall Detection&quot;</td></tr><tr><td class="num">39</td><td class="txt">volMaLen    = input.int(20,   &quot;Volume MA Length&quot;, minval=5, group=groupWall)</td></tr><tr><td class="num">40</td><td class="txt">buyWallMult = input.float(2.5,&quot;Buy Wall Multiplier&quot;, minval=1.0, step=0.1, group=groupWall)</td></tr><tr><td class="num">41</td><td class="txt">sellWallMult= input.float(2.5,&quot;Sell Wall Multiplier&quot;, minval=1.0, step=0.1, group=groupWall)</td></tr><tr><td class="num">42</td><td class="txt">strongWallMult = input.float(5.0, &quot;Strong Wall Mult&quot;, minval=2.0, step=0.5, group=groupWall)</td></tr><tr><td class="num">43</td><td class="txt">modWallMult    = input.float(3.5, &quot;Moderate Wall Mult&quot;, minval=2.0, step=0.5, group=groupWall)</td></tr><tr><td class="num">44</td><td class="txt">wallExpiryBars = input.int(100,&quot;Wall Expiry Bars&quot;, minval=10, group=groupWall)</td></tr><tr><td class="num">45</td><td class="txt">wallZoneAtrMult= input.float(0.4,&quot;Wall Zone ATR Mult&quot;, minval=0.1, step=0.1, group=groupWall)</td></tr><tr><td class="num">46</td><td class="txt empty"> </td></tr><tr><td class="num">47</td><td class="txt">// 🎯 Support / Resistance / 지지·저항 구간</td></tr><tr><td class="num">48</td><td class="txt">groupSr     = &quot;🎯 Support / Resistance Zones&quot;</td></tr><tr><td class="num">49</td><td class="txt">srLookback  = input.int(200,  &quot;S/R Lookback&quot;, minval=50, group=groupSr)</td></tr><tr><td class="num">50</td><td class="txt">pivotLeft   = input.int(10,   &quot;Pivot Left&quot;, minval=2, group=groupSr)</td></tr><tr><td class="num">51</td><td class="txt">pivotRight  = input.int(10,   &quot;Pivot Right&quot;, minval=2, group=groupSr)</td></tr><tr><td class="num">52</td><td class="txt">clusterAtrMult = input.float(0.5, &quot;Cluster ATR Mult&quot;, minval=0.1, step=0.1, group=groupSr)</td></tr><tr><td class="num">53</td><td class="txt">minTouches  = input.int(2,    &quot;Min Touches&quot;, minval=1, group=groupSr)</td></tr><tr><td class="num">54</td><td class="txt">showMajorOnly = input.bool(false, &quot;Show Major Zones Only&quot;, group=groupSr)</td></tr><tr><td class="num">55</td><td class="txt">showDistLabels= input.bool(true,  &quot;Show Distance Labels&quot;, group=groupSr)</td></tr><tr><td class="num">56</td><td class="txt empty"> </td></tr><tr><td class="num">57</td><td class="txt">// 📖 Wall Pressure (무료·캔들 기반) / 실제 호가는 터미널 스크립트 사용</td></tr><tr><td class="num">58</td><td class="txt">groupOb     = &quot;📖 Wall Pressure (Free)&quot;</td></tr><tr><td class="num">59</td><td class="txt">showOrderbook = input.bool(false, &quot;Show Wall Pressure Table&quot;, group=groupOb,</td></tr><tr><td class="num">60</td><td class="txt">     tooltip=&quot;실제 오더북: python3 scripts/tradingview_orderbook_feed.py&quot;)</td></tr><tr><td class="num">61</td><td class="txt">obLevels    = input.int(5, &quot;Levels (each side)&quot;, minval=1, maxval=5, group=groupOb)</td></tr><tr><td class="num">62</td><td class="txt">obAtrSpacing= input.float(0.15, &quot;ATR Spacing&quot;, minval=0.05, step=0.05, group=groupOb)</td></tr><tr><td class="num">63</td><td class="txt empty"> </td></tr><tr><td class="num">64</td><td class="txt">// 📡 Signals / 진입 시그널</td></tr><tr><td class="num">65</td><td class="txt">groupSig    = &quot;📡 Signals&quot;</td></tr><tr><td class="num">66</td><td class="txt">showMarks   = input.bool(true, &quot;Show Signal Markers&quot;, inline=&quot;sigshow&quot;, group=groupSig,</td></tr><tr><td class="num">67</td><td class="txt">     tooltip=&quot;LONG/SHORT 플립 시점에만 차트 마커 표시 (확정봉·쿨다운 적용)&quot;)</td></tr><tr><td class="num">68</td><td class="txt">sigCoolBars = input.int(5, &quot;Signal Cooldown (bars)&quot;, minval=1, maxval=50, group=groupSig,</td></tr><tr><td class="num">69</td><td class="txt">     tooltip=&quot;연속 시그널 방지 — 최소 대기 봉 수&quot;)</td></tr><tr><td class="num">70</td><td class="txt">sigBull     = input.color(color.lime, &quot;Long&quot;, inline=&quot;sigcol&quot;, group=groupSig)</td></tr><tr><td class="num">71</td><td class="txt">sigBear     = input.color(color.red, &quot;Short&quot;, inline=&quot;sigcol&quot;, group=groupSig)</td></tr><tr><td class="num">72</td><td class="txt empty"> </td></tr><tr><td class="num">73</td><td class="txt">// 🖥 Dashboard / 대시보드</td></tr><tr><td class="num">74</td><td class="txt">groupDash   = &quot;🖥 Dashboard&quot;</td></tr><tr><td class="num">75</td><td class="txt">showDashboard = input.bool(true, &quot;Show Dashboard&quot;, group=groupDash)</td></tr><tr><td class="num">76</td><td class="txt">dashPosition  = input.string(&quot;top_right&quot;, &quot;Dashboard Position&quot;,</td></tr><tr><td class="num">77</td><td class="txt">     options=[&quot;top_right&quot;, &quot;top_left&quot;, &quot;bottom_right&quot;, &quot;bottom_left&quot;], group=groupDash)</td></tr><tr><td class="num">78</td><td class="txt">tableSize     = input.string(&quot;small&quot;, &quot;Table Size&quot;,</td></tr><tr><td class="num">79</td><td class="txt">     options=[&quot;tiny&quot;, &quot;small&quot;, &quot;normal&quot;], group=groupDash)</td></tr><tr><td class="num">80</td><td class="txt empty"> </td></tr><tr><td class="num">81</td><td class="txt">// ══════════ SHARED CALCULATIONS ══════════</td></tr><tr><td class="num">82</td><td class="txt">atr14   = ta.atr(14)</td></tr><tr><td class="num">83</td><td class="txt">volMa   = ta.sma(volume, volMaLen)</td></tr><tr><td class="num">84</td><td class="txt">volStd  = ta.stdev(volume, volMaLen)</td></tr><tr><td class="num">85</td><td class="txt">confirmed = barstate.isconfirmed</td></tr><tr><td class="num">86</td><td class="txt empty"> </td></tr><tr><td class="num">87</td><td class="txt">// ══════════ SECTION 1: VWAP + BANDS ══════════</td></tr><tr><td class="num">88</td><td class="txt">// 1-1 Session VWAP — 일일 세션 기준 VWAP</td></tr><tr><td class="num">89</td><td class="txt">var float sCumVol  = 0.0</td></tr><tr><td class="num">90</td><td class="txt">var float sCumPV   = 0.0</td></tr><tr><td class="num">91</td><td class="txt">var float sSumDev  = 0.0</td></tr><tr><td class="num">92</td><td class="txt">var float sSumDev2 = 0.0</td></tr><tr><td class="num">93</td><td class="txt">var int   sBars    = 0</td></tr><tr><td class="num">94</td><td class="txt empty"> </td></tr><tr><td class="num">95</td><td class="txt">newDay = ta.change(time(&quot;1D&quot;)) != 0</td></tr><tr><td class="num">96</td><td class="txt">if newDay</td></tr><tr><td class="num">97</td><td class="txt">    sCumVol  := 0.0</td></tr><tr><td class="num">98</td><td class="txt">    sCumPV   := 0.0</td></tr><tr><td class="num">99</td><td class="txt">    sSumDev  := 0.0</td></tr><tr><td class="num">100</td><td class="txt">    sSumDev2 := 0.0</td></tr><tr><td class="num">101</td><td class="txt">    sBars    := 0</td></tr><tr><td class="num">102</td><td class="txt empty"> </td></tr><tr><td class="num">103</td><td class="txt">tp = hlc3</td></tr><tr><td class="num">104</td><td class="txt">sCumVol  += volume</td></tr><tr><td class="num">105</td><td class="txt">sCumPV   += tp * volume</td></tr><tr><td class="num">106</td><td class="txt">sessionVwap = sCumVol &gt; 0 ? sCumPV / sCumVol : tp</td></tr><tr><td class="num">107</td><td class="txt empty"> </td></tr><tr><td class="num">108</td><td class="txt">dev = close - sessionVwap</td></tr><tr><td class="num">109</td><td class="txt">sSumDev  += dev</td></tr><tr><td class="num">110</td><td class="txt">sSumDev2 += dev * dev</td></tr><tr><td class="num">111</td><td class="txt">sBars    += 1</td></tr><tr><td class="num">112</td><td class="txt">sessionStd = sBars &gt; 1 ? math.sqrt(math.max((sSumDev2 - sSumDev * sSumDev / sBars) / (sBars - 1), 0.0)) : 0.0</td></tr><tr><td class="num">113</td><td class="txt empty"> </td></tr><tr><td class="num">114</td><td class="txt">band1U = sessionVwap + sessionStd * vwapBandMult</td></tr><tr><td class="num">115</td><td class="txt">band2U = sessionVwap + sessionStd * 2.0 * vwapBandMult</td></tr><tr><td class="num">116</td><td class="txt">band3U = sessionVwap + sessionStd * 3.0 * vwapBandMult</td></tr><tr><td class="num">117</td><td class="txt">band1D = sessionVwap - sessionStd * vwapBandMult</td></tr><tr><td class="num">118</td><td class="txt">band2D = sessionVwap - sessionStd * 2.0 * vwapBandMult</td></tr><tr><td class="num">119</td><td class="txt">band3D = sessionVwap - sessionStd * 3.0 * vwapBandMult</td></tr><tr><td class="num">120</td><td class="txt empty"> </td></tr><tr><td class="num">121</td><td class="txt">vwapColor = close &gt;= sessionVwap ? color.new(color.green, 0) : color.new(color.red, 0)</td></tr><tr><td class="num">122</td><td class="txt">plot(sessionVwap, &quot;Session VWAP&quot;, color=vwapColor, linewidth=2)</td></tr><tr><td class="num">123</td><td class="txt empty"> </td></tr><tr><td class="num">124</td><td class="txt">// 1-2 VWAP Standard Deviation Bands — 표준편차 밴드</td></tr><tr><td class="num">125</td><td class="txt">pB1U = plot(showVwapBands ? band1U : na, &quot;+1σ&quot;, color=color.new(color.blue, 40), linewidth=1)</td></tr><tr><td class="num">126</td><td class="txt">pB1D = plot(showVwapBands ? band1D : na, &quot;-1σ&quot;, color=color.new(color.blue, 40), linewidth=1)</td></tr><tr><td class="num">127</td><td class="txt">plot(showVwapBands ? band2U : na, &quot;+2σ&quot;, color=color.new(color.orange, 40), linewidth=1)</td></tr><tr><td class="num">128</td><td class="txt">plot(showVwapBands ? band2D : na, &quot;-2σ&quot;, color=color.new(color.orange, 40), linewidth=1)</td></tr><tr><td class="num">129</td><td class="txt">plot(showVwapBands ? band3U : na, &quot;+3σ&quot;, color=color.new(color.red, 20), linewidth=1)</td></tr><tr><td class="num">130</td><td class="txt">plot(showVwapBands ? band3D : na, &quot;-3σ&quot;, color=color.new(color.lime, 20), linewidth=1)</td></tr><tr><td class="num">131</td><td class="txt">fill(pB1U, pB1D, color=color.new(color.blue, 90), title=&quot;±1σ Fill&quot;)</td></tr><tr><td class="num">132</td><td class="txt empty"> </td></tr></tbody></table></div>
 <script>
 function copyCode(id, btn) {
-  var el = document.getElementById(id);
-  var text = el.textContent;
+  var ta = document.getElementById(id);
+  var text = ta.value;
   function ok() {
     btn.textContent = '✓ 복사됨 — Pine Editor에 붙여넣기';
     btn.classList.add('done');
@@ -211,15 +213,18 @@ function copyCode(id, btn) {
     navigator.clipboard.writeText(text).then(ok).catch(fallback);
   } else { fallback(); }
   function fallback() {
-    var ta = document.createElement('textarea');
-    ta.value = text;
     ta.style.position = 'fixed';
-    ta.style.left = '-9999px';
-    document.body.appendChild(ta);
+    ta.style.left = '0';
+    ta.style.top = '0';
+    ta.style.width = '2em';
+    ta.style.height = '2em';
+    ta.style.opacity = '0';
+    ta.focus();
     ta.select();
     try { document.execCommand('copy'); ok(); }
-    catch (e) { alert('복사 실패 — 아래 코드를 길게 눌러 직접 복사하세요.'); }
-    document.body.removeChild(ta);
+    catch (e) { alert('복사 버튼을 다시 눌러주세요.'); }
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
   }
 }
 </script>
