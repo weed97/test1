@@ -1,4 +1,4 @@
-//@version=5
+//@version=6
 // ══════════════════════════════════════════════════════════════════════════════
 // CPE Honest Strategy — 정직한 백테스트 전략 (BTC/ETH)
 // 승률을 "표시"하지 않고 strategy() 통계로만 검증합니다.
@@ -45,7 +45,7 @@ confirmed = barstate.isconfirmed
 
 // Session VWAP
 var float sCumVol = 0.0, sCumPV = 0.0
-if ta.change(time("D")) != 0
+if ta.change(time("1D")) != 0
     sCumVol := 0.0
     sCumPV  := 0.0
 sCumVol += volume
@@ -180,3 +180,5 @@ if showStats and barstate.islast
 // 알림
 alertcondition(longSig,  "CPE Long",  "CPE Honest Long entry")
 alertcondition(shortSig, "CPE Short", "CPE Honest Short entry")
+
+plot(close, title="Anchor", display=display.none)

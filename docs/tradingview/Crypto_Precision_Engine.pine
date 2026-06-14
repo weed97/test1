@@ -1,7 +1,7 @@
-//@version=5
+//@version=6
 // ══════════════════════════════════════════════════════════════════════════════
 // Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones
-// BTC/ETH 정밀 트레이딩 통합 인디케이터 (Pine Script v5)
+// BTC/ETH 정밀 트레이딩 통합 인디케이터 (Pine Script v6)
 // ══════════════════════════════════════════════════════════════════════════════
 indicator(
      title="Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones [BTC/ETH]",
@@ -80,7 +80,7 @@ var float sSumDev  = 0.0
 var float sSumDev2 = 0.0
 var int   sBars    = 0
 
-newDay = ta.change(time("D")) != 0
+newDay = ta.change(time("1D")) != 0
 if newDay
     sCumVol  := 0.0
     sCumPV   := 0.0
@@ -121,8 +121,8 @@ fill(pB1U, pB1D, color=color.new(color.blue, 90), title="±1σ Fill")
 // 1-3 Weekly + Monthly VWAP — 주간·월간 VWAP
 var float wCumVol = 0.0, wCumPV = 0.0
 var float mCumVol = 0.0, mCumPV = 0.0
-newWeek  = ta.change(time("W")) != 0
-newMonth = ta.change(time("M")) != 0
+newWeek  = ta.change(time("1W")) != 0
+newMonth = ta.change(time("1M")) != 0
 if newWeek
     wCumVol := 0.0
     wCumPV  := 0.0
@@ -971,3 +971,6 @@ alertcondition(strongBidImb,    "Strong Bid Pressure","Bid/Ask imbalance > 2.0")
 alertcondition(strongAskImb,    "Strong Ask Pressure","Bid/Ask imbalance < 0.5")
 alertcondition(longSetup,       "LONG SETUP",        "Composite LONG SETUP triggered")
 alertcondition(shortSetup,      "SHORT SETUP",       "Composite SHORT SETUP triggered")
+
+// v6 앵커 plot — 테이블·라벨(문자열) 전용 구간 컴파일 안정화 (차트에 안 보임)
+plot(close, title="Anchor", display=display.none)

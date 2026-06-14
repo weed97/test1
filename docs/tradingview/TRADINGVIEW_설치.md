@@ -9,6 +9,10 @@ Pine Script는 **Python처럼 들여쓰기(indent)가 필수**입니다.
 
 ## 올바른 설치 (3단계)
 
+**버전: Pine Script v6** (`//@version=6`)
+
+Pine Editor에서 v5로 열리면: **Manage script → Convert code to v6**
+
 ### 1) Raw 파일 전체 복사
 
 GitHub에서 파일 열기 → **Raw** 버튼 → `Ctrl+A` → `Ctrl+C`
