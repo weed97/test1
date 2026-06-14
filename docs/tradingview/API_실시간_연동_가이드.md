@@ -130,9 +130,46 @@ btc1h = request.security("BINANCE:BTCUSDT", "60", close)
 | 용도 | API 키 |
 |------|--------|
 | 공개 오더북 조회 (depth) | **불필요** (Binance/Bybit public endpoint) |
+| **CoinGlass API** | **필요 + 유료 플랜** ($29/월 Hobbyist~) |
 | 주문·잔고 | **필요** (별도 봇·서버에서만; Pine과 무관) |
 
 `tradingview_orderbook_feed.py`는 **공개 REST API**만 사용하므로 키 없이 동작합니다.
+
+---
+
+## CoinGlass — 웹 무료 vs API 유료 (헷갈리기 쉬운 부분)
+
+| | 웹사이트 (coinglass.com) | CoinGlass API |
+|--|--------------------------|---------------|
+| 오더북·청산·OI 보기 | ✅ 개인용 **무료** | ❌ 무료 티어 없음 (유료) |
+| 오픈소스? | ❌ 상용 서비스 | ❌ **Open API**일 뿐, 오픈소스 아님 |
+| 공개 API 키? | ❌ 없음 — **본인 키** 발급 | `CG-API-KEY` 헤더 필수 |
+| Pine에서 직접 호출 | — | ❌ 불가 |
+
+**"Open API"** = 문서 공개된 REST 인터페이스 (개발용)  
+**"오픈소스"** = 소스·데이터가 무료로 공개 — **CoinGlass는 해당 없음**
+
+### CoinGlass API로 뽑을 수 있는 오더북 데이터
+
+문서: https://docs.coinglass.com/reference/endpoint-overview
+
+| 엔드포인트 | 내용 | 실시간 |
+|-----------|------|--------|
+| `/api/futures/orderbook/large-limit-order` | 대형 지정가(벽) — 웹 UI와 유사 | ✅ Real-time |
+| `/api/futures/orderbook/aggregated-ask-bids-history` | 거래소 합산 Bid/Ask (±range%) | interval별 |
+| `/api/futures/orderbook/history` | 오더북 히트맵 | 히스토리 |
+
+플랜별 제한 (예: Hobbyist는 interval ≥4h 등) — https://www.coinglass.com/pricing
+
+### CoinGlass 스크립트 (API 키 있을 때)
+
+```bash
+export COINGLASS_API_KEY="발급받은_본인_키"
+python3 scripts/coinglass_orderbook_feed.py --symbol BTC --exchange Binance
+python3 scripts/coinglass_orderbook_feed.py --mode imbalance --symbol BTC --interval 1m
+```
+
+**Pine Script에는 여전히 못 넣습니다.** 터미널/자체 대시보드에서 CoinGlass + TradingView 병행.
 
 ---
 
