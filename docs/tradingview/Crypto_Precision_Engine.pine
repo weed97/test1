@@ -7,6 +7,9 @@ indicator(
      title="Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones [BTC/ETH]",
      shorttitle="CPE Engine",
      overlay=true,
+     behind_chart=false,
+     precision=2,
+     max_bars_back=2100,
      max_lines_count=500,
      max_labels_count=500,
      max_boxes_count=100)
@@ -57,6 +60,15 @@ showOrderbook = input.bool(false, "Show Wall Pressure Table", group=groupOb,
      tooltip="실제 오더북: python3 scripts/tradingview_orderbook_feed.py")
 obLevels    = input.int(5, "Levels (each side)", minval=1, maxval=5, group=groupOb)
 obAtrSpacing= input.float(0.15, "ATR Spacing", minval=0.05, step=0.05, group=groupOb)
+
+// 📡 Signals / 진입 시그널
+groupSig    = "📡 Signals"
+showMarks   = input.bool(true, "Show Signal Markers", inline="sigshow", group=groupSig,
+     tooltip="LONG/SHORT 플립 시점에만 차트 마커 표시 (확정봉·쿨다운 적용)")
+sigCoolBars = input.int(5, "Signal Cooldown (bars)", minval=1, maxval=50, group=groupSig,
+     tooltip="연속 시그널 방지 — 최소 대기 봉 수")
+sigBull     = input.color(color.lime, "Long", inline="sigcol", group=groupSig)
+sigBear     = input.color(color.red, "Short", inline="sigcol", group=groupSig)
 
 // 🖥 Dashboard / 대시보드
 groupDash   = "🖥 Dashboard"
@@ -876,6 +888,25 @@ longSetup  = close > sessionVwap and priceNearSup and imbRatio > 1.5 and volRati
 shortSetup = close < sessionVwap and priceNearRes and imbRatio < 0.67 and volRatio > 2.0
 signalTxt  = longSetup ? "LONG SETUP 🟢" : shortSetup ? "SHORT SETUP 🔴" : "NEUTRAL ⚪"
 
+// — Flip-only triggers (Zeiierman-style: fire once on setup onset, not every bar)
+flipLong  = longSetup and not longSetup[1]
+flipShort = shortSetup and not shortSetup[1]
+var int lastEntryBar = na
+barOK     = confirmed
+coolOK    = na(lastEntryBar) or bar_index - lastEntryBar >= sigCoolBars
+triggerLong  = flipLong and coolOK and barOK
+triggerShort = flipShort and coolOK and barOK
+if triggerLong or triggerShort
+    lastEntryBar := bar_index
+
+// — Chart markers at recent swing low/high (absolute placement)
+placeBuy  = ta.lowest(low, 5)
+placeSell = ta.highest(high, 5)
+plotshape(showMarks and triggerLong ? placeBuy : na, "Long", shape.triangleup, location.absolute, sigBull, size=size.tiny)
+plotshape(showMarks and triggerShort ? placeSell : na, "Short", shape.triangledown, location.absolute, sigBear, size=size.tiny)
+plotshape(showMarks and triggerLong ? placeBuy : na, "Long Glow", shape.triangleup, location.absolute, color.new(sigBull, 50), size=size.small)
+plotshape(showMarks and triggerShort ? placeSell : na, "Short Glow", shape.triangledown, location.absolute, color.new(sigBear, 50), size=size.small)
+
 var table dash = na
 if showDashboard and barstate.islast
   if na(dash)
@@ -969,8 +1000,17 @@ alertcondition(inMajorSup,      "Major Support",     "Price entered Major Suppor
 alertcondition(inMajorRes,      "Major Resistance",  "Price entered Major Resistance Zone")
 alertcondition(strongBidImb,    "Strong Bid Pressure","Bid/Ask imbalance > 2.0")
 alertcondition(strongAskImb,    "Strong Ask Pressure","Bid/Ask imbalance < 0.5")
-alertcondition(longSetup,       "LONG SETUP",        "Composite LONG SETUP triggered")
-alertcondition(shortSetup,      "SHORT SETUP",       "Composite SHORT SETUP triggered")
+alertcondition(triggerLong,     "LONG SETUP",        "CPE: Composite LONG setup flip (confirmed bar)")
+alertcondition(triggerShort,    "SHORT SETUP",       "CPE: Composite SHORT setup flip (confirmed bar)")
+alertcondition(triggerLong or triggerShort, "Any Setup Signal", "CPE: New LONG or SHORT setup flip")
 
-// v6 앵커 plot — 테이블·라벨(문자열) 전용 구간 컴파일 안정화 (차트에 안 보임)
-plot(close, title="Anchor", display=display.none)
+// — Dynamic alert() with ticker + timeframe (fires once per confirmed bar)
+if confirmed
+    if triggerLong
+        alert("🟢 LONG  |  " + syminfo.ticker + " (" + timeframe.period + ")  VWAP+Sup+Imb+Vol", alert.freq_once_per_bar_close)
+    if triggerShort
+        alert("🔴 SHORT |  " + syminfo.ticker + " (" + timeframe.period + ")  VWAP+Res+Imb+Vol", alert.freq_once_per_bar_close)
+    if crossAboveVwap
+        alert("▲ VWAP Cross Above  |  " + syminfo.ticker + " (" + timeframe.period + ")", alert.freq_once_per_bar_close)
+    if crossBelowVwap
+        alert("▼ VWAP Cross Below  |  " + syminfo.ticker + " (" + timeframe.period + ")", alert.freq_once_per_bar_close)
