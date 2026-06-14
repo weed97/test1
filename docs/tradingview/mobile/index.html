@@ -6,28 +6,74 @@
 <title>CPE Mobile Install</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #0d1117; color: #e6edf3; }
-  h1 { font-size: 1.1rem; margin: 0 0 8px; }
-  p { font-size: 0.9rem; color: #8b949e; margin: 0 0 12px; line-height: 1.5; }
-  .btn { display: block; width: 100%; padding: 14px; font-size: 1rem; font-weight: 600;
-    border: none; border-radius: 8px; background: #238636; color: #fff; cursor: pointer; margin-bottom: 12px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    margin: 0; padding: 14px; background: #0d1117; color: #e6edf3;
+    -webkit-text-size-adjust: 100%;
+  }
+  h1 { font-size: 1.05rem; margin: 0 0 10px; line-height: 1.35; }
+  h2 { font-size: 0.95rem; margin: 18px 0 8px; color: #c9d1d9; }
+  p, li { font-size: 0.88rem; color: #8b949e; line-height: 1.55; margin: 0 0 10px; }
+  .btn {
+    display: block; width: 100%; padding: 13px; font-size: 0.95rem; font-weight: 600;
+    border: none; border-radius: 8px; background: #238636; color: #fff;
+    cursor: pointer; margin: 0 0 10px;
+  }
   .btn:active { background: #2ea043; }
   .btn.done { background: #1f6feb; }
-  pre { display: none; }
-  .warn { background: #3d1f00; border: 1px solid #9e6a03; padding: 10px; border-radius: 8px;
-    font-size: 0.85rem; margin-bottom: 12px; }
-  .step { background: #161b22; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
-  .sizes { font-size: 0.85rem; color: #8b949e; margin-bottom: 16px; }
+  .warn {
+    background: #3d1f00; border: 1px solid #9e6a03; padding: 10px 12px;
+    border-radius: 8px; font-size: 0.84rem; margin-bottom: 12px; line-height: 1.5;
+  }
+  .step {
+    background: #161b22; border: 1px solid #30363d; padding: 12px;
+    border-radius: 8px; margin-bottom: 14px; font-size: 0.86rem; line-height: 1.6;
+  }
+  .sizes { font-size: 0.82rem; color: #8b949e; margin-bottom: 12px; }
+  .links { list-style: none; padding: 0; margin: 0 0 16px; }
+  .links li { margin: 0 0 6px; }
+  .links a { color: #58a6ff; font-size: 0.86rem; word-break: break-all; }
+  .codebox {
+    display: block;
+    margin: 0 0 16px;
+    padding: 12px 10px;
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.55;
+    letter-spacing: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #e6edf3;
+    tab-size: 4;
+  }
+  .part-block { margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #21262d; }
+  .hint { font-size: 0.8rem; color: #6e7681; margin: -6px 0 8px; }
 </style>
 </head>
 <body>
-<h1>Crypto Precision Engine — 모바일 7분할 설치</h1>
-<div class="warn"><b>Raw GitHub = 모바일에서 한 줄.</b> 아래 <b>복사 버튼</b>만 사용하세요.</div>
+<h1>CPE Engine — 모바일 7분할</h1>
+<div class="warn"><b>raw.githubusercontent.com = 모바일 한 줄.</b><br>이 페이지(HTML Preview)에서 줄간격 유지 · <b>복사 버튼</b> 사용.</div>
 <p class="sizes">총 1016줄 · P1:132 · P2:99 · P3:161 · P4:125 · P5:234 · P6:116 · P7:149</p>
-<div class="step"><b>순서</b><br>1. TradingView <b>웹 브라우저</b> → Pine Editor<br>2. 기존 코드 전부 삭제<br>3. Part 1 복사 → <b>맨 위</b>에 붙여넣기<br>4. Part 2~7 복사 → <b>맨 아래에 이어 붙이기</b> (빈 줄 추가 X)<br>5. Save → Add to chart</div>
-<p><b>Part 1</b> — //@version=6 · Inputs · Session VWAP · σ Bands</p>
+<div class="step"><b>순서</b><br>1. TradingView <b>웹</b> → Pine Editor → 코드 전부 삭제<br>2. Part 1 복사 → <b>맨 위</b> 붙여넣기<br>3. Part 2~7 → <b>맨 아래 이어 붙이기</b> (빈 줄 X)<br>4. Save → Add to chart</div>
+<h2>Part별 링크 (HTML Preview)</h2>
+<ul class="links">
+<li><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part1.html">Part 1</a> (132줄) — //@version=6 · Inputs · Session VWAP · σ Bands</li>
+<li><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part2.html">Part 2</a> (99줄) — Weekly/Monthly VWAP · VWAP S/R Zones</li>
+<li><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part3.html">Part 3</a> (161줄) — Volume Profile · POC · VAH/VAL</li>
+<li><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part4.html">Part 4</a> (125줄) — Buy Wall · Sell Wall detection</li>
+<li><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part5.html">Part 5</a> (234줄) — Support &amp; Resistance Zones (전체)</li>
+<li><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part6.html">Part 6</a> (116줄) — Wall Pressure table (free)</li>
+<li><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part7.html">Part 7</a> (149줄) — Dashboard · Signals · Alerts</li>
+</ul>
+<h2>한 페이지에서 전부 복사</h2>
+<div class="part-block"><p><b>Part 1</b> — //@version=6 · Inputs · Session VWAP · σ Bands</p>
 <button class="btn" data-label="Part 1 복사 (132줄)" onclick="copyCode('code1', this)">Part 1 복사 (132줄)</button>
-<pre id="code1">//@version=6
+<pre class="codebox" id="code1">//@version=6
 // ══════════════════════════════════════════════════════════════════════════════
 // Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones
 // BTC/ETH 정밀 트레이딩 통합 인디케이터 (Pine Script v6)
@@ -160,9 +206,10 @@ plot(showVwapBands ? band3D : na, &quot;-3σ&quot;, color=color.new(color.lime, 
 fill(pB1U, pB1D, color=color.new(color.blue, 90), title=&quot;±1σ Fill&quot;)
 
 </pre>
-<p><b>Part 2</b> — Weekly/Monthly VWAP · VWAP S/R Zones</p>
+</div>
+<div class="part-block"><p><b>Part 2</b> — Weekly/Monthly VWAP · VWAP S/R Zones</p>
 <button class="btn" data-label="Part 2 복사 (99줄)" onclick="copyCode('code2', this)">Part 2 복사 (99줄)</button>
-<pre id="code2">// 1-3 Weekly + Monthly VWAP — 주간·월간 VWAP
+<pre class="codebox" id="code2">// 1-3 Weekly + Monthly VWAP — 주간·월간 VWAP
 var float wCumVol = 0.0, wCumPV = 0.0
 var float mCumVol = 0.0, mCumPV = 0.0
 newWeek  = ta.change(time(&quot;1W&quot;)) != 0
@@ -262,9 +309,10 @@ if barstate.islast
         f_drawVwapZone(band3D, &quot;VWAP -3σ Zone&quot;, false)
 
 </pre>
-<p><b>Part 3</b> — Volume Profile · POC · VAH/VAL</p>
+</div>
+<div class="part-block"><p><b>Part 3</b> — Volume Profile · POC · VAH/VAL</p>
 <button class="btn" data-label="Part 3 복사 (161줄)" onclick="copyCode('code3', this)">Part 3 복사 (161줄)</button>
-<pre id="code3">// ══════════ SECTION 2: VOLUME PROFILE + POC ══════════
+<pre class="codebox" id="code3">// ══════════ SECTION 2: VOLUME PROFILE + POC ══════════
 // 2-1 Rolling Volume Profile — 롤링 거래량 프로파일
 f_calcVP() =&gt;
     float hi = ta.highest(high, vpLookback)
@@ -426,9 +474,10 @@ if barstate.islast
                 array.push(lvnLabels, ll)
 
 </pre>
-<p><b>Part 4</b> — Buy Wall · Sell Wall detection</p>
+</div>
+<div class="part-block"><p><b>Part 4</b> — Buy Wall · Sell Wall detection</p>
 <button class="btn" data-label="Part 4 복사 (125줄)" onclick="copyCode('code4', this)">Part 4 복사 (125줄)</button>
-<pre id="code4">// ══════════ SECTION 3: BUY WALL + SELL WALL ══════════
+<pre class="codebox" id="code4">// ══════════ SECTION 3: BUY WALL + SELL WALL ══════════
 // 3-1 ~ 3-4 Wall detection, zones, expiry — 매수·매도벽 탐지
 type Wall
     float level
@@ -554,9 +603,10 @@ f_wallNear(float price, float pct, bool wantBuy) =&gt;
     found
 
 </pre>
-<p><b>Part 5</b> — Support &amp; Resistance Zones (전체)</p>
+</div>
+<div class="part-block"><p><b>Part 5</b> — Support &amp; Resistance Zones (전체)</p>
 <button class="btn" data-label="Part 5 복사 (234줄)" onclick="copyCode('code5', this)">Part 5 복사 (234줄)</button>
-<pre id="code5">// ══════════ SECTION 4: SUPPORT &amp; RESISTANCE ZONES ══════════
+<pre class="codebox" id="code5">// ══════════ SECTION 4: SUPPORT &amp; RESISTANCE ZONES ══════════
 // 4-1 ~ 4-3 S/R zone detection + classification — 지지·저항 구간 탐지
 type SrZone
     float center
@@ -791,9 +841,10 @@ if barstate.islast
                         array.push(resAbove, z2)
 
 </pre>
-<p><b>Part 6</b> — Wall Pressure table (free)</p>
+</div>
+<div class="part-block"><p><b>Part 6</b> — Wall Pressure table (free)</p>
 <button class="btn" data-label="Part 6 복사 (116줄)" onclick="copyCode('code6', this)">Part 6 복사 (116줄)</button>
-<pre id="code6">// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
+<pre class="codebox" id="code6">// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
 // 실제 호가는 Binance/Bybit 무료 API → tradingview_orderbook_feed.py
 // Pine: 매수·매도벽 + S/R 태그만으로 Bid/Ask 압력 추정 (유료 API·랜덤 없음)
 
@@ -910,9 +961,10 @@ if showOrderbook and barstate.islast
   table.cell(obTable, 3, 11, &quot;FREE&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
 
 </pre>
-<p><b>Part 7</b> — Dashboard · Signals · Alerts</p>
+</div>
+<div class="part-block"><p><b>Part 7</b> — Dashboard · Signals · Alerts</p>
 <button class="btn" data-label="Part 7 복사 (149줄)" onclick="copyCode('code7', this)">Part 7 복사 (149줄)</button>
-<pre id="code7">// ══════════ SECTION 6: MASTER DASHBOARD ══════════
+<pre class="codebox" id="code7">// ══════════ SECTION 6: MASTER DASHBOARD ══════════
 // 6 Master dashboard — 통합 대시보드
 f_distPct(float price) =&gt;
     price &gt; 0 ? (close - price) / price * 100.0 : 0.0
@@ -1062,19 +1114,20 @@ if confirmed
     if crossBelowVwap
         alert(&quot;▼ VWAP Cross Below  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)&quot;, alert.freq_once_per_bar_close)
 </pre>
-<p style="margin-top:20px;font-size:0.8rem;color:#6e7681">북마크: https://cdn.jsdelivr.net/gh/weed97/test1@cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/index.html</p>
+</div>
+<p class="hint">북마크: https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/index.html</p>
 
 <script>
 function copyCode(id, btn) {
   var el = document.getElementById(id);
   var text = el.textContent;
   function ok() {
-    btn.textContent = '✓ 복사됨 — Pine Editor 맨 아래에 이어 붙이기';
+    btn.textContent = '✓ 복사됨 — Pine Editor에 붙여넣기';
     btn.classList.add('done');
     setTimeout(function() {
       btn.textContent = btn.dataset.label;
       btn.classList.remove('done');
-    }, 3000);
+    }, 2800);
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(ok).catch(fallback);
@@ -1087,7 +1140,7 @@ function copyCode(id, btn) {
     document.body.appendChild(ta);
     ta.select();
     try { document.execCommand('copy'); ok(); }
-    catch (e) { alert('복사 실패 — 코드 영역을 길게 눌러 직접 복사하세요.'); }
+    catch (e) { alert('복사 실패 — 아래 코드를 길게 눌러 직접 복사하세요.'); }
     document.body.removeChild(ta);
   }
 }

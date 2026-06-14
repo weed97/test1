@@ -3,29 +3,65 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CPE Pine Part 6</title>
+<title>CPE Part 6</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #0d1117; color: #e6edf3; }
-  h1 { font-size: 1.1rem; margin: 0 0 8px; }
-  p { font-size: 0.9rem; color: #8b949e; margin: 0 0 12px; line-height: 1.5; }
-  .btn { display: block; width: 100%; padding: 14px; font-size: 1rem; font-weight: 600;
-    border: none; border-radius: 8px; background: #238636; color: #fff; cursor: pointer; margin-bottom: 12px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    margin: 0; padding: 14px; background: #0d1117; color: #e6edf3;
+    -webkit-text-size-adjust: 100%;
+  }
+  h1 { font-size: 1.05rem; margin: 0 0 10px; line-height: 1.35; }
+  h2 { font-size: 0.95rem; margin: 18px 0 8px; color: #c9d1d9; }
+  p, li { font-size: 0.88rem; color: #8b949e; line-height: 1.55; margin: 0 0 10px; }
+  .btn {
+    display: block; width: 100%; padding: 13px; font-size: 0.95rem; font-weight: 600;
+    border: none; border-radius: 8px; background: #238636; color: #fff;
+    cursor: pointer; margin: 0 0 10px;
+  }
   .btn:active { background: #2ea043; }
   .btn.done { background: #1f6feb; }
-  pre { display: none; }
-  .warn { background: #3d1f00; border: 1px solid #9e6a03; padding: 10px; border-radius: 8px;
-    font-size: 0.85rem; margin-bottom: 12px; }
-  .step { background: #161b22; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
-  .sizes { font-size: 0.85rem; color: #8b949e; margin-bottom: 16px; }
+  .warn {
+    background: #3d1f00; border: 1px solid #9e6a03; padding: 10px 12px;
+    border-radius: 8px; font-size: 0.84rem; margin-bottom: 12px; line-height: 1.5;
+  }
+  .step {
+    background: #161b22; border: 1px solid #30363d; padding: 12px;
+    border-radius: 8px; margin-bottom: 14px; font-size: 0.86rem; line-height: 1.6;
+  }
+  .sizes { font-size: 0.82rem; color: #8b949e; margin-bottom: 12px; }
+  .links { list-style: none; padding: 0; margin: 0 0 16px; }
+  .links li { margin: 0 0 6px; }
+  .links a { color: #58a6ff; font-size: 0.86rem; word-break: break-all; }
+  .codebox {
+    display: block;
+    margin: 0 0 16px;
+    padding: 12px 10px;
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.55;
+    letter-spacing: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #e6edf3;
+    tab-size: 4;
+  }
+  .part-block { margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #21262d; }
+  .hint { font-size: 0.8rem; color: #6e7681; margin: -6px 0 8px; }
 </style>
 </head>
 <body>
-<h1>CPE Engine — Part 6 / 7</h1>
-<div class="warn"><b>복사 버튼</b>으로 줄바꿈 유지. Part 1→7 순서로 <b>이어 붙이기</b>.</div>
-<p>Wall Pressure table (free)</p>
-<button class="btn" data-label="Part 6 복사 (116줄)" onclick="copyCode('code6', this)">Part 6 복사 (116줄)</button>
-<pre id="code6">// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
+<h1>Part 6 / 7</h1>
+<div class="warn">모바일 <b>Raw</b>는 한 줄 → 이 페이지에서 <b>복사 버튼</b> 또는 아래 코드 블록 사용.</div>
+<p><a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part5.html" style="color:#58a6ff">← Part 5</a> · <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/index.html" style="color:#58a6ff">전체 목록</a> · <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part7.html" style="color:#58a6ff">Part 7 →</a></p>
+<p class="hint">Wall Pressure table (free)</p>
+<button class="btn" data-label="Part 6 전체 복사 (116줄)" onclick="copyCode('code6', this)">Part 6 전체 복사 (116줄)</button>
+<pre class="codebox" id="code6">// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
 // 실제 호가는 Binance/Bybit 무료 API → tradingview_orderbook_feed.py
 // Pine: 매수·매도벽 + S/R 태그만으로 Bid/Ask 압력 추정 (유료 API·랜덤 없음)
 
@@ -148,12 +184,12 @@ function copyCode(id, btn) {
   var el = document.getElementById(id);
   var text = el.textContent;
   function ok() {
-    btn.textContent = '✓ 복사됨 — Pine Editor 맨 아래에 이어 붙이기';
+    btn.textContent = '✓ 복사됨 — Pine Editor에 붙여넣기';
     btn.classList.add('done');
     setTimeout(function() {
       btn.textContent = btn.dataset.label;
       btn.classList.remove('done');
-    }, 3000);
+    }, 2800);
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(ok).catch(fallback);
@@ -166,7 +202,7 @@ function copyCode(id, btn) {
     document.body.appendChild(ta);
     ta.select();
     try { document.execCommand('copy'); ok(); }
-    catch (e) { alert('복사 실패 — 코드 영역을 길게 눌러 직접 복사하세요.'); }
+    catch (e) { alert('복사 실패 — 아래 코드를 길게 눌러 직접 복사하세요.'); }
     document.body.removeChild(ta);
   }
 }
