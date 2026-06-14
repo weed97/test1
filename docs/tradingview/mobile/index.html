@@ -24,23 +24,21 @@
     border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem; line-height: 1.55;
   }
   .code-scroll {
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    overflow: auto; -webkit-overflow-scrolling: touch;
     border: 1px solid #30363d; border-radius: 6px; background: #010409;
+    max-height: 70vh;
   }
-  .code-table {
-    border-collapse: collapse; width: max-content; min-width: 100%;
-    font-family: ui-monospace, Menlo, Consolas, monospace;
-    font-size: 12px; line-height: 1.42; tab-size: 4;
+  pre.code {
+    margin: 0; padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px; line-height: 1.45; tab-size: 4; -moz-tab-size: 4;
+    white-space: pre;
+    color: #c9d1d9;
   }
-  .code-table td.num {
-    color: #6e7681; text-align: right; vertical-align: top;
-    padding: 0 10px 0 6px; user-select: none; border-right: 1px solid #21262d;
-  }
-  .code-table td.txt { vertical-align: top; padding: 0 14px 0 10px; white-space: pre; }
 </style>
 </head>
 <body>
-<h1>CPE Engine — 2분할 (주석 제거)</h1><div class="warn">Raw ❌ · 이 페이지 <b>복사 버튼</b> ✅</div><div class="step">1. Pine Editor 코드 삭제<br>2. <b>Part 1</b> 복사 → 맨 위<br>3. <b>Part 2</b> 복사 → 맨 아래 이어 붙이기<br>4. Save</div><p>총 966줄 (주석 제거 후)</p><p><b>Part 1</b> — //@version=6 · Inputs · VWAP · POC · Walls · <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part1.html">단독 페이지</a></p><button class="btn" data-label="Part 1 복사 (486줄)" onclick="copyCode('code1', this)">Part 1 복사 (486줄)</button><textarea id="code1" readonly aria-hidden="true" style="position:fixed;left:-9999px;opacity:0;width:1px;height:1px">//@version=6
+<h1>CPE Engine — 2분할 (주석 제거)</h1><div class="warn">Raw ❌ · 이 페이지 <b>복사 버튼</b> ✅</div><div class="step">1. Pine Editor 코드 삭제<br>2. <b>Part 1</b> 복사 → 맨 위<br>3. <b>Part 2</b> 복사 → 맨 아래 이어 붙이기<br>4. Save</div><p>총 967줄 (주석 제거 후)</p><p><b>Part 1</b> — //@version=6 · Inputs · VWAP · POC · Walls · <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part1.html">단독 페이지</a></p><button class="btn" data-label="Part 1 복사 (486줄)" onclick="copyCode('code1', this)">Part 1 복사 (486줄)</button><textarea id="code1" readonly aria-hidden="true" style="position:fixed;left:-9999px;opacity:0;width:1px;height:1px">//@version=6
 indicator(
      title=&quot;Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones [BTC/ETH]&quot;,
      shorttitle=&quot;CPE Engine&quot;,
@@ -526,7 +524,493 @@ f_wallNear(float price, float pct, bool wantBuy) =&gt;
             found := true
     found
 
-</textarea><div class="code-scroll"><table class="code-table"><tbody><tr><td class="num">1</td><td class="txt">//@version=6</td></tr><tr><td class="num">2</td><td class="txt">indicator(</td></tr><tr><td class="num">3</td><td class="txt">     title=&quot;Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones [BTC/ETH]&quot;,</td></tr><tr><td class="num">4</td><td class="txt">     shorttitle=&quot;CPE Engine&quot;,</td></tr><tr><td class="num">5</td><td class="txt">     overlay=true,</td></tr><tr><td class="num">6</td><td class="txt">     behind_chart=false,</td></tr><tr><td class="num">7</td><td class="txt">     precision=2,</td></tr><tr><td class="num">8</td><td class="txt">     max_bars_back=2100,</td></tr><tr><td class="num">9</td><td class="txt">     max_lines_count=500,</td></tr><tr><td class="num">10</td><td class="txt">     max_labels_count=500,</td></tr><tr><td class="num">11</td><td class="txt">     max_boxes_count=100)</td></tr><tr><td class="num">12</td><td class="txt"> </td></tr><tr><td class="num">13</td><td class="txt">groupVwap   = &quot;⚡ VWAP Settings&quot;</td></tr><tr><td class="num">14</td><td class="txt">showVwapBands    = input.bool(true,  &quot;Show VWAP Bands&quot;,           group=groupVwap)</td></tr><tr><td class="num">15</td><td class="txt">showWeeklyVwap   = input.bool(false, &quot;Show Weekly VWAP&quot;,          group=groupVwap)</td></tr><tr><td class="num">16</td><td class="txt">showMonthlyVwap  = input.bool(false, &quot;Show Monthly VWAP&quot;,           group=groupVwap)</td></tr><tr><td class="num">17</td><td class="txt">vwapBandMult     = input.float(1.0, &quot;Band Multiplier&quot;, minval=0.1, step=0.1, group=groupVwap)</td></tr><tr><td class="num">18</td><td class="txt">showVwapZones    = input.bool(true,  &quot;Show VWAP S/R Zones&quot;,       group=groupVwap)</td></tr><tr><td class="num">19</td><td class="txt">vwapZoneAtrMult  = input.float(0.5, &quot;VWAP Zone ATR Mult&quot;, minval=0.1, step=0.1, group=groupVwap)</td></tr><tr><td class="num">20</td><td class="txt">vwapZoneLookback = input.int(100,   &quot;VWAP Zone Touch Lookback&quot;, minval=20, group=groupVwap)</td></tr><tr><td class="num">21</td><td class="txt"> </td></tr><tr><td class="num">22</td><td class="txt">groupVp     = &quot;📊 Volume Profile / POC&quot;</td></tr><tr><td class="num">23</td><td class="txt">vpLookback  = input.int(300,  &quot;VP Lookback Bars&quot;, minval=50, maxval=500, group=groupVp)</td></tr><tr><td class="num">24</td><td class="txt">vpBins      = input.int(48,   &quot;VP Bins&quot;, minval=10, maxval=100, group=groupVp)</td></tr><tr><td class="num">25</td><td class="txt">valueAreaPct= input.float(70.0,&quot;Value Area %&quot;, minval=50, maxval=95, group=groupVp)</td></tr><tr><td class="num">26</td><td class="txt">vpExtend    = input.int(50,    &quot;Extend Lines Right (bars)&quot;, minval=0, group=groupVp)</td></tr><tr><td class="num">27</td><td class="txt">showHvn     = input.bool(true, &quot;Show HVN Zones&quot;, group=groupVp)</td></tr><tr><td class="num">28</td><td class="txt">showLvn     = input.bool(true, &quot;Show LVN Lines&quot;, group=groupVp)</td></tr><tr><td class="num">29</td><td class="txt"> </td></tr><tr><td class="num">30</td><td class="txt">groupWall   = &quot;🧱 Wall Detection&quot;</td></tr><tr><td class="num">31</td><td class="txt">volMaLen    = input.int(20,   &quot;Volume MA Length&quot;, minval=5, group=groupWall)</td></tr><tr><td class="num">32</td><td class="txt">buyWallMult = input.float(2.5,&quot;Buy Wall Multiplier&quot;, minval=1.0, step=0.1, group=groupWall)</td></tr><tr><td class="num">33</td><td class="txt">sellWallMult= input.float(2.5,&quot;Sell Wall Multiplier&quot;, minval=1.0, step=0.1, group=groupWall)</td></tr><tr><td class="num">34</td><td class="txt">strongWallMult = input.float(5.0, &quot;Strong Wall Mult&quot;, minval=2.0, step=0.5, group=groupWall)</td></tr><tr><td class="num">35</td><td class="txt">modWallMult    = input.float(3.5, &quot;Moderate Wall Mult&quot;, minval=2.0, step=0.5, group=groupWall)</td></tr><tr><td class="num">36</td><td class="txt">wallExpiryBars = input.int(100,&quot;Wall Expiry Bars&quot;, minval=10, group=groupWall)</td></tr><tr><td class="num">37</td><td class="txt">wallZoneAtrMult= input.float(0.4,&quot;Wall Zone ATR Mult&quot;, minval=0.1, step=0.1, group=groupWall)</td></tr><tr><td class="num">38</td><td class="txt"> </td></tr><tr><td class="num">39</td><td class="txt">groupSr     = &quot;🎯 Support / Resistance Zones&quot;</td></tr><tr><td class="num">40</td><td class="txt">srLookback  = input.int(200,  &quot;S/R Lookback&quot;, minval=50, group=groupSr)</td></tr><tr><td class="num">41</td><td class="txt">pivotLeft   = input.int(10,   &quot;Pivot Left&quot;, minval=2, group=groupSr)</td></tr><tr><td class="num">42</td><td class="txt">pivotRight  = input.int(10,   &quot;Pivot Right&quot;, minval=2, group=groupSr)</td></tr><tr><td class="num">43</td><td class="txt">clusterAtrMult = input.float(0.5, &quot;Cluster ATR Mult&quot;, minval=0.1, step=0.1, group=groupSr)</td></tr><tr><td class="num">44</td><td class="txt">minTouches  = input.int(2,    &quot;Min Touches&quot;, minval=1, group=groupSr)</td></tr><tr><td class="num">45</td><td class="txt">showMajorOnly = input.bool(false, &quot;Show Major Zones Only&quot;, group=groupSr)</td></tr><tr><td class="num">46</td><td class="txt">showDistLabels= input.bool(true,  &quot;Show Distance Labels&quot;, group=groupSr)</td></tr><tr><td class="num">47</td><td class="txt"> </td></tr><tr><td class="num">48</td><td class="txt">groupOb     = &quot;📖 Wall Pressure (Free)&quot;</td></tr><tr><td class="num">49</td><td class="txt">showOrderbook = input.bool(false, &quot;Show Wall Pressure Table&quot;, group=groupOb,</td></tr><tr><td class="num">50</td><td class="txt">     tooltip=&quot;실제 오더북: python3 scripts/tradingview_orderbook_feed.py&quot;)</td></tr><tr><td class="num">51</td><td class="txt">obLevels    = input.int(5, &quot;Levels (each side)&quot;, minval=1, maxval=5, group=groupOb)</td></tr><tr><td class="num">52</td><td class="txt">obAtrSpacing= input.float(0.15, &quot;ATR Spacing&quot;, minval=0.05, step=0.05, group=groupOb)</td></tr><tr><td class="num">53</td><td class="txt"> </td></tr><tr><td class="num">54</td><td class="txt">groupSig    = &quot;📡 Signals&quot;</td></tr><tr><td class="num">55</td><td class="txt">showMarks   = input.bool(true, &quot;Show Signal Markers&quot;, inline=&quot;sigshow&quot;, group=groupSig,</td></tr><tr><td class="num">56</td><td class="txt">     tooltip=&quot;LONG/SHORT 플립 시점에만 차트 마커 표시 (확정봉·쿨다운 적용)&quot;)</td></tr><tr><td class="num">57</td><td class="txt">sigCoolBars = input.int(5, &quot;Signal Cooldown (bars)&quot;, minval=1, maxval=50, group=groupSig,</td></tr><tr><td class="num">58</td><td class="txt">     tooltip=&quot;연속 시그널 방지 — 최소 대기 봉 수&quot;)</td></tr><tr><td class="num">59</td><td class="txt">sigBull     = input.color(color.lime, &quot;Long&quot;, inline=&quot;sigcol&quot;, group=groupSig)</td></tr><tr><td class="num">60</td><td class="txt">sigBear     = input.color(color.red, &quot;Short&quot;, inline=&quot;sigcol&quot;, group=groupSig)</td></tr><tr><td class="num">61</td><td class="txt"> </td></tr><tr><td class="num">62</td><td class="txt">groupDash   = &quot;🖥 Dashboard&quot;</td></tr><tr><td class="num">63</td><td class="txt">showDashboard = input.bool(true, &quot;Show Dashboard&quot;, group=groupDash)</td></tr><tr><td class="num">64</td><td class="txt">dashPosition  = input.string(&quot;top_right&quot;, &quot;Dashboard Position&quot;,</td></tr><tr><td class="num">65</td><td class="txt">     options=[&quot;top_right&quot;, &quot;top_left&quot;, &quot;bottom_right&quot;, &quot;bottom_left&quot;], group=groupDash)</td></tr><tr><td class="num">66</td><td class="txt">tableSize     = input.string(&quot;small&quot;, &quot;Table Size&quot;,</td></tr><tr><td class="num">67</td><td class="txt">     options=[&quot;tiny&quot;, &quot;small&quot;, &quot;normal&quot;], group=groupDash)</td></tr><tr><td class="num">68</td><td class="txt"> </td></tr><tr><td class="num">69</td><td class="txt">atr14   = ta.atr(14)</td></tr><tr><td class="num">70</td><td class="txt">volMa   = ta.sma(volume, volMaLen)</td></tr><tr><td class="num">71</td><td class="txt">volStd  = ta.stdev(volume, volMaLen)</td></tr><tr><td class="num">72</td><td class="txt">confirmed = barstate.isconfirmed</td></tr><tr><td class="num">73</td><td class="txt"> </td></tr><tr><td class="num">74</td><td class="txt">var float sCumVol  = 0.0</td></tr><tr><td class="num">75</td><td class="txt">var float sCumPV   = 0.0</td></tr><tr><td class="num">76</td><td class="txt">var float sSumDev  = 0.0</td></tr><tr><td class="num">77</td><td class="txt">var float sSumDev2 = 0.0</td></tr><tr><td class="num">78</td><td class="txt">var int   sBars    = 0</td></tr><tr><td class="num">79</td><td class="txt"> </td></tr><tr><td class="num">80</td><td class="txt">newDay = ta.change(time(&quot;1D&quot;)) != 0</td></tr><tr><td class="num">81</td><td class="txt">if newDay</td></tr><tr><td class="num">82</td><td class="txt">    sCumVol  := 0.0</td></tr><tr><td class="num">83</td><td class="txt">    sCumPV   := 0.0</td></tr><tr><td class="num">84</td><td class="txt">    sSumDev  := 0.0</td></tr><tr><td class="num">85</td><td class="txt">    sSumDev2 := 0.0</td></tr><tr><td class="num">86</td><td class="txt">    sBars    := 0</td></tr><tr><td class="num">87</td><td class="txt"> </td></tr><tr><td class="num">88</td><td class="txt">tp = hlc3</td></tr><tr><td class="num">89</td><td class="txt">sCumVol  += volume</td></tr><tr><td class="num">90</td><td class="txt">sCumPV   += tp * volume</td></tr><tr><td class="num">91</td><td class="txt">sessionVwap = sCumVol &gt; 0 ? sCumPV / sCumVol : tp</td></tr><tr><td class="num">92</td><td class="txt"> </td></tr><tr><td class="num">93</td><td class="txt">dev = close - sessionVwap</td></tr><tr><td class="num">94</td><td class="txt">sSumDev  += dev</td></tr><tr><td class="num">95</td><td class="txt">sSumDev2 += dev * dev</td></tr><tr><td class="num">96</td><td class="txt">sBars    += 1</td></tr><tr><td class="num">97</td><td class="txt">sessionStd = sBars &gt; 1 ? math.sqrt(math.max((sSumDev2 - sSumDev * sSumDev / sBars) / (sBars - 1), 0.0)) : 0.0</td></tr><tr><td class="num">98</td><td class="txt"> </td></tr><tr><td class="num">99</td><td class="txt">band1U = sessionVwap + sessionStd * vwapBandMult</td></tr><tr><td class="num">100</td><td class="txt">band2U = sessionVwap + sessionStd * 2.0 * vwapBandMult</td></tr><tr><td class="num">101</td><td class="txt">band3U = sessionVwap + sessionStd * 3.0 * vwapBandMult</td></tr><tr><td class="num">102</td><td class="txt">band1D = sessionVwap - sessionStd * vwapBandMult</td></tr><tr><td class="num">103</td><td class="txt">band2D = sessionVwap - sessionStd * 2.0 * vwapBandMult</td></tr><tr><td class="num">104</td><td class="txt">band3D = sessionVwap - sessionStd * 3.0 * vwapBandMult</td></tr><tr><td class="num">105</td><td class="txt"> </td></tr><tr><td class="num">106</td><td class="txt">vwapColor = close &gt;= sessionVwap ? color.new(color.green, 0) : color.new(color.red, 0)</td></tr><tr><td class="num">107</td><td class="txt">plot(sessionVwap, &quot;Session VWAP&quot;, color=vwapColor, linewidth=2)</td></tr><tr><td class="num">108</td><td class="txt"> </td></tr><tr><td class="num">109</td><td class="txt">pB1U = plot(showVwapBands ? band1U : na, &quot;+1σ&quot;, color=color.new(color.blue, 40), linewidth=1)</td></tr><tr><td class="num">110</td><td class="txt">pB1D = plot(showVwapBands ? band1D : na, &quot;-1σ&quot;, color=color.new(color.blue, 40), linewidth=1)</td></tr><tr><td class="num">111</td><td class="txt">plot(showVwapBands ? band2U : na, &quot;+2σ&quot;, color=color.new(color.orange, 40), linewidth=1)</td></tr><tr><td class="num">112</td><td class="txt">plot(showVwapBands ? band2D : na, &quot;-2σ&quot;, color=color.new(color.orange, 40), linewidth=1)</td></tr><tr><td class="num">113</td><td class="txt">plot(showVwapBands ? band3U : na, &quot;+3σ&quot;, color=color.new(color.red, 20), linewidth=1)</td></tr><tr><td class="num">114</td><td class="txt">plot(showVwapBands ? band3D : na, &quot;-3σ&quot;, color=color.new(color.lime, 20), linewidth=1)</td></tr><tr><td class="num">115</td><td class="txt">fill(pB1U, pB1D, color=color.new(color.blue, 90), title=&quot;±1σ Fill&quot;)</td></tr><tr><td class="num">116</td><td class="txt"> </td></tr><tr><td class="num">117</td><td class="txt">var float wCumVol = 0.0, wCumPV = 0.0</td></tr><tr><td class="num">118</td><td class="txt">var float mCumVol = 0.0, mCumPV = 0.0</td></tr><tr><td class="num">119</td><td class="txt">newWeek  = ta.change(time(&quot;1W&quot;)) != 0</td></tr><tr><td class="num">120</td><td class="txt">newMonth = ta.change(time(&quot;1M&quot;)) != 0</td></tr><tr><td class="num">121</td><td class="txt">if newWeek</td></tr><tr><td class="num">122</td><td class="txt">    wCumVol := 0.0</td></tr><tr><td class="num">123</td><td class="txt">    wCumPV  := 0.0</td></tr><tr><td class="num">124</td><td class="txt">if newMonth</td></tr><tr><td class="num">125</td><td class="txt">    mCumVol := 0.0</td></tr><tr><td class="num">126</td><td class="txt">    mCumPV  := 0.0</td></tr><tr><td class="num">127</td><td class="txt">wCumVol += volume</td></tr><tr><td class="num">128</td><td class="txt">wCumPV  += tp * volume</td></tr><tr><td class="num">129</td><td class="txt">mCumVol += volume</td></tr><tr><td class="num">130</td><td class="txt">mCumPV  += tp * volume</td></tr><tr><td class="num">131</td><td class="txt">weeklyVwap  = wCumVol &gt; 0 ? wCumPV / wCumVol : tp</td></tr><tr><td class="num">132</td><td class="txt">monthlyVwap = mCumVol &gt; 0 ? mCumPV / mCumVol : tp</td></tr><tr><td class="num">133</td><td class="txt"> </td></tr><tr><td class="num">134</td><td class="txt">plot(showWeeklyVwap  ? weeklyVwap  : na, &quot;Weekly VWAP&quot;,  color=color.new(color.purple, 0), linewidth=1, style=plot.style_linebr)</td></tr><tr><td class="num">135</td><td class="txt">plot(showMonthlyVwap ? monthlyVwap : na, &quot;Monthly VWAP&quot;, color=color.new(color.orange, 0), linewidth=1, style=plot.style_linebr)</td></tr><tr><td class="num">136</td><td class="txt"> </td></tr><tr><td class="num">137</td><td class="txt">var label wLbl = na</td></tr><tr><td class="num">138</td><td class="txt">var label mLbl = na</td></tr><tr><td class="num">139</td><td class="txt">if barstate.islast</td></tr><tr><td class="num">140</td><td class="txt">    if showWeeklyVwap</td></tr><tr><td class="num">141</td><td class="txt">        label.delete(wLbl)</td></tr><tr><td class="num">142</td><td class="txt">        wLbl := label.new(bar_index, weeklyVwap, &quot;W-VWAP&quot;, style=label.style_label_left,</td></tr><tr><td class="num">143</td><td class="txt">             color=color.new(color.purple, 70), textcolor=color.white, size=size.small)</td></tr><tr><td class="num">144</td><td class="txt">    if showMonthlyVwap</td></tr><tr><td class="num">145</td><td class="txt">        label.delete(mLbl)</td></tr><tr><td class="num">146</td><td class="txt">        mLbl := label.new(bar_index, monthlyVwap, &quot;M-VWAP&quot;, style=label.style_label_left,</td></tr><tr><td class="num">147</td><td class="txt">             color=color.new(color.orange, 70), textcolor=color.white, size=size.small)</td></tr><tr><td class="num">148</td><td class="txt"> </td></tr><tr><td class="num">149</td><td class="txt">f_zoneTouches(float level, float halfH, int lb) =&gt;</td></tr><tr><td class="num">150</td><td class="txt">    int touches = 0</td></tr><tr><td class="num">151</td><td class="txt">    float touchVol = 0.0</td></tr><tr><td class="num">152</td><td class="txt">    int bounces = 0</td></tr><tr><td class="num">153</td><td class="txt">    bool broken = false</td></tr><tr><td class="num">154</td><td class="txt">    for i = 1 to lb</td></tr><tr><td class="num">155</td><td class="txt">        if bar_index &gt;= i</td></tr><tr><td class="num">156</td><td class="txt">            float zTop = level + halfH</td></tr><tr><td class="num">157</td><td class="txt">            float zBot = level - halfH</td></tr><tr><td class="num">158</td><td class="txt">            bool touched = high[i] &gt;= zBot and low[i] &lt;= zTop</td></tr><tr><td class="num">159</td><td class="txt">            if touched</td></tr><tr><td class="num">160</td><td class="txt">                touches += 1</td></tr><tr><td class="num">161</td><td class="txt">                touchVol += volume[i]</td></tr><tr><td class="num">162</td><td class="txt">                bool bouncedUp = false</td></tr><tr><td class="num">163</td><td class="txt">                bool bouncedDn = false</td></tr><tr><td class="num">164</td><td class="txt">                for j = 0 to 2</td></tr><tr><td class="num">165</td><td class="txt">                    if i - j &gt;= 0</td></tr><tr><td class="num">166</td><td class="txt">                        if close[i - j] &gt; zTop</td></tr><tr><td class="num">167</td><td class="txt">                            bouncedUp := true</td></tr><tr><td class="num">168</td><td class="txt">                        if close[i - j] &lt; zBot</td></tr><tr><td class="num">169</td><td class="txt">                            bouncedDn := true</td></tr><tr><td class="num">170</td><td class="txt">                if bouncedUp or bouncedDn</td></tr><tr><td class="num">171</td><td class="txt">                    bounces += 1</td></tr><tr><td class="num">172</td><td class="txt">            if close[i] &gt; zTop + halfH or close[i] &lt; zBot - halfH</td></tr><tr><td class="num">173</td><td class="txt">                broken := true</td></tr><tr><td class="num">174</td><td class="txt">    float strength = touches &gt; 0 ? math.min(100, int(touches * 15 + touchVol / math.max(volMa, 1) * 5)) : 0</td></tr><tr><td class="num">175</td><td class="txt">    [touches, bounces, broken, strength]</td></tr><tr><td class="num">176</td><td class="txt"> </td></tr><tr><td class="num">177</td><td class="txt">vwapHalfH = atr14 * vwapZoneAtrMult</td></tr><tr><td class="num">178</td><td class="txt">var box[] vwapZoneBoxes = array.new_box()</td></tr><tr><td class="num">179</td><td class="txt">var label[] vwapZoneLabels = array.new_label()</td></tr><tr><td class="num">180</td><td class="txt"> </td></tr><tr><td class="num">181</td><td class="txt">f_drawVwapZone(float lvl, string name, bool isUpper) =&gt;</td></tr><tr><td class="num">182</td><td class="txt">    if showVwapZones and barstate.islast</td></tr><tr><td class="num">183</td><td class="txt">        [tch, bnc, brk, str] = f_zoneTouches(lvl, vwapHalfH, vwapZoneLookback)</td></tr><tr><td class="num">184</td><td class="txt">        isSupport = not isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk</td></tr><tr><td class="num">185</td><td class="txt">        isResist  = isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk</td></tr><tr><td class="num">186</td><td class="txt">        bgCol = brk ? color.new(color.gray, 75) :</td></tr><tr><td class="num">187</td><td class="txt">             isSupport ? color.new(color.green, 80) :</td></tr><tr><td class="num">188</td><td class="txt">             isResist  ? color.new(color.red, 80) :</td></tr><tr><td class="num">189</td><td class="txt">             color.new(color.gray, 90)</td></tr><tr><td class="num">190</td><td class="txt">        b = box.new(bar_index - vwapZoneLookback, lvl + vwapHalfH, bar_index + 20, lvl - vwapHalfH,</td></tr><tr><td class="num">191</td><td class="txt">             border_color=color.new(color.gray, 60), bgcolor=bgCol, border_width=1)</td></tr><tr><td class="num">192</td><td class="txt">        array.push(vwapZoneBoxes, b)</td></tr><tr><td class="num">193</td><td class="txt">        lblTxt = name + &quot;\nTouches: &quot; + str.tostring(tch) + &quot;\nStrength: &quot; + str.tostring(str)</td></tr><tr><td class="num">194</td><td class="txt">        l = label.new(bar_index + 5, lvl, lblTxt, style=label.style_label_left,</td></tr><tr><td class="num">195</td><td class="txt">             color=color.new(color.black, 40), textcolor=color.white, size=size.tiny)</td></tr><tr><td class="num">196</td><td class="txt">        array.push(vwapZoneLabels, l)</td></tr><tr><td class="num">197</td><td class="txt"> </td></tr><tr><td class="num">198</td><td class="txt">if barstate.islast</td></tr><tr><td class="num">199</td><td class="txt">    for b in vwapZoneBoxes</td></tr><tr><td class="num">200</td><td class="txt">        box.delete(b)</td></tr><tr><td class="num">201</td><td class="txt">    for l in vwapZoneLabels</td></tr><tr><td class="num">202</td><td class="txt">        label.delete(l)</td></tr><tr><td class="num">203</td><td class="txt">    array.clear(vwapZoneBoxes)</td></tr><tr><td class="num">204</td><td class="txt">    array.clear(vwapZoneLabels)</td></tr><tr><td class="num">205</td><td class="txt">    if showVwapZones</td></tr><tr><td class="num">206</td><td class="txt">        f_drawVwapZone(band1U, &quot;VWAP +1σ Zone&quot;, true)</td></tr><tr><td class="num">207</td><td class="txt">        f_drawVwapZone(band1D, &quot;VWAP -1σ Zone&quot;, false)</td></tr><tr><td class="num">208</td><td class="txt">        f_drawVwapZone(band2U, &quot;VWAP +2σ Zone&quot;, true)</td></tr><tr><td class="num">209</td><td class="txt">        f_drawVwapZone(band2D, &quot;VWAP -2σ Zone&quot;, false)</td></tr><tr><td class="num">210</td><td class="txt">        f_drawVwapZone(band3U, &quot;VWAP +3σ Zone&quot;, true)</td></tr><tr><td class="num">211</td><td class="txt">        f_drawVwapZone(band3D, &quot;VWAP -3σ Zone&quot;, false)</td></tr><tr><td class="num">212</td><td class="txt"> </td></tr><tr><td class="num">213</td><td class="txt">f_calcVP() =&gt;</td></tr><tr><td class="num">214</td><td class="txt">    float hi = ta.highest(high, vpLookback)</td></tr><tr><td class="num">215</td><td class="txt">    float lo = ta.lowest(low, vpLookback)</td></tr><tr><td class="num">216</td><td class="txt">    float step = (hi - lo) / vpBins</td></tr><tr><td class="num">217</td><td class="txt">    float[] bins = array.new_float(vpBins, 0.0)</td></tr><tr><td class="num">218</td><td class="txt">    float totalVol = 0.0</td></tr><tr><td class="num">219</td><td class="txt">    for i = 0 to vpLookback - 1</td></tr><tr><td class="num">220</td><td class="txt">        if bar_index &gt;= i</td></tr><tr><td class="num">221</td><td class="txt">            float c = close[i]</td></tr><tr><td class="num">222</td><td class="txt">            float v = volume[i]</td></tr><tr><td class="num">223</td><td class="txt">            int idx = step &gt; 0 ? int(math.floor((c - lo) / step)) : 0</td></tr><tr><td class="num">224</td><td class="txt">            idx := math.min(math.max(idx, 0), vpBins - 1)</td></tr><tr><td class="num">225</td><td class="txt">            array.set(bins, idx, array.get(bins, idx) + v)</td></tr><tr><td class="num">226</td><td class="txt">            totalVol += v</td></tr><tr><td class="num">227</td><td class="txt">    int pocIdx = 0</td></tr><tr><td class="num">228</td><td class="txt">    float maxV = 0.0</td></tr><tr><td class="num">229</td><td class="txt">    for j = 0 to vpBins - 1</td></tr><tr><td class="num">230</td><td class="txt">        float bv = array.get(bins, j)</td></tr><tr><td class="num">231</td><td class="txt">        if bv &gt; maxV</td></tr><tr><td class="num">232</td><td class="txt">            maxV := bv</td></tr><tr><td class="num">233</td><td class="txt">            pocIdx := j</td></tr><tr><td class="num">234</td><td class="txt">    float pocPrice = lo + step * (pocIdx + 0.5)</td></tr><tr><td class="num">235</td><td class="txt">    float vaVol = array.get(bins, pocIdx)</td></tr><tr><td class="num">236</td><td class="txt">    int loIdx = pocIdx</td></tr><tr><td class="num">237</td><td class="txt">    int hiIdx = pocIdx</td></tr><tr><td class="num">238</td><td class="txt">    float target = totalVol * valueAreaPct / 100.0</td></tr><tr><td class="num">239</td><td class="txt">    while vaVol &lt; target and (loIdx &gt; 0 or hiIdx &lt; vpBins - 1)</td></tr><tr><td class="num">240</td><td class="txt">        float volBelow = loIdx &gt; 0 ? array.get(bins, loIdx - 1) : 0.0</td></tr><tr><td class="num">241</td><td class="txt">        float volAbove = hiIdx &lt; vpBins - 1 ? array.get(bins, hiIdx + 1) : 0.0</td></tr><tr><td class="num">242</td><td class="txt">        if volAbove &gt;= volBelow and hiIdx &lt; vpBins - 1</td></tr><tr><td class="num">243</td><td class="txt">            hiIdx += 1</td></tr><tr><td class="num">244</td><td class="txt">            vaVol += array.get(bins, hiIdx)</td></tr><tr><td class="num">245</td><td class="txt">        else if loIdx &gt; 0</td></tr><tr><td class="num">246</td><td class="txt">            loIdx -= 1</td></tr><tr><td class="num">247</td><td class="txt">            vaVol += array.get(bins, loIdx)</td></tr><tr><td class="num">248</td><td class="txt">        else if hiIdx &lt; vpBins - 1</td></tr><tr><td class="num">249</td><td class="txt">            hiIdx += 1</td></tr><tr><td class="num">250</td><td class="txt">            vaVol += array.get(bins, hiIdx)</td></tr><tr><td class="num">251</td><td class="txt">        else</td></tr><tr><td class="num">252</td><td class="txt">            break</td></tr><tr><td class="num">253</td><td class="txt">    float vah = lo + step * (hiIdx + 1)</td></tr><tr><td class="num">254</td><td class="txt">    float val = lo + step * loIdx</td></tr><tr><td class="num">255</td><td class="txt">    float pocStrength = totalVol &gt; 0 ? maxV / totalVol * 100.0 : 0.0</td></tr><tr><td class="num">256</td><td class="txt">    int[] hvnIdx = array.new_int(3, -1)</td></tr><tr><td class="num">257</td><td class="txt">    for rank = 0 to 2</td></tr><tr><td class="num">258</td><td class="txt">        float best = 0.0</td></tr><tr><td class="num">259</td><td class="txt">        int bestI = -1</td></tr><tr><td class="num">260</td><td class="txt">        for j = 0 to vpBins - 1</td></tr><tr><td class="num">261</td><td class="txt">            if j != pocIdx</td></tr><tr><td class="num">262</td><td class="txt">                float bv = array.get(bins, j)</td></tr><tr><td class="num">263</td><td class="txt">                bool already = false</td></tr><tr><td class="num">264</td><td class="txt">                for r = 0 to rank - 1</td></tr><tr><td class="num">265</td><td class="txt">                    if array.get(hvnIdx, r) == j</td></tr><tr><td class="num">266</td><td class="txt">                        already := true</td></tr><tr><td class="num">267</td><td class="txt">                if not already and bv &gt; best</td></tr><tr><td class="num">268</td><td class="txt">                    best := bv</td></tr><tr><td class="num">269</td><td class="txt">                    bestI := j</td></tr><tr><td class="num">270</td><td class="txt">        array.set(hvnIdx, rank, bestI)</td></tr><tr><td class="num">271</td><td class="txt">    int[] lvnIdx = array.new_int()</td></tr><tr><td class="num">272</td><td class="txt">    for j = 0 to vpBins - 1</td></tr><tr><td class="num">273</td><td class="txt">        if j != pocIdx and array.get(bins, j) &lt; maxV * 0.2</td></tr><tr><td class="num">274</td><td class="txt">            array.push(lvnIdx, j)</td></tr><tr><td class="num">275</td><td class="txt">    [pocPrice, vah, val, pocStrength, step, lo, bins, hvnIdx, lvnIdx, pocIdx]</td></tr><tr><td class="num">276</td><td class="txt"> </td></tr><tr><td class="num">277</td><td class="txt">[poc, vah, val, pocStrength, binStep, binLo, vpBinsArr, hvnIndices, lvnIndices, pocBinIdx] = f_calcVP()</td></tr><tr><td class="num">278</td><td class="txt"> </td></tr><tr><td class="num">279</td><td class="txt">pocDistPct = poc &gt; 0 ? (close - poc) / poc * 100.0 : 0.0</td></tr><tr><td class="num">280</td><td class="txt">pocDistUsd = close - poc</td></tr><tr><td class="num">281</td><td class="txt">pocStrengthLbl = pocStrength &gt; 15 ? &quot;Strong POC&quot; : pocStrength &gt;= 8 ? &quot;Medium POC&quot; : &quot;Weak POC&quot;</td></tr><tr><td class="num">282</td><td class="txt">pocStrengthCol = pocStrength &gt; 15 ? #FFD700 : pocStrength &gt;= 8 ? color.yellow : color.gray</td></tr><tr><td class="num">283</td><td class="txt"> </td></tr><tr><td class="num">284</td><td class="txt">var line pocLine = na</td></tr><tr><td class="num">285</td><td class="txt">var line vahLine = na</td></tr><tr><td class="num">286</td><td class="txt">var line valLine = na</td></tr><tr><td class="num">287</td><td class="txt">var label pocLbl = na</td></tr><tr><td class="num">288</td><td class="txt">var label vahLbl = na</td></tr><tr><td class="num">289</td><td class="txt">var label valLbl = na</td></tr><tr><td class="num">290</td><td class="txt"> </td></tr><tr><td class="num">291</td><td class="txt">if barstate.islast</td></tr><tr><td class="num">292</td><td class="txt">    line.delete(pocLine)</td></tr><tr><td class="num">293</td><td class="txt">    line.delete(vahLine)</td></tr><tr><td class="num">294</td><td class="txt">    line.delete(valLine)</td></tr><tr><td class="num">295</td><td class="txt">    label.delete(pocLbl)</td></tr><tr><td class="num">296</td><td class="txt">    label.delete(vahLbl)</td></tr><tr><td class="num">297</td><td class="txt">    label.delete(valLbl)</td></tr><tr><td class="num">298</td><td class="txt">    int x1 = bar_index - vpLookback</td></tr><tr><td class="num">299</td><td class="txt">    int x2 = bar_index + vpExtend</td></tr><tr><td class="num">300</td><td class="txt">    pocLine := line.new(x1, poc, x2, poc, color=color.yellow, style=line.style_dashed, width=2)</td></tr><tr><td class="num">301</td><td class="txt">    vahLine := line.new(x1, vah, x2, vah, color=color.green, style=line.style_dotted, width=1)</td></tr><tr><td class="num">302</td><td class="txt">    valLine := line.new(x1, val, x2, val, color=color.red, style=line.style_dotted, width=1)</td></tr><tr><td class="num">303</td><td class="txt">    pocLbl := label.new(x2, poc, &quot;POC: &quot; + str.tostring(poc, format.mintick), style=label.style_label_left,</td></tr><tr><td class="num">304</td><td class="txt">         color=color.new(color.yellow, 50), textcolor=color.black, size=size.small)</td></tr><tr><td class="num">305</td><td class="txt">    vahLbl := label.new(x2, vah, &quot;VAH&quot;, style=label.style_label_left,</td></tr><tr><td class="num">306</td><td class="txt">         color=color.new(color.green, 60), textcolor=color.white, size=size.tiny)</td></tr><tr><td class="num">307</td><td class="txt">    valLbl := label.new(x2, val, &quot;VAL&quot;, style=label.style_label_left,</td></tr><tr><td class="num">308</td><td class="txt">         color=color.new(color.red, 60), textcolor=color.white, size=size.tiny)</td></tr><tr><td class="num">309</td><td class="txt"> </td></tr><tr><td class="num">310</td><td class="txt">pocHalf = atr14 * 0.3</td></tr><tr><td class="num">311</td><td class="txt">var box pocBox = na</td></tr><tr><td class="num">312</td><td class="txt">var box[] hvnBoxes = array.new_box()</td></tr><tr><td class="num">313</td><td class="txt">var label[] hvnLabels = array.new_label()</td></tr><tr><td class="num">314</td><td class="txt">var line[] lvnLines = array.new_line()</td></tr><tr><td class="num">315</td><td class="txt">var label[] lvnLabels = array.new_label()</td></tr><tr><td class="num">316</td><td class="txt"> </td></tr><tr><td class="num">317</td><td class="txt">if barstate.islast</td></tr><tr><td class="num">318</td><td class="txt">    box.delete(pocBox)</td></tr><tr><td class="num">319</td><td class="txt">    for b in hvnBoxes</td></tr><tr><td class="num">320</td><td class="txt">        box.delete(b)</td></tr><tr><td class="num">321</td><td class="txt">    for l in hvnLabels</td></tr><tr><td class="num">322</td><td class="txt">        label.delete(l)</td></tr><tr><td class="num">323</td><td class="txt">    for ln in lvnLines</td></tr><tr><td class="num">324</td><td class="txt">        line.delete(ln)</td></tr><tr><td class="num">325</td><td class="txt">    for l in lvnLabels</td></tr><tr><td class="num">326</td><td class="txt">        label.delete(l)</td></tr><tr><td class="num">327</td><td class="txt">    array.clear(hvnBoxes)</td></tr><tr><td class="num">328</td><td class="txt">    array.clear(hvnLabels)</td></tr><tr><td class="num">329</td><td class="txt">    array.clear(lvnLines)</td></tr><tr><td class="num">330</td><td class="txt">    array.clear(lvnLabels)</td></tr><tr><td class="num">331</td><td class="txt"> </td></tr><tr><td class="num">332</td><td class="txt">    pocBox := box.new(bar_index - vpLookback, poc + pocHalf, bar_index + vpExtend, poc - pocHalf,</td></tr><tr><td class="num">333</td><td class="txt">         bgcolor=color.new(color.yellow, 80), border_color=color.new(color.orange, 50),</td></tr><tr><td class="num">334</td><td class="txt">         text=&quot;최고 거래 밀집 구간&quot;, text_size=size.tiny)</td></tr><tr><td class="num">335</td><td class="txt"> </td></tr><tr><td class="num">336</td><td class="txt">    if showHvn</td></tr><tr><td class="num">337</td><td class="txt">        for rank = 0 to 2</td></tr><tr><td class="num">338</td><td class="txt">            int hIdx = array.get(hvnIndices, rank)</td></tr><tr><td class="num">339</td><td class="txt">            if hIdx &gt;= 0</td></tr><tr><td class="num">340</td><td class="txt">                float hPrice = binLo + binStep * (hIdx + 0.5)</td></tr><tr><td class="num">341</td><td class="txt">                float hTop = binLo + binStep * (hIdx + 1)</td></tr><tr><td class="num">342</td><td class="txt">                float hBot = binLo + binStep * hIdx</td></tr><tr><td class="num">343</td><td class="txt">                box hb = box.new(bar_index - vpLookback, hTop, bar_index + vpExtend, hBot,</td></tr><tr><td class="num">344</td><td class="txt">                     bgcolor=color.new(color.yellow, 85), border_width=0)</td></tr><tr><td class="num">345</td><td class="txt">                array.push(hvnBoxes, hb)</td></tr><tr><td class="num">346</td><td class="txt">                label hl = label.new(bar_index + vpExtend, hPrice, &quot;HVN &quot; + str.tostring(rank + 1),</td></tr><tr><td class="num">347</td><td class="txt">                     style=label.style_label_left, color=color.new(color.yellow, 50),</td></tr><tr><td class="num">348</td><td class="txt">                     textcolor=color.black, size=size.tiny)</td></tr><tr><td class="num">349</td><td class="txt">                array.push(hvnLabels, hl)</td></tr><tr><td class="num">350</td><td class="txt"> </td></tr><tr><td class="num">351</td><td class="txt">    if showLvn</td></tr><tr><td class="num">352</td><td class="txt">        int lvnCount = array.size(lvnIndices)</td></tr><tr><td class="num">353</td><td class="txt">        int maxLvn = math.min(lvnCount, 8)</td></tr><tr><td class="num">354</td><td class="txt">        for i = 0 to maxLvn - 1</td></tr><tr><td class="num">355</td><td class="txt">            int lIdx = array.get(lvnIndices, i)</td></tr><tr><td class="num">356</td><td class="txt">            float lPrice = binLo + binStep * (lIdx + 0.5)</td></tr><tr><td class="num">357</td><td class="txt">            line ln = line.new(bar_index - vpLookback, lPrice, bar_index + vpExtend, lPrice,</td></tr><tr><td class="num">358</td><td class="txt">                 color=color.gray, style=line.style_dashed, width=1)</td></tr><tr><td class="num">359</td><td class="txt">            array.push(lvnLines, ln)</td></tr><tr><td class="num">360</td><td class="txt">            if i &lt; 3</td></tr><tr><td class="num">361</td><td class="txt">                label ll = label.new(bar_index + vpExtend, lPrice, &quot;LVN — Fast Move Zone&quot;,</td></tr><tr><td class="num">362</td><td class="txt">                     style=label.style_label_left, color=color.new(color.gray, 60),</td></tr><tr><td class="num">363</td><td class="txt">                     textcolor=color.white, size=size.tiny)</td></tr><tr><td class="num">364</td><td class="txt">                array.push(lvnLabels, ll)</td></tr><tr><td class="num">365</td><td class="txt"> </td></tr><tr><td class="num">366</td><td class="txt">type Wall</td></tr><tr><td class="num">367</td><td class="txt">    float level</td></tr><tr><td class="num">368</td><td class="txt">    int   barIdx</td></tr><tr><td class="num">369</td><td class="txt">    float vol</td></tr><tr><td class="num">370</td><td class="txt">    bool  isBuy</td></tr><tr><td class="num">371</td><td class="txt">    bool  broken</td></tr><tr><td class="num">372</td><td class="txt">    line  ln</td></tr><tr><td class="num">373</td><td class="txt">    box   bx</td></tr><tr><td class="num">374</td><td class="txt">    label lb</td></tr><tr><td class="num">375</td><td class="txt"> </td></tr><tr><td class="num">376</td><td class="txt">var Wall[] walls = array.new&lt;Wall&gt;()</td></tr><tr><td class="num">377</td><td class="txt"> </td></tr><tr><td class="num">378</td><td class="txt">f_nearWall(float price, float pct) =&gt;</td></tr><tr><td class="num">379</td><td class="txt">    bool near = false</td></tr><tr><td class="num">380</td><td class="txt">    for w in walls</td></tr><tr><td class="num">381</td><td class="txt">        if math.abs(w.level - price) / price * 100.0 &lt; pct</td></tr><tr><td class="num">382</td><td class="txt">            near := true</td></tr><tr><td class="num">383</td><td class="txt">    near</td></tr><tr><td class="num">384</td><td class="txt"> </td></tr><tr><td class="num">385</td><td class="txt">f_strengthBar(float vol) =&gt;</td></tr><tr><td class="num">386</td><td class="txt">    float ratio = vol / math.max(volMa, 1)</td></tr><tr><td class="num">387</td><td class="txt">    int blocks = int(math.min(8, math.round(ratio)))</td></tr><tr><td class="num">388</td><td class="txt">    string s = &quot;&quot;</td></tr><tr><td class="num">389</td><td class="txt">    for i = 0 to 7</td></tr><tr><td class="num">390</td><td class="txt">        s += i &lt; blocks ? &quot;█&quot; : &quot;░&quot;</td></tr><tr><td class="num">391</td><td class="txt">    s</td></tr><tr><td class="num">392</td><td class="txt"> </td></tr><tr><td class="num">393</td><td class="txt">bigLowerWick = low &lt; open - (high - low) * 0.5</td></tr><tr><td class="num">394</td><td class="txt">bigUpperWick = high &gt; open + (high - low) * 0.5</td></tr><tr><td class="num">395</td><td class="txt">buyCond  = confirmed and volume &gt; volMa * buyWallMult and (close &gt;= open or bigLowerWick) and close &lt; sessionVwap</td></tr><tr><td class="num">396</td><td class="txt">sellCond = confirmed and volume &gt; volMa * sellWallMult and (close &lt;= open or bigUpperWick) and close &gt; sessionVwap</td></tr><tr><td class="num">397</td><td class="txt"> </td></tr><tr><td class="num">398</td><td class="txt">if buyCond and not f_nearWall(low, 0.3)</td></tr><tr><td class="num">399</td><td class="txt">    string bwStr = volume &gt; volMa * strongWallMult ? &quot;💪 STRONG BW&quot; :</td></tr><tr><td class="num">400</td><td class="txt">         volume &gt; volMa * modWallMult ? &quot;⚡ MODERATE BW&quot; : &quot;BW&quot;</td></tr><tr><td class="num">401</td><td class="txt">    string bar = f_strengthBar(volume)</td></tr><tr><td class="num">402</td><td class="txt">    float bTop = low + atr14 * 0.5</td></tr><tr><td class="num">403</td><td class="txt">    float bBot = low - atr14 * 0.2</td></tr><tr><td class="num">404</td><td class="txt">    line  bln = line.new(bar_index, low, bar_index + wallExpiryBars, low, color=color.lime, width=2)</td></tr><tr><td class="num">405</td><td class="txt">    box   bbx = box.new(bar_index, bTop, bar_index + wallExpiryBars, bBot,</td></tr><tr><td class="num">406</td><td class="txt">         bgcolor=color.new(color.lime, 85), border_color=color.new(color.lime, 50))</td></tr><tr><td class="num">407</td><td class="txt">    label blb = label.new(bar_index, bTop, bwStr + &quot; &quot; + bar, style=label.style_label_down,</td></tr><tr><td class="num">408</td><td class="txt">         color=color.new(color.lime, 30), textcolor=color.white, size=size.small)</td></tr><tr><td class="num">409</td><td class="txt">    Wall nw = Wall.new(low, bar_index, volume, true, false, bln, bbx, blb)</td></tr><tr><td class="num">410</td><td class="txt">    array.push(walls, nw)</td></tr><tr><td class="num">411</td><td class="txt">    if array.size(walls) &gt; 5</td></tr><tr><td class="num">412</td><td class="txt">        Wall old = array.shift(walls)</td></tr><tr><td class="num">413</td><td class="txt">        line.delete(old.ln)</td></tr><tr><td class="num">414</td><td class="txt">        box.delete(old.bx)</td></tr><tr><td class="num">415</td><td class="txt">        label.delete(old.lb)</td></tr><tr><td class="num">416</td><td class="txt"> </td></tr><tr><td class="num">417</td><td class="txt">if sellCond and not f_nearWall(high, 0.3)</td></tr><tr><td class="num">418</td><td class="txt">    string swStr = volume &gt; volMa * strongWallMult ? &quot;💪 STRONG SW&quot; :</td></tr><tr><td class="num">419</td><td class="txt">         volume &gt; volMa * modWallMult ? &quot;⚡ MODERATE SW&quot; : &quot;SW&quot;</td></tr><tr><td class="num">420</td><td class="txt">    string bar = f_strengthBar(volume)</td></tr><tr><td class="num">421</td><td class="txt">    float sTop = high + atr14 * 0.2</td></tr><tr><td class="num">422</td><td class="txt">    float sBot = high - atr14 * 0.5</td></tr><tr><td class="num">423</td><td class="txt">    line  sln = line.new(bar_index, high, bar_index + wallExpiryBars, high, color=color.red, width=2)</td></tr><tr><td class="num">424</td><td class="txt">    box   sbx = box.new(bar_index, sTop, bar_index + wallExpiryBars, sBot,</td></tr><tr><td class="num">425</td><td class="txt">         bgcolor=color.new(color.red, 85), border_color=color.new(color.red, 50))</td></tr><tr><td class="num">426</td><td class="txt">    label slb = label.new(bar_index, sBot, swStr + &quot; &quot; + bar, style=label.style_label_up,</td></tr><tr><td class="num">427</td><td class="txt">         color=color.new(color.red, 30), textcolor=color.white, size=size.small)</td></tr><tr><td class="num">428</td><td class="txt">    Wall nw = Wall.new(high, bar_index, volume, false, false, sln, sbx, slb)</td></tr><tr><td class="num">429</td><td class="txt">    array.push(walls, nw)</td></tr><tr><td class="num">430</td><td class="txt">    if array.size(walls) &gt; 5</td></tr><tr><td class="num">431</td><td class="txt">        Wall old = array.shift(walls)</td></tr><tr><td class="num">432</td><td class="txt">        line.delete(old.ln)</td></tr><tr><td class="num">433</td><td class="txt">        box.delete(old.bx)</td></tr><tr><td class="num">434</td><td class="txt">        label.delete(old.lb)</td></tr><tr><td class="num">435</td><td class="txt"> </td></tr><tr><td class="num">436</td><td class="txt">var bool buyWallBroken  = false</td></tr><tr><td class="num">437</td><td class="txt">var bool sellWallBroken = false</td></tr><tr><td class="num">438</td><td class="txt">buyWallBroken  := false</td></tr><tr><td class="num">439</td><td class="txt">sellWallBroken := false</td></tr><tr><td class="num">440</td><td class="txt"> </td></tr><tr><td class="num">441</td><td class="txt">int activeBuyWalls  = 0</td></tr><tr><td class="num">442</td><td class="txt">int activeSellWalls = 0</td></tr><tr><td class="num">443</td><td class="txt">float nearestBw = na</td></tr><tr><td class="num">444</td><td class="txt">float nearestSw = na</td></tr><tr><td class="num">445</td><td class="txt"> </td></tr><tr><td class="num">446</td><td class="txt">if array.size(walls) &gt; 0</td></tr><tr><td class="num">447</td><td class="txt">    for i = array.size(walls) - 1 to 0</td></tr><tr><td class="num">448</td><td class="txt">        Wall w = array.get(walls, i)</td></tr><tr><td class="num">449</td><td class="txt">        bool expired = bar_index - w.barIdx &gt; wallExpiryBars</td></tr><tr><td class="num">450</td><td class="txt">        if expired</td></tr><tr><td class="num">451</td><td class="txt">            line.delete(w.ln)</td></tr><tr><td class="num">452</td><td class="txt">            box.delete(w.bx)</td></tr><tr><td class="num">453</td><td class="txt">            label.delete(w.lb)</td></tr><tr><td class="num">454</td><td class="txt">            array.remove(walls, i)</td></tr><tr><td class="num">455</td><td class="txt">        else</td></tr><tr><td class="num">456</td><td class="txt">            line.set_x2(w.ln, bar_index + 5)</td></tr><tr><td class="num">457</td><td class="txt">            box.set_right(w.bx, bar_index + 5)</td></tr><tr><td class="num">458</td><td class="txt">            if w.isBuy</td></tr><tr><td class="num">459</td><td class="txt">                activeBuyWalls += 1</td></tr><tr><td class="num">460</td><td class="txt">                if w.level &lt;= close and (na(nearestBw) or w.level &gt; nearestBw)</td></tr><tr><td class="num">461</td><td class="txt">                    nearestBw := w.level</td></tr><tr><td class="num">462</td><td class="txt">                if confirmed and close &lt; w.level and not w.broken</td></tr><tr><td class="num">463</td><td class="txt">                    w.broken := true</td></tr><tr><td class="num">464</td><td class="txt">                    buyWallBroken := true</td></tr><tr><td class="num">465</td><td class="txt">                    line.set_color(w.ln, color.gray)</td></tr><tr><td class="num">466</td><td class="txt">                    label.set_text(w.lb, &quot;BW BROKEN&quot;)</td></tr><tr><td class="num">467</td><td class="txt">                    label.set_color(w.lb, color.new(color.gray, 30))</td></tr><tr><td class="num">468</td><td class="txt">            else</td></tr><tr><td class="num">469</td><td class="txt">                activeSellWalls += 1</td></tr><tr><td class="num">470</td><td class="txt">                if w.level &gt;= close and (na(nearestSw) or w.level &lt; nearestSw)</td></tr><tr><td class="num">471</td><td class="txt">                    nearestSw := w.level</td></tr><tr><td class="num">472</td><td class="txt">                if confirmed and close &gt; w.level and not w.broken</td></tr><tr><td class="num">473</td><td class="txt">                    w.broken := true</td></tr><tr><td class="num">474</td><td class="txt">                    sellWallBroken := true</td></tr><tr><td class="num">475</td><td class="txt">                    line.set_color(w.ln, color.gray)</td></tr><tr><td class="num">476</td><td class="txt">                    label.set_text(w.lb, &quot;SW BROKEN&quot;)</td></tr><tr><td class="num">477</td><td class="txt">                    label.set_color(w.lb, color.new(color.gray, 30))</td></tr><tr><td class="num">478</td><td class="txt">            array.set(walls, i, w)</td></tr><tr><td class="num">479</td><td class="txt"> </td></tr><tr><td class="num">480</td><td class="txt">f_wallNear(float price, float pct, bool wantBuy) =&gt;</td></tr><tr><td class="num">481</td><td class="txt">    bool found = false</td></tr><tr><td class="num">482</td><td class="txt">    for w in walls</td></tr><tr><td class="num">483</td><td class="txt">        if w.isBuy == wantBuy and not w.broken and math.abs(w.level - price) / price * 100.0 &lt; pct</td></tr><tr><td class="num">484</td><td class="txt">            found := true</td></tr><tr><td class="num">485</td><td class="txt">    found</td></tr><tr><td class="num">486</td><td class="txt"> </td></tr></tbody></table></div><p><b>Part 2</b> — S/R Zones · Wall Pressure · Dashboard · Signals · Alerts · <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part2.html">단독 페이지</a></p><button class="btn" data-label="Part 2 복사 (480줄)" onclick="copyCode('code2', this)">Part 2 복사 (480줄)</button><textarea id="code2" readonly aria-hidden="true" style="position:fixed;left:-9999px;opacity:0;width:1px;height:1px">type SrZone
+</textarea><div class="code-scroll"><pre class="code">//@version=6
+indicator(
+     title=&quot;Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones [BTC/ETH]&quot;,
+     shorttitle=&quot;CPE Engine&quot;,
+     overlay=true,
+     behind_chart=false,
+     precision=2,
+     max_bars_back=2100,
+     max_lines_count=500,
+     max_labels_count=500,
+     max_boxes_count=100)
+
+groupVwap   = &quot;⚡ VWAP Settings&quot;
+showVwapBands    = input.bool(true,  &quot;Show VWAP Bands&quot;,           group=groupVwap)
+showWeeklyVwap   = input.bool(false, &quot;Show Weekly VWAP&quot;,          group=groupVwap)
+showMonthlyVwap  = input.bool(false, &quot;Show Monthly VWAP&quot;,           group=groupVwap)
+vwapBandMult     = input.float(1.0, &quot;Band Multiplier&quot;, minval=0.1, step=0.1, group=groupVwap)
+showVwapZones    = input.bool(true,  &quot;Show VWAP S/R Zones&quot;,       group=groupVwap)
+vwapZoneAtrMult  = input.float(0.5, &quot;VWAP Zone ATR Mult&quot;, minval=0.1, step=0.1, group=groupVwap)
+vwapZoneLookback = input.int(100,   &quot;VWAP Zone Touch Lookback&quot;, minval=20, group=groupVwap)
+
+groupVp     = &quot;📊 Volume Profile / POC&quot;
+vpLookback  = input.int(300,  &quot;VP Lookback Bars&quot;, minval=50, maxval=500, group=groupVp)
+vpBins      = input.int(48,   &quot;VP Bins&quot;, minval=10, maxval=100, group=groupVp)
+valueAreaPct= input.float(70.0,&quot;Value Area %&quot;, minval=50, maxval=95, group=groupVp)
+vpExtend    = input.int(50,    &quot;Extend Lines Right (bars)&quot;, minval=0, group=groupVp)
+showHvn     = input.bool(true, &quot;Show HVN Zones&quot;, group=groupVp)
+showLvn     = input.bool(true, &quot;Show LVN Lines&quot;, group=groupVp)
+
+groupWall   = &quot;🧱 Wall Detection&quot;
+volMaLen    = input.int(20,   &quot;Volume MA Length&quot;, minval=5, group=groupWall)
+buyWallMult = input.float(2.5,&quot;Buy Wall Multiplier&quot;, minval=1.0, step=0.1, group=groupWall)
+sellWallMult= input.float(2.5,&quot;Sell Wall Multiplier&quot;, minval=1.0, step=0.1, group=groupWall)
+strongWallMult = input.float(5.0, &quot;Strong Wall Mult&quot;, minval=2.0, step=0.5, group=groupWall)
+modWallMult    = input.float(3.5, &quot;Moderate Wall Mult&quot;, minval=2.0, step=0.5, group=groupWall)
+wallExpiryBars = input.int(100,&quot;Wall Expiry Bars&quot;, minval=10, group=groupWall)
+wallZoneAtrMult= input.float(0.4,&quot;Wall Zone ATR Mult&quot;, minval=0.1, step=0.1, group=groupWall)
+
+groupSr     = &quot;🎯 Support / Resistance Zones&quot;
+srLookback  = input.int(200,  &quot;S/R Lookback&quot;, minval=50, group=groupSr)
+pivotLeft   = input.int(10,   &quot;Pivot Left&quot;, minval=2, group=groupSr)
+pivotRight  = input.int(10,   &quot;Pivot Right&quot;, minval=2, group=groupSr)
+clusterAtrMult = input.float(0.5, &quot;Cluster ATR Mult&quot;, minval=0.1, step=0.1, group=groupSr)
+minTouches  = input.int(2,    &quot;Min Touches&quot;, minval=1, group=groupSr)
+showMajorOnly = input.bool(false, &quot;Show Major Zones Only&quot;, group=groupSr)
+showDistLabels= input.bool(true,  &quot;Show Distance Labels&quot;, group=groupSr)
+
+groupOb     = &quot;📖 Wall Pressure (Free)&quot;
+showOrderbook = input.bool(false, &quot;Show Wall Pressure Table&quot;, group=groupOb,
+     tooltip=&quot;실제 오더북: python3 scripts/tradingview_orderbook_feed.py&quot;)
+obLevels    = input.int(5, &quot;Levels (each side)&quot;, minval=1, maxval=5, group=groupOb)
+obAtrSpacing= input.float(0.15, &quot;ATR Spacing&quot;, minval=0.05, step=0.05, group=groupOb)
+
+groupSig    = &quot;📡 Signals&quot;
+showMarks   = input.bool(true, &quot;Show Signal Markers&quot;, inline=&quot;sigshow&quot;, group=groupSig,
+     tooltip=&quot;LONG/SHORT 플립 시점에만 차트 마커 표시 (확정봉·쿨다운 적용)&quot;)
+sigCoolBars = input.int(5, &quot;Signal Cooldown (bars)&quot;, minval=1, maxval=50, group=groupSig,
+     tooltip=&quot;연속 시그널 방지 — 최소 대기 봉 수&quot;)
+sigBull     = input.color(color.lime, &quot;Long&quot;, inline=&quot;sigcol&quot;, group=groupSig)
+sigBear     = input.color(color.red, &quot;Short&quot;, inline=&quot;sigcol&quot;, group=groupSig)
+
+groupDash   = &quot;🖥 Dashboard&quot;
+showDashboard = input.bool(true, &quot;Show Dashboard&quot;, group=groupDash)
+dashPosition  = input.string(&quot;top_right&quot;, &quot;Dashboard Position&quot;,
+     options=[&quot;top_right&quot;, &quot;top_left&quot;, &quot;bottom_right&quot;, &quot;bottom_left&quot;], group=groupDash)
+tableSize     = input.string(&quot;small&quot;, &quot;Table Size&quot;,
+     options=[&quot;tiny&quot;, &quot;small&quot;, &quot;normal&quot;], group=groupDash)
+
+atr14   = ta.atr(14)
+volMa   = ta.sma(volume, volMaLen)
+volStd  = ta.stdev(volume, volMaLen)
+confirmed = barstate.isconfirmed
+
+var float sCumVol  = 0.0
+var float sCumPV   = 0.0
+var float sSumDev  = 0.0
+var float sSumDev2 = 0.0
+var int   sBars    = 0
+
+newDay = ta.change(time(&quot;1D&quot;)) != 0
+if newDay
+    sCumVol  := 0.0
+    sCumPV   := 0.0
+    sSumDev  := 0.0
+    sSumDev2 := 0.0
+    sBars    := 0
+
+tp = hlc3
+sCumVol  += volume
+sCumPV   += tp * volume
+sessionVwap = sCumVol &gt; 0 ? sCumPV / sCumVol : tp
+
+dev = close - sessionVwap
+sSumDev  += dev
+sSumDev2 += dev * dev
+sBars    += 1
+sessionStd = sBars &gt; 1 ? math.sqrt(math.max((sSumDev2 - sSumDev * sSumDev / sBars) / (sBars - 1), 0.0)) : 0.0
+
+band1U = sessionVwap + sessionStd * vwapBandMult
+band2U = sessionVwap + sessionStd * 2.0 * vwapBandMult
+band3U = sessionVwap + sessionStd * 3.0 * vwapBandMult
+band1D = sessionVwap - sessionStd * vwapBandMult
+band2D = sessionVwap - sessionStd * 2.0 * vwapBandMult
+band3D = sessionVwap - sessionStd * 3.0 * vwapBandMult
+
+vwapColor = close &gt;= sessionVwap ? color.new(color.green, 0) : color.new(color.red, 0)
+plot(sessionVwap, &quot;Session VWAP&quot;, color=vwapColor, linewidth=2)
+
+pB1U = plot(showVwapBands ? band1U : na, &quot;+1σ&quot;, color=color.new(color.blue, 40), linewidth=1)
+pB1D = plot(showVwapBands ? band1D : na, &quot;-1σ&quot;, color=color.new(color.blue, 40), linewidth=1)
+plot(showVwapBands ? band2U : na, &quot;+2σ&quot;, color=color.new(color.orange, 40), linewidth=1)
+plot(showVwapBands ? band2D : na, &quot;-2σ&quot;, color=color.new(color.orange, 40), linewidth=1)
+plot(showVwapBands ? band3U : na, &quot;+3σ&quot;, color=color.new(color.red, 20), linewidth=1)
+plot(showVwapBands ? band3D : na, &quot;-3σ&quot;, color=color.new(color.lime, 20), linewidth=1)
+fill(pB1U, pB1D, color=color.new(color.blue, 90), title=&quot;±1σ Fill&quot;)
+
+var float wCumVol = 0.0, wCumPV = 0.0
+var float mCumVol = 0.0, mCumPV = 0.0
+newWeek  = ta.change(time(&quot;1W&quot;)) != 0
+newMonth = ta.change(time(&quot;1M&quot;)) != 0
+if newWeek
+    wCumVol := 0.0
+    wCumPV  := 0.0
+if newMonth
+    mCumVol := 0.0
+    mCumPV  := 0.0
+wCumVol += volume
+wCumPV  += tp * volume
+mCumVol += volume
+mCumPV  += tp * volume
+weeklyVwap  = wCumVol &gt; 0 ? wCumPV / wCumVol : tp
+monthlyVwap = mCumVol &gt; 0 ? mCumPV / mCumVol : tp
+
+plot(showWeeklyVwap  ? weeklyVwap  : na, &quot;Weekly VWAP&quot;,  color=color.new(color.purple, 0), linewidth=1, style=plot.style_linebr)
+plot(showMonthlyVwap ? monthlyVwap : na, &quot;Monthly VWAP&quot;, color=color.new(color.orange, 0), linewidth=1, style=plot.style_linebr)
+
+var label wLbl = na
+var label mLbl = na
+if barstate.islast
+    if showWeeklyVwap
+        label.delete(wLbl)
+        wLbl := label.new(bar_index, weeklyVwap, &quot;W-VWAP&quot;, style=label.style_label_left,
+             color=color.new(color.purple, 70), textcolor=color.white, size=size.small)
+    if showMonthlyVwap
+        label.delete(mLbl)
+        mLbl := label.new(bar_index, monthlyVwap, &quot;M-VWAP&quot;, style=label.style_label_left,
+             color=color.new(color.orange, 70), textcolor=color.white, size=size.small)
+
+f_zoneTouches(float level, float halfH, int lb) =&gt;
+    int touches = 0
+    float touchVol = 0.0
+    int bounces = 0
+    bool broken = false
+    for i = 1 to lb
+        if bar_index &gt;= i
+            float zTop = level + halfH
+            float zBot = level - halfH
+            bool touched = high[i] &gt;= zBot and low[i] &lt;= zTop
+            if touched
+                touches += 1
+                touchVol += volume[i]
+                bool bouncedUp = false
+                bool bouncedDn = false
+                for j = 0 to 2
+                    if i - j &gt;= 0
+                        if close[i - j] &gt; zTop
+                            bouncedUp := true
+                        if close[i - j] &lt; zBot
+                            bouncedDn := true
+                if bouncedUp or bouncedDn
+                    bounces += 1
+            if close[i] &gt; zTop + halfH or close[i] &lt; zBot - halfH
+                broken := true
+    float strength = touches &gt; 0 ? math.min(100, int(touches * 15 + touchVol / math.max(volMa, 1) * 5)) : 0
+    [touches, bounces, broken, strength]
+
+vwapHalfH = atr14 * vwapZoneAtrMult
+var box[] vwapZoneBoxes = array.new_box()
+var label[] vwapZoneLabels = array.new_label()
+
+f_drawVwapZone(float lvl, string name, bool isUpper) =&gt;
+    if showVwapZones and barstate.islast
+        [tch, bnc, brk, str] = f_zoneTouches(lvl, vwapHalfH, vwapZoneLookback)
+        isSupport = not isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk
+        isResist  = isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk
+        bgCol = brk ? color.new(color.gray, 75) :
+             isSupport ? color.new(color.green, 80) :
+             isResist  ? color.new(color.red, 80) :
+             color.new(color.gray, 90)
+        b = box.new(bar_index - vwapZoneLookback, lvl + vwapHalfH, bar_index + 20, lvl - vwapHalfH,
+             border_color=color.new(color.gray, 60), bgcolor=bgCol, border_width=1)
+        array.push(vwapZoneBoxes, b)
+        lblTxt = name + &quot;\nTouches: &quot; + str.tostring(tch) + &quot;\nStrength: &quot; + str.tostring(str)
+        l = label.new(bar_index + 5, lvl, lblTxt, style=label.style_label_left,
+             color=color.new(color.black, 40), textcolor=color.white, size=size.tiny)
+        array.push(vwapZoneLabels, l)
+
+if barstate.islast
+    for b in vwapZoneBoxes
+        box.delete(b)
+    for l in vwapZoneLabels
+        label.delete(l)
+    array.clear(vwapZoneBoxes)
+    array.clear(vwapZoneLabels)
+    if showVwapZones
+        f_drawVwapZone(band1U, &quot;VWAP +1σ Zone&quot;, true)
+        f_drawVwapZone(band1D, &quot;VWAP -1σ Zone&quot;, false)
+        f_drawVwapZone(band2U, &quot;VWAP +2σ Zone&quot;, true)
+        f_drawVwapZone(band2D, &quot;VWAP -2σ Zone&quot;, false)
+        f_drawVwapZone(band3U, &quot;VWAP +3σ Zone&quot;, true)
+        f_drawVwapZone(band3D, &quot;VWAP -3σ Zone&quot;, false)
+
+f_calcVP() =&gt;
+    float hi = ta.highest(high, vpLookback)
+    float lo = ta.lowest(low, vpLookback)
+    float step = (hi - lo) / vpBins
+    float[] bins = array.new_float(vpBins, 0.0)
+    float totalVol = 0.0
+    for i = 0 to vpLookback - 1
+        if bar_index &gt;= i
+            float c = close[i]
+            float v = volume[i]
+            int idx = step &gt; 0 ? int(math.floor((c - lo) / step)) : 0
+            idx := math.min(math.max(idx, 0), vpBins - 1)
+            array.set(bins, idx, array.get(bins, idx) + v)
+            totalVol += v
+    int pocIdx = 0
+    float maxV = 0.0
+    for j = 0 to vpBins - 1
+        float bv = array.get(bins, j)
+        if bv &gt; maxV
+            maxV := bv
+            pocIdx := j
+    float pocPrice = lo + step * (pocIdx + 0.5)
+    float vaVol = array.get(bins, pocIdx)
+    int loIdx = pocIdx
+    int hiIdx = pocIdx
+    float target = totalVol * valueAreaPct / 100.0
+    while vaVol &lt; target and (loIdx &gt; 0 or hiIdx &lt; vpBins - 1)
+        float volBelow = loIdx &gt; 0 ? array.get(bins, loIdx - 1) : 0.0
+        float volAbove = hiIdx &lt; vpBins - 1 ? array.get(bins, hiIdx + 1) : 0.0
+        if volAbove &gt;= volBelow and hiIdx &lt; vpBins - 1
+            hiIdx += 1
+            vaVol += array.get(bins, hiIdx)
+        else if loIdx &gt; 0
+            loIdx -= 1
+            vaVol += array.get(bins, loIdx)
+        else if hiIdx &lt; vpBins - 1
+            hiIdx += 1
+            vaVol += array.get(bins, hiIdx)
+        else
+            break
+    float vah = lo + step * (hiIdx + 1)
+    float val = lo + step * loIdx
+    float pocStrength = totalVol &gt; 0 ? maxV / totalVol * 100.0 : 0.0
+    int[] hvnIdx = array.new_int(3, -1)
+    for rank = 0 to 2
+        float best = 0.0
+        int bestI = -1
+        for j = 0 to vpBins - 1
+            if j != pocIdx
+                float bv = array.get(bins, j)
+                bool already = false
+                for r = 0 to rank - 1
+                    if array.get(hvnIdx, r) == j
+                        already := true
+                if not already and bv &gt; best
+                    best := bv
+                    bestI := j
+        array.set(hvnIdx, rank, bestI)
+    int[] lvnIdx = array.new_int()
+    for j = 0 to vpBins - 1
+        if j != pocIdx and array.get(bins, j) &lt; maxV * 0.2
+            array.push(lvnIdx, j)
+    [pocPrice, vah, val, pocStrength, step, lo, bins, hvnIdx, lvnIdx, pocIdx]
+
+[poc, vah, val, pocStrength, binStep, binLo, vpBinsArr, hvnIndices, lvnIndices, pocBinIdx] = f_calcVP()
+
+pocDistPct = poc &gt; 0 ? (close - poc) / poc * 100.0 : 0.0
+pocDistUsd = close - poc
+pocStrengthLbl = pocStrength &gt; 15 ? &quot;Strong POC&quot; : pocStrength &gt;= 8 ? &quot;Medium POC&quot; : &quot;Weak POC&quot;
+pocStrengthCol = pocStrength &gt; 15 ? #FFD700 : pocStrength &gt;= 8 ? color.yellow : color.gray
+
+var line pocLine = na
+var line vahLine = na
+var line valLine = na
+var label pocLbl = na
+var label vahLbl = na
+var label valLbl = na
+
+if barstate.islast
+    line.delete(pocLine)
+    line.delete(vahLine)
+    line.delete(valLine)
+    label.delete(pocLbl)
+    label.delete(vahLbl)
+    label.delete(valLbl)
+    int x1 = bar_index - vpLookback
+    int x2 = bar_index + vpExtend
+    pocLine := line.new(x1, poc, x2, poc, color=color.yellow, style=line.style_dashed, width=2)
+    vahLine := line.new(x1, vah, x2, vah, color=color.green, style=line.style_dotted, width=1)
+    valLine := line.new(x1, val, x2, val, color=color.red, style=line.style_dotted, width=1)
+    pocLbl := label.new(x2, poc, &quot;POC: &quot; + str.tostring(poc, format.mintick), style=label.style_label_left,
+         color=color.new(color.yellow, 50), textcolor=color.black, size=size.small)
+    vahLbl := label.new(x2, vah, &quot;VAH&quot;, style=label.style_label_left,
+         color=color.new(color.green, 60), textcolor=color.white, size=size.tiny)
+    valLbl := label.new(x2, val, &quot;VAL&quot;, style=label.style_label_left,
+         color=color.new(color.red, 60), textcolor=color.white, size=size.tiny)
+
+pocHalf = atr14 * 0.3
+var box pocBox = na
+var box[] hvnBoxes = array.new_box()
+var label[] hvnLabels = array.new_label()
+var line[] lvnLines = array.new_line()
+var label[] lvnLabels = array.new_label()
+
+if barstate.islast
+    box.delete(pocBox)
+    for b in hvnBoxes
+        box.delete(b)
+    for l in hvnLabels
+        label.delete(l)
+    for ln in lvnLines
+        line.delete(ln)
+    for l in lvnLabels
+        label.delete(l)
+    array.clear(hvnBoxes)
+    array.clear(hvnLabels)
+    array.clear(lvnLines)
+    array.clear(lvnLabels)
+
+    pocBox := box.new(bar_index - vpLookback, poc + pocHalf, bar_index + vpExtend, poc - pocHalf,
+         bgcolor=color.new(color.yellow, 80), border_color=color.new(color.orange, 50),
+         text=&quot;최고 거래 밀집 구간&quot;, text_size=size.tiny)
+
+    if showHvn
+        for rank = 0 to 2
+            int hIdx = array.get(hvnIndices, rank)
+            if hIdx &gt;= 0
+                float hPrice = binLo + binStep * (hIdx + 0.5)
+                float hTop = binLo + binStep * (hIdx + 1)
+                float hBot = binLo + binStep * hIdx
+                box hb = box.new(bar_index - vpLookback, hTop, bar_index + vpExtend, hBot,
+                     bgcolor=color.new(color.yellow, 85), border_width=0)
+                array.push(hvnBoxes, hb)
+                label hl = label.new(bar_index + vpExtend, hPrice, &quot;HVN &quot; + str.tostring(rank + 1),
+                     style=label.style_label_left, color=color.new(color.yellow, 50),
+                     textcolor=color.black, size=size.tiny)
+                array.push(hvnLabels, hl)
+
+    if showLvn
+        int lvnCount = array.size(lvnIndices)
+        int maxLvn = math.min(lvnCount, 8)
+        for i = 0 to maxLvn - 1
+            int lIdx = array.get(lvnIndices, i)
+            float lPrice = binLo + binStep * (lIdx + 0.5)
+            line ln = line.new(bar_index - vpLookback, lPrice, bar_index + vpExtend, lPrice,
+                 color=color.gray, style=line.style_dashed, width=1)
+            array.push(lvnLines, ln)
+            if i &lt; 3
+                label ll = label.new(bar_index + vpExtend, lPrice, &quot;LVN — Fast Move Zone&quot;,
+                     style=label.style_label_left, color=color.new(color.gray, 60),
+                     textcolor=color.white, size=size.tiny)
+                array.push(lvnLabels, ll)
+
+type Wall
+    float level
+    int   barIdx
+    float vol
+    bool  isBuy
+    bool  broken
+    line  ln
+    box   bx
+    label lb
+
+var Wall[] walls = array.new&lt;Wall&gt;()
+
+f_nearWall(float price, float pct) =&gt;
+    bool near = false
+    for w in walls
+        if math.abs(w.level - price) / price * 100.0 &lt; pct
+            near := true
+    near
+
+f_strengthBar(float vol) =&gt;
+    float ratio = vol / math.max(volMa, 1)
+    int blocks = int(math.min(8, math.round(ratio)))
+    string s = &quot;&quot;
+    for i = 0 to 7
+        s += i &lt; blocks ? &quot;█&quot; : &quot;░&quot;
+    s
+
+bigLowerWick = low &lt; open - (high - low) * 0.5
+bigUpperWick = high &gt; open + (high - low) * 0.5
+buyCond  = confirmed and volume &gt; volMa * buyWallMult and (close &gt;= open or bigLowerWick) and close &lt; sessionVwap
+sellCond = confirmed and volume &gt; volMa * sellWallMult and (close &lt;= open or bigUpperWick) and close &gt; sessionVwap
+
+if buyCond and not f_nearWall(low, 0.3)
+    string bwStr = volume &gt; volMa * strongWallMult ? &quot;💪 STRONG BW&quot; :
+         volume &gt; volMa * modWallMult ? &quot;⚡ MODERATE BW&quot; : &quot;BW&quot;
+    string bar = f_strengthBar(volume)
+    float bTop = low + atr14 * 0.5
+    float bBot = low - atr14 * 0.2
+    line  bln = line.new(bar_index, low, bar_index + wallExpiryBars, low, color=color.lime, width=2)
+    box   bbx = box.new(bar_index, bTop, bar_index + wallExpiryBars, bBot,
+         bgcolor=color.new(color.lime, 85), border_color=color.new(color.lime, 50))
+    label blb = label.new(bar_index, bTop, bwStr + &quot; &quot; + bar, style=label.style_label_down,
+         color=color.new(color.lime, 30), textcolor=color.white, size=size.small)
+    Wall nw = Wall.new(low, bar_index, volume, true, false, bln, bbx, blb)
+    array.push(walls, nw)
+    if array.size(walls) &gt; 5
+        Wall old = array.shift(walls)
+        line.delete(old.ln)
+        box.delete(old.bx)
+        label.delete(old.lb)
+
+if sellCond and not f_nearWall(high, 0.3)
+    string swStr = volume &gt; volMa * strongWallMult ? &quot;💪 STRONG SW&quot; :
+         volume &gt; volMa * modWallMult ? &quot;⚡ MODERATE SW&quot; : &quot;SW&quot;
+    string bar = f_strengthBar(volume)
+    float sTop = high + atr14 * 0.2
+    float sBot = high - atr14 * 0.5
+    line  sln = line.new(bar_index, high, bar_index + wallExpiryBars, high, color=color.red, width=2)
+    box   sbx = box.new(bar_index, sTop, bar_index + wallExpiryBars, sBot,
+         bgcolor=color.new(color.red, 85), border_color=color.new(color.red, 50))
+    label slb = label.new(bar_index, sBot, swStr + &quot; &quot; + bar, style=label.style_label_up,
+         color=color.new(color.red, 30), textcolor=color.white, size=size.small)
+    Wall nw = Wall.new(high, bar_index, volume, false, false, sln, sbx, slb)
+    array.push(walls, nw)
+    if array.size(walls) &gt; 5
+        Wall old = array.shift(walls)
+        line.delete(old.ln)
+        box.delete(old.bx)
+        label.delete(old.lb)
+
+var bool buyWallBroken  = false
+var bool sellWallBroken = false
+buyWallBroken  := false
+sellWallBroken := false
+
+int activeBuyWalls  = 0
+int activeSellWalls = 0
+float nearestBw = na
+float nearestSw = na
+
+if array.size(walls) &gt; 0
+    for i = array.size(walls) - 1 to 0
+        Wall w = array.get(walls, i)
+        bool expired = bar_index - w.barIdx &gt; wallExpiryBars
+        if expired
+            line.delete(w.ln)
+            box.delete(w.bx)
+            label.delete(w.lb)
+            array.remove(walls, i)
+        else
+            line.set_x2(w.ln, bar_index + 5)
+            box.set_right(w.bx, bar_index + 5)
+            if w.isBuy
+                activeBuyWalls += 1
+                if w.level &lt;= close and (na(nearestBw) or w.level &gt; nearestBw)
+                    nearestBw := w.level
+                if confirmed and close &lt; w.level and not w.broken
+                    w.broken := true
+                    buyWallBroken := true
+                    line.set_color(w.ln, color.gray)
+                    label.set_text(w.lb, &quot;BW BROKEN&quot;)
+                    label.set_color(w.lb, color.new(color.gray, 30))
+            else
+                activeSellWalls += 1
+                if w.level &gt;= close and (na(nearestSw) or w.level &lt; nearestSw)
+                    nearestSw := w.level
+                if confirmed and close &gt; w.level and not w.broken
+                    w.broken := true
+                    sellWallBroken := true
+                    line.set_color(w.ln, color.gray)
+                    label.set_text(w.lb, &quot;SW BROKEN&quot;)
+                    label.set_color(w.lb, color.new(color.gray, 30))
+            array.set(walls, i, w)
+
+f_wallNear(float price, float pct, bool wantBuy) =&gt;
+    bool found = false
+    for w in walls
+        if w.isBuy == wantBuy and not w.broken and math.abs(w.level - price) / price * 100.0 &lt; pct
+            found := true
+    found
+
+</pre></div><p><b>Part 2</b> — S/R Zones · Wall Pressure · Dashboard · Signals · Alerts · <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/part2.html">단독 페이지</a></p><button class="btn" data-label="Part 2 복사 (481줄)" onclick="copyCode('code2', this)">Part 2 복사 (481줄)</button><textarea id="code2" readonly aria-hidden="true" style="position:fixed;left:-9999px;opacity:0;width:1px;height:1px">type SrZone
     float center
     float top
     float bot
@@ -813,56 +1297,56 @@ tblSz(sz) =&gt;
     sz == &quot;tiny&quot; ? size.tiny : sz == &quot;normal&quot; ? size.normal : size.small
 
 if showOrderbook and barstate.islast
-  if na(obTable)
-    obTable := table.new(position.bottom_right, 4, 12, border_width=1)
-  else
-    table.clear(obTable, 0, 0, 3, 11)
+    if na(obTable)
+        obTable := table.new(position.bottom_right, 4, 12, border_width=1)
+    else
+        table.clear(obTable, 0, 0, 3, 11)
 
-  table.cell(obTable, 0, 0, &quot;Price&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 1, 0, &quot;Wall&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 2, 0, &quot;Lvl&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 3, 0, &quot;Tag&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+    table.cell(obTable, 0, 0, &quot;Price&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+    table.cell(obTable, 1, 0, &quot;Wall&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+    table.cell(obTable, 2, 0, &quot;Lvl&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+    table.cell(obTable, 3, 0, &quot;Tag&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
 
-  float maxSz = math.max(math.max(bidTotal, askTotal), 1.0)
+    float maxSz = math.max(math.max(bidTotal, askTotal), 1.0)
 
-  for n = obLevels to 1
-    int row = obLevels - n + 1
-    float askP = close + spacing * n
-    float sz = f_wallSizeAt(askP, 0.25)
-    string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
-    string bar = f_sizeBar(sz, maxSz)
-    string tags = f_obTag(askP, true)
-    bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
-    table.cell(obTable, 0, row, str.tostring(askP, format.mintick), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 3, row, &quot;ASK &quot; + tags, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+    for n = obLevels to 1
+        int row = obLevels - n + 1
+        float askP = close + spacing * n
+        float sz = f_wallSizeAt(askP, 0.25)
+        string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
+        string bar = f_sizeBar(sz, maxSz)
+        string tags = f_obTag(askP, true)
+        bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
+        table.cell(obTable, 0, row, str.tostring(askP, format.mintick), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 3, row, &quot;ASK &quot; + tags, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
 
-  table.cell(obTable, 0, 6, str.tostring(close, format.mintick), bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
-  table.cell(obTable, 1, 6, &quot;▶ CURRENT&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
-  table.cell(obTable, 2, 6, &quot;—&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
-  table.cell(obTable, 3, 6, &quot;캔들·벽 기반&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+    table.cell(obTable, 0, 6, str.tostring(close, format.mintick), bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+    table.cell(obTable, 1, 6, &quot;▶ CURRENT&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+    table.cell(obTable, 2, 6, &quot;—&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+    table.cell(obTable, 3, 6, &quot;캔들·벽 기반&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
 
-  for n = 1 to obLevels
-    int row = 6 + n
-    float bidP = close - spacing * n
-    float sz = f_wallSizeAt(bidP, 0.25)
-    string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
-    string bar = f_sizeBar(sz, maxSz)
-    string tags = f_obTag(bidP, false)
-    bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
-    table.cell(obTable, 0, row, str.tostring(bidP, format.mintick), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 3, row, &quot;BID &quot; + tags, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+    for n = 1 to obLevels
+        int row = 6 + n
+        float bidP = close - spacing * n
+        float sz = f_wallSizeAt(bidP, 0.25)
+        string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
+        string bar = f_sizeBar(sz, maxSz)
+        string tags = f_obTag(bidP, false)
+        bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
+        table.cell(obTable, 0, row, str.tostring(bidP, format.mintick), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 3, row, &quot;BID &quot; + tags, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
 
-  string imbTxt = imbRatio &gt; 1.5 ? &quot;📈 BID (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; :
-       imbRatio &lt; 0.67 ? &quot;📉 ASK (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; : &quot;⚖ BALANCED&quot;
-  color imbCol = imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray
-  table.cell(obTable, 0, 11, &quot;Wall Imb&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
-  table.cell(obTable, 1, 11, str.tostring(bidTotal, &quot;#.#&quot;) + &quot;/&quot; + str.tostring(askTotal, &quot;#.#&quot;), bgcolor=color.new(color.black, 30), text_size=size.tiny)
-  table.cell(obTable, 2, 11, imbTxt, bgcolor=color.new(imbCol, 50), text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 3, 11, &quot;FREE&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
+    string imbTxt = imbRatio &gt; 1.5 ? &quot;📈 BID (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; :
+              imbRatio &lt; 0.67 ? &quot;📉 ASK (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; : &quot;⚖ BALANCED&quot;
+    color imbCol = imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray
+    table.cell(obTable, 0, 11, &quot;Wall Imb&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
+    table.cell(obTable, 1, 11, str.tostring(bidTotal, &quot;#.#&quot;) + &quot;/&quot; + str.tostring(askTotal, &quot;#.#&quot;), bgcolor=color.new(color.black, 30), text_size=size.tiny)
+    table.cell(obTable, 2, 11, imbTxt, bgcolor=color.new(imbCol, 50), text_color=color.white, text_size=size.tiny)
+    table.cell(obTable, 3, 11, &quot;FREE&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
 
 f_distPct(float price) =&gt;
     price &gt; 0 ? (close - price) / price * 100.0 : 0.0
@@ -904,73 +1388,73 @@ plotshape(showMarks and triggerShort ? placeSell : na, &quot;Short Glow&quot;, s
 
 var table dash = na
 if showDashboard and barstate.islast
-  if na(dash)
-    dash := table.new(tblPos(dashPosition), 2, 16, border_width=1)
-  else
-    table.clear(dash, 0, 0, 1, 15)
+    if na(dash)
+        dash := table.new(tblPos(dashPosition), 2, 16, border_width=1)
+    else
+        table.clear(dash, 0, 0, 1, 15)
 
-  sz = tblSz(tableSize)
-  vwapDist = f_distPct(sessionVwap)
-  vwapArrow = vwapDist &gt;= 0 ? &quot;▲&quot; : &quot;▼&quot;
-  vwapCol = vwapDist &gt;= 0 ? color.green : color.red
+    sz = tblSz(tableSize)
+    vwapDist = f_distPct(sessionVwap)
+    vwapArrow = vwapDist &gt;= 0 ? &quot;▲&quot; : &quot;▼&quot;
+    vwapCol = vwapDist &gt;= 0 ? color.green : color.red
 
-  table.cell(dash, 0, 0, &quot;VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 0, str.tostring(sessionVwap, format.mintick) + &quot; (&quot; + str.tostring(vwapDist, &quot;#.##&quot;) + &quot;% &quot; + vwapArrow + &quot;)&quot;,
-       text_size=sz, text_color=vwapCol)
+    table.cell(dash, 0, 0, &quot;VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 0, str.tostring(sessionVwap, format.mintick) + &quot; (&quot; + str.tostring(vwapDist, &quot;#.##&quot;) + &quot;% &quot; + vwapArrow + &quot;)&quot;,
+              text_size=sz, text_color=vwapCol)
 
-  table.cell(dash, 0, 1, &quot;W-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 1, str.tostring(weeklyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(weeklyVwap), &quot;#.##&quot;) + &quot;%)&quot;,
-       text_size=sz)
+    table.cell(dash, 0, 1, &quot;W-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 1, str.tostring(weeklyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(weeklyVwap), &quot;#.##&quot;) + &quot;%)&quot;,
+              text_size=sz)
 
-  table.cell(dash, 0, 2, &quot;M-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 2, str.tostring(monthlyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(monthlyVwap), &quot;#.##&quot;) + &quot;%)&quot;,
-       text_size=sz)
+    table.cell(dash, 0, 2, &quot;M-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 2, str.tostring(monthlyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(monthlyVwap), &quot;#.##&quot;) + &quot;%)&quot;,
+              text_size=sz)
 
-  table.cell(dash, 0, 3, &quot;POC&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 3, str.tostring(poc, format.mintick) + &quot; &quot; + str.tostring(pocDistPct, &quot;#.##&quot;) + &quot;% | &quot; +
-       pocStrengthLbl + &quot; (&quot; + str.tostring(pocStrength, &quot;#.#&quot;) + &quot;%)&quot;, text_size=sz, text_color=pocStrengthCol)
+    table.cell(dash, 0, 3, &quot;POC&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 3, str.tostring(poc, format.mintick) + &quot; &quot; + str.tostring(pocDistPct, &quot;#.##&quot;) + &quot;% | &quot; +
+              pocStrengthLbl + &quot; (&quot; + str.tostring(pocStrength, &quot;#.#&quot;) + &quot;%)&quot;, text_size=sz, text_color=pocStrengthCol)
 
-  table.cell(dash, 0, 4, &quot;VAH&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 4, str.tostring(vah, format.mintick) + &quot; (+&quot; + str.tostring((vah - close) / close * 100.0, &quot;#.##&quot;) + &quot;% above)&quot;, text_size=sz)
+    table.cell(dash, 0, 4, &quot;VAH&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 4, str.tostring(vah, format.mintick) + &quot; (+&quot; + str.tostring((vah - close) / close * 100.0, &quot;#.##&quot;) + &quot;% above)&quot;, text_size=sz)
 
-  table.cell(dash, 0, 5, &quot;VAL&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 5, str.tostring(val, format.mintick) + &quot; (-&quot; + str.tostring((close - val) / close * 100.0, &quot;#.##&quot;) + &quot;% below)&quot;, text_size=sz)
+    table.cell(dash, 0, 5, &quot;VAL&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 5, str.tostring(val, format.mintick) + &quot; (-&quot; + str.tostring((close - val) / close * 100.0, &quot;#.##&quot;) + &quot;% below)&quot;, text_size=sz)
 
-  table.cell(dash, 0, 6, &quot;Buy Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 6, str.tostring(activeBuyWalls) + &quot; active | Nearest: &quot; +
-       (na(nearestBw) ? &quot;—&quot; : str.tostring(nearestBw, format.mintick)), text_size=sz, text_color=color.lime)
+    table.cell(dash, 0, 6, &quot;Buy Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 6, str.tostring(activeBuyWalls) + &quot; active | Nearest: &quot; +
+              (na(nearestBw) ? &quot;—&quot; : str.tostring(nearestBw, format.mintick)), text_size=sz, text_color=color.lime)
 
-  table.cell(dash, 0, 7, &quot;Sell Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 7, str.tostring(activeSellWalls) + &quot; active | Nearest: &quot; +
-       (na(nearestSw) ? &quot;—&quot; : str.tostring(nearestSw, format.mintick)), text_size=sz, text_color=color.red)
+    table.cell(dash, 0, 7, &quot;Sell Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 7, str.tostring(activeSellWalls) + &quot; active | Nearest: &quot; +
+              (na(nearestSw) ? &quot;—&quot; : str.tostring(nearestSw, format.mintick)), text_size=sz, text_color=color.red)
 
-  table.cell(dash, 0, 8, &quot;Major Sup&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 8, na(nearMajorSup) ? &quot;—&quot; : &quot;↓&quot; + str.tostring(nearSupPct, &quot;#.##&quot;) + &quot;% | 순지지 &quot; +
-       str.tostring(nearSupNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.lime)
+    table.cell(dash, 0, 8, &quot;Major Sup&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 8, na(nearMajorSup) ? &quot;—&quot; : &quot;↓&quot; + str.tostring(nearSupPct, &quot;#.##&quot;) + &quot;% | 순지지 &quot; +
+              str.tostring(nearSupNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.lime)
 
-  table.cell(dash, 0, 9, &quot;Major Res&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 9, na(nearMajorRes) ? &quot;—&quot; : &quot;↑&quot; + str.tostring(nearResPct, &quot;#.##&quot;) + &quot;% | 순저항 &quot; +
-       str.tostring(nearResNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.red)
+    table.cell(dash, 0, 9, &quot;Major Res&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 9, na(nearMajorRes) ? &quot;—&quot; : &quot;↑&quot; + str.tostring(nearResPct, &quot;#.##&quot;) + &quot;% | 순저항 &quot; +
+              str.tostring(nearResNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.red)
 
-  table.cell(dash, 0, 10, &quot;Vol Ratio&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 10, volRatioTxt, text_size=sz, text_color=volRatio &gt; 2.5 ? color.orange : color.white)
+    table.cell(dash, 0, 10, &quot;Vol Ratio&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 10, volRatioTxt, text_size=sz, text_color=volRatio &gt; 2.5 ? color.orange : color.white)
 
-  table.cell(dash, 0, 11, &quot;Wall Imb&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 11, str.tostring(imbRatio, &quot;#.##&quot;) + &quot;x&quot;, text_size=sz,
-       text_color=imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray)
+    table.cell(dash, 0, 11, &quot;Wall Imb&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 11, str.tostring(imbRatio, &quot;#.##&quot;) + &quot;x&quot;, text_size=sz,
+              text_color=imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray)
 
-  table.cell(dash, 0, 12, &quot;Session&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 12, f_session(), text_size=sz)
+    table.cell(dash, 0, 12, &quot;Session&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 12, f_session(), text_size=sz)
 
-  table.cell(dash, 0, 13, &quot;Trend&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 13, trendTxt, text_size=sz, text_color=vwapSlope &gt;= 0 ? color.green : color.red)
+    table.cell(dash, 0, 13, &quot;Trend&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 13, trendTxt, text_size=sz, text_color=vwapSlope &gt;= 0 ? color.green : color.red)
 
-  table.cell(dash, 0, 14, &quot;ATR&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 14, str.tostring(atr14, format.mintick) + &quot; (&quot; + str.tostring(atr14 / close * 100.0, &quot;#.##&quot;) + &quot;%)&quot;, text_size=sz)
+    table.cell(dash, 0, 14, &quot;ATR&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 14, str.tostring(atr14, format.mintick) + &quot; (&quot; + str.tostring(atr14 / close * 100.0, &quot;#.##&quot;) + &quot;%)&quot;, text_size=sz)
 
-  table.cell(dash, 0, 15, &quot;Signal&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
-  table.cell(dash, 1, 15, signalTxt, text_size=sz,
-       text_color=longSetup ? color.lime : shortSetup ? color.red : color.gray)
+    table.cell(dash, 0, 15, &quot;Signal&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 15, signalTxt, text_size=sz,
+              text_color=longSetup ? color.lime : shortSetup ? color.red : color.gray)
 
 crossAboveVwap = ta.crossover(close, sessionVwap)
 crossBelowVwap = ta.crossunder(close, sessionVwap)
@@ -1006,7 +1490,489 @@ if confirmed
         alert(&quot;▲ VWAP Cross Above  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)&quot;, alert.freq_once_per_bar_close)
     if crossBelowVwap
         alert(&quot;▼ VWAP Cross Below  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)&quot;, alert.freq_once_per_bar_close)
-</textarea><div class="code-scroll"><table class="code-table"><tbody><tr><td class="num">1</td><td class="txt">type SrZone</td></tr><tr><td class="num">2</td><td class="txt">    float center</td></tr><tr><td class="num">3</td><td class="txt">    float top</td></tr><tr><td class="num">4</td><td class="txt">    float bot</td></tr><tr><td class="num">5</td><td class="txt">    int   touches</td></tr><tr><td class="num">6</td><td class="txt">    int   bullBounce</td></tr><tr><td class="num">7</td><td class="txt">    int   bearReject</td></tr><tr><td class="num">8</td><td class="txt">    bool  isSupport</td></tr><tr><td class="num">9</td><td class="txt">    float avgVol</td></tr><tr><td class="num">10</td><td class="txt"> </td></tr><tr><td class="num">11</td><td class="txt">var float[] pivotPrices = array.new_float()</td></tr><tr><td class="num">12</td><td class="txt">var bool[]  pivotIsHigh  = array.new_bool()</td></tr><tr><td class="num">13</td><td class="txt"> </td></tr><tr><td class="num">14</td><td class="txt">ph = ta.pivothigh(high, pivotLeft, pivotRight)</td></tr><tr><td class="num">15</td><td class="txt">pl = ta.pivotlow(low, pivotLeft, pivotRight)</td></tr><tr><td class="num">16</td><td class="txt"> </td></tr><tr><td class="num">17</td><td class="txt">if confirmed and not na(ph)</td></tr><tr><td class="num">18</td><td class="txt">    array.push(pivotPrices, ph)</td></tr><tr><td class="num">19</td><td class="txt">    array.push(pivotIsHigh, true)</td></tr><tr><td class="num">20</td><td class="txt">if confirmed and not na(pl)</td></tr><tr><td class="num">21</td><td class="txt">    array.push(pivotPrices, pl)</td></tr><tr><td class="num">22</td><td class="txt">    array.push(pivotIsHigh, false)</td></tr><tr><td class="num">23</td><td class="txt"> </td></tr><tr><td class="num">24</td><td class="txt">while array.size(pivotPrices) &gt; 50</td></tr><tr><td class="num">25</td><td class="txt">    array.shift(pivotPrices)</td></tr><tr><td class="num">26</td><td class="txt">    array.shift(pivotIsHigh)</td></tr><tr><td class="num">27</td><td class="txt"> </td></tr><tr><td class="num">28</td><td class="txt">f_buildZones() =&gt;</td></tr><tr><td class="num">29</td><td class="txt">    SrZone[] zones = array.new&lt;SrZone&gt;()</td></tr><tr><td class="num">30</td><td class="txt">    float clusterR = atr14 * clusterAtrMult</td></tr><tr><td class="num">31</td><td class="txt">    int pSize = array.size(pivotPrices)</td></tr><tr><td class="num">32</td><td class="txt">    bool[] used = array.new_bool(pSize, false)</td></tr><tr><td class="num">33</td><td class="txt">    for i = 0 to pSize - 1</td></tr><tr><td class="num">34</td><td class="txt">        if not array.get(used, i)</td></tr><tr><td class="num">35</td><td class="txt">            float pc = array.get(pivotPrices, i)</td></tr><tr><td class="num">36</td><td class="txt">            bool isH = array.get(pivotIsHigh, i)</td></tr><tr><td class="num">37</td><td class="txt">            float sumP = pc</td></tr><tr><td class="num">38</td><td class="txt">            int cnt = 1</td></tr><tr><td class="num">39</td><td class="txt">            int hiCnt = isH ? 1 : 0</td></tr><tr><td class="num">40</td><td class="txt">            int loCnt = isH ? 0 : 1</td></tr><tr><td class="num">41</td><td class="txt">            array.set(used, i, true)</td></tr><tr><td class="num">42</td><td class="txt">            for j = i + 1 to pSize - 1</td></tr><tr><td class="num">43</td><td class="txt">                if not array.get(used, j)</td></tr><tr><td class="num">44</td><td class="txt">                    float pj = array.get(pivotPrices, j)</td></tr><tr><td class="num">45</td><td class="txt">                    if math.abs(pj - pc) &lt;= clusterR</td></tr><tr><td class="num">46</td><td class="txt">                        sumP += pj</td></tr><tr><td class="num">47</td><td class="txt">                        cnt += 1</td></tr><tr><td class="num">48</td><td class="txt">                        if array.get(pivotIsHigh, j)</td></tr><tr><td class="num">49</td><td class="txt">                            hiCnt += 1</td></tr><tr><td class="num">50</td><td class="txt">                        else</td></tr><tr><td class="num">51</td><td class="txt">                            loCnt += 1</td></tr><tr><td class="num">52</td><td class="txt">                        array.set(used, j, true)</td></tr><tr><td class="num">53</td><td class="txt">            float center = sumP / cnt</td></tr><tr><td class="num">54</td><td class="txt">            float halfZ = atr14 * 0.3</td></tr><tr><td class="num">55</td><td class="txt">            int tch = 0</td></tr><tr><td class="num">56</td><td class="txt">            int bull = 0</td></tr><tr><td class="num">57</td><td class="txt">            int bear = 0</td></tr><tr><td class="num">58</td><td class="txt">            float tVol = 0.0</td></tr><tr><td class="num">59</td><td class="txt">            for k = 0 to srLookback - 1</td></tr><tr><td class="num">60</td><td class="txt">                if bar_index &gt;= k</td></tr><tr><td class="num">61</td><td class="txt">                    if high[k] &gt;= center - halfZ and low[k] &lt;= center + halfZ</td></tr><tr><td class="num">62</td><td class="txt">                        tch += 1</td></tr><tr><td class="num">63</td><td class="txt">                        tVol += volume[k]</td></tr><tr><td class="num">64</td><td class="txt">                        bool bUp = false</td></tr><tr><td class="num">65</td><td class="txt">                        bool bDn = false</td></tr><tr><td class="num">66</td><td class="txt">                        for m = 0 to 2</td></tr><tr><td class="num">67</td><td class="txt">                            if k - m &gt;= 0</td></tr><tr><td class="num">68</td><td class="txt">                                if close[k - m] &gt; center + halfZ</td></tr><tr><td class="num">69</td><td class="txt">                                    bUp := true</td></tr><tr><td class="num">70</td><td class="txt">                                if close[k - m] &lt; center - halfZ</td></tr><tr><td class="num">71</td><td class="txt">                                    bDn := true</td></tr><tr><td class="num">72</td><td class="txt">                        if bUp</td></tr><tr><td class="num">73</td><td class="txt">                            bull += 1</td></tr><tr><td class="num">74</td><td class="txt">                        if bDn</td></tr><tr><td class="num">75</td><td class="txt">                            bear += 1</td></tr><tr><td class="num">76</td><td class="txt">            float avgV = tch &gt; 0 ? tVol / tch : 0.0</td></tr><tr><td class="num">77</td><td class="txt">            bool sup = loCnt &gt;= hiCnt</td></tr><tr><td class="num">78</td><td class="txt">            SrZone z = SrZone.new(center, center + halfZ, center - halfZ, tch, bull, bear, sup, avgV)</td></tr><tr><td class="num">79</td><td class="txt">            if tch &gt;= minTouches</td></tr><tr><td class="num">80</td><td class="txt">                array.push(zones, z)</td></tr><tr><td class="num">81</td><td class="txt">    zones</td></tr><tr><td class="num">82</td><td class="txt"> </td></tr><tr><td class="num">83</td><td class="txt">SrZone[] srZones = f_buildZones()</td></tr><tr><td class="num">84</td><td class="txt"> </td></tr><tr><td class="num">85</td><td class="txt">float nearMajorSup = na</td></tr><tr><td class="num">86</td><td class="txt">float nearMajorRes = na</td></tr><tr><td class="num">87</td><td class="txt">float nearSupNet   = na</td></tr><tr><td class="num">88</td><td class="txt">float nearResNet   = na</td></tr><tr><td class="num">89</td><td class="txt">for z in srZones</td></tr><tr><td class="num">90</td><td class="txt">    float netSup = z.touches &gt; 0 ? z.bullBounce * 100.0 / z.touches : 0.0</td></tr><tr><td class="num">91</td><td class="txt">    float netRes = z.touches &gt; 0 ? z.bearReject * 100.0 / z.touches : 0.0</td></tr><tr><td class="num">92</td><td class="txt">    bool majorSup = netSup &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2</td></tr><tr><td class="num">93</td><td class="txt">    bool majorRes = netRes &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2</td></tr><tr><td class="num">94</td><td class="txt">    if majorSup and z.center &lt; close and (na(nearMajorSup) or z.center &gt; nearMajorSup)</td></tr><tr><td class="num">95</td><td class="txt">        nearMajorSup := z.center</td></tr><tr><td class="num">96</td><td class="txt">        nearSupNet := netSup</td></tr><tr><td class="num">97</td><td class="txt">    if majorRes and z.center &gt; close and (na(nearMajorRes) or z.center &lt; nearMajorRes)</td></tr><tr><td class="num">98</td><td class="txt">        nearMajorRes := z.center</td></tr><tr><td class="num">99</td><td class="txt">        nearResNet := netRes</td></tr><tr><td class="num">100</td><td class="txt"> </td></tr><tr><td class="num">101</td><td class="txt">var box[]   srBoxes  = array.new_box()</td></tr><tr><td class="num">102</td><td class="txt">var label[] srLabels = array.new_label()</td></tr><tr><td class="num">103</td><td class="txt">var line[]  distLines = array.new_line()</td></tr><tr><td class="num">104</td><td class="txt">var label[] distLabels = array.new_label()</td></tr><tr><td class="num">105</td><td class="txt"> </td></tr><tr><td class="num">106</td><td class="txt">if barstate.islast</td></tr><tr><td class="num">107</td><td class="txt">    for b in srBoxes</td></tr><tr><td class="num">108</td><td class="txt">        box.delete(b)</td></tr><tr><td class="num">109</td><td class="txt">    for l in srLabels</td></tr><tr><td class="num">110</td><td class="txt">        label.delete(l)</td></tr><tr><td class="num">111</td><td class="txt">    for ln in distLines</td></tr><tr><td class="num">112</td><td class="txt">        line.delete(ln)</td></tr><tr><td class="num">113</td><td class="txt">    for l in distLabels</td></tr><tr><td class="num">114</td><td class="txt">        label.delete(l)</td></tr><tr><td class="num">115</td><td class="txt">    array.clear(srBoxes)</td></tr><tr><td class="num">116</td><td class="txt">    array.clear(srLabels)</td></tr><tr><td class="num">117</td><td class="txt">    array.clear(distLines)</td></tr><tr><td class="num">118</td><td class="txt">    array.clear(distLabels)</td></tr><tr><td class="num">119</td><td class="txt"> </td></tr><tr><td class="num">120</td><td class="txt">    SrZone[] supBelow = array.new&lt;SrZone&gt;()</td></tr><tr><td class="num">121</td><td class="txt">    SrZone[] resAbove = array.new&lt;SrZone&gt;()</td></tr><tr><td class="num">122</td><td class="txt"> </td></tr><tr><td class="num">123</td><td class="txt">    for z in srZones</td></tr><tr><td class="num">124</td><td class="txt">        float netSup = z.touches &gt; 0 ? z.bullBounce * 100.0 / z.touches : 0.0</td></tr><tr><td class="num">125</td><td class="txt">        float netRes = z.touches &gt; 0 ? z.bearReject * 100.0 / z.touches : 0.0</td></tr><tr><td class="num">126</td><td class="txt">        bool majorSup = netSup &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2</td></tr><tr><td class="num">127</td><td class="txt">        bool minorSup = netSup &gt;= 50 and z.touches &gt;= 2 and not majorSup</td></tr><tr><td class="num">128</td><td class="txt">        bool majorRes = netRes &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2</td></tr><tr><td class="num">129</td><td class="txt">        bool minorRes = netRes &gt;= 50 and z.touches &gt;= 2 and not majorRes</td></tr><tr><td class="num">130</td><td class="txt">        bool neutral  = netSup &gt;= 40 and netSup &lt;= 60 and not majorSup and not majorRes</td></tr><tr><td class="num">131</td><td class="txt"> </td></tr><tr><td class="num">132</td><td class="txt">        if showMajorOnly and not majorSup and not majorRes</td></tr><tr><td class="num">133</td><td class="txt">            continue</td></tr><tr><td class="num">134</td><td class="txt"> </td></tr><tr><td class="num">135</td><td class="txt">        color bg = color.new(color.gray, 92)</td></tr><tr><td class="num">136</td><td class="txt">        string txt = &quot;&quot;</td></tr><tr><td class="num">137</td><td class="txt">        int bWidth = 1</td></tr><tr><td class="num">138</td><td class="txt">        if majorSup and z.center &lt; close</td></tr><tr><td class="num">139</td><td class="txt">            bg := color.new(color.lime, 75)</td></tr><tr><td class="num">140</td><td class="txt">            txt := &quot;🟢 Major Support | 순지지: &quot; + str.tostring(netSup, &quot;#.#&quot;) + &quot;% | Touches: &quot; + str.tostring(z.touches)</td></tr><tr><td class="num">141</td><td class="txt">            bWidth := 3</td></tr><tr><td class="num">142</td><td class="txt">        else if minorSup and z.center &lt; close</td></tr><tr><td class="num">143</td><td class="txt">            bg := color.new(color.green, 88)</td></tr><tr><td class="num">144</td><td class="txt">            txt := &quot;Minor Support | 순지지: &quot; + str.tostring(netSup, &quot;#.#&quot;) + &quot;%&quot;</td></tr><tr><td class="num">145</td><td class="txt">        else if majorRes and z.center &gt; close</td></tr><tr><td class="num">146</td><td class="txt">            bg := color.new(color.red, 75)</td></tr><tr><td class="num">147</td><td class="txt">            txt := &quot;🔴 Major Resistance | 순저항: &quot; + str.tostring(netRes, &quot;#.#&quot;) + &quot;% | Touches: &quot; + str.tostring(z.touches)</td></tr><tr><td class="num">148</td><td class="txt">            bWidth := 3</td></tr><tr><td class="num">149</td><td class="txt">        else if minorRes and z.center &gt; close</td></tr><tr><td class="num">150</td><td class="txt">            bg := color.new(color.red, 88)</td></tr><tr><td class="num">151</td><td class="txt">            txt := &quot;Minor Resistance | 순저항: &quot; + str.tostring(netRes, &quot;#.#&quot;) + &quot;%&quot;</td></tr><tr><td class="num">152</td><td class="txt">        else if neutral</td></tr><tr><td class="num">153</td><td class="txt">            bg := color.new(color.gray, 92)</td></tr><tr><td class="num">154</td><td class="txt">            txt := &quot;Neutral Zone | S: &quot; + str.tostring(netSup, &quot;#.#&quot;) + &quot;% / R: &quot; + str.tostring(netRes, &quot;#.#&quot;) + &quot;%&quot;</td></tr><tr><td class="num">155</td><td class="txt">        else</td></tr><tr><td class="num">156</td><td class="txt">            continue</td></tr><tr><td class="num">157</td><td class="txt"> </td></tr><tr><td class="num">158</td><td class="txt">        box sb = box.new(bar_index - srLookback, z.top, bar_index + 30, z.bot,</td></tr><tr><td class="num">159</td><td class="txt">             bgcolor=bg, border_width=bWidth)</td></tr><tr><td class="num">160</td><td class="txt">        array.push(srBoxes, sb)</td></tr><tr><td class="num">161</td><td class="txt">        label sl = label.new(bar_index + 5, z.center, txt, style=label.style_label_left,</td></tr><tr><td class="num">162</td><td class="txt">             color=color.new(color.black, 50), textcolor=color.white, size=size.tiny)</td></tr><tr><td class="num">163</td><td class="txt">        array.push(srLabels, sl)</td></tr><tr><td class="num">164</td><td class="txt"> </td></tr><tr><td class="num">165</td><td class="txt">        if z.center &lt; close</td></tr><tr><td class="num">166</td><td class="txt">            array.push(supBelow, z)</td></tr><tr><td class="num">167</td><td class="txt">        else</td></tr><tr><td class="num">168</td><td class="txt">            array.push(resAbove, z)</td></tr><tr><td class="num">169</td><td class="txt"> </td></tr><tr><td class="num">170</td><td class="txt">    if showDistLabels</td></tr><tr><td class="num">171</td><td class="txt">        for n = 0 to 2</td></tr><tr><td class="num">172</td><td class="txt">            float bestD = na</td></tr><tr><td class="num">173</td><td class="txt">            float bestC = na</td></tr><tr><td class="num">174</td><td class="txt">            int bestT = 0</td></tr><tr><td class="num">175</td><td class="txt">            int bestB = 0</td></tr><tr><td class="num">176</td><td class="txt">            for z in supBelow</td></tr><tr><td class="num">177</td><td class="txt">                float d = (close - z.center) / close * 100.0</td></tr><tr><td class="num">178</td><td class="txt">                if d &gt; 0 and (na(bestD) or d &lt; bestD)</td></tr><tr><td class="num">179</td><td class="txt">                    bestD := d</td></tr><tr><td class="num">180</td><td class="txt">                    bestC := z.center</td></tr><tr><td class="num">181</td><td class="txt">                    bestT := z.touches</td></tr><tr><td class="num">182</td><td class="txt">                    bestB := z.bullBounce</td></tr><tr><td class="num">183</td><td class="txt">            if not na(bestC)</td></tr><tr><td class="num">184</td><td class="txt">                float ns = bestT &gt; 0 ? bestB * 100.0 / bestT : 0.0</td></tr><tr><td class="num">185</td><td class="txt">                bool isMaj = ns &gt;= 70 and bestT &gt;= 3</td></tr><tr><td class="num">186</td><td class="txt">                string dTxt = &quot;↓ &quot; + str.tostring(bestD, &quot;#.##&quot;) + &quot;% to &quot; + (isMaj ? &quot;Major&quot; : &quot;Minor&quot;) + &quot; Support&quot;</td></tr><tr><td class="num">187</td><td class="txt">                line dl = line.new(bar_index, close, bar_index, bestC,</td></tr><tr><td class="num">188</td><td class="txt">                     color=color.new(color.green, 30), style=line.style_dotted)</td></tr><tr><td class="num">189</td><td class="txt">                label dll = label.new(bar_index + 2, (close + bestC) / 2, dTxt,</td></tr><tr><td class="num">190</td><td class="txt">                     style=label.style_label_left, color=color.new(color.green, 60),</td></tr><tr><td class="num">191</td><td class="txt">                     textcolor=color.white, size=isMaj ? size.small : size.tiny)</td></tr><tr><td class="num">192</td><td class="txt">                array.push(distLines, dl)</td></tr><tr><td class="num">193</td><td class="txt">                array.push(distLabels, dll)</td></tr><tr><td class="num">194</td><td class="txt">                array.clear(supBelow)</td></tr><tr><td class="num">195</td><td class="txt">                for z2 in srZones</td></tr><tr><td class="num">196</td><td class="txt">                    if z2.center &lt; close and z2.center != bestC</td></tr><tr><td class="num">197</td><td class="txt">                        array.push(supBelow, z2)</td></tr><tr><td class="num">198</td><td class="txt"> </td></tr><tr><td class="num">199</td><td class="txt">        for n = 0 to 2</td></tr><tr><td class="num">200</td><td class="txt">            float bestD = na</td></tr><tr><td class="num">201</td><td class="txt">            float bestC = na</td></tr><tr><td class="num">202</td><td class="txt">            int bestT = 0</td></tr><tr><td class="num">203</td><td class="txt">            int bestBr = 0</td></tr><tr><td class="num">204</td><td class="txt">            for z in resAbove</td></tr><tr><td class="num">205</td><td class="txt">                float d = (z.center - close) / close * 100.0</td></tr><tr><td class="num">206</td><td class="txt">                if d &gt; 0 and (na(bestD) or d &lt; bestD)</td></tr><tr><td class="num">207</td><td class="txt">                    bestD := d</td></tr><tr><td class="num">208</td><td class="txt">                    bestC := z.center</td></tr><tr><td class="num">209</td><td class="txt">                    bestT := z.touches</td></tr><tr><td class="num">210</td><td class="txt">                    bestBr := z.bearReject</td></tr><tr><td class="num">211</td><td class="txt">            if not na(bestC)</td></tr><tr><td class="num">212</td><td class="txt">                float nr = bestT &gt; 0 ? bestBr * 100.0 / bestT : 0.0</td></tr><tr><td class="num">213</td><td class="txt">                bool isMaj = nr &gt;= 70 and bestT &gt;= 3</td></tr><tr><td class="num">214</td><td class="txt">                string dTxt = &quot;↑ &quot; + str.tostring(bestD, &quot;#.##&quot;) + &quot;% to &quot; + (isMaj ? &quot;Major&quot; : &quot;Minor&quot;) +</td></tr><tr><td class="num">215</td><td class="txt">                     &quot; Resistance (순저항 &quot; + str.tostring(nr, &quot;#.#&quot;) + &quot;%)&quot;</td></tr><tr><td class="num">216</td><td class="txt">                line dl = line.new(bar_index, close, bar_index, bestC,</td></tr><tr><td class="num">217</td><td class="txt">                     color=color.new(color.red, 30), style=line.style_dotted)</td></tr><tr><td class="num">218</td><td class="txt">                label dll = label.new(bar_index + 2, (close + bestC) / 2, dTxt,</td></tr><tr><td class="num">219</td><td class="txt">                     style=label.style_label_left, color=color.new(color.red, 60),</td></tr><tr><td class="num">220</td><td class="txt">                     textcolor=color.white, size=isMaj ? size.small : size.tiny)</td></tr><tr><td class="num">221</td><td class="txt">                array.push(distLines, dl)</td></tr><tr><td class="num">222</td><td class="txt">                array.push(distLabels, dll)</td></tr><tr><td class="num">223</td><td class="txt">                array.clear(resAbove)</td></tr><tr><td class="num">224</td><td class="txt">                for z2 in srZones</td></tr><tr><td class="num">225</td><td class="txt">                    if z2.center &gt; close and z2.center != bestC</td></tr><tr><td class="num">226</td><td class="txt">                        array.push(resAbove, z2)</td></tr><tr><td class="num">227</td><td class="txt"> </td></tr><tr><td class="num">228</td><td class="txt">f_wallSizeAt(float price, float pct) =&gt;</td></tr><tr><td class="num">229</td><td class="txt">    float sz = 0.0</td></tr><tr><td class="num">230</td><td class="txt">    for w in walls</td></tr><tr><td class="num">231</td><td class="txt">        if not w.broken and math.abs(w.level - price) / price * 100.0 &lt; pct</td></tr><tr><td class="num">232</td><td class="txt">            sz += w.vol / math.max(volMa, 1) * 50.0</td></tr><tr><td class="num">233</td><td class="txt">    sz</td></tr><tr><td class="num">234</td><td class="txt"> </td></tr><tr><td class="num">235</td><td class="txt">f_obTag(float price, bool isAsk) =&gt;</td></tr><tr><td class="num">236</td><td class="txt">    string tag = &quot;&quot;</td></tr><tr><td class="num">237</td><td class="txt">    if isAsk</td></tr><tr><td class="num">238</td><td class="txt">        if f_wallNear(price, 0.3, false)</td></tr><tr><td class="num">239</td><td class="txt">            tag += &quot;SW🧱 &quot;</td></tr><tr><td class="num">240</td><td class="txt">        if not na(nearMajorRes) and math.abs(price - nearMajorRes) / price * 100.0 &lt; 0.3</td></tr><tr><td class="num">241</td><td class="txt">            tag += &quot;MR🔴 &quot;</td></tr><tr><td class="num">242</td><td class="txt">        if math.abs(price - band2U) / price * 100.0 &lt; 0.3</td></tr><tr><td class="num">243</td><td class="txt">            tag += &quot;V+2σ &quot;</td></tr><tr><td class="num">244</td><td class="txt">    else</td></tr><tr><td class="num">245</td><td class="txt">        if f_wallNear(price, 0.3, true)</td></tr><tr><td class="num">246</td><td class="txt">            tag += &quot;BW🧱 &quot;</td></tr><tr><td class="num">247</td><td class="txt">        if not na(nearMajorSup) and math.abs(price - nearMajorSup) / price * 100.0 &lt; 0.3</td></tr><tr><td class="num">248</td><td class="txt">            tag += &quot;MS🟢 &quot;</td></tr><tr><td class="num">249</td><td class="txt">        if math.abs(price - poc) / price * 100.0 &lt; 0.3</td></tr><tr><td class="num">250</td><td class="txt">            tag += &quot;POC⭐ &quot;</td></tr><tr><td class="num">251</td><td class="txt">        if math.abs(price - band1D) / price * 100.0 &lt; 0.3</td></tr><tr><td class="num">252</td><td class="txt">            tag += &quot;V-1σ &quot;</td></tr><tr><td class="num">253</td><td class="txt">    tag</td></tr><tr><td class="num">254</td><td class="txt"> </td></tr><tr><td class="num">255</td><td class="txt">float bidTotal = 0.0</td></tr><tr><td class="num">256</td><td class="txt">float askTotal = 0.0</td></tr><tr><td class="num">257</td><td class="txt">float imbRatio = 1.0</td></tr><tr><td class="num">258</td><td class="txt">float spacing = atr14 * obAtrSpacing</td></tr><tr><td class="num">259</td><td class="txt">for n = 1 to obLevels</td></tr><tr><td class="num">260</td><td class="txt">    askTotal += f_wallSizeAt(close + spacing * n, 0.25)</td></tr><tr><td class="num">261</td><td class="txt">    bidTotal += f_wallSizeAt(close - spacing * n, 0.25)</td></tr><tr><td class="num">262</td><td class="txt">for w in walls</td></tr><tr><td class="num">263</td><td class="txt">    if not w.broken</td></tr><tr><td class="num">264</td><td class="txt">        if w.isBuy</td></tr><tr><td class="num">265</td><td class="txt">            bidTotal += w.vol / math.max(volMa, 1) * 10.0</td></tr><tr><td class="num">266</td><td class="txt">        else</td></tr><tr><td class="num">267</td><td class="txt">            askTotal += w.vol / math.max(volMa, 1) * 10.0</td></tr><tr><td class="num">268</td><td class="txt">imbRatio := askTotal &gt; 0 ? bidTotal / askTotal : 1.0</td></tr><tr><td class="num">269</td><td class="txt"> </td></tr><tr><td class="num">270</td><td class="txt">f_sizeBar(float sz, float maxSz) =&gt;</td></tr><tr><td class="num">271</td><td class="txt">    int blocks = int(math.round(sz / math.max(maxSz, 1) * 8))</td></tr><tr><td class="num">272</td><td class="txt">    string s = &quot;&quot;</td></tr><tr><td class="num">273</td><td class="txt">    for i = 0 to 7</td></tr><tr><td class="num">274</td><td class="txt">        s += i &lt; blocks ? &quot;█&quot; : &quot;░&quot;</td></tr><tr><td class="num">275</td><td class="txt">    s</td></tr><tr><td class="num">276</td><td class="txt"> </td></tr><tr><td class="num">277</td><td class="txt">var table obTable = na</td></tr><tr><td class="num">278</td><td class="txt"> </td></tr><tr><td class="num">279</td><td class="txt">tblPos(pos) =&gt;</td></tr><tr><td class="num">280</td><td class="txt">    pos == &quot;top_left&quot; ? position.top_left :</td></tr><tr><td class="num">281</td><td class="txt">     pos == &quot;bottom_right&quot; ? position.bottom_right :</td></tr><tr><td class="num">282</td><td class="txt">     pos == &quot;bottom_left&quot; ? position.bottom_left : position.top_right</td></tr><tr><td class="num">283</td><td class="txt"> </td></tr><tr><td class="num">284</td><td class="txt">tblSz(sz) =&gt;</td></tr><tr><td class="num">285</td><td class="txt">    sz == &quot;tiny&quot; ? size.tiny : sz == &quot;normal&quot; ? size.normal : size.small</td></tr><tr><td class="num">286</td><td class="txt"> </td></tr><tr><td class="num">287</td><td class="txt">if showOrderbook and barstate.islast</td></tr><tr><td class="num">288</td><td class="txt">  if na(obTable)</td></tr><tr><td class="num">289</td><td class="txt">    obTable := table.new(position.bottom_right, 4, 12, border_width=1)</td></tr><tr><td class="num">290</td><td class="txt">  else</td></tr><tr><td class="num">291</td><td class="txt">    table.clear(obTable, 0, 0, 3, 11)</td></tr><tr><td class="num">292</td><td class="txt"> </td></tr><tr><td class="num">293</td><td class="txt">  table.cell(obTable, 0, 0, &quot;Price&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)</td></tr><tr><td class="num">294</td><td class="txt">  table.cell(obTable, 1, 0, &quot;Wall&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)</td></tr><tr><td class="num">295</td><td class="txt">  table.cell(obTable, 2, 0, &quot;Lvl&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)</td></tr><tr><td class="num">296</td><td class="txt">  table.cell(obTable, 3, 0, &quot;Tag&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)</td></tr><tr><td class="num">297</td><td class="txt"> </td></tr><tr><td class="num">298</td><td class="txt">  float maxSz = math.max(math.max(bidTotal, askTotal), 1.0)</td></tr><tr><td class="num">299</td><td class="txt"> </td></tr><tr><td class="num">300</td><td class="txt">  for n = obLevels to 1</td></tr><tr><td class="num">301</td><td class="txt">    int row = obLevels - n + 1</td></tr><tr><td class="num">302</td><td class="txt">    float askP = close + spacing * n</td></tr><tr><td class="num">303</td><td class="txt">    float sz = f_wallSizeAt(askP, 0.25)</td></tr><tr><td class="num">304</td><td class="txt">    string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;</td></tr><tr><td class="num">305</td><td class="txt">    string bar = f_sizeBar(sz, maxSz)</td></tr><tr><td class="num">306</td><td class="txt">    string tags = f_obTag(askP, true)</td></tr><tr><td class="num">307</td><td class="txt">    bool highlight = sz &gt; 0 or str.length(tags) &gt; 0</td></tr><tr><td class="num">308</td><td class="txt">    table.cell(obTable, 0, row, str.tostring(askP, format.mintick), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)</td></tr><tr><td class="num">309</td><td class="txt">    table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)</td></tr><tr><td class="num">310</td><td class="txt">    table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)</td></tr><tr><td class="num">311</td><td class="txt">    table.cell(obTable, 3, row, &quot;ASK &quot; + tags, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)</td></tr><tr><td class="num">312</td><td class="txt"> </td></tr><tr><td class="num">313</td><td class="txt">  table.cell(obTable, 0, 6, str.tostring(close, format.mintick), bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)</td></tr><tr><td class="num">314</td><td class="txt">  table.cell(obTable, 1, 6, &quot;▶ CURRENT&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)</td></tr><tr><td class="num">315</td><td class="txt">  table.cell(obTable, 2, 6, &quot;—&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)</td></tr><tr><td class="num">316</td><td class="txt">  table.cell(obTable, 3, 6, &quot;캔들·벽 기반&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)</td></tr><tr><td class="num">317</td><td class="txt"> </td></tr><tr><td class="num">318</td><td class="txt">  for n = 1 to obLevels</td></tr><tr><td class="num">319</td><td class="txt">    int row = 6 + n</td></tr><tr><td class="num">320</td><td class="txt">    float bidP = close - spacing * n</td></tr><tr><td class="num">321</td><td class="txt">    float sz = f_wallSizeAt(bidP, 0.25)</td></tr><tr><td class="num">322</td><td class="txt">    string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;</td></tr><tr><td class="num">323</td><td class="txt">    string bar = f_sizeBar(sz, maxSz)</td></tr><tr><td class="num">324</td><td class="txt">    string tags = f_obTag(bidP, false)</td></tr><tr><td class="num">325</td><td class="txt">    bool highlight = sz &gt; 0 or str.length(tags) &gt; 0</td></tr><tr><td class="num">326</td><td class="txt">    table.cell(obTable, 0, row, str.tostring(bidP, format.mintick), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)</td></tr><tr><td class="num">327</td><td class="txt">    table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)</td></tr><tr><td class="num">328</td><td class="txt">    table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)</td></tr><tr><td class="num">329</td><td class="txt">    table.cell(obTable, 3, row, &quot;BID &quot; + tags, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)</td></tr><tr><td class="num">330</td><td class="txt"> </td></tr><tr><td class="num">331</td><td class="txt">  string imbTxt = imbRatio &gt; 1.5 ? &quot;📈 BID (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; :</td></tr><tr><td class="num">332</td><td class="txt">       imbRatio &lt; 0.67 ? &quot;📉 ASK (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; : &quot;⚖ BALANCED&quot;</td></tr><tr><td class="num">333</td><td class="txt">  color imbCol = imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray</td></tr><tr><td class="num">334</td><td class="txt">  table.cell(obTable, 0, 11, &quot;Wall Imb&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)</td></tr><tr><td class="num">335</td><td class="txt">  table.cell(obTable, 1, 11, str.tostring(bidTotal, &quot;#.#&quot;) + &quot;/&quot; + str.tostring(askTotal, &quot;#.#&quot;), bgcolor=color.new(color.black, 30), text_size=size.tiny)</td></tr><tr><td class="num">336</td><td class="txt">  table.cell(obTable, 2, 11, imbTxt, bgcolor=color.new(imbCol, 50), text_color=color.white, text_size=size.tiny)</td></tr><tr><td class="num">337</td><td class="txt">  table.cell(obTable, 3, 11, &quot;FREE&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)</td></tr><tr><td class="num">338</td><td class="txt"> </td></tr><tr><td class="num">339</td><td class="txt">f_distPct(float price) =&gt;</td></tr><tr><td class="num">340</td><td class="txt">    price &gt; 0 ? (close - price) / price * 100.0 : 0.0</td></tr><tr><td class="num">341</td><td class="txt"> </td></tr><tr><td class="num">342</td><td class="txt">f_session() =&gt;</td></tr><tr><td class="num">343</td><td class="txt">    int h = hour(time, &quot;UTC&quot;)</td></tr><tr><td class="num">344</td><td class="txt">    h &gt;= 0 and h &lt; 8 ? &quot;Asian&quot; : h &gt;= 8 and h &lt; 16 ? &quot;London&quot; : h &gt;= 16 and h &lt; 22 ? &quot;New York&quot; : &quot;Off-hours&quot;</td></tr><tr><td class="num">345</td><td class="txt"> </td></tr><tr><td class="num">346</td><td class="txt">vwapSlope = sessionVwap - sessionVwap[5]</td></tr><tr><td class="num">347</td><td class="txt">trendTxt  = vwapSlope &gt; 0 ? &quot;↑ Bullish VWAP&quot; : vwapSlope &lt; 0 ? &quot;↓ Bearish VWAP&quot; : &quot;→ Flat VWAP&quot;</td></tr><tr><td class="num">348</td><td class="txt">volRatio  = volMa &gt; 0 ? volume / volMa : 1.0</td></tr><tr><td class="num">349</td><td class="txt">volRatioTxt = str.tostring(volRatio, &quot;#.#&quot;) + &quot;x&quot; + (volRatio &gt; 2.5 ? &quot; 🔥&quot; : &quot;&quot;)</td></tr><tr><td class="num">350</td><td class="txt"> </td></tr><tr><td class="num">351</td><td class="txt">nearSupPct = not na(nearMajorSup) ? (close - nearMajorSup) / close * 100.0 : na</td></tr><tr><td class="num">352</td><td class="txt">nearResPct = not na(nearMajorRes) ? (nearMajorRes - close) / close * 100.0 : na</td></tr><tr><td class="num">353</td><td class="txt">priceNearSup = not na(nearMajorSup) and math.abs(close - nearMajorSup) / close * 100.0 &lt; 1.5</td></tr><tr><td class="num">354</td><td class="txt">priceNearRes = not na(nearMajorRes) and math.abs(nearMajorRes - close) / close * 100.0 &lt; 1.5</td></tr><tr><td class="num">355</td><td class="txt"> </td></tr><tr><td class="num">356</td><td class="txt">longSetup  = close &gt; sessionVwap and priceNearSup and imbRatio &gt; 1.5 and volRatio &gt; 2.0</td></tr><tr><td class="num">357</td><td class="txt">shortSetup = close &lt; sessionVwap and priceNearRes and imbRatio &lt; 0.67 and volRatio &gt; 2.0</td></tr><tr><td class="num">358</td><td class="txt">signalTxt  = longSetup ? &quot;LONG SETUP 🟢&quot; : shortSetup ? &quot;SHORT SETUP 🔴&quot; : &quot;NEUTRAL ⚪&quot;</td></tr><tr><td class="num">359</td><td class="txt"> </td></tr><tr><td class="num">360</td><td class="txt">flipLong  = longSetup and not longSetup[1]</td></tr><tr><td class="num">361</td><td class="txt">flipShort = shortSetup and not shortSetup[1]</td></tr><tr><td class="num">362</td><td class="txt">var int lastEntryBar = na</td></tr><tr><td class="num">363</td><td class="txt">barOK     = confirmed</td></tr><tr><td class="num">364</td><td class="txt">coolOK    = na(lastEntryBar) or bar_index - lastEntryBar &gt;= sigCoolBars</td></tr><tr><td class="num">365</td><td class="txt">triggerLong  = flipLong and coolOK and barOK</td></tr><tr><td class="num">366</td><td class="txt">triggerShort = flipShort and coolOK and barOK</td></tr><tr><td class="num">367</td><td class="txt">if triggerLong or triggerShort</td></tr><tr><td class="num">368</td><td class="txt">    lastEntryBar := bar_index</td></tr><tr><td class="num">369</td><td class="txt"> </td></tr><tr><td class="num">370</td><td class="txt">placeBuy  = ta.lowest(low, 5)</td></tr><tr><td class="num">371</td><td class="txt">placeSell = ta.highest(high, 5)</td></tr><tr><td class="num">372</td><td class="txt">plotshape(showMarks and triggerLong ? placeBuy : na, &quot;Long&quot;, shape.triangleup, location.absolute, sigBull, size=size.tiny)</td></tr><tr><td class="num">373</td><td class="txt">plotshape(showMarks and triggerShort ? placeSell : na, &quot;Short&quot;, shape.triangledown, location.absolute, sigBear, size=size.tiny)</td></tr><tr><td class="num">374</td><td class="txt">plotshape(showMarks and triggerLong ? placeBuy : na, &quot;Long Glow&quot;, shape.triangleup, location.absolute, color.new(sigBull, 50), size=size.small)</td></tr><tr><td class="num">375</td><td class="txt">plotshape(showMarks and triggerShort ? placeSell : na, &quot;Short Glow&quot;, shape.triangledown, location.absolute, color.new(sigBear, 50), size=size.small)</td></tr><tr><td class="num">376</td><td class="txt"> </td></tr><tr><td class="num">377</td><td class="txt">var table dash = na</td></tr><tr><td class="num">378</td><td class="txt">if showDashboard and barstate.islast</td></tr><tr><td class="num">379</td><td class="txt">  if na(dash)</td></tr><tr><td class="num">380</td><td class="txt">    dash := table.new(tblPos(dashPosition), 2, 16, border_width=1)</td></tr><tr><td class="num">381</td><td class="txt">  else</td></tr><tr><td class="num">382</td><td class="txt">    table.clear(dash, 0, 0, 1, 15)</td></tr><tr><td class="num">383</td><td class="txt"> </td></tr><tr><td class="num">384</td><td class="txt">  sz = tblSz(tableSize)</td></tr><tr><td class="num">385</td><td class="txt">  vwapDist = f_distPct(sessionVwap)</td></tr><tr><td class="num">386</td><td class="txt">  vwapArrow = vwapDist &gt;= 0 ? &quot;▲&quot; : &quot;▼&quot;</td></tr><tr><td class="num">387</td><td class="txt">  vwapCol = vwapDist &gt;= 0 ? color.green : color.red</td></tr><tr><td class="num">388</td><td class="txt"> </td></tr><tr><td class="num">389</td><td class="txt">  table.cell(dash, 0, 0, &quot;VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">390</td><td class="txt">  table.cell(dash, 1, 0, str.tostring(sessionVwap, format.mintick) + &quot; (&quot; + str.tostring(vwapDist, &quot;#.##&quot;) + &quot;% &quot; + vwapArrow + &quot;)&quot;,</td></tr><tr><td class="num">391</td><td class="txt">       text_size=sz, text_color=vwapCol)</td></tr><tr><td class="num">392</td><td class="txt"> </td></tr><tr><td class="num">393</td><td class="txt">  table.cell(dash, 0, 1, &quot;W-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">394</td><td class="txt">  table.cell(dash, 1, 1, str.tostring(weeklyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(weeklyVwap), &quot;#.##&quot;) + &quot;%)&quot;,</td></tr><tr><td class="num">395</td><td class="txt">       text_size=sz)</td></tr><tr><td class="num">396</td><td class="txt"> </td></tr><tr><td class="num">397</td><td class="txt">  table.cell(dash, 0, 2, &quot;M-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">398</td><td class="txt">  table.cell(dash, 1, 2, str.tostring(monthlyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(monthlyVwap), &quot;#.##&quot;) + &quot;%)&quot;,</td></tr><tr><td class="num">399</td><td class="txt">       text_size=sz)</td></tr><tr><td class="num">400</td><td class="txt"> </td></tr><tr><td class="num">401</td><td class="txt">  table.cell(dash, 0, 3, &quot;POC&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">402</td><td class="txt">  table.cell(dash, 1, 3, str.tostring(poc, format.mintick) + &quot; &quot; + str.tostring(pocDistPct, &quot;#.##&quot;) + &quot;% | &quot; +</td></tr><tr><td class="num">403</td><td class="txt">       pocStrengthLbl + &quot; (&quot; + str.tostring(pocStrength, &quot;#.#&quot;) + &quot;%)&quot;, text_size=sz, text_color=pocStrengthCol)</td></tr><tr><td class="num">404</td><td class="txt"> </td></tr><tr><td class="num">405</td><td class="txt">  table.cell(dash, 0, 4, &quot;VAH&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">406</td><td class="txt">  table.cell(dash, 1, 4, str.tostring(vah, format.mintick) + &quot; (+&quot; + str.tostring((vah - close) / close * 100.0, &quot;#.##&quot;) + &quot;% above)&quot;, text_size=sz)</td></tr><tr><td class="num">407</td><td class="txt"> </td></tr><tr><td class="num">408</td><td class="txt">  table.cell(dash, 0, 5, &quot;VAL&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">409</td><td class="txt">  table.cell(dash, 1, 5, str.tostring(val, format.mintick) + &quot; (-&quot; + str.tostring((close - val) / close * 100.0, &quot;#.##&quot;) + &quot;% below)&quot;, text_size=sz)</td></tr><tr><td class="num">410</td><td class="txt"> </td></tr><tr><td class="num">411</td><td class="txt">  table.cell(dash, 0, 6, &quot;Buy Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">412</td><td class="txt">  table.cell(dash, 1, 6, str.tostring(activeBuyWalls) + &quot; active | Nearest: &quot; +</td></tr><tr><td class="num">413</td><td class="txt">       (na(nearestBw) ? &quot;—&quot; : str.tostring(nearestBw, format.mintick)), text_size=sz, text_color=color.lime)</td></tr><tr><td class="num">414</td><td class="txt"> </td></tr><tr><td class="num">415</td><td class="txt">  table.cell(dash, 0, 7, &quot;Sell Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">416</td><td class="txt">  table.cell(dash, 1, 7, str.tostring(activeSellWalls) + &quot; active | Nearest: &quot; +</td></tr><tr><td class="num">417</td><td class="txt">       (na(nearestSw) ? &quot;—&quot; : str.tostring(nearestSw, format.mintick)), text_size=sz, text_color=color.red)</td></tr><tr><td class="num">418</td><td class="txt"> </td></tr><tr><td class="num">419</td><td class="txt">  table.cell(dash, 0, 8, &quot;Major Sup&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">420</td><td class="txt">  table.cell(dash, 1, 8, na(nearMajorSup) ? &quot;—&quot; : &quot;↓&quot; + str.tostring(nearSupPct, &quot;#.##&quot;) + &quot;% | 순지지 &quot; +</td></tr><tr><td class="num">421</td><td class="txt">       str.tostring(nearSupNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.lime)</td></tr><tr><td class="num">422</td><td class="txt"> </td></tr><tr><td class="num">423</td><td class="txt">  table.cell(dash, 0, 9, &quot;Major Res&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">424</td><td class="txt">  table.cell(dash, 1, 9, na(nearMajorRes) ? &quot;—&quot; : &quot;↑&quot; + str.tostring(nearResPct, &quot;#.##&quot;) + &quot;% | 순저항 &quot; +</td></tr><tr><td class="num">425</td><td class="txt">       str.tostring(nearResNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.red)</td></tr><tr><td class="num">426</td><td class="txt"> </td></tr><tr><td class="num">427</td><td class="txt">  table.cell(dash, 0, 10, &quot;Vol Ratio&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">428</td><td class="txt">  table.cell(dash, 1, 10, volRatioTxt, text_size=sz, text_color=volRatio &gt; 2.5 ? color.orange : color.white)</td></tr><tr><td class="num">429</td><td class="txt"> </td></tr><tr><td class="num">430</td><td class="txt">  table.cell(dash, 0, 11, &quot;Wall Imb&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">431</td><td class="txt">  table.cell(dash, 1, 11, str.tostring(imbRatio, &quot;#.##&quot;) + &quot;x&quot;, text_size=sz,</td></tr><tr><td class="num">432</td><td class="txt">       text_color=imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray)</td></tr><tr><td class="num">433</td><td class="txt"> </td></tr><tr><td class="num">434</td><td class="txt">  table.cell(dash, 0, 12, &quot;Session&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">435</td><td class="txt">  table.cell(dash, 1, 12, f_session(), text_size=sz)</td></tr><tr><td class="num">436</td><td class="txt"> </td></tr><tr><td class="num">437</td><td class="txt">  table.cell(dash, 0, 13, &quot;Trend&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">438</td><td class="txt">  table.cell(dash, 1, 13, trendTxt, text_size=sz, text_color=vwapSlope &gt;= 0 ? color.green : color.red)</td></tr><tr><td class="num">439</td><td class="txt"> </td></tr><tr><td class="num">440</td><td class="txt">  table.cell(dash, 0, 14, &quot;ATR&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">441</td><td class="txt">  table.cell(dash, 1, 14, str.tostring(atr14, format.mintick) + &quot; (&quot; + str.tostring(atr14 / close * 100.0, &quot;#.##&quot;) + &quot;%)&quot;, text_size=sz)</td></tr><tr><td class="num">442</td><td class="txt"> </td></tr><tr><td class="num">443</td><td class="txt">  table.cell(dash, 0, 15, &quot;Signal&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)</td></tr><tr><td class="num">444</td><td class="txt">  table.cell(dash, 1, 15, signalTxt, text_size=sz,</td></tr><tr><td class="num">445</td><td class="txt">       text_color=longSetup ? color.lime : shortSetup ? color.red : color.gray)</td></tr><tr><td class="num">446</td><td class="txt"> </td></tr><tr><td class="num">447</td><td class="txt">crossAboveVwap = ta.crossover(close, sessionVwap)</td></tr><tr><td class="num">448</td><td class="txt">crossBelowVwap = ta.crossunder(close, sessionVwap)</td></tr><tr><td class="num">449</td><td class="txt">inPocZone      = math.abs(close - poc) &lt;= atr14 * 0.3</td></tr><tr><td class="num">450</td><td class="txt">buyWallDet     = buyCond</td></tr><tr><td class="num">451</td><td class="txt">sellWallDet    = sellCond</td></tr><tr><td class="num">452</td><td class="txt">inMajorSup     = not na(nearMajorSup) and low &lt;= nearMajorSup + atr14 * 0.3 and high &gt;= nearMajorSup - atr14 * 0.3</td></tr><tr><td class="num">453</td><td class="txt">inMajorRes     = not na(nearMajorRes) and low &lt;= nearMajorRes + atr14 * 0.3 and high &gt;= nearMajorRes - atr14 * 0.3</td></tr><tr><td class="num">454</td><td class="txt">strongBidImb   = imbRatio &gt; 2.0</td></tr><tr><td class="num">455</td><td class="txt">strongAskImb   = imbRatio &lt; 0.5</td></tr><tr><td class="num">456</td><td class="txt"> </td></tr><tr><td class="num">457</td><td class="txt">alertcondition(crossAboveVwap,  &quot;VWAP Cross Above&quot;,  &quot;Price crossed above Session VWAP&quot;)</td></tr><tr><td class="num">458</td><td class="txt">alertcondition(crossBelowVwap,  &quot;VWAP Cross Below&quot;,  &quot;Price crossed below Session VWAP&quot;)</td></tr><tr><td class="num">459</td><td class="txt">alertcondition(inPocZone,       &quot;POC Zone Entry&quot;,    &quot;Price entered POC Zone&quot;)</td></tr><tr><td class="num">460</td><td class="txt">alertcondition(buyWallDet,      &quot;Buy Wall Detected&quot;, &quot;Buy Wall detected&quot;)</td></tr><tr><td class="num">461</td><td class="txt">alertcondition(sellWallDet,     &quot;Sell Wall Detected&quot;,&quot;Sell Wall detected&quot;)</td></tr><tr><td class="num">462</td><td class="txt">alertcondition(buyWallBroken,   &quot;Buy Wall Broken&quot;,   &quot;Buy Wall BROKEN&quot;)</td></tr><tr><td class="num">463</td><td class="txt">alertcondition(sellWallBroken,  &quot;Sell Wall Broken&quot;,  &quot;Sell Wall BROKEN&quot;)</td></tr><tr><td class="num">464</td><td class="txt">alertcondition(inMajorSup,      &quot;Major Support&quot;,     &quot;Price entered Major Support Zone&quot;)</td></tr><tr><td class="num">465</td><td class="txt">alertcondition(inMajorRes,      &quot;Major Resistance&quot;,  &quot;Price entered Major Resistance Zone&quot;)</td></tr><tr><td class="num">466</td><td class="txt">alertcondition(strongBidImb,    &quot;Strong Bid Pressure&quot;,&quot;Bid/Ask imbalance &gt; 2.0&quot;)</td></tr><tr><td class="num">467</td><td class="txt">alertcondition(strongAskImb,    &quot;Strong Ask Pressure&quot;,&quot;Bid/Ask imbalance &lt; 0.5&quot;)</td></tr><tr><td class="num">468</td><td class="txt">alertcondition(triggerLong,     &quot;LONG SETUP&quot;,        &quot;CPE: Composite LONG setup flip (confirmed bar)&quot;)</td></tr><tr><td class="num">469</td><td class="txt">alertcondition(triggerShort,    &quot;SHORT SETUP&quot;,       &quot;CPE: Composite SHORT setup flip (confirmed bar)&quot;)</td></tr><tr><td class="num">470</td><td class="txt">alertcondition(triggerLong or triggerShort, &quot;Any Setup Signal&quot;, &quot;CPE: New LONG or SHORT setup flip&quot;)</td></tr><tr><td class="num">471</td><td class="txt"> </td></tr><tr><td class="num">472</td><td class="txt">if confirmed</td></tr><tr><td class="num">473</td><td class="txt">    if triggerLong</td></tr><tr><td class="num">474</td><td class="txt">        alert(&quot;🟢 LONG  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)  VWAP+Sup+Imb+Vol&quot;, alert.freq_once_per_bar_close)</td></tr><tr><td class="num">475</td><td class="txt">    if triggerShort</td></tr><tr><td class="num">476</td><td class="txt">        alert(&quot;🔴 SHORT |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)  VWAP+Res+Imb+Vol&quot;, alert.freq_once_per_bar_close)</td></tr><tr><td class="num">477</td><td class="txt">    if crossAboveVwap</td></tr><tr><td class="num">478</td><td class="txt">        alert(&quot;▲ VWAP Cross Above  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)&quot;, alert.freq_once_per_bar_close)</td></tr><tr><td class="num">479</td><td class="txt">    if crossBelowVwap</td></tr><tr><td class="num">480</td><td class="txt">        alert(&quot;▼ VWAP Cross Below  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)&quot;, alert.freq_once_per_bar_close)</td></tr></tbody></table></div>
+
+</textarea><div class="code-scroll"><pre class="code">type SrZone
+    float center
+    float top
+    float bot
+    int   touches
+    int   bullBounce
+    int   bearReject
+    bool  isSupport
+    float avgVol
+
+var float[] pivotPrices = array.new_float()
+var bool[]  pivotIsHigh  = array.new_bool()
+
+ph = ta.pivothigh(high, pivotLeft, pivotRight)
+pl = ta.pivotlow(low, pivotLeft, pivotRight)
+
+if confirmed and not na(ph)
+    array.push(pivotPrices, ph)
+    array.push(pivotIsHigh, true)
+if confirmed and not na(pl)
+    array.push(pivotPrices, pl)
+    array.push(pivotIsHigh, false)
+
+while array.size(pivotPrices) &gt; 50
+    array.shift(pivotPrices)
+    array.shift(pivotIsHigh)
+
+f_buildZones() =&gt;
+    SrZone[] zones = array.new&lt;SrZone&gt;()
+    float clusterR = atr14 * clusterAtrMult
+    int pSize = array.size(pivotPrices)
+    bool[] used = array.new_bool(pSize, false)
+    for i = 0 to pSize - 1
+        if not array.get(used, i)
+            float pc = array.get(pivotPrices, i)
+            bool isH = array.get(pivotIsHigh, i)
+            float sumP = pc
+            int cnt = 1
+            int hiCnt = isH ? 1 : 0
+            int loCnt = isH ? 0 : 1
+            array.set(used, i, true)
+            for j = i + 1 to pSize - 1
+                if not array.get(used, j)
+                    float pj = array.get(pivotPrices, j)
+                    if math.abs(pj - pc) &lt;= clusterR
+                        sumP += pj
+                        cnt += 1
+                        if array.get(pivotIsHigh, j)
+                            hiCnt += 1
+                        else
+                            loCnt += 1
+                        array.set(used, j, true)
+            float center = sumP / cnt
+            float halfZ = atr14 * 0.3
+            int tch = 0
+            int bull = 0
+            int bear = 0
+            float tVol = 0.0
+            for k = 0 to srLookback - 1
+                if bar_index &gt;= k
+                    if high[k] &gt;= center - halfZ and low[k] &lt;= center + halfZ
+                        tch += 1
+                        tVol += volume[k]
+                        bool bUp = false
+                        bool bDn = false
+                        for m = 0 to 2
+                            if k - m &gt;= 0
+                                if close[k - m] &gt; center + halfZ
+                                    bUp := true
+                                if close[k - m] &lt; center - halfZ
+                                    bDn := true
+                        if bUp
+                            bull += 1
+                        if bDn
+                            bear += 1
+            float avgV = tch &gt; 0 ? tVol / tch : 0.0
+            bool sup = loCnt &gt;= hiCnt
+            SrZone z = SrZone.new(center, center + halfZ, center - halfZ, tch, bull, bear, sup, avgV)
+            if tch &gt;= minTouches
+                array.push(zones, z)
+    zones
+
+SrZone[] srZones = f_buildZones()
+
+float nearMajorSup = na
+float nearMajorRes = na
+float nearSupNet   = na
+float nearResNet   = na
+for z in srZones
+    float netSup = z.touches &gt; 0 ? z.bullBounce * 100.0 / z.touches : 0.0
+    float netRes = z.touches &gt; 0 ? z.bearReject * 100.0 / z.touches : 0.0
+    bool majorSup = netSup &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2
+    bool majorRes = netRes &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2
+    if majorSup and z.center &lt; close and (na(nearMajorSup) or z.center &gt; nearMajorSup)
+        nearMajorSup := z.center
+        nearSupNet := netSup
+    if majorRes and z.center &gt; close and (na(nearMajorRes) or z.center &lt; nearMajorRes)
+        nearMajorRes := z.center
+        nearResNet := netRes
+
+var box[]   srBoxes  = array.new_box()
+var label[] srLabels = array.new_label()
+var line[]  distLines = array.new_line()
+var label[] distLabels = array.new_label()
+
+if barstate.islast
+    for b in srBoxes
+        box.delete(b)
+    for l in srLabels
+        label.delete(l)
+    for ln in distLines
+        line.delete(ln)
+    for l in distLabels
+        label.delete(l)
+    array.clear(srBoxes)
+    array.clear(srLabels)
+    array.clear(distLines)
+    array.clear(distLabels)
+
+    SrZone[] supBelow = array.new&lt;SrZone&gt;()
+    SrZone[] resAbove = array.new&lt;SrZone&gt;()
+
+    for z in srZones
+        float netSup = z.touches &gt; 0 ? z.bullBounce * 100.0 / z.touches : 0.0
+        float netRes = z.touches &gt; 0 ? z.bearReject * 100.0 / z.touches : 0.0
+        bool majorSup = netSup &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2
+        bool minorSup = netSup &gt;= 50 and z.touches &gt;= 2 and not majorSup
+        bool majorRes = netRes &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2
+        bool minorRes = netRes &gt;= 50 and z.touches &gt;= 2 and not majorRes
+        bool neutral  = netSup &gt;= 40 and netSup &lt;= 60 and not majorSup and not majorRes
+
+        if showMajorOnly and not majorSup and not majorRes
+            continue
+
+        color bg = color.new(color.gray, 92)
+        string txt = &quot;&quot;
+        int bWidth = 1
+        if majorSup and z.center &lt; close
+            bg := color.new(color.lime, 75)
+            txt := &quot;🟢 Major Support | 순지지: &quot; + str.tostring(netSup, &quot;#.#&quot;) + &quot;% | Touches: &quot; + str.tostring(z.touches)
+            bWidth := 3
+        else if minorSup and z.center &lt; close
+            bg := color.new(color.green, 88)
+            txt := &quot;Minor Support | 순지지: &quot; + str.tostring(netSup, &quot;#.#&quot;) + &quot;%&quot;
+        else if majorRes and z.center &gt; close
+            bg := color.new(color.red, 75)
+            txt := &quot;🔴 Major Resistance | 순저항: &quot; + str.tostring(netRes, &quot;#.#&quot;) + &quot;% | Touches: &quot; + str.tostring(z.touches)
+            bWidth := 3
+        else if minorRes and z.center &gt; close
+            bg := color.new(color.red, 88)
+            txt := &quot;Minor Resistance | 순저항: &quot; + str.tostring(netRes, &quot;#.#&quot;) + &quot;%&quot;
+        else if neutral
+            bg := color.new(color.gray, 92)
+            txt := &quot;Neutral Zone | S: &quot; + str.tostring(netSup, &quot;#.#&quot;) + &quot;% / R: &quot; + str.tostring(netRes, &quot;#.#&quot;) + &quot;%&quot;
+        else
+            continue
+
+        box sb = box.new(bar_index - srLookback, z.top, bar_index + 30, z.bot,
+             bgcolor=bg, border_width=bWidth)
+        array.push(srBoxes, sb)
+        label sl = label.new(bar_index + 5, z.center, txt, style=label.style_label_left,
+             color=color.new(color.black, 50), textcolor=color.white, size=size.tiny)
+        array.push(srLabels, sl)
+
+        if z.center &lt; close
+            array.push(supBelow, z)
+        else
+            array.push(resAbove, z)
+
+    if showDistLabels
+        for n = 0 to 2
+            float bestD = na
+            float bestC = na
+            int bestT = 0
+            int bestB = 0
+            for z in supBelow
+                float d = (close - z.center) / close * 100.0
+                if d &gt; 0 and (na(bestD) or d &lt; bestD)
+                    bestD := d
+                    bestC := z.center
+                    bestT := z.touches
+                    bestB := z.bullBounce
+            if not na(bestC)
+                float ns = bestT &gt; 0 ? bestB * 100.0 / bestT : 0.0
+                bool isMaj = ns &gt;= 70 and bestT &gt;= 3
+                string dTxt = &quot;↓ &quot; + str.tostring(bestD, &quot;#.##&quot;) + &quot;% to &quot; + (isMaj ? &quot;Major&quot; : &quot;Minor&quot;) + &quot; Support&quot;
+                line dl = line.new(bar_index, close, bar_index, bestC,
+                     color=color.new(color.green, 30), style=line.style_dotted)
+                label dll = label.new(bar_index + 2, (close + bestC) / 2, dTxt,
+                     style=label.style_label_left, color=color.new(color.green, 60),
+                     textcolor=color.white, size=isMaj ? size.small : size.tiny)
+                array.push(distLines, dl)
+                array.push(distLabels, dll)
+                array.clear(supBelow)
+                for z2 in srZones
+                    if z2.center &lt; close and z2.center != bestC
+                        array.push(supBelow, z2)
+
+        for n = 0 to 2
+            float bestD = na
+            float bestC = na
+            int bestT = 0
+            int bestBr = 0
+            for z in resAbove
+                float d = (z.center - close) / close * 100.0
+                if d &gt; 0 and (na(bestD) or d &lt; bestD)
+                    bestD := d
+                    bestC := z.center
+                    bestT := z.touches
+                    bestBr := z.bearReject
+            if not na(bestC)
+                float nr = bestT &gt; 0 ? bestBr * 100.0 / bestT : 0.0
+                bool isMaj = nr &gt;= 70 and bestT &gt;= 3
+                string dTxt = &quot;↑ &quot; + str.tostring(bestD, &quot;#.##&quot;) + &quot;% to &quot; + (isMaj ? &quot;Major&quot; : &quot;Minor&quot;) +
+                     &quot; Resistance (순저항 &quot; + str.tostring(nr, &quot;#.#&quot;) + &quot;%)&quot;
+                line dl = line.new(bar_index, close, bar_index, bestC,
+                     color=color.new(color.red, 30), style=line.style_dotted)
+                label dll = label.new(bar_index + 2, (close + bestC) / 2, dTxt,
+                     style=label.style_label_left, color=color.new(color.red, 60),
+                     textcolor=color.white, size=isMaj ? size.small : size.tiny)
+                array.push(distLines, dl)
+                array.push(distLabels, dll)
+                array.clear(resAbove)
+                for z2 in srZones
+                    if z2.center &gt; close and z2.center != bestC
+                        array.push(resAbove, z2)
+
+f_wallSizeAt(float price, float pct) =&gt;
+    float sz = 0.0
+    for w in walls
+        if not w.broken and math.abs(w.level - price) / price * 100.0 &lt; pct
+            sz += w.vol / math.max(volMa, 1) * 50.0
+    sz
+
+f_obTag(float price, bool isAsk) =&gt;
+    string tag = &quot;&quot;
+    if isAsk
+        if f_wallNear(price, 0.3, false)
+            tag += &quot;SW🧱 &quot;
+        if not na(nearMajorRes) and math.abs(price - nearMajorRes) / price * 100.0 &lt; 0.3
+            tag += &quot;MR🔴 &quot;
+        if math.abs(price - band2U) / price * 100.0 &lt; 0.3
+            tag += &quot;V+2σ &quot;
+    else
+        if f_wallNear(price, 0.3, true)
+            tag += &quot;BW🧱 &quot;
+        if not na(nearMajorSup) and math.abs(price - nearMajorSup) / price * 100.0 &lt; 0.3
+            tag += &quot;MS🟢 &quot;
+        if math.abs(price - poc) / price * 100.0 &lt; 0.3
+            tag += &quot;POC⭐ &quot;
+        if math.abs(price - band1D) / price * 100.0 &lt; 0.3
+            tag += &quot;V-1σ &quot;
+    tag
+
+float bidTotal = 0.0
+float askTotal = 0.0
+float imbRatio = 1.0
+float spacing = atr14 * obAtrSpacing
+for n = 1 to obLevels
+    askTotal += f_wallSizeAt(close + spacing * n, 0.25)
+    bidTotal += f_wallSizeAt(close - spacing * n, 0.25)
+for w in walls
+    if not w.broken
+        if w.isBuy
+            bidTotal += w.vol / math.max(volMa, 1) * 10.0
+        else
+            askTotal += w.vol / math.max(volMa, 1) * 10.0
+imbRatio := askTotal &gt; 0 ? bidTotal / askTotal : 1.0
+
+f_sizeBar(float sz, float maxSz) =&gt;
+    int blocks = int(math.round(sz / math.max(maxSz, 1) * 8))
+    string s = &quot;&quot;
+    for i = 0 to 7
+        s += i &lt; blocks ? &quot;█&quot; : &quot;░&quot;
+    s
+
+var table obTable = na
+
+tblPos(pos) =&gt;
+    pos == &quot;top_left&quot; ? position.top_left :
+     pos == &quot;bottom_right&quot; ? position.bottom_right :
+     pos == &quot;bottom_left&quot; ? position.bottom_left : position.top_right
+
+tblSz(sz) =&gt;
+    sz == &quot;tiny&quot; ? size.tiny : sz == &quot;normal&quot; ? size.normal : size.small
+
+if showOrderbook and barstate.islast
+    if na(obTable)
+        obTable := table.new(position.bottom_right, 4, 12, border_width=1)
+    else
+        table.clear(obTable, 0, 0, 3, 11)
+
+    table.cell(obTable, 0, 0, &quot;Price&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+    table.cell(obTable, 1, 0, &quot;Wall&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+    table.cell(obTable, 2, 0, &quot;Lvl&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+    table.cell(obTable, 3, 0, &quot;Tag&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+
+    float maxSz = math.max(math.max(bidTotal, askTotal), 1.0)
+
+    for n = obLevels to 1
+        int row = obLevels - n + 1
+        float askP = close + spacing * n
+        float sz = f_wallSizeAt(askP, 0.25)
+        string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
+        string bar = f_sizeBar(sz, maxSz)
+        string tags = f_obTag(askP, true)
+        bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
+        table.cell(obTable, 0, row, str.tostring(askP, format.mintick), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 3, row, &quot;ASK &quot; + tags, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
+
+    table.cell(obTable, 0, 6, str.tostring(close, format.mintick), bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+    table.cell(obTable, 1, 6, &quot;▶ CURRENT&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+    table.cell(obTable, 2, 6, &quot;—&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+    table.cell(obTable, 3, 6, &quot;캔들·벽 기반&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+
+    for n = 1 to obLevels
+        int row = 6 + n
+        float bidP = close - spacing * n
+        float sz = f_wallSizeAt(bidP, 0.25)
+        string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
+        string bar = f_sizeBar(sz, maxSz)
+        string tags = f_obTag(bidP, false)
+        bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
+        table.cell(obTable, 0, row, str.tostring(bidP, format.mintick), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+        table.cell(obTable, 3, row, &quot;BID &quot; + tags, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
+
+    string imbTxt = imbRatio &gt; 1.5 ? &quot;📈 BID (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; :
+              imbRatio &lt; 0.67 ? &quot;📉 ASK (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; : &quot;⚖ BALANCED&quot;
+    color imbCol = imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray
+    table.cell(obTable, 0, 11, &quot;Wall Imb&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
+    table.cell(obTable, 1, 11, str.tostring(bidTotal, &quot;#.#&quot;) + &quot;/&quot; + str.tostring(askTotal, &quot;#.#&quot;), bgcolor=color.new(color.black, 30), text_size=size.tiny)
+    table.cell(obTable, 2, 11, imbTxt, bgcolor=color.new(imbCol, 50), text_color=color.white, text_size=size.tiny)
+    table.cell(obTable, 3, 11, &quot;FREE&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
+
+f_distPct(float price) =&gt;
+    price &gt; 0 ? (close - price) / price * 100.0 : 0.0
+
+f_session() =&gt;
+    int h = hour(time, &quot;UTC&quot;)
+    h &gt;= 0 and h &lt; 8 ? &quot;Asian&quot; : h &gt;= 8 and h &lt; 16 ? &quot;London&quot; : h &gt;= 16 and h &lt; 22 ? &quot;New York&quot; : &quot;Off-hours&quot;
+
+vwapSlope = sessionVwap - sessionVwap[5]
+trendTxt  = vwapSlope &gt; 0 ? &quot;↑ Bullish VWAP&quot; : vwapSlope &lt; 0 ? &quot;↓ Bearish VWAP&quot; : &quot;→ Flat VWAP&quot;
+volRatio  = volMa &gt; 0 ? volume / volMa : 1.0
+volRatioTxt = str.tostring(volRatio, &quot;#.#&quot;) + &quot;x&quot; + (volRatio &gt; 2.5 ? &quot; 🔥&quot; : &quot;&quot;)
+
+nearSupPct = not na(nearMajorSup) ? (close - nearMajorSup) / close * 100.0 : na
+nearResPct = not na(nearMajorRes) ? (nearMajorRes - close) / close * 100.0 : na
+priceNearSup = not na(nearMajorSup) and math.abs(close - nearMajorSup) / close * 100.0 &lt; 1.5
+priceNearRes = not na(nearMajorRes) and math.abs(nearMajorRes - close) / close * 100.0 &lt; 1.5
+
+longSetup  = close &gt; sessionVwap and priceNearSup and imbRatio &gt; 1.5 and volRatio &gt; 2.0
+shortSetup = close &lt; sessionVwap and priceNearRes and imbRatio &lt; 0.67 and volRatio &gt; 2.0
+signalTxt  = longSetup ? &quot;LONG SETUP 🟢&quot; : shortSetup ? &quot;SHORT SETUP 🔴&quot; : &quot;NEUTRAL ⚪&quot;
+
+flipLong  = longSetup and not longSetup[1]
+flipShort = shortSetup and not shortSetup[1]
+var int lastEntryBar = na
+barOK     = confirmed
+coolOK    = na(lastEntryBar) or bar_index - lastEntryBar &gt;= sigCoolBars
+triggerLong  = flipLong and coolOK and barOK
+triggerShort = flipShort and coolOK and barOK
+if triggerLong or triggerShort
+    lastEntryBar := bar_index
+
+placeBuy  = ta.lowest(low, 5)
+placeSell = ta.highest(high, 5)
+plotshape(showMarks and triggerLong ? placeBuy : na, &quot;Long&quot;, shape.triangleup, location.absolute, sigBull, size=size.tiny)
+plotshape(showMarks and triggerShort ? placeSell : na, &quot;Short&quot;, shape.triangledown, location.absolute, sigBear, size=size.tiny)
+plotshape(showMarks and triggerLong ? placeBuy : na, &quot;Long Glow&quot;, shape.triangleup, location.absolute, color.new(sigBull, 50), size=size.small)
+plotshape(showMarks and triggerShort ? placeSell : na, &quot;Short Glow&quot;, shape.triangledown, location.absolute, color.new(sigBear, 50), size=size.small)
+
+var table dash = na
+if showDashboard and barstate.islast
+    if na(dash)
+        dash := table.new(tblPos(dashPosition), 2, 16, border_width=1)
+    else
+        table.clear(dash, 0, 0, 1, 15)
+
+    sz = tblSz(tableSize)
+    vwapDist = f_distPct(sessionVwap)
+    vwapArrow = vwapDist &gt;= 0 ? &quot;▲&quot; : &quot;▼&quot;
+    vwapCol = vwapDist &gt;= 0 ? color.green : color.red
+
+    table.cell(dash, 0, 0, &quot;VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 0, str.tostring(sessionVwap, format.mintick) + &quot; (&quot; + str.tostring(vwapDist, &quot;#.##&quot;) + &quot;% &quot; + vwapArrow + &quot;)&quot;,
+              text_size=sz, text_color=vwapCol)
+
+    table.cell(dash, 0, 1, &quot;W-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 1, str.tostring(weeklyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(weeklyVwap), &quot;#.##&quot;) + &quot;%)&quot;,
+              text_size=sz)
+
+    table.cell(dash, 0, 2, &quot;M-VWAP&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 2, str.tostring(monthlyVwap, format.mintick) + &quot; (&quot; + str.tostring(f_distPct(monthlyVwap), &quot;#.##&quot;) + &quot;%)&quot;,
+              text_size=sz)
+
+    table.cell(dash, 0, 3, &quot;POC&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 3, str.tostring(poc, format.mintick) + &quot; &quot; + str.tostring(pocDistPct, &quot;#.##&quot;) + &quot;% | &quot; +
+              pocStrengthLbl + &quot; (&quot; + str.tostring(pocStrength, &quot;#.#&quot;) + &quot;%)&quot;, text_size=sz, text_color=pocStrengthCol)
+
+    table.cell(dash, 0, 4, &quot;VAH&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 4, str.tostring(vah, format.mintick) + &quot; (+&quot; + str.tostring((vah - close) / close * 100.0, &quot;#.##&quot;) + &quot;% above)&quot;, text_size=sz)
+
+    table.cell(dash, 0, 5, &quot;VAL&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 5, str.tostring(val, format.mintick) + &quot; (-&quot; + str.tostring((close - val) / close * 100.0, &quot;#.##&quot;) + &quot;% below)&quot;, text_size=sz)
+
+    table.cell(dash, 0, 6, &quot;Buy Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 6, str.tostring(activeBuyWalls) + &quot; active | Nearest: &quot; +
+              (na(nearestBw) ? &quot;—&quot; : str.tostring(nearestBw, format.mintick)), text_size=sz, text_color=color.lime)
+
+    table.cell(dash, 0, 7, &quot;Sell Walls&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 7, str.tostring(activeSellWalls) + &quot; active | Nearest: &quot; +
+              (na(nearestSw) ? &quot;—&quot; : str.tostring(nearestSw, format.mintick)), text_size=sz, text_color=color.red)
+
+    table.cell(dash, 0, 8, &quot;Major Sup&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 8, na(nearMajorSup) ? &quot;—&quot; : &quot;↓&quot; + str.tostring(nearSupPct, &quot;#.##&quot;) + &quot;% | 순지지 &quot; +
+              str.tostring(nearSupNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.lime)
+
+    table.cell(dash, 0, 9, &quot;Major Res&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 9, na(nearMajorRes) ? &quot;—&quot; : &quot;↑&quot; + str.tostring(nearResPct, &quot;#.##&quot;) + &quot;% | 순저항 &quot; +
+              str.tostring(nearResNet, &quot;#.#&quot;) + &quot;%&quot;, text_size=sz, text_color=color.red)
+
+    table.cell(dash, 0, 10, &quot;Vol Ratio&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 10, volRatioTxt, text_size=sz, text_color=volRatio &gt; 2.5 ? color.orange : color.white)
+
+    table.cell(dash, 0, 11, &quot;Wall Imb&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 11, str.tostring(imbRatio, &quot;#.##&quot;) + &quot;x&quot;, text_size=sz,
+              text_color=imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray)
+
+    table.cell(dash, 0, 12, &quot;Session&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 12, f_session(), text_size=sz)
+
+    table.cell(dash, 0, 13, &quot;Trend&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 13, trendTxt, text_size=sz, text_color=vwapSlope &gt;= 0 ? color.green : color.red)
+
+    table.cell(dash, 0, 14, &quot;ATR&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 14, str.tostring(atr14, format.mintick) + &quot; (&quot; + str.tostring(atr14 / close * 100.0, &quot;#.##&quot;) + &quot;%)&quot;, text_size=sz)
+
+    table.cell(dash, 0, 15, &quot;Signal&quot;, text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+    table.cell(dash, 1, 15, signalTxt, text_size=sz,
+              text_color=longSetup ? color.lime : shortSetup ? color.red : color.gray)
+
+crossAboveVwap = ta.crossover(close, sessionVwap)
+crossBelowVwap = ta.crossunder(close, sessionVwap)
+inPocZone      = math.abs(close - poc) &lt;= atr14 * 0.3
+buyWallDet     = buyCond
+sellWallDet    = sellCond
+inMajorSup     = not na(nearMajorSup) and low &lt;= nearMajorSup + atr14 * 0.3 and high &gt;= nearMajorSup - atr14 * 0.3
+inMajorRes     = not na(nearMajorRes) and low &lt;= nearMajorRes + atr14 * 0.3 and high &gt;= nearMajorRes - atr14 * 0.3
+strongBidImb   = imbRatio &gt; 2.0
+strongAskImb   = imbRatio &lt; 0.5
+
+alertcondition(crossAboveVwap,  &quot;VWAP Cross Above&quot;,  &quot;Price crossed above Session VWAP&quot;)
+alertcondition(crossBelowVwap,  &quot;VWAP Cross Below&quot;,  &quot;Price crossed below Session VWAP&quot;)
+alertcondition(inPocZone,       &quot;POC Zone Entry&quot;,    &quot;Price entered POC Zone&quot;)
+alertcondition(buyWallDet,      &quot;Buy Wall Detected&quot;, &quot;Buy Wall detected&quot;)
+alertcondition(sellWallDet,     &quot;Sell Wall Detected&quot;,&quot;Sell Wall detected&quot;)
+alertcondition(buyWallBroken,   &quot;Buy Wall Broken&quot;,   &quot;Buy Wall BROKEN&quot;)
+alertcondition(sellWallBroken,  &quot;Sell Wall Broken&quot;,  &quot;Sell Wall BROKEN&quot;)
+alertcondition(inMajorSup,      &quot;Major Support&quot;,     &quot;Price entered Major Support Zone&quot;)
+alertcondition(inMajorRes,      &quot;Major Resistance&quot;,  &quot;Price entered Major Resistance Zone&quot;)
+alertcondition(strongBidImb,    &quot;Strong Bid Pressure&quot;,&quot;Bid/Ask imbalance &gt; 2.0&quot;)
+alertcondition(strongAskImb,    &quot;Strong Ask Pressure&quot;,&quot;Bid/Ask imbalance &lt; 0.5&quot;)
+alertcondition(triggerLong,     &quot;LONG SETUP&quot;,        &quot;CPE: Composite LONG setup flip (confirmed bar)&quot;)
+alertcondition(triggerShort,    &quot;SHORT SETUP&quot;,       &quot;CPE: Composite SHORT setup flip (confirmed bar)&quot;)
+alertcondition(triggerLong or triggerShort, &quot;Any Setup Signal&quot;, &quot;CPE: New LONG or SHORT setup flip&quot;)
+
+if confirmed
+    if triggerLong
+        alert(&quot;🟢 LONG  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)  VWAP+Sup+Imb+Vol&quot;, alert.freq_once_per_bar_close)
+    if triggerShort
+        alert(&quot;🔴 SHORT |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)  VWAP+Res+Imb+Vol&quot;, alert.freq_once_per_bar_close)
+    if crossAboveVwap
+        alert(&quot;▲ VWAP Cross Above  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)&quot;, alert.freq_once_per_bar_close)
+    if crossBelowVwap
+        alert(&quot;▼ VWAP Cross Below  |  &quot; + syminfo.ticker + &quot; (&quot; + timeframe.period + &quot;)&quot;, alert.freq_once_per_bar_close)
+
+</pre></div>
 <script>
 function copyCode(id, btn) {
   var text = document.getElementById(id).value;

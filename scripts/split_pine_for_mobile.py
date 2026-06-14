@@ -50,19 +50,17 @@ HTML_HEAD = """<!DOCTYPE html>
     border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem; line-height: 1.55;
   }}
   .code-scroll {{
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    overflow: auto; -webkit-overflow-scrolling: touch;
     border: 1px solid #30363d; border-radius: 6px; background: #010409;
+    max-height: 70vh;
   }}
-  .code-table {{
-    border-collapse: collapse; width: max-content; min-width: 100%;
-    font-family: ui-monospace, Menlo, Consolas, monospace;
-    font-size: 12px; line-height: 1.42; tab-size: 4;
+  pre.code {{
+    margin: 0; padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px; line-height: 1.45; tab-size: 4; -moz-tab-size: 4;
+    white-space: pre;
+    color: #c9d1d9;
   }}
-  .code-table td.num {{
-    color: #6e7681; text-align: right; vertical-align: top;
-    padding: 0 10px 0 6px; user-select: none; border-right: 1px solid #21262d;
-  }}
-  .code-table td.txt {{ vertical-align: top; padding: 0 14px 0 10px; white-space: pre; }}
 </style>
 </head>
 <body>
@@ -121,20 +119,38 @@ def strip_comments(text: str) -> str:
     return "\n".join(cleaned) + "\n"
 
 
+def normalize_table_indent(text: str) -> str:
+    """2-space table blocks → 4-space (match rest of script)."""
+    markers = ("if showOrderbook and barstate.islast", "if showDashboard and barstate.islast")
+    lines = text.split("\n")
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        out.append(line)
+        if any(line.startswith(m) for m in markers):
+            i += 1
+            while i < len(lines) and (lines[i].startswith("  ") or lines[i].strip() == ""):
+                if lines[i].strip():
+                    body = lines[i].lstrip(" ")
+                    n = len(lines[i]) - len(body)
+                    out.append(" " * (n * 2) + body)
+                else:
+                    out.append("")
+                i += 1
+            continue
+        i += 1
+    return "\n".join(out) + "\n"
+
+
 def code_panel(code_id: str, code: str) -> str:
-    lines = code.split("\n")
-    if lines and lines[-1] == "":
-        lines = lines[:-1]
-    rows = "".join(
-        f'<tr><td class="num">{i}</td><td class="txt">{html.escape(ln) if ln else " "}</td></tr>'
-        for i, ln in enumerate(lines, 1)
-    )
     ta = (
         f'<textarea id="{code_id}" readonly aria-hidden="true" '
         f'style="position:fixed;left:-9999px;opacity:0;width:1px;height:1px">'
         f"{html.escape(code)}</textarea>"
     )
-    return ta + f'<div class="code-scroll"><table class="code-table"><tbody>{rows}</tbody></table></div>'
+    pre = f'<div class="code-scroll"><pre class="code">{html.escape(code)}</pre></div>'
+    return ta + pre
 
 
 def find_split_indices(lines: list[str]) -> list[int]:
@@ -195,9 +211,9 @@ def make_index_html(parts: list[tuple[int, int]], chunks: dict[int, str]) -> str
 
 def main() -> None:
     raw = SRC.read_text(encoding="utf-8")
-    cleaned = strip_comments(raw)
+    cleaned = normalize_table_indent(strip_comments(raw))
     SRC.write_text(cleaned, encoding="utf-8")
-    print(f"Stripped comments: {raw.count(chr(10))} → {cleaned.count(chr(10))} lines")
+    print(f"Cleaned: {raw.count(chr(10))} → {cleaned.count(chr(10))} lines")
 
     line_starts = cleaned.split("\n")
     if line_starts and line_starts[-1] == "":
