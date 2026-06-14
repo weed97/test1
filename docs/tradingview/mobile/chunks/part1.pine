@@ -1,8 +1,4 @@
 //@version=6
-// ══════════════════════════════════════════════════════════════════════════════
-// Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones
-// BTC/ETH 정밀 트레이딩 통합 인디케이터 (Pine Script v6)
-// ══════════════════════════════════════════════════════════════════════════════
 indicator(
      title="Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones [BTC/ETH]",
      shorttitle="CPE Engine",
@@ -14,8 +10,6 @@ indicator(
      max_labels_count=500,
      max_boxes_count=100)
 
-// ══════════ SECTION 8: USER INPUTS ══════════
-// ⚡ VWAP Settings / VWAP 설정
 groupVwap   = "⚡ VWAP Settings"
 showVwapBands    = input.bool(true,  "Show VWAP Bands",           group=groupVwap)
 showWeeklyVwap   = input.bool(false, "Show Weekly VWAP",          group=groupVwap)
@@ -25,7 +19,6 @@ showVwapZones    = input.bool(true,  "Show VWAP S/R Zones",       group=groupVwa
 vwapZoneAtrMult  = input.float(0.5, "VWAP Zone ATR Mult", minval=0.1, step=0.1, group=groupVwap)
 vwapZoneLookback = input.int(100,   "VWAP Zone Touch Lookback", minval=20, group=groupVwap)
 
-// 📊 Volume Profile / POC / 거래량 프로파일
 groupVp     = "📊 Volume Profile / POC"
 vpLookback  = input.int(300,  "VP Lookback Bars", minval=50, maxval=500, group=groupVp)
 vpBins      = input.int(48,   "VP Bins", minval=10, maxval=100, group=groupVp)
@@ -34,7 +27,6 @@ vpExtend    = input.int(50,    "Extend Lines Right (bars)", minval=0, group=grou
 showHvn     = input.bool(true, "Show HVN Zones", group=groupVp)
 showLvn     = input.bool(true, "Show LVN Lines", group=groupVp)
 
-// 🧱 Wall Detection / 매수·매도벽
 groupWall   = "🧱 Wall Detection"
 volMaLen    = input.int(20,   "Volume MA Length", minval=5, group=groupWall)
 buyWallMult = input.float(2.5,"Buy Wall Multiplier", minval=1.0, step=0.1, group=groupWall)
@@ -44,7 +36,6 @@ modWallMult    = input.float(3.5, "Moderate Wall Mult", minval=2.0, step=0.5, gr
 wallExpiryBars = input.int(100,"Wall Expiry Bars", minval=10, group=groupWall)
 wallZoneAtrMult= input.float(0.4,"Wall Zone ATR Mult", minval=0.1, step=0.1, group=groupWall)
 
-// 🎯 Support / Resistance / 지지·저항 구간
 groupSr     = "🎯 Support / Resistance Zones"
 srLookback  = input.int(200,  "S/R Lookback", minval=50, group=groupSr)
 pivotLeft   = input.int(10,   "Pivot Left", minval=2, group=groupSr)
@@ -54,14 +45,12 @@ minTouches  = input.int(2,    "Min Touches", minval=1, group=groupSr)
 showMajorOnly = input.bool(false, "Show Major Zones Only", group=groupSr)
 showDistLabels= input.bool(true,  "Show Distance Labels", group=groupSr)
 
-// 📖 Wall Pressure (무료·캔들 기반) / 실제 호가는 터미널 스크립트 사용
 groupOb     = "📖 Wall Pressure (Free)"
 showOrderbook = input.bool(false, "Show Wall Pressure Table", group=groupOb,
      tooltip="실제 오더북: python3 scripts/tradingview_orderbook_feed.py")
 obLevels    = input.int(5, "Levels (each side)", minval=1, maxval=5, group=groupOb)
 obAtrSpacing= input.float(0.15, "ATR Spacing", minval=0.05, step=0.05, group=groupOb)
 
-// 📡 Signals / 진입 시그널
 groupSig    = "📡 Signals"
 showMarks   = input.bool(true, "Show Signal Markers", inline="sigshow", group=groupSig,
      tooltip="LONG/SHORT 플립 시점에만 차트 마커 표시 (확정봉·쿨다운 적용)")
@@ -70,7 +59,6 @@ sigCoolBars = input.int(5, "Signal Cooldown (bars)", minval=1, maxval=50, group=
 sigBull     = input.color(color.lime, "Long", inline="sigcol", group=groupSig)
 sigBear     = input.color(color.red, "Short", inline="sigcol", group=groupSig)
 
-// 🖥 Dashboard / 대시보드
 groupDash   = "🖥 Dashboard"
 showDashboard = input.bool(true, "Show Dashboard", group=groupDash)
 dashPosition  = input.string("top_right", "Dashboard Position",
@@ -78,14 +66,11 @@ dashPosition  = input.string("top_right", "Dashboard Position",
 tableSize     = input.string("small", "Table Size",
      options=["tiny", "small", "normal"], group=groupDash)
 
-// ══════════ SHARED CALCULATIONS ══════════
 atr14   = ta.atr(14)
 volMa   = ta.sma(volume, volMaLen)
 volStd  = ta.stdev(volume, volMaLen)
 confirmed = barstate.isconfirmed
 
-// ══════════ SECTION 1: VWAP + BANDS ══════════
-// 1-1 Session VWAP — 일일 세션 기준 VWAP
 var float sCumVol  = 0.0
 var float sCumPV   = 0.0
 var float sSumDev  = 0.0
@@ -121,7 +106,6 @@ band3D = sessionVwap - sessionStd * 3.0 * vwapBandMult
 vwapColor = close >= sessionVwap ? color.new(color.green, 0) : color.new(color.red, 0)
 plot(sessionVwap, "Session VWAP", color=vwapColor, linewidth=2)
 
-// 1-2 VWAP Standard Deviation Bands — 표준편차 밴드
 pB1U = plot(showVwapBands ? band1U : na, "+1σ", color=color.new(color.blue, 40), linewidth=1)
 pB1D = plot(showVwapBands ? band1D : na, "-1σ", color=color.new(color.blue, 40), linewidth=1)
 plot(showVwapBands ? band2U : na, "+2σ", color=color.new(color.orange, 40), linewidth=1)
@@ -129,4 +113,374 @@ plot(showVwapBands ? band2D : na, "-2σ", color=color.new(color.orange, 40), lin
 plot(showVwapBands ? band3U : na, "+3σ", color=color.new(color.red, 20), linewidth=1)
 plot(showVwapBands ? band3D : na, "-3σ", color=color.new(color.lime, 20), linewidth=1)
 fill(pB1U, pB1D, color=color.new(color.blue, 90), title="±1σ Fill")
+
+var float wCumVol = 0.0, wCumPV = 0.0
+var float mCumVol = 0.0, mCumPV = 0.0
+newWeek  = ta.change(time("1W")) != 0
+newMonth = ta.change(time("1M")) != 0
+if newWeek
+    wCumVol := 0.0
+    wCumPV  := 0.0
+if newMonth
+    mCumVol := 0.0
+    mCumPV  := 0.0
+wCumVol += volume
+wCumPV  += tp * volume
+mCumVol += volume
+mCumPV  += tp * volume
+weeklyVwap  = wCumVol > 0 ? wCumPV / wCumVol : tp
+monthlyVwap = mCumVol > 0 ? mCumPV / mCumVol : tp
+
+plot(showWeeklyVwap  ? weeklyVwap  : na, "Weekly VWAP",  color=color.new(color.purple, 0), linewidth=1, style=plot.style_linebr)
+plot(showMonthlyVwap ? monthlyVwap : na, "Monthly VWAP", color=color.new(color.orange, 0), linewidth=1, style=plot.style_linebr)
+
+var label wLbl = na
+var label mLbl = na
+if barstate.islast
+    if showWeeklyVwap
+        label.delete(wLbl)
+        wLbl := label.new(bar_index, weeklyVwap, "W-VWAP", style=label.style_label_left,
+             color=color.new(color.purple, 70), textcolor=color.white, size=size.small)
+    if showMonthlyVwap
+        label.delete(mLbl)
+        mLbl := label.new(bar_index, monthlyVwap, "M-VWAP", style=label.style_label_left,
+             color=color.new(color.orange, 70), textcolor=color.white, size=size.small)
+
+f_zoneTouches(float level, float halfH, int lb) =>
+    int touches = 0
+    float touchVol = 0.0
+    int bounces = 0
+    bool broken = false
+    for i = 1 to lb
+        if bar_index >= i
+            float zTop = level + halfH
+            float zBot = level - halfH
+            bool touched = high[i] >= zBot and low[i] <= zTop
+            if touched
+                touches += 1
+                touchVol += volume[i]
+                bool bouncedUp = false
+                bool bouncedDn = false
+                for j = 0 to 2
+                    if i - j >= 0
+                        if close[i - j] > zTop
+                            bouncedUp := true
+                        if close[i - j] < zBot
+                            bouncedDn := true
+                if bouncedUp or bouncedDn
+                    bounces += 1
+            if close[i] > zTop + halfH or close[i] < zBot - halfH
+                broken := true
+    float strength = touches > 0 ? math.min(100, int(touches * 15 + touchVol / math.max(volMa, 1) * 5)) : 0
+    [touches, bounces, broken, strength]
+
+vwapHalfH = atr14 * vwapZoneAtrMult
+var box[] vwapZoneBoxes = array.new_box()
+var label[] vwapZoneLabels = array.new_label()
+
+f_drawVwapZone(float lvl, string name, bool isUpper) =>
+    if showVwapZones and barstate.islast
+        [tch, bnc, brk, str] = f_zoneTouches(lvl, vwapHalfH, vwapZoneLookback)
+        isSupport = not isUpper and tch >= 2 and bnc >= 2 and not brk
+        isResist  = isUpper and tch >= 2 and bnc >= 2 and not brk
+        bgCol = brk ? color.new(color.gray, 75) :
+             isSupport ? color.new(color.green, 80) :
+             isResist  ? color.new(color.red, 80) :
+             color.new(color.gray, 90)
+        b = box.new(bar_index - vwapZoneLookback, lvl + vwapHalfH, bar_index + 20, lvl - vwapHalfH,
+             border_color=color.new(color.gray, 60), bgcolor=bgCol, border_width=1)
+        array.push(vwapZoneBoxes, b)
+        lblTxt = name + "\nTouches: " + str.tostring(tch) + "\nStrength: " + str.tostring(str)
+        l = label.new(bar_index + 5, lvl, lblTxt, style=label.style_label_left,
+             color=color.new(color.black, 40), textcolor=color.white, size=size.tiny)
+        array.push(vwapZoneLabels, l)
+
+if barstate.islast
+    for b in vwapZoneBoxes
+        box.delete(b)
+    for l in vwapZoneLabels
+        label.delete(l)
+    array.clear(vwapZoneBoxes)
+    array.clear(vwapZoneLabels)
+    if showVwapZones
+        f_drawVwapZone(band1U, "VWAP +1σ Zone", true)
+        f_drawVwapZone(band1D, "VWAP -1σ Zone", false)
+        f_drawVwapZone(band2U, "VWAP +2σ Zone", true)
+        f_drawVwapZone(band2D, "VWAP -2σ Zone", false)
+        f_drawVwapZone(band3U, "VWAP +3σ Zone", true)
+        f_drawVwapZone(band3D, "VWAP -3σ Zone", false)
+
+f_calcVP() =>
+    float hi = ta.highest(high, vpLookback)
+    float lo = ta.lowest(low, vpLookback)
+    float step = (hi - lo) / vpBins
+    float[] bins = array.new_float(vpBins, 0.0)
+    float totalVol = 0.0
+    for i = 0 to vpLookback - 1
+        if bar_index >= i
+            float c = close[i]
+            float v = volume[i]
+            int idx = step > 0 ? int(math.floor((c - lo) / step)) : 0
+            idx := math.min(math.max(idx, 0), vpBins - 1)
+            array.set(bins, idx, array.get(bins, idx) + v)
+            totalVol += v
+    int pocIdx = 0
+    float maxV = 0.0
+    for j = 0 to vpBins - 1
+        float bv = array.get(bins, j)
+        if bv > maxV
+            maxV := bv
+            pocIdx := j
+    float pocPrice = lo + step * (pocIdx + 0.5)
+    float vaVol = array.get(bins, pocIdx)
+    int loIdx = pocIdx
+    int hiIdx = pocIdx
+    float target = totalVol * valueAreaPct / 100.0
+    while vaVol < target and (loIdx > 0 or hiIdx < vpBins - 1)
+        float volBelow = loIdx > 0 ? array.get(bins, loIdx - 1) : 0.0
+        float volAbove = hiIdx < vpBins - 1 ? array.get(bins, hiIdx + 1) : 0.0
+        if volAbove >= volBelow and hiIdx < vpBins - 1
+            hiIdx += 1
+            vaVol += array.get(bins, hiIdx)
+        else if loIdx > 0
+            loIdx -= 1
+            vaVol += array.get(bins, loIdx)
+        else if hiIdx < vpBins - 1
+            hiIdx += 1
+            vaVol += array.get(bins, hiIdx)
+        else
+            break
+    float vah = lo + step * (hiIdx + 1)
+    float val = lo + step * loIdx
+    float pocStrength = totalVol > 0 ? maxV / totalVol * 100.0 : 0.0
+    int[] hvnIdx = array.new_int(3, -1)
+    for rank = 0 to 2
+        float best = 0.0
+        int bestI = -1
+        for j = 0 to vpBins - 1
+            if j != pocIdx
+                float bv = array.get(bins, j)
+                bool already = false
+                for r = 0 to rank - 1
+                    if array.get(hvnIdx, r) == j
+                        already := true
+                if not already and bv > best
+                    best := bv
+                    bestI := j
+        array.set(hvnIdx, rank, bestI)
+    int[] lvnIdx = array.new_int()
+    for j = 0 to vpBins - 1
+        if j != pocIdx and array.get(bins, j) < maxV * 0.2
+            array.push(lvnIdx, j)
+    [pocPrice, vah, val, pocStrength, step, lo, bins, hvnIdx, lvnIdx, pocIdx]
+
+[poc, vah, val, pocStrength, binStep, binLo, vpBinsArr, hvnIndices, lvnIndices, pocBinIdx] = f_calcVP()
+
+pocDistPct = poc > 0 ? (close - poc) / poc * 100.0 : 0.0
+pocDistUsd = close - poc
+pocStrengthLbl = pocStrength > 15 ? "Strong POC" : pocStrength >= 8 ? "Medium POC" : "Weak POC"
+pocStrengthCol = pocStrength > 15 ? #FFD700 : pocStrength >= 8 ? color.yellow : color.gray
+
+var line pocLine = na
+var line vahLine = na
+var line valLine = na
+var label pocLbl = na
+var label vahLbl = na
+var label valLbl = na
+
+if barstate.islast
+    line.delete(pocLine)
+    line.delete(vahLine)
+    line.delete(valLine)
+    label.delete(pocLbl)
+    label.delete(vahLbl)
+    label.delete(valLbl)
+    int x1 = bar_index - vpLookback
+    int x2 = bar_index + vpExtend
+    pocLine := line.new(x1, poc, x2, poc, color=color.yellow, style=line.style_dashed, width=2)
+    vahLine := line.new(x1, vah, x2, vah, color=color.green, style=line.style_dotted, width=1)
+    valLine := line.new(x1, val, x2, val, color=color.red, style=line.style_dotted, width=1)
+    pocLbl := label.new(x2, poc, "POC: " + str.tostring(poc, format.mintick), style=label.style_label_left,
+         color=color.new(color.yellow, 50), textcolor=color.black, size=size.small)
+    vahLbl := label.new(x2, vah, "VAH", style=label.style_label_left,
+         color=color.new(color.green, 60), textcolor=color.white, size=size.tiny)
+    valLbl := label.new(x2, val, "VAL", style=label.style_label_left,
+         color=color.new(color.red, 60), textcolor=color.white, size=size.tiny)
+
+pocHalf = atr14 * 0.3
+var box pocBox = na
+var box[] hvnBoxes = array.new_box()
+var label[] hvnLabels = array.new_label()
+var line[] lvnLines = array.new_line()
+var label[] lvnLabels = array.new_label()
+
+if barstate.islast
+    box.delete(pocBox)
+    for b in hvnBoxes
+        box.delete(b)
+    for l in hvnLabels
+        label.delete(l)
+    for ln in lvnLines
+        line.delete(ln)
+    for l in lvnLabels
+        label.delete(l)
+    array.clear(hvnBoxes)
+    array.clear(hvnLabels)
+    array.clear(lvnLines)
+    array.clear(lvnLabels)
+
+    pocBox := box.new(bar_index - vpLookback, poc + pocHalf, bar_index + vpExtend, poc - pocHalf,
+         bgcolor=color.new(color.yellow, 80), border_color=color.new(color.orange, 50),
+         text="최고 거래 밀집 구간", text_size=size.tiny)
+
+    if showHvn
+        for rank = 0 to 2
+            int hIdx = array.get(hvnIndices, rank)
+            if hIdx >= 0
+                float hPrice = binLo + binStep * (hIdx + 0.5)
+                float hTop = binLo + binStep * (hIdx + 1)
+                float hBot = binLo + binStep * hIdx
+                box hb = box.new(bar_index - vpLookback, hTop, bar_index + vpExtend, hBot,
+                     bgcolor=color.new(color.yellow, 85), border_width=0)
+                array.push(hvnBoxes, hb)
+                label hl = label.new(bar_index + vpExtend, hPrice, "HVN " + str.tostring(rank + 1),
+                     style=label.style_label_left, color=color.new(color.yellow, 50),
+                     textcolor=color.black, size=size.tiny)
+                array.push(hvnLabels, hl)
+
+    if showLvn
+        int lvnCount = array.size(lvnIndices)
+        int maxLvn = math.min(lvnCount, 8)
+        for i = 0 to maxLvn - 1
+            int lIdx = array.get(lvnIndices, i)
+            float lPrice = binLo + binStep * (lIdx + 0.5)
+            line ln = line.new(bar_index - vpLookback, lPrice, bar_index + vpExtend, lPrice,
+                 color=color.gray, style=line.style_dashed, width=1)
+            array.push(lvnLines, ln)
+            if i < 3
+                label ll = label.new(bar_index + vpExtend, lPrice, "LVN — Fast Move Zone",
+                     style=label.style_label_left, color=color.new(color.gray, 60),
+                     textcolor=color.white, size=size.tiny)
+                array.push(lvnLabels, ll)
+
+type Wall
+    float level
+    int   barIdx
+    float vol
+    bool  isBuy
+    bool  broken
+    line  ln
+    box   bx
+    label lb
+
+var Wall[] walls = array.new<Wall>()
+
+f_nearWall(float price, float pct) =>
+    bool near = false
+    for w in walls
+        if math.abs(w.level - price) / price * 100.0 < pct
+            near := true
+    near
+
+f_strengthBar(float vol) =>
+    float ratio = vol / math.max(volMa, 1)
+    int blocks = int(math.min(8, math.round(ratio)))
+    string s = ""
+    for i = 0 to 7
+        s += i < blocks ? "█" : "░"
+    s
+
+bigLowerWick = low < open - (high - low) * 0.5
+bigUpperWick = high > open + (high - low) * 0.5
+buyCond  = confirmed and volume > volMa * buyWallMult and (close >= open or bigLowerWick) and close < sessionVwap
+sellCond = confirmed and volume > volMa * sellWallMult and (close <= open or bigUpperWick) and close > sessionVwap
+
+if buyCond and not f_nearWall(low, 0.3)
+    string bwStr = volume > volMa * strongWallMult ? "💪 STRONG BW" :
+         volume > volMa * modWallMult ? "⚡ MODERATE BW" : "BW"
+    string bar = f_strengthBar(volume)
+    float bTop = low + atr14 * 0.5
+    float bBot = low - atr14 * 0.2
+    line  bln = line.new(bar_index, low, bar_index + wallExpiryBars, low, color=color.lime, width=2)
+    box   bbx = box.new(bar_index, bTop, bar_index + wallExpiryBars, bBot,
+         bgcolor=color.new(color.lime, 85), border_color=color.new(color.lime, 50))
+    label blb = label.new(bar_index, bTop, bwStr + " " + bar, style=label.style_label_down,
+         color=color.new(color.lime, 30), textcolor=color.white, size=size.small)
+    Wall nw = Wall.new(low, bar_index, volume, true, false, bln, bbx, blb)
+    array.push(walls, nw)
+    if array.size(walls) > 5
+        Wall old = array.shift(walls)
+        line.delete(old.ln)
+        box.delete(old.bx)
+        label.delete(old.lb)
+
+if sellCond and not f_nearWall(high, 0.3)
+    string swStr = volume > volMa * strongWallMult ? "💪 STRONG SW" :
+         volume > volMa * modWallMult ? "⚡ MODERATE SW" : "SW"
+    string bar = f_strengthBar(volume)
+    float sTop = high + atr14 * 0.2
+    float sBot = high - atr14 * 0.5
+    line  sln = line.new(bar_index, high, bar_index + wallExpiryBars, high, color=color.red, width=2)
+    box   sbx = box.new(bar_index, sTop, bar_index + wallExpiryBars, sBot,
+         bgcolor=color.new(color.red, 85), border_color=color.new(color.red, 50))
+    label slb = label.new(bar_index, sBot, swStr + " " + bar, style=label.style_label_up,
+         color=color.new(color.red, 30), textcolor=color.white, size=size.small)
+    Wall nw = Wall.new(high, bar_index, volume, false, false, sln, sbx, slb)
+    array.push(walls, nw)
+    if array.size(walls) > 5
+        Wall old = array.shift(walls)
+        line.delete(old.ln)
+        box.delete(old.bx)
+        label.delete(old.lb)
+
+var bool buyWallBroken  = false
+var bool sellWallBroken = false
+buyWallBroken  := false
+sellWallBroken := false
+
+int activeBuyWalls  = 0
+int activeSellWalls = 0
+float nearestBw = na
+float nearestSw = na
+
+if array.size(walls) > 0
+    for i = array.size(walls) - 1 to 0
+        Wall w = array.get(walls, i)
+        bool expired = bar_index - w.barIdx > wallExpiryBars
+        if expired
+            line.delete(w.ln)
+            box.delete(w.bx)
+            label.delete(w.lb)
+            array.remove(walls, i)
+        else
+            line.set_x2(w.ln, bar_index + 5)
+            box.set_right(w.bx, bar_index + 5)
+            if w.isBuy
+                activeBuyWalls += 1
+                if w.level <= close and (na(nearestBw) or w.level > nearestBw)
+                    nearestBw := w.level
+                if confirmed and close < w.level and not w.broken
+                    w.broken := true
+                    buyWallBroken := true
+                    line.set_color(w.ln, color.gray)
+                    label.set_text(w.lb, "BW BROKEN")
+                    label.set_color(w.lb, color.new(color.gray, 30))
+            else
+                activeSellWalls += 1
+                if w.level >= close and (na(nearestSw) or w.level < nearestSw)
+                    nearestSw := w.level
+                if confirmed and close > w.level and not w.broken
+                    w.broken := true
+                    sellWallBroken := true
+                    line.set_color(w.ln, color.gray)
+                    label.set_text(w.lb, "SW BROKEN")
+                    label.set_color(w.lb, color.new(color.gray, 30))
+            array.set(walls, i, w)
+
+f_wallNear(float price, float pct, bool wantBuy) =>
+    bool found = false
+    for w in walls
+        if w.isBuy == wantBuy and not w.broken and math.abs(w.level - price) / price * 100.0 < pct
+            found := true
+    found
 

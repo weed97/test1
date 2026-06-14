@@ -1,8 +1,4 @@
 //@version=6
-// ══════════════════════════════════════════════════════════════════════════════
-// Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones
-// BTC/ETH 정밀 트레이딩 통합 인디케이터 (Pine Script v6)
-// ══════════════════════════════════════════════════════════════════════════════
 indicator(
      title="Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones [BTC/ETH]",
      shorttitle="CPE Engine",
@@ -14,8 +10,6 @@ indicator(
      max_labels_count=500,
      max_boxes_count=100)
 
-// ══════════ SECTION 8: USER INPUTS ══════════
-// ⚡ VWAP Settings / VWAP 설정
 groupVwap   = "⚡ VWAP Settings"
 showVwapBands    = input.bool(true,  "Show VWAP Bands",           group=groupVwap)
 showWeeklyVwap   = input.bool(false, "Show Weekly VWAP",          group=groupVwap)
@@ -25,7 +19,6 @@ showVwapZones    = input.bool(true,  "Show VWAP S/R Zones",       group=groupVwa
 vwapZoneAtrMult  = input.float(0.5, "VWAP Zone ATR Mult", minval=0.1, step=0.1, group=groupVwap)
 vwapZoneLookback = input.int(100,   "VWAP Zone Touch Lookback", minval=20, group=groupVwap)
 
-// 📊 Volume Profile / POC / 거래량 프로파일
 groupVp     = "📊 Volume Profile / POC"
 vpLookback  = input.int(300,  "VP Lookback Bars", minval=50, maxval=500, group=groupVp)
 vpBins      = input.int(48,   "VP Bins", minval=10, maxval=100, group=groupVp)
@@ -34,7 +27,6 @@ vpExtend    = input.int(50,    "Extend Lines Right (bars)", minval=0, group=grou
 showHvn     = input.bool(true, "Show HVN Zones", group=groupVp)
 showLvn     = input.bool(true, "Show LVN Lines", group=groupVp)
 
-// 🧱 Wall Detection / 매수·매도벽
 groupWall   = "🧱 Wall Detection"
 volMaLen    = input.int(20,   "Volume MA Length", minval=5, group=groupWall)
 buyWallMult = input.float(2.5,"Buy Wall Multiplier", minval=1.0, step=0.1, group=groupWall)
@@ -44,7 +36,6 @@ modWallMult    = input.float(3.5, "Moderate Wall Mult", minval=2.0, step=0.5, gr
 wallExpiryBars = input.int(100,"Wall Expiry Bars", minval=10, group=groupWall)
 wallZoneAtrMult= input.float(0.4,"Wall Zone ATR Mult", minval=0.1, step=0.1, group=groupWall)
 
-// 🎯 Support / Resistance / 지지·저항 구간
 groupSr     = "🎯 Support / Resistance Zones"
 srLookback  = input.int(200,  "S/R Lookback", minval=50, group=groupSr)
 pivotLeft   = input.int(10,   "Pivot Left", minval=2, group=groupSr)
@@ -54,14 +45,12 @@ minTouches  = input.int(2,    "Min Touches", minval=1, group=groupSr)
 showMajorOnly = input.bool(false, "Show Major Zones Only", group=groupSr)
 showDistLabels= input.bool(true,  "Show Distance Labels", group=groupSr)
 
-// 📖 Wall Pressure (무료·캔들 기반) / 실제 호가는 터미널 스크립트 사용
 groupOb     = "📖 Wall Pressure (Free)"
 showOrderbook = input.bool(false, "Show Wall Pressure Table", group=groupOb,
      tooltip="실제 오더북: python3 scripts/tradingview_orderbook_feed.py")
 obLevels    = input.int(5, "Levels (each side)", minval=1, maxval=5, group=groupOb)
 obAtrSpacing= input.float(0.15, "ATR Spacing", minval=0.05, step=0.05, group=groupOb)
 
-// 📡 Signals / 진입 시그널
 groupSig    = "📡 Signals"
 showMarks   = input.bool(true, "Show Signal Markers", inline="sigshow", group=groupSig,
      tooltip="LONG/SHORT 플립 시점에만 차트 마커 표시 (확정봉·쿨다운 적용)")
@@ -70,7 +59,6 @@ sigCoolBars = input.int(5, "Signal Cooldown (bars)", minval=1, maxval=50, group=
 sigBull     = input.color(color.lime, "Long", inline="sigcol", group=groupSig)
 sigBear     = input.color(color.red, "Short", inline="sigcol", group=groupSig)
 
-// 🖥 Dashboard / 대시보드
 groupDash   = "🖥 Dashboard"
 showDashboard = input.bool(true, "Show Dashboard", group=groupDash)
 dashPosition  = input.string("top_right", "Dashboard Position",
@@ -78,14 +66,11 @@ dashPosition  = input.string("top_right", "Dashboard Position",
 tableSize     = input.string("small", "Table Size",
      options=["tiny", "small", "normal"], group=groupDash)
 
-// ══════════ SHARED CALCULATIONS ══════════
 atr14   = ta.atr(14)
 volMa   = ta.sma(volume, volMaLen)
 volStd  = ta.stdev(volume, volMaLen)
 confirmed = barstate.isconfirmed
 
-// ══════════ SECTION 1: VWAP + BANDS ══════════
-// 1-1 Session VWAP — 일일 세션 기준 VWAP
 var float sCumVol  = 0.0
 var float sCumPV   = 0.0
 var float sSumDev  = 0.0
@@ -121,7 +106,6 @@ band3D = sessionVwap - sessionStd * 3.0 * vwapBandMult
 vwapColor = close >= sessionVwap ? color.new(color.green, 0) : color.new(color.red, 0)
 plot(sessionVwap, "Session VWAP", color=vwapColor, linewidth=2)
 
-// 1-2 VWAP Standard Deviation Bands — 표준편차 밴드
 pB1U = plot(showVwapBands ? band1U : na, "+1σ", color=color.new(color.blue, 40), linewidth=1)
 pB1D = plot(showVwapBands ? band1D : na, "-1σ", color=color.new(color.blue, 40), linewidth=1)
 plot(showVwapBands ? band2U : na, "+2σ", color=color.new(color.orange, 40), linewidth=1)
@@ -130,7 +114,6 @@ plot(showVwapBands ? band3U : na, "+3σ", color=color.new(color.red, 20), linewi
 plot(showVwapBands ? band3D : na, "-3σ", color=color.new(color.lime, 20), linewidth=1)
 fill(pB1U, pB1D, color=color.new(color.blue, 90), title="±1σ Fill")
 
-// 1-3 Weekly + Monthly VWAP — 주간·월간 VWAP
 var float wCumVol = 0.0, wCumPV = 0.0
 var float mCumVol = 0.0, mCumPV = 0.0
 newWeek  = ta.change(time("1W")) != 0
@@ -163,7 +146,6 @@ if barstate.islast
         mLbl := label.new(bar_index, monthlyVwap, "M-VWAP", style=label.style_label_left,
              color=color.new(color.orange, 70), textcolor=color.white, size=size.small)
 
-// 1-4 VWAP Zone touch analysis — VWAP 밴드 존 분석
 f_zoneTouches(float level, float halfH, int lb) =>
     int touches = 0
     float touchVol = 0.0
@@ -187,7 +169,6 @@ f_zoneTouches(float level, float halfH, int lb) =>
                             bouncedDn := true
                 if bouncedUp or bouncedDn
                     bounces += 1
-            // broken through
             if close[i] > zTop + halfH or close[i] < zBot - halfH
                 broken := true
     float strength = touches > 0 ? math.min(100, int(touches * 15 + touchVol / math.max(volMa, 1) * 5)) : 0
@@ -229,8 +210,6 @@ if barstate.islast
         f_drawVwapZone(band3U, "VWAP +3σ Zone", true)
         f_drawVwapZone(band3D, "VWAP -3σ Zone", false)
 
-// ══════════ SECTION 2: VOLUME PROFILE + POC ══════════
-// 2-1 Rolling Volume Profile — 롤링 거래량 프로파일
 f_calcVP() =>
     float hi = ta.highest(high, vpLookback)
     float lo = ta.lowest(low, vpLookback)
@@ -245,7 +224,6 @@ f_calcVP() =>
             idx := math.min(math.max(idx, 0), vpBins - 1)
             array.set(bins, idx, array.get(bins, idx) + v)
             totalVol += v
-    // POC
     int pocIdx = 0
     float maxV = 0.0
     for j = 0 to vpBins - 1
@@ -254,7 +232,6 @@ f_calcVP() =>
             maxV := bv
             pocIdx := j
     float pocPrice = lo + step * (pocIdx + 0.5)
-    // Value Area
     float vaVol = array.get(bins, pocIdx)
     int loIdx = pocIdx
     int hiIdx = pocIdx
@@ -276,7 +253,6 @@ f_calcVP() =>
     float vah = lo + step * (hiIdx + 1)
     float val = lo + step * loIdx
     float pocStrength = totalVol > 0 ? maxV / totalVol * 100.0 : 0.0
-    // HVN top 3 (excluding POC)
     int[] hvnIdx = array.new_int(3, -1)
     for rank = 0 to 2
         float best = 0.0
@@ -292,7 +268,6 @@ f_calcVP() =>
                     best := bv
                     bestI := j
         array.set(hvnIdx, rank, bestI)
-    // LVN indices
     int[] lvnIdx = array.new_int()
     for j = 0 to vpBins - 1
         if j != pocIdx and array.get(bins, j) < maxV * 0.2
@@ -306,7 +281,6 @@ pocDistUsd = close - poc
 pocStrengthLbl = pocStrength > 15 ? "Strong POC" : pocStrength >= 8 ? "Medium POC" : "Weak POC"
 pocStrengthCol = pocStrength > 15 ? #FFD700 : pocStrength >= 8 ? color.yellow : color.gray
 
-// 2-2 POC / VAH / VAL lines — POC·VAH·VAL 라인
 var line pocLine = na
 var line vahLine = na
 var line valLine = na
@@ -333,7 +307,6 @@ if barstate.islast
     valLbl := label.new(x2, val, "VAL", style=label.style_label_left,
          color=color.new(color.red, 60), textcolor=color.white, size=size.tiny)
 
-// 2-3 POC Zone + HVN + LVN — POC 존·HVN·LVN
 pocHalf = atr14 * 0.3
 var box pocBox = na
 var box[] hvnBoxes = array.new_box()
@@ -390,8 +363,6 @@ if barstate.islast
                      textcolor=color.white, size=size.tiny)
                 array.push(lvnLabels, ll)
 
-// ══════════ SECTION 3: BUY WALL + SELL WALL ══════════
-// 3-1 ~ 3-4 Wall detection, zones, expiry — 매수·매도벽 탐지
 type Wall
     float level
     int   barIdx
@@ -462,7 +433,6 @@ if sellCond and not f_nearWall(high, 0.3)
         box.delete(old.bx)
         label.delete(old.lb)
 
-// Wall expiry + break logic — 벽 만료·돌파 처리
 var bool buyWallBroken  = false
 var bool sellWallBroken = false
 buyWallBroken  := false
@@ -483,7 +453,6 @@ if array.size(walls) > 0
             label.delete(w.lb)
             array.remove(walls, i)
         else
-            // extend drawings
             line.set_x2(w.ln, bar_index + 5)
             box.set_right(w.bx, bar_index + 5)
             if w.isBuy
@@ -515,8 +484,6 @@ f_wallNear(float price, float pct, bool wantBuy) =>
             found := true
     found
 
-// ══════════ SECTION 4: SUPPORT & RESISTANCE ZONES ══════════
-// 4-1 ~ 4-3 S/R zone detection + classification — 지지·저항 구간 탐지
 type SrZone
     float center
     float top
@@ -540,7 +507,6 @@ if confirmed and not na(pl)
     array.push(pivotPrices, pl)
     array.push(pivotIsHigh, false)
 
-// trim old pivots
 while array.size(pivotPrices) > 50
     array.shift(pivotPrices)
     array.shift(pivotIsHigh)
@@ -572,7 +538,6 @@ f_buildZones() =>
                         array.set(used, j, true)
             float center = sumP / cnt
             float halfZ = atr14 * 0.3
-            // count touches in lookback
             int tch = 0
             int bull = 0
             int bear = 0
@@ -603,7 +568,6 @@ f_buildZones() =>
 
 SrZone[] srZones = f_buildZones()
 
-// Per-bar major zone levels for alerts / 알림용 대형 구간 가격
 float nearMajorSup = na
 float nearMajorRes = na
 float nearSupNet   = na
@@ -689,9 +653,7 @@ if barstate.islast
         else
             array.push(resAbove, z)
 
-    // 4-3 Distance labels — 거리 라벨
     if showDistLabels
-        // nearest 3 support below
         for n = 0 to 2
             float bestD = na
             float bestC = na
@@ -749,10 +711,6 @@ if barstate.islast
                     if z2.center > close and z2.center != bestC
                         array.push(resAbove, z2)
 
-// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
-// 실제 호가는 Binance/Bybit 무료 API → tradingview_orderbook_feed.py
-// Pine: 매수·매도벽 + S/R 태그만으로 Bid/Ask 압력 추정 (유료 API·랜덤 없음)
-
 f_wallSizeAt(float price, float pct) =>
     float sz = 0.0
     for w in walls
@@ -780,7 +738,6 @@ f_obTag(float price, bool isAsk) =>
             tag += "V-1σ "
     tag
 
-// 매 바 Bid/Ask 압력 (벽 기반만 — 테이블 꺼져도 대시보드·시그널 동작)
 float bidTotal = 0.0
 float askTotal = 0.0
 float imbRatio = 1.0
@@ -865,8 +822,6 @@ if showOrderbook and barstate.islast
   table.cell(obTable, 2, 11, imbTxt, bgcolor=color.new(imbCol, 50), text_color=color.white, text_size=size.tiny)
   table.cell(obTable, 3, 11, "FREE", bgcolor=color.new(color.black, 30), text_size=size.tiny)
 
-// ══════════ SECTION 6: MASTER DASHBOARD ══════════
-// 6 Master dashboard — 통합 대시보드
 f_distPct(float price) =>
     price > 0 ? (close - price) / price * 100.0 : 0.0
 
@@ -888,7 +843,6 @@ longSetup  = close > sessionVwap and priceNearSup and imbRatio > 1.5 and volRati
 shortSetup = close < sessionVwap and priceNearRes and imbRatio < 0.67 and volRatio > 2.0
 signalTxt  = longSetup ? "LONG SETUP 🟢" : shortSetup ? "SHORT SETUP 🔴" : "NEUTRAL ⚪"
 
-// — Flip-only triggers (Zeiierman-style: fire once on setup onset, not every bar)
 flipLong  = longSetup and not longSetup[1]
 flipShort = shortSetup and not shortSetup[1]
 var int lastEntryBar = na
@@ -899,7 +853,6 @@ triggerShort = flipShort and coolOK and barOK
 if triggerLong or triggerShort
     lastEntryBar := bar_index
 
-// — Chart markers at recent swing low/high (absolute placement)
 placeBuy  = ta.lowest(low, 5)
 placeSell = ta.highest(high, 5)
 plotshape(showMarks and triggerLong ? placeBuy : na, "Long", shape.triangleup, location.absolute, sigBull, size=size.tiny)
@@ -977,8 +930,6 @@ if showDashboard and barstate.islast
   table.cell(dash, 1, 15, signalTxt, text_size=sz,
        text_color=longSetup ? color.lime : shortSetup ? color.red : color.gray)
 
-// ══════════ SECTION 7: ALERTS ══════════
-// 7 Alert conditions — 알림 조건
 crossAboveVwap = ta.crossover(close, sessionVwap)
 crossBelowVwap = ta.crossunder(close, sessionVwap)
 inPocZone      = math.abs(close - poc) <= atr14 * 0.3
@@ -1004,7 +955,6 @@ alertcondition(triggerLong,     "LONG SETUP",        "CPE: Composite LONG setup 
 alertcondition(triggerShort,    "SHORT SETUP",       "CPE: Composite SHORT setup flip (confirmed bar)")
 alertcondition(triggerLong or triggerShort, "Any Setup Signal", "CPE: New LONG or SHORT setup flip")
 
-// — Dynamic alert() with ticker + timeframe (fires once per confirmed bar)
 if confirmed
     if triggerLong
         alert("🟢 LONG  |  " + syminfo.ticker + " (" + timeframe.period + ")  VWAP+Sup+Imb+Vol", alert.freq_once_per_bar_close)

@@ -2,13 +2,13 @@
 
 ## 모바일 사용자
 
-**Raw = 모바일 한 줄** → **HTML Preview**만 사용:
+**2분할** (주석 제거, 약 450줄씩):
 
 ```
 https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/index.html
 ```
 
-Part 1~7 링크: **[모바일_설치가이드.md](./모바일_설치가이드.md)**
+Part 1·2: **[모바일_설치가이드.md](./모바일_설치가이드.md)**
 
 ---
 
