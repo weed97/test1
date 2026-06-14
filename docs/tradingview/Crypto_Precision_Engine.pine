@@ -159,15 +159,14 @@ f_zoneTouches(float level, float halfH, int lb) =>
     bool broken = false
     for i = 1 to lb
         if bar_index >= i
-            zTop = level + halfH
-            zBot = level - halfH
-            touched = high[i] >= zBot and low[i] <= zTop
+            float zTop = level + halfH
+            float zBot = level - halfH
+            bool touched = high[i] >= zBot and low[i] <= zTop
             if touched
                 touches += 1
                 touchVol += volume[i]
-                // bounce: closed away from zone within 3 bars
-                bouncedUp = false
-                bouncedDn = false
+                bool bouncedUp = false
+                bool bouncedDn = false
                 for j = 0 to 2
                     if i - j >= 0
                         if close[i - j] > zTop
@@ -179,7 +178,7 @@ f_zoneTouches(float level, float halfH, int lb) =>
             // broken through
             if close[i] > zTop + halfH or close[i] < zBot - halfH
                 broken := true
-    strength = touches > 0 ? math.min(100, int(touches * 15 + touchVol / math.max(volMa, 1) * 5)) : 0
+    float strength = touches > 0 ? math.min(100, int(touches * 15 + touchVol / math.max(volMa, 1) * 5)) : 0
     [touches, bounces, broken, strength]
 
 vwapHalfH = atr14 * vwapZoneAtrMult
@@ -813,7 +812,7 @@ if showOrderbook and barstate.islast
   table.cell(obTable, 2, 0, "Lvl", bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
   table.cell(obTable, 3, 0, "Tag", bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
 
-  float maxSz = math.max(bidTotal, askTotal, 1.0)
+  float maxSz = math.max(math.max(bidTotal, askTotal), 1.0)
 
   for n = obLevels to 1
     int row = obLevels - n + 1
