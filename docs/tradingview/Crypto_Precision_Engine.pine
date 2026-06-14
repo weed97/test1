@@ -51,11 +51,12 @@ minTouches  = input.int(2,    "Min Touches", minval=1, group=groupSr)
 showMajorOnly = input.bool(false, "Show Major Zones Only", group=groupSr)
 showDistLabels= input.bool(true,  "Show Distance Labels", group=groupSr)
 
-// 📖 Order Book Simulator / 오더북 시뮬레이터
-groupOb     = "📖 Order Book Simulator"
-showOrderbook = input.bool(true, "Show Order Book Table", group=groupOb)
-obLevels    = input.int(5, "OB Levels (each side)", minval=1, maxval=5, group=groupOb)
-obAtrSpacing= input.float(0.15, "OB ATR Spacing", minval=0.05, step=0.05, group=groupOb)
+// 📖 Wall Pressure (무료·캔들 기반) / 실제 호가는 터미널 스크립트 사용
+groupOb     = "📖 Wall Pressure (Free)"
+showOrderbook = input.bool(false, "Show Wall Pressure Table", group=groupOb,
+     tooltip="실제 오더북: python3 scripts/tradingview_orderbook_feed.py")
+obLevels    = input.int(5, "Levels (each side)", minval=1, maxval=5, group=groupOb)
+obAtrSpacing= input.float(0.15, "ATR Spacing", minval=0.05, step=0.05, group=groupOb)
 
 // 🖥 Dashboard / 대시보드
 groupDash   = "🖥 Dashboard"
@@ -737,27 +738,16 @@ if barstate.islast
                     if z2.center > close and z2.center != bestC
                         array.push(resAbove, z2)
 
-// ══════════ SECTION 5: ORDER BOOK SIMULATOR ══════════
-// 5-1 ~ 5-4 Simulated order book — 오더북 시뮬레이션
-f_obSize(float price) =>
-    bool isWall = f_wallNear(price, 0.2, true) or f_wallNear(price, 0.2, false)
-    float sz = 0.0
-    if isWall
-        for w in walls
-            if math.abs(w.level - price) / price * 100.0 < 0.2
-                sz := w.vol / math.max(volMa, 1) * 50
-    else
-        // price-seeded pseudo-random 1-100
-        int seed = int(math.abs(price * 1000) % 97)
-        sz := float(seed % 100 + 1)
-    sz
+// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
+// 실제 호가는 Binance/Bybit 무료 API → tradingview_orderbook_feed.py
+// Pine: 매수·매도벽 + S/R 태그만으로 Bid/Ask 압력 추정 (유료 API·랜덤 없음)
 
-f_sizeBar(float sz, float maxSz) =>
-    int blocks = int(math.round(sz / math.max(maxSz, 1) * 8))
-    string s = ""
-    for i = 0 to 7
-        s += i < blocks ? "█" : "░"
-    s
+f_wallSizeAt(float price, float pct) =>
+    float sz = 0.0
+    for w in walls
+        if not w.broken and math.abs(w.level - price) / price * 100.0 < pct
+            sz += w.vol / math.max(volMa, 1) * 50.0
+    sz
 
 f_obTag(float price, bool isAsk) =>
     string tag = ""
@@ -779,10 +769,30 @@ f_obTag(float price, bool isAsk) =>
             tag += "V-1σ "
     tag
 
-var table obTable = na
+// 매 바 Bid/Ask 압력 (벽 기반만 — 테이블 꺼져도 대시보드·시그널 동작)
 float bidTotal = 0.0
 float askTotal = 0.0
 float imbRatio = 1.0
+float spacing = atr14 * obAtrSpacing
+for n = 1 to obLevels
+    askTotal += f_wallSizeAt(close + spacing * n, 0.25)
+    bidTotal += f_wallSizeAt(close - spacing * n, 0.25)
+for w in walls
+    if not w.broken
+        if w.isBuy
+            bidTotal += w.vol / math.max(volMa, 1) * 10.0
+        else
+            askTotal += w.vol / math.max(volMa, 1) * 10.0
+imbRatio := askTotal > 0 ? bidTotal / askTotal : 1.0
+
+f_sizeBar(float sz, float maxSz) =>
+    int blocks = int(math.round(sz / math.max(maxSz, 1) * 8))
+    string s = ""
+    for i = 0 to 7
+        s += i < blocks ? "█" : "░"
+    s
+
+var table obTable = na
 
 tblPos(pos) =>
     pos == "top_left" ? position.top_left :
@@ -799,57 +809,50 @@ if showOrderbook and barstate.islast
     table.clear(obTable, 0, 0, 3, 11)
 
   table.cell(obTable, 0, 0, "Price", bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 1, 0, "Size", bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 2, 0, "Bar", bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 3, 0, "Type", bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+  table.cell(obTable, 1, 0, "Wall", bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+  table.cell(obTable, 2, 0, "Lvl", bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
+  table.cell(obTable, 3, 0, "Tag", bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
 
-  float spacing = atr14 * obAtrSpacing
-  float maxSz = 100.0
+  float maxSz = math.max(bidTotal, askTotal, 1.0)
 
-  // asks rows 1-5
   for n = obLevels to 1
     int row = obLevels - n + 1
     float askP = close + spacing * n
-    float sz = f_obSize(askP)
-    askTotal += sz
-    string szTxt = f_wallNear(askP, 0.2, false) ? "WALL 🧱" : str.tostring(int(sz))
+    float sz = f_wallSizeAt(askP, 0.25)
+    string szTxt = sz > 0 ? "WALL 🧱" : "—"
     string bar = f_sizeBar(sz, maxSz)
     string tags = f_obTag(askP, true)
-    bool highlight = str.length(tags) > 0
+    bool highlight = sz > 0 or str.length(tags) > 0
     table.cell(obTable, 0, row, str.tostring(askP, format.mintick), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
     table.cell(obTable, 1, row, szTxt + " " + bar, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
     table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
     table.cell(obTable, 3, row, "ASK " + tags, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
 
-  // current price row 6
   table.cell(obTable, 0, 6, str.tostring(close, format.mintick), bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
   table.cell(obTable, 1, 6, "▶ CURRENT", bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
   table.cell(obTable, 2, 6, "—", bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
-  table.cell(obTable, 3, 6, "—", bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
+  table.cell(obTable, 3, 6, "캔들·벽 기반", bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
 
-  // bids rows 7-11
   for n = 1 to obLevels
     int row = 6 + n
     float bidP = close - spacing * n
-    float sz = f_obSize(bidP)
-    bidTotal += sz
-    string szTxt = f_wallNear(bidP, 0.2, true) ? "WALL 🧱" : str.tostring(int(sz))
+    float sz = f_wallSizeAt(bidP, 0.25)
+    string szTxt = sz > 0 ? "WALL 🧱" : "—"
     string bar = f_sizeBar(sz, maxSz)
     string tags = f_obTag(bidP, false)
-    bool highlight = str.length(tags) > 0
+    bool highlight = sz > 0 or str.length(tags) > 0
     table.cell(obTable, 0, row, str.tostring(bidP, format.mintick), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
     table.cell(obTable, 1, row, szTxt + " " + bar, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
     table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
     table.cell(obTable, 3, row, "BID " + tags, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
 
-  imbRatio := askTotal > 0 ? bidTotal / askTotal : 1.0
-  string imbTxt = imbRatio > 1.5 ? "📈 BID DOMINANT (" + str.tostring(imbRatio, "#.#") + "x)" :
-       imbRatio < 0.67 ? "📉 ASK DOMINANT (" + str.tostring(imbRatio, "#.#") + "x)" : "⚖ BALANCED"
+  string imbTxt = imbRatio > 1.5 ? "📈 BID (" + str.tostring(imbRatio, "#.#") + "x)" :
+       imbRatio < 0.67 ? "📉 ASK (" + str.tostring(imbRatio, "#.#") + "x)" : "⚖ BALANCED"
   color imbCol = imbRatio > 1.5 ? color.green : imbRatio < 0.67 ? color.red : color.gray
-  table.cell(obTable, 0, 11, "Bid/Ask", bgcolor=color.new(color.black, 30), text_size=size.tiny)
-  table.cell(obTable, 1, 11, str.tostring(bidTotal, "#") + " / " + str.tostring(askTotal, "#"), bgcolor=color.new(color.black, 30), text_size=size.tiny)
+  table.cell(obTable, 0, 11, "Wall Imb", bgcolor=color.new(color.black, 30), text_size=size.tiny)
+  table.cell(obTable, 1, 11, str.tostring(bidTotal, "#.#") + "/" + str.tostring(askTotal, "#.#"), bgcolor=color.new(color.black, 30), text_size=size.tiny)
   table.cell(obTable, 2, 11, imbTxt, bgcolor=color.new(imbCol, 50), text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 3, 11, "Ratio", bgcolor=color.new(color.black, 30), text_size=size.tiny)
+  table.cell(obTable, 3, 11, "FREE", bgcolor=color.new(color.black, 30), text_size=size.tiny)
 
 // ══════════ SECTION 6: MASTER DASHBOARD ══════════
 // 6 Master dashboard — 통합 대시보드
@@ -927,7 +930,7 @@ if showDashboard and barstate.islast
   table.cell(dash, 0, 10, "Vol Ratio", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
   table.cell(dash, 1, 10, volRatioTxt, text_size=sz, text_color=volRatio > 2.5 ? color.orange : color.white)
 
-  table.cell(dash, 0, 11, "Bid/Ask", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 0, 11, "Wall Imb", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
   table.cell(dash, 1, 11, str.tostring(imbRatio, "#.##") + "x", text_size=sz,
        text_color=imbRatio > 1.5 ? color.green : imbRatio < 0.67 ? color.red : color.gray)
 

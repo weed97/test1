@@ -105,25 +105,27 @@
 
 ---
 
-## SECTION 5: 오더북 시뮬레이터
+## SECTION 5: Wall Pressure + 무료 실시간 오더북
 
-### 한계 (중요)
-TradingView는 **실시간 오더북 데이터에 접근할 수 없습니다.**  
-이 모듈은 다음으로 **추정**합니다:
-- ATR 기반 가격 레벨 간격
-- 거래량·매수/매도벽 위치
-- 가격 시드 의사 난수
+### Pine (차트 안) — Wall Pressure
+- **기본 OFF** (성능 최적화)
+- 매수/매도벽 + S/R 태그로 Bid/Ask 압력 **추정** (랜덤·유료 API 없음)
+- 대시보드 `Bid/Ask` 행은 벽 기반 imbalance 사용
 
-### 활용법
-- **BID DOMINANT (1.5x 이상)**: 매수 압력 우위 → 롱 바이어스
-- **ASK DOMINANT (0.67x 이하)**: 매도 압력 우위 → 숏 바이어스
-- **WALL 🧱** 표시: 실제 탐지된 매수/매도벽과 겹치는 레벨
-- **POC⭐, MS🟢, MR🔴, V±σ** 태그: S/R·VWAP와 오더북 레벨 일치
+### 실제 오더북 (무료 · 권장)
+터미널에서 Binance/Bybit **공개 API** (키 불필요):
 
-### 실시간 오더북이 필요할 때
-1. **Binance/Bybit WebSocket API** + 외부 서버 → TradingView `request.security()` 로 커스텀 심볼 피드
-2. **3rd-party 데이터** (Bookmap, TensorCharts 등) 연동
-3. 거래소 **Depth Chart** 를 별도 모니터와 병행
+```bash
+python3 scripts/tradingview_orderbook_feed.py
+python3 scripts/tradingview_orderbook_feed.py -e bybit -s ETHUSDT
+```
+
+TradingView 차트와 **나란히** 두고 매매합니다.
+
+### 해석
+- Pine `BID DOMINANT` + 터미널 `📈 BID` 겹치면 신뢰도 ↑
+- 터미널만 BID dominant → 실제 호가 우위 확인됨
+- Pine만 signal → 터미널로 호가 확인 후 진입
 
 ---
 
@@ -161,7 +163,7 @@ TradingView는 **실시간 오더북 데이터에 접근할 수 없습니다.**
 
 | 제한 | 설명 | 대응 |
 |------|------|------|
-| 오더북 없음 | 실제 호가 데이터 불가 | 시뮬레이터 + 외부 API |
+| 오더북 없음 | Pine HTTP 불가 | `tradingview_orderbook_feed.py` (무료) |
 | drawing 한도 | line 500, box 100, label 500 | 오래된 객체 자동 삭제 |
 | VP 연산 | 300봉×48빈 매 바 계산 | lookback 줄이기 |
 | S/R 클러스터 | pivot 50개 상한 | pivotLeft/Right 조정 |
