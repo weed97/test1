@@ -2,13 +2,13 @@
 
 ## 모바일 사용자
 
-**2분할** (주석 제거, 약 450줄씩):
+**전체 한 번에 복사:**
 
 ```
 https://htmlpreview.github.io/?https://raw.githubusercontent.com/weed97/test1/cursor/crypto-precision-engine-pine-94d6/docs/tradingview/mobile/index.html
 ```
 
-Part 1·2: **[모바일_설치가이드.md](./모바일_설치가이드.md)**
+→ **전체 코드 복사** 버튼 → Pine Editor 붙여넣기
 
 ---
 
