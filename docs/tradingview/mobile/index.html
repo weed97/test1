@@ -17,15 +17,16 @@
   .warn { background: #3d1f00; border: 1px solid #9e6a03; padding: 10px; border-radius: 8px;
     font-size: 0.85rem; margin-bottom: 12px; }
   .step { background: #161b22; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+  .sizes { font-size: 0.85rem; color: #8b949e; margin-bottom: 16px; }
 </style>
 </head>
 <body>
-<h1>Crypto Precision Engine — 모바일 설치</h1>
-<div class="warn"><b>Raw 페이지는 모바일에서 한 줄로 보입니다.</b> 각 Part의 <b>복사 버튼</b>을 누르세요. 줄바꿈이 살아 있습니다.</div>
-<p>총 1016줄 · Part 1 → 6 순서로 Pine Editor에 <b>이어 붙이기</b></p>
-<div class="step"><b>순서</b><br>1. TradingView 웹(브라우저) → Pine Editor<br>2. 기존 코드 전부 삭제<br>3. Part 1 복사 → 붙여넣기<br>4. 맨 아래로 가서 Part 2~6 반복<br>5. Save → Add to chart</div>
-<p><b>Part 1</b> — 맨 위 //@version=6 로 시작</p>
-<button class="btn" data-label="Part 1 복사 (231줄)" onclick="copyCode('code1', this)">Part 1 복사 (231줄)</button>
+<h1>Crypto Precision Engine — 모바일 7분할 설치</h1>
+<div class="warn"><b>Raw GitHub = 모바일에서 한 줄.</b> 아래 <b>복사 버튼</b>만 사용하세요.</div>
+<p class="sizes">총 1016줄 · P1:132 · P2:99 · P3:161 · P4:125 · P5:234 · P6:116 · P7:149</p>
+<div class="step"><b>순서</b><br>1. TradingView <b>웹 브라우저</b> → Pine Editor<br>2. 기존 코드 전부 삭제<br>3. Part 1 복사 → <b>맨 위</b>에 붙여넣기<br>4. Part 2~7 복사 → <b>맨 아래에 이어 붙이기</b> (빈 줄 추가 X)<br>5. Save → Add to chart</div>
+<p><b>Part 1</b> — //@version=6 · Inputs · Session VWAP · σ Bands</p>
+<button class="btn" data-label="Part 1 복사 (132줄)" onclick="copyCode('code1', this)">Part 1 복사 (132줄)</button>
 <pre id="code1">//@version=6
 // ══════════════════════════════════════════════════════════════════════════════
 // Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones
@@ -158,7 +159,10 @@ plot(showVwapBands ? band3U : na, &quot;+3σ&quot;, color=color.new(color.red, 2
 plot(showVwapBands ? band3D : na, &quot;-3σ&quot;, color=color.new(color.lime, 20), linewidth=1)
 fill(pB1U, pB1D, color=color.new(color.blue, 90), title=&quot;±1σ Fill&quot;)
 
-// 1-3 Weekly + Monthly VWAP — 주간·월간 VWAP
+</pre>
+<p><b>Part 2</b> — Weekly/Monthly VWAP · VWAP S/R Zones</p>
+<button class="btn" data-label="Part 2 복사 (99줄)" onclick="copyCode('code2', this)">Part 2 복사 (99줄)</button>
+<pre id="code2">// 1-3 Weekly + Monthly VWAP — 주간·월간 VWAP
 var float wCumVol = 0.0, wCumPV = 0.0
 var float mCumVol = 0.0, mCumPV = 0.0
 newWeek  = ta.change(time(&quot;1W&quot;)) != 0
@@ -258,9 +262,9 @@ if barstate.islast
         f_drawVwapZone(band3D, &quot;VWAP -3σ Zone&quot;, false)
 
 </pre>
-<p><b>Part 2</b> — SECTION 2: VOLUME PROFILE</p>
-<button class="btn" data-label="Part 2 복사 (161줄)" onclick="copyCode('code2', this)">Part 2 복사 (161줄)</button>
-<pre id="code2">// ══════════ SECTION 2: VOLUME PROFILE + POC ══════════
+<p><b>Part 3</b> — Volume Profile · POC · VAH/VAL</p>
+<button class="btn" data-label="Part 3 복사 (161줄)" onclick="copyCode('code3', this)">Part 3 복사 (161줄)</button>
+<pre id="code3">// ══════════ SECTION 2: VOLUME PROFILE + POC ══════════
 // 2-1 Rolling Volume Profile — 롤링 거래량 프로파일
 f_calcVP() =&gt;
     float hi = ta.highest(high, vpLookback)
@@ -422,9 +426,9 @@ if barstate.islast
                 array.push(lvnLabels, ll)
 
 </pre>
-<p><b>Part 3</b> — SECTION 3: BUY WALL</p>
-<button class="btn" data-label="Part 3 복사 (125줄)" onclick="copyCode('code3', this)">Part 3 복사 (125줄)</button>
-<pre id="code3">// ══════════ SECTION 3: BUY WALL + SELL WALL ══════════
+<p><b>Part 4</b> — Buy Wall · Sell Wall detection</p>
+<button class="btn" data-label="Part 4 복사 (125줄)" onclick="copyCode('code4', this)">Part 4 복사 (125줄)</button>
+<pre id="code4">// ══════════ SECTION 3: BUY WALL + SELL WALL ══════════
 // 3-1 ~ 3-4 Wall detection, zones, expiry — 매수·매도벽 탐지
 type Wall
     float level
@@ -550,9 +554,9 @@ f_wallNear(float price, float pct, bool wantBuy) =&gt;
     found
 
 </pre>
-<p><b>Part 4</b> — SECTION 4: SUPPORT</p>
-<button class="btn" data-label="Part 4 복사 (234줄)" onclick="copyCode('code4', this)">Part 4 복사 (234줄)</button>
-<pre id="code4">// ══════════ SECTION 4: SUPPORT &amp; RESISTANCE ZONES ══════════
+<p><b>Part 5</b> — Support &amp; Resistance Zones (전체)</p>
+<button class="btn" data-label="Part 5 복사 (234줄)" onclick="copyCode('code5', this)">Part 5 복사 (234줄)</button>
+<pre id="code5">// ══════════ SECTION 4: SUPPORT &amp; RESISTANCE ZONES ══════════
 // 4-1 ~ 4-3 S/R zone detection + classification — 지지·저항 구간 탐지
 type SrZone
     float center
@@ -787,9 +791,9 @@ if barstate.islast
                         array.push(resAbove, z2)
 
 </pre>
-<p><b>Part 5</b> — SECTION 5: WALL PRESSURE</p>
-<button class="btn" data-label="Part 5 복사 (116줄)" onclick="copyCode('code5', this)">Part 5 복사 (116줄)</button>
-<pre id="code5">// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
+<p><b>Part 6</b> — Wall Pressure table (free)</p>
+<button class="btn" data-label="Part 6 복사 (116줄)" onclick="copyCode('code6', this)">Part 6 복사 (116줄)</button>
+<pre id="code6">// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
 // 실제 호가는 Binance/Bybit 무료 API → tradingview_orderbook_feed.py
 // Pine: 매수·매도벽 + S/R 태그만으로 Bid/Ask 압력 추정 (유료 API·랜덤 없음)
 
@@ -906,9 +910,9 @@ if showOrderbook and barstate.islast
   table.cell(obTable, 3, 11, &quot;FREE&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
 
 </pre>
-<p><b>Part 6</b> — SECTION 6: DASHBOARD + ALERTS</p>
-<button class="btn" data-label="Part 6 복사 (149줄)" onclick="copyCode('code6', this)">Part 6 복사 (149줄)</button>
-<pre id="code6">// ══════════ SECTION 6: MASTER DASHBOARD ══════════
+<p><b>Part 7</b> — Dashboard · Signals · Alerts</p>
+<button class="btn" data-label="Part 7 복사 (149줄)" onclick="copyCode('code7', this)">Part 7 복사 (149줄)</button>
+<pre id="code7">// ══════════ SECTION 6: MASTER DASHBOARD ══════════
 // 6 Master dashboard — 통합 대시보드
 f_distPct(float price) =&gt;
     price &gt; 0 ? (close - price) / price * 100.0 : 0.0
@@ -1065,7 +1069,7 @@ function copyCode(id, btn) {
   var el = document.getElementById(id);
   var text = el.textContent;
   function ok() {
-    btn.textContent = '✓ 복사됨 — TradingView Pine Editor에 붙여넣기';
+    btn.textContent = '✓ 복사됨 — Pine Editor 맨 아래에 이어 붙이기';
     btn.classList.add('done');
     setTimeout(function() {
       btn.textContent = btn.dataset.label;
@@ -1074,9 +1078,7 @@ function copyCode(id, btn) {
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(ok).catch(fallback);
-  } else {
-    fallback();
-  }
+  } else { fallback(); }
   function fallback() {
     var ta = document.createElement('textarea');
     ta.value = text;
@@ -1084,7 +1086,8 @@ function copyCode(id, btn) {
     ta.style.left = '-9999px';
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand('copy'); ok(); } catch (e) { alert('복사 실패 — 아래 코드 영역을 길게 눌러 직접 복사하세요.'); }
+    try { document.execCommand('copy'); ok(); }
+    catch (e) { alert('복사 실패 — 코드 영역을 길게 눌러 직접 복사하세요.'); }
     document.body.removeChild(ta);
   }
 }

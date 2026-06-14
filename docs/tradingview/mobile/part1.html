@@ -17,13 +17,14 @@
   .warn { background: #3d1f00; border: 1px solid #9e6a03; padding: 10px; border-radius: 8px;
     font-size: 0.85rem; margin-bottom: 12px; }
   .step { background: #161b22; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+  .sizes { font-size: 0.85rem; color: #8b949e; margin-bottom: 16px; }
 </style>
 </head>
 <body>
-<h1>CPE Engine — Part 1 / 6</h1>
-<div class="warn">Raw GitHub는 모바일에서 한 줄로 보일 수 있습니다. <b>아래 초록 버튼</b>으로 복사하면 줄바꿈이 유지됩니다.</div>
-<p>확인: <code>맨 위 //@version=6 로 시작</code></p>
-<button class="btn" data-label="Part 1 복사 (231줄)" onclick="copyCode('code1', this)">Part 1 복사 (231줄)</button>
+<h1>CPE Engine — Part 1 / 7</h1>
+<div class="warn"><b>복사 버튼</b>으로 줄바꿈 유지. Part 1→7 순서로 <b>이어 붙이기</b>.</div>
+<p>//@version=6 · Inputs · Session VWAP · σ Bands</p>
+<button class="btn" data-label="Part 1 복사 (132줄)" onclick="copyCode('code1', this)">Part 1 복사 (132줄)</button>
 <pre id="code1">//@version=6
 // ══════════════════════════════════════════════════════════════════════════════
 // Crypto Precision Engine — VWAP · POC · Order Book · Support/Resistance Zones
@@ -156,105 +157,6 @@ plot(showVwapBands ? band3U : na, &quot;+3σ&quot;, color=color.new(color.red, 2
 plot(showVwapBands ? band3D : na, &quot;-3σ&quot;, color=color.new(color.lime, 20), linewidth=1)
 fill(pB1U, pB1D, color=color.new(color.blue, 90), title=&quot;±1σ Fill&quot;)
 
-// 1-3 Weekly + Monthly VWAP — 주간·월간 VWAP
-var float wCumVol = 0.0, wCumPV = 0.0
-var float mCumVol = 0.0, mCumPV = 0.0
-newWeek  = ta.change(time(&quot;1W&quot;)) != 0
-newMonth = ta.change(time(&quot;1M&quot;)) != 0
-if newWeek
-    wCumVol := 0.0
-    wCumPV  := 0.0
-if newMonth
-    mCumVol := 0.0
-    mCumPV  := 0.0
-wCumVol += volume
-wCumPV  += tp * volume
-mCumVol += volume
-mCumPV  += tp * volume
-weeklyVwap  = wCumVol &gt; 0 ? wCumPV / wCumVol : tp
-monthlyVwap = mCumVol &gt; 0 ? mCumPV / mCumVol : tp
-
-plot(showWeeklyVwap  ? weeklyVwap  : na, &quot;Weekly VWAP&quot;,  color=color.new(color.purple, 0), linewidth=1, style=plot.style_linebr)
-plot(showMonthlyVwap ? monthlyVwap : na, &quot;Monthly VWAP&quot;, color=color.new(color.orange, 0), linewidth=1, style=plot.style_linebr)
-
-var label wLbl = na
-var label mLbl = na
-if barstate.islast
-    if showWeeklyVwap
-        label.delete(wLbl)
-        wLbl := label.new(bar_index, weeklyVwap, &quot;W-VWAP&quot;, style=label.style_label_left,
-             color=color.new(color.purple, 70), textcolor=color.white, size=size.small)
-    if showMonthlyVwap
-        label.delete(mLbl)
-        mLbl := label.new(bar_index, monthlyVwap, &quot;M-VWAP&quot;, style=label.style_label_left,
-             color=color.new(color.orange, 70), textcolor=color.white, size=size.small)
-
-// 1-4 VWAP Zone touch analysis — VWAP 밴드 존 분석
-f_zoneTouches(float level, float halfH, int lb) =&gt;
-    int touches = 0
-    float touchVol = 0.0
-    int bounces = 0
-    bool broken = false
-    for i = 1 to lb
-        if bar_index &gt;= i
-            float zTop = level + halfH
-            float zBot = level - halfH
-            bool touched = high[i] &gt;= zBot and low[i] &lt;= zTop
-            if touched
-                touches += 1
-                touchVol += volume[i]
-                bool bouncedUp = false
-                bool bouncedDn = false
-                for j = 0 to 2
-                    if i - j &gt;= 0
-                        if close[i - j] &gt; zTop
-                            bouncedUp := true
-                        if close[i - j] &lt; zBot
-                            bouncedDn := true
-                if bouncedUp or bouncedDn
-                    bounces += 1
-            // broken through
-            if close[i] &gt; zTop + halfH or close[i] &lt; zBot - halfH
-                broken := true
-    float strength = touches &gt; 0 ? math.min(100, int(touches * 15 + touchVol / math.max(volMa, 1) * 5)) : 0
-    [touches, bounces, broken, strength]
-
-vwapHalfH = atr14 * vwapZoneAtrMult
-var box[] vwapZoneBoxes = array.new_box()
-var label[] vwapZoneLabels = array.new_label()
-
-f_drawVwapZone(float lvl, string name, bool isUpper) =&gt;
-    if showVwapZones and barstate.islast
-        [tch, bnc, brk, str] = f_zoneTouches(lvl, vwapHalfH, vwapZoneLookback)
-        isSupport = not isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk
-        isResist  = isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk
-        bgCol = brk ? color.new(color.gray, 75) :
-             isSupport ? color.new(color.green, 80) :
-             isResist  ? color.new(color.red, 80) :
-             color.new(color.gray, 90)
-        b = box.new(bar_index - vwapZoneLookback, lvl + vwapHalfH, bar_index + 20, lvl - vwapHalfH,
-             border_color=color.new(color.gray, 60), bgcolor=bgCol, border_width=1)
-        array.push(vwapZoneBoxes, b)
-        lblTxt = name + &quot;\nTouches: &quot; + str.tostring(tch) + &quot;\nStrength: &quot; + str.tostring(str)
-        l = label.new(bar_index + 5, lvl, lblTxt, style=label.style_label_left,
-             color=color.new(color.black, 40), textcolor=color.white, size=size.tiny)
-        array.push(vwapZoneLabels, l)
-
-if barstate.islast
-    for b in vwapZoneBoxes
-        box.delete(b)
-    for l in vwapZoneLabels
-        label.delete(l)
-    array.clear(vwapZoneBoxes)
-    array.clear(vwapZoneLabels)
-    if showVwapZones
-        f_drawVwapZone(band1U, &quot;VWAP +1σ Zone&quot;, true)
-        f_drawVwapZone(band1D, &quot;VWAP -1σ Zone&quot;, false)
-        f_drawVwapZone(band2U, &quot;VWAP +2σ Zone&quot;, true)
-        f_drawVwapZone(band2D, &quot;VWAP -2σ Zone&quot;, false)
-        f_drawVwapZone(band3U, &quot;VWAP +3σ Zone&quot;, true)
-        f_drawVwapZone(band3D, &quot;VWAP -3σ Zone&quot;, false)
-
 </pre>
 
 <script>
@@ -262,7 +164,7 @@ function copyCode(id, btn) {
   var el = document.getElementById(id);
   var text = el.textContent;
   function ok() {
-    btn.textContent = '✓ 복사됨 — TradingView Pine Editor에 붙여넣기';
+    btn.textContent = '✓ 복사됨 — Pine Editor 맨 아래에 이어 붙이기';
     btn.classList.add('done');
     setTimeout(function() {
       btn.textContent = btn.dataset.label;
@@ -271,9 +173,7 @@ function copyCode(id, btn) {
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(ok).catch(fallback);
-  } else {
-    fallback();
-  }
+  } else { fallback(); }
   function fallback() {
     var ta = document.createElement('textarea');
     ta.value = text;
@@ -281,7 +181,8 @@ function copyCode(id, btn) {
     ta.style.left = '-9999px';
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand('copy'); ok(); } catch (e) { alert('복사 실패 — 아래 코드 영역을 길게 눌러 직접 복사하세요.'); }
+    try { document.execCommand('copy'); ok(); }
+    catch (e) { alert('복사 실패 — 코드 영역을 길게 눌러 직접 복사하세요.'); }
     document.body.removeChild(ta);
   }
 }

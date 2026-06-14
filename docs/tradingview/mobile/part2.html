@@ -17,173 +17,112 @@
   .warn { background: #3d1f00; border: 1px solid #9e6a03; padding: 10px; border-radius: 8px;
     font-size: 0.85rem; margin-bottom: 12px; }
   .step { background: #161b22; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+  .sizes { font-size: 0.85rem; color: #8b949e; margin-bottom: 16px; }
 </style>
 </head>
 <body>
-<h1>CPE Engine — Part 2 / 6</h1>
-<div class="warn">Raw GitHub는 모바일에서 한 줄로 보일 수 있습니다. <b>아래 초록 버튼</b>으로 복사하면 줄바꿈이 유지됩니다.</div>
-<p>확인: <code>SECTION 2: VOLUME PROFILE</code></p>
-<button class="btn" data-label="Part 2 복사 (161줄)" onclick="copyCode('code2', this)">Part 2 복사 (161줄)</button>
-<pre id="code2">// ══════════ SECTION 2: VOLUME PROFILE + POC ══════════
-// 2-1 Rolling Volume Profile — 롤링 거래량 프로파일
-f_calcVP() =&gt;
-    float hi = ta.highest(high, vpLookback)
-    float lo = ta.lowest(low, vpLookback)
-    float step = (hi - lo) / vpBins
-    float[] bins = array.new_float(vpBins, 0.0)
-    float totalVol = 0.0
-    for i = 0 to vpLookback - 1
+<h1>CPE Engine — Part 2 / 7</h1>
+<div class="warn"><b>복사 버튼</b>으로 줄바꿈 유지. Part 1→7 순서로 <b>이어 붙이기</b>.</div>
+<p>Weekly/Monthly VWAP · VWAP S/R Zones</p>
+<button class="btn" data-label="Part 2 복사 (99줄)" onclick="copyCode('code2', this)">Part 2 복사 (99줄)</button>
+<pre id="code2">// 1-3 Weekly + Monthly VWAP — 주간·월간 VWAP
+var float wCumVol = 0.0, wCumPV = 0.0
+var float mCumVol = 0.0, mCumPV = 0.0
+newWeek  = ta.change(time(&quot;1W&quot;)) != 0
+newMonth = ta.change(time(&quot;1M&quot;)) != 0
+if newWeek
+    wCumVol := 0.0
+    wCumPV  := 0.0
+if newMonth
+    mCumVol := 0.0
+    mCumPV  := 0.0
+wCumVol += volume
+wCumPV  += tp * volume
+mCumVol += volume
+mCumPV  += tp * volume
+weeklyVwap  = wCumVol &gt; 0 ? wCumPV / wCumVol : tp
+monthlyVwap = mCumVol &gt; 0 ? mCumPV / mCumVol : tp
+
+plot(showWeeklyVwap  ? weeklyVwap  : na, &quot;Weekly VWAP&quot;,  color=color.new(color.purple, 0), linewidth=1, style=plot.style_linebr)
+plot(showMonthlyVwap ? monthlyVwap : na, &quot;Monthly VWAP&quot;, color=color.new(color.orange, 0), linewidth=1, style=plot.style_linebr)
+
+var label wLbl = na
+var label mLbl = na
+if barstate.islast
+    if showWeeklyVwap
+        label.delete(wLbl)
+        wLbl := label.new(bar_index, weeklyVwap, &quot;W-VWAP&quot;, style=label.style_label_left,
+             color=color.new(color.purple, 70), textcolor=color.white, size=size.small)
+    if showMonthlyVwap
+        label.delete(mLbl)
+        mLbl := label.new(bar_index, monthlyVwap, &quot;M-VWAP&quot;, style=label.style_label_left,
+             color=color.new(color.orange, 70), textcolor=color.white, size=size.small)
+
+// 1-4 VWAP Zone touch analysis — VWAP 밴드 존 분석
+f_zoneTouches(float level, float halfH, int lb) =&gt;
+    int touches = 0
+    float touchVol = 0.0
+    int bounces = 0
+    bool broken = false
+    for i = 1 to lb
         if bar_index &gt;= i
-            float c = close[i]
-            float v = volume[i]
-            int idx = step &gt; 0 ? int(math.floor((c - lo) / step)) : 0
-            idx := math.min(math.max(idx, 0), vpBins - 1)
-            array.set(bins, idx, array.get(bins, idx) + v)
-            totalVol += v
-    // POC
-    int pocIdx = 0
-    float maxV = 0.0
-    for j = 0 to vpBins - 1
-        float bv = array.get(bins, j)
-        if bv &gt; maxV
-            maxV := bv
-            pocIdx := j
-    float pocPrice = lo + step * (pocIdx + 0.5)
-    // Value Area
-    float vaVol = array.get(bins, pocIdx)
-    int loIdx = pocIdx
-    int hiIdx = pocIdx
-    float target = totalVol * valueAreaPct / 100.0
-    while vaVol &lt; target and (loIdx &gt; 0 or hiIdx &lt; vpBins - 1)
-        float volBelow = loIdx &gt; 0 ? array.get(bins, loIdx - 1) : 0.0
-        float volAbove = hiIdx &lt; vpBins - 1 ? array.get(bins, hiIdx + 1) : 0.0
-        if volAbove &gt;= volBelow and hiIdx &lt; vpBins - 1
-            hiIdx += 1
-            vaVol += array.get(bins, hiIdx)
-        else if loIdx &gt; 0
-            loIdx -= 1
-            vaVol += array.get(bins, loIdx)
-        else if hiIdx &lt; vpBins - 1
-            hiIdx += 1
-            vaVol += array.get(bins, hiIdx)
-        else
-            break
-    float vah = lo + step * (hiIdx + 1)
-    float val = lo + step * loIdx
-    float pocStrength = totalVol &gt; 0 ? maxV / totalVol * 100.0 : 0.0
-    // HVN top 3 (excluding POC)
-    int[] hvnIdx = array.new_int(3, -1)
-    for rank = 0 to 2
-        float best = 0.0
-        int bestI = -1
-        for j = 0 to vpBins - 1
-            if j != pocIdx
-                float bv = array.get(bins, j)
-                bool already = false
-                for r = 0 to rank - 1
-                    if array.get(hvnIdx, r) == j
-                        already := true
-                if not already and bv &gt; best
-                    best := bv
-                    bestI := j
-        array.set(hvnIdx, rank, bestI)
-    // LVN indices
-    int[] lvnIdx = array.new_int()
-    for j = 0 to vpBins - 1
-        if j != pocIdx and array.get(bins, j) &lt; maxV * 0.2
-            array.push(lvnIdx, j)
-    [pocPrice, vah, val, pocStrength, step, lo, bins, hvnIdx, lvnIdx, pocIdx]
+            float zTop = level + halfH
+            float zBot = level - halfH
+            bool touched = high[i] &gt;= zBot and low[i] &lt;= zTop
+            if touched
+                touches += 1
+                touchVol += volume[i]
+                bool bouncedUp = false
+                bool bouncedDn = false
+                for j = 0 to 2
+                    if i - j &gt;= 0
+                        if close[i - j] &gt; zTop
+                            bouncedUp := true
+                        if close[i - j] &lt; zBot
+                            bouncedDn := true
+                if bouncedUp or bouncedDn
+                    bounces += 1
+            // broken through
+            if close[i] &gt; zTop + halfH or close[i] &lt; zBot - halfH
+                broken := true
+    float strength = touches &gt; 0 ? math.min(100, int(touches * 15 + touchVol / math.max(volMa, 1) * 5)) : 0
+    [touches, bounces, broken, strength]
 
-[poc, vah, val, pocStrength, binStep, binLo, vpBinsArr, hvnIndices, lvnIndices, pocBinIdx] = f_calcVP()
+vwapHalfH = atr14 * vwapZoneAtrMult
+var box[] vwapZoneBoxes = array.new_box()
+var label[] vwapZoneLabels = array.new_label()
 
-pocDistPct = poc &gt; 0 ? (close - poc) / poc * 100.0 : 0.0
-pocDistUsd = close - poc
-pocStrengthLbl = pocStrength &gt; 15 ? &quot;Strong POC&quot; : pocStrength &gt;= 8 ? &quot;Medium POC&quot; : &quot;Weak POC&quot;
-pocStrengthCol = pocStrength &gt; 15 ? #FFD700 : pocStrength &gt;= 8 ? color.yellow : color.gray
-
-// 2-2 POC / VAH / VAL lines — POC·VAH·VAL 라인
-var line pocLine = na
-var line vahLine = na
-var line valLine = na
-var label pocLbl = na
-var label vahLbl = na
-var label valLbl = na
+f_drawVwapZone(float lvl, string name, bool isUpper) =&gt;
+    if showVwapZones and barstate.islast
+        [tch, bnc, brk, str] = f_zoneTouches(lvl, vwapHalfH, vwapZoneLookback)
+        isSupport = not isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk
+        isResist  = isUpper and tch &gt;= 2 and bnc &gt;= 2 and not brk
+        bgCol = brk ? color.new(color.gray, 75) :
+             isSupport ? color.new(color.green, 80) :
+             isResist  ? color.new(color.red, 80) :
+             color.new(color.gray, 90)
+        b = box.new(bar_index - vwapZoneLookback, lvl + vwapHalfH, bar_index + 20, lvl - vwapHalfH,
+             border_color=color.new(color.gray, 60), bgcolor=bgCol, border_width=1)
+        array.push(vwapZoneBoxes, b)
+        lblTxt = name + &quot;\nTouches: &quot; + str.tostring(tch) + &quot;\nStrength: &quot; + str.tostring(str)
+        l = label.new(bar_index + 5, lvl, lblTxt, style=label.style_label_left,
+             color=color.new(color.black, 40), textcolor=color.white, size=size.tiny)
+        array.push(vwapZoneLabels, l)
 
 if barstate.islast
-    line.delete(pocLine)
-    line.delete(vahLine)
-    line.delete(valLine)
-    label.delete(pocLbl)
-    label.delete(vahLbl)
-    label.delete(valLbl)
-    int x1 = bar_index - vpLookback
-    int x2 = bar_index + vpExtend
-    pocLine := line.new(x1, poc, x2, poc, color=color.yellow, style=line.style_dashed, width=2)
-    vahLine := line.new(x1, vah, x2, vah, color=color.green, style=line.style_dotted, width=1)
-    valLine := line.new(x1, val, x2, val, color=color.red, style=line.style_dotted, width=1)
-    pocLbl := label.new(x2, poc, &quot;POC: &quot; + str.tostring(poc, format.mintick), style=label.style_label_left,
-         color=color.new(color.yellow, 50), textcolor=color.black, size=size.small)
-    vahLbl := label.new(x2, vah, &quot;VAH&quot;, style=label.style_label_left,
-         color=color.new(color.green, 60), textcolor=color.white, size=size.tiny)
-    valLbl := label.new(x2, val, &quot;VAL&quot;, style=label.style_label_left,
-         color=color.new(color.red, 60), textcolor=color.white, size=size.tiny)
-
-// 2-3 POC Zone + HVN + LVN — POC 존·HVN·LVN
-pocHalf = atr14 * 0.3
-var box pocBox = na
-var box[] hvnBoxes = array.new_box()
-var label[] hvnLabels = array.new_label()
-var line[] lvnLines = array.new_line()
-var label[] lvnLabels = array.new_label()
-
-if barstate.islast
-    box.delete(pocBox)
-    for b in hvnBoxes
+    for b in vwapZoneBoxes
         box.delete(b)
-    for l in hvnLabels
+    for l in vwapZoneLabels
         label.delete(l)
-    for ln in lvnLines
-        line.delete(ln)
-    for l in lvnLabels
-        label.delete(l)
-    array.clear(hvnBoxes)
-    array.clear(hvnLabels)
-    array.clear(lvnLines)
-    array.clear(lvnLabels)
-
-    pocBox := box.new(bar_index - vpLookback, poc + pocHalf, bar_index + vpExtend, poc - pocHalf,
-         bgcolor=color.new(color.yellow, 80), border_color=color.new(color.orange, 50),
-         text=&quot;최고 거래 밀집 구간&quot;, text_size=size.tiny)
-
-    if showHvn
-        for rank = 0 to 2
-            int hIdx = array.get(hvnIndices, rank)
-            if hIdx &gt;= 0
-                float hPrice = binLo + binStep * (hIdx + 0.5)
-                float hTop = binLo + binStep * (hIdx + 1)
-                float hBot = binLo + binStep * hIdx
-                box hb = box.new(bar_index - vpLookback, hTop, bar_index + vpExtend, hBot,
-                     bgcolor=color.new(color.yellow, 85), border_width=0)
-                array.push(hvnBoxes, hb)
-                label hl = label.new(bar_index + vpExtend, hPrice, &quot;HVN &quot; + str.tostring(rank + 1),
-                     style=label.style_label_left, color=color.new(color.yellow, 50),
-                     textcolor=color.black, size=size.tiny)
-                array.push(hvnLabels, hl)
-
-    if showLvn
-        int lvnCount = array.size(lvnIndices)
-        int maxLvn = math.min(lvnCount, 8)
-        for i = 0 to maxLvn - 1
-            int lIdx = array.get(lvnIndices, i)
-            float lPrice = binLo + binStep * (lIdx + 0.5)
-            line ln = line.new(bar_index - vpLookback, lPrice, bar_index + vpExtend, lPrice,
-                 color=color.gray, style=line.style_dashed, width=1)
-            array.push(lvnLines, ln)
-            if i &lt; 3
-                label ll = label.new(bar_index + vpExtend, lPrice, &quot;LVN — Fast Move Zone&quot;,
-                     style=label.style_label_left, color=color.new(color.gray, 60),
-                     textcolor=color.white, size=size.tiny)
-                array.push(lvnLabels, ll)
+    array.clear(vwapZoneBoxes)
+    array.clear(vwapZoneLabels)
+    if showVwapZones
+        f_drawVwapZone(band1U, &quot;VWAP +1σ Zone&quot;, true)
+        f_drawVwapZone(band1D, &quot;VWAP -1σ Zone&quot;, false)
+        f_drawVwapZone(band2U, &quot;VWAP +2σ Zone&quot;, true)
+        f_drawVwapZone(band2D, &quot;VWAP -2σ Zone&quot;, false)
+        f_drawVwapZone(band3U, &quot;VWAP +3σ Zone&quot;, true)
+        f_drawVwapZone(band3D, &quot;VWAP -3σ Zone&quot;, false)
 
 </pre>
 
@@ -192,7 +131,7 @@ function copyCode(id, btn) {
   var el = document.getElementById(id);
   var text = el.textContent;
   function ok() {
-    btn.textContent = '✓ 복사됨 — TradingView Pine Editor에 붙여넣기';
+    btn.textContent = '✓ 복사됨 — Pine Editor 맨 아래에 이어 붙이기';
     btn.classList.add('done');
     setTimeout(function() {
       btn.textContent = btn.dataset.label;
@@ -201,9 +140,7 @@ function copyCode(id, btn) {
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(ok).catch(fallback);
-  } else {
-    fallback();
-  }
+  } else { fallback(); }
   function fallback() {
     var ta = document.createElement('textarea');
     ta.value = text;
@@ -211,7 +148,8 @@ function copyCode(id, btn) {
     ta.style.left = '-9999px';
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand('copy'); ok(); } catch (e) { alert('복사 실패 — 아래 코드 영역을 길게 눌러 직접 복사하세요.'); }
+    try { document.execCommand('copy'); ok(); }
+    catch (e) { alert('복사 실패 — 코드 영역을 길게 눌러 직접 복사하세요.'); }
     document.body.removeChild(ta);
   }
 }

@@ -17,128 +17,247 @@
   .warn { background: #3d1f00; border: 1px solid #9e6a03; padding: 10px; border-radius: 8px;
     font-size: 0.85rem; margin-bottom: 12px; }
   .step { background: #161b22; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+  .sizes { font-size: 0.85rem; color: #8b949e; margin-bottom: 16px; }
 </style>
 </head>
 <body>
-<h1>CPE Engine — Part 5 / 6</h1>
-<div class="warn">Raw GitHub는 모바일에서 한 줄로 보일 수 있습니다. <b>아래 초록 버튼</b>으로 복사하면 줄바꿈이 유지됩니다.</div>
-<p>확인: <code>SECTION 5: WALL PRESSURE</code></p>
-<button class="btn" data-label="Part 5 복사 (116줄)" onclick="copyCode('code5', this)">Part 5 복사 (116줄)</button>
-<pre id="code5">// ══════════ SECTION 5: WALL PRESSURE (무료·캔들 기반) ══════════
-// 실제 호가는 Binance/Bybit 무료 API → tradingview_orderbook_feed.py
-// Pine: 매수·매도벽 + S/R 태그만으로 Bid/Ask 압력 추정 (유료 API·랜덤 없음)
+<h1>CPE Engine — Part 5 / 7</h1>
+<div class="warn"><b>복사 버튼</b>으로 줄바꿈 유지. Part 1→7 순서로 <b>이어 붙이기</b>.</div>
+<p>Support &amp; Resistance Zones (전체)</p>
+<button class="btn" data-label="Part 5 복사 (234줄)" onclick="copyCode('code5', this)">Part 5 복사 (234줄)</button>
+<pre id="code5">// ══════════ SECTION 4: SUPPORT &amp; RESISTANCE ZONES ══════════
+// 4-1 ~ 4-3 S/R zone detection + classification — 지지·저항 구간 탐지
+type SrZone
+    float center
+    float top
+    float bot
+    int   touches
+    int   bullBounce
+    int   bearReject
+    bool  isSupport
+    float avgVol
 
-f_wallSizeAt(float price, float pct) =&gt;
-    float sz = 0.0
-    for w in walls
-        if not w.broken and math.abs(w.level - price) / price * 100.0 &lt; pct
-            sz += w.vol / math.max(volMa, 1) * 50.0
-    sz
+var float[] pivotPrices = array.new_float()
+var bool[]  pivotIsHigh  = array.new_bool()
 
-f_obTag(float price, bool isAsk) =&gt;
-    string tag = &quot;&quot;
-    if isAsk
-        if f_wallNear(price, 0.3, false)
-            tag += &quot;SW🧱 &quot;
-        if not na(nearMajorRes) and math.abs(price - nearMajorRes) / price * 100.0 &lt; 0.3
-            tag += &quot;MR🔴 &quot;
-        if math.abs(price - band2U) / price * 100.0 &lt; 0.3
-            tag += &quot;V+2σ &quot;
-    else
-        if f_wallNear(price, 0.3, true)
-            tag += &quot;BW🧱 &quot;
-        if not na(nearMajorSup) and math.abs(price - nearMajorSup) / price * 100.0 &lt; 0.3
-            tag += &quot;MS🟢 &quot;
-        if math.abs(price - poc) / price * 100.0 &lt; 0.3
-            tag += &quot;POC⭐ &quot;
-        if math.abs(price - band1D) / price * 100.0 &lt; 0.3
-            tag += &quot;V-1σ &quot;
-    tag
+ph = ta.pivothigh(high, pivotLeft, pivotRight)
+pl = ta.pivotlow(low, pivotLeft, pivotRight)
 
-// 매 바 Bid/Ask 압력 (벽 기반만 — 테이블 꺼져도 대시보드·시그널 동작)
-float bidTotal = 0.0
-float askTotal = 0.0
-float imbRatio = 1.0
-float spacing = atr14 * obAtrSpacing
-for n = 1 to obLevels
-    askTotal += f_wallSizeAt(close + spacing * n, 0.25)
-    bidTotal += f_wallSizeAt(close - spacing * n, 0.25)
-for w in walls
-    if not w.broken
-        if w.isBuy
-            bidTotal += w.vol / math.max(volMa, 1) * 10.0
+if confirmed and not na(ph)
+    array.push(pivotPrices, ph)
+    array.push(pivotIsHigh, true)
+if confirmed and not na(pl)
+    array.push(pivotPrices, pl)
+    array.push(pivotIsHigh, false)
+
+// trim old pivots
+while array.size(pivotPrices) &gt; 50
+    array.shift(pivotPrices)
+    array.shift(pivotIsHigh)
+
+f_buildZones() =&gt;
+    SrZone[] zones = array.new&lt;SrZone&gt;()
+    float clusterR = atr14 * clusterAtrMult
+    int pSize = array.size(pivotPrices)
+    bool[] used = array.new_bool(pSize, false)
+    for i = 0 to pSize - 1
+        if not array.get(used, i)
+            float pc = array.get(pivotPrices, i)
+            bool isH = array.get(pivotIsHigh, i)
+            float sumP = pc
+            int cnt = 1
+            int hiCnt = isH ? 1 : 0
+            int loCnt = isH ? 0 : 1
+            array.set(used, i, true)
+            for j = i + 1 to pSize - 1
+                if not array.get(used, j)
+                    float pj = array.get(pivotPrices, j)
+                    if math.abs(pj - pc) &lt;= clusterR
+                        sumP += pj
+                        cnt += 1
+                        if array.get(pivotIsHigh, j)
+                            hiCnt += 1
+                        else
+                            loCnt += 1
+                        array.set(used, j, true)
+            float center = sumP / cnt
+            float halfZ = atr14 * 0.3
+            // count touches in lookback
+            int tch = 0
+            int bull = 0
+            int bear = 0
+            float tVol = 0.0
+            for k = 0 to srLookback - 1
+                if bar_index &gt;= k
+                    if high[k] &gt;= center - halfZ and low[k] &lt;= center + halfZ
+                        tch += 1
+                        tVol += volume[k]
+                        bool bUp = false
+                        bool bDn = false
+                        for m = 0 to 2
+                            if k - m &gt;= 0
+                                if close[k - m] &gt; center + halfZ
+                                    bUp := true
+                                if close[k - m] &lt; center - halfZ
+                                    bDn := true
+                        if bUp
+                            bull += 1
+                        if bDn
+                            bear += 1
+            float avgV = tch &gt; 0 ? tVol / tch : 0.0
+            bool sup = loCnt &gt;= hiCnt
+            SrZone z = SrZone.new(center, center + halfZ, center - halfZ, tch, bull, bear, sup, avgV)
+            if tch &gt;= minTouches
+                array.push(zones, z)
+    zones
+
+SrZone[] srZones = f_buildZones()
+
+// Per-bar major zone levels for alerts / 알림용 대형 구간 가격
+float nearMajorSup = na
+float nearMajorRes = na
+float nearSupNet   = na
+float nearResNet   = na
+for z in srZones
+    float netSup = z.touches &gt; 0 ? z.bullBounce * 100.0 / z.touches : 0.0
+    float netRes = z.touches &gt; 0 ? z.bearReject * 100.0 / z.touches : 0.0
+    bool majorSup = netSup &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2
+    bool majorRes = netRes &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2
+    if majorSup and z.center &lt; close and (na(nearMajorSup) or z.center &gt; nearMajorSup)
+        nearMajorSup := z.center
+        nearSupNet := netSup
+    if majorRes and z.center &gt; close and (na(nearMajorRes) or z.center &lt; nearMajorRes)
+        nearMajorRes := z.center
+        nearResNet := netRes
+
+var box[]   srBoxes  = array.new_box()
+var label[] srLabels = array.new_label()
+var line[]  distLines = array.new_line()
+var label[] distLabels = array.new_label()
+
+if barstate.islast
+    for b in srBoxes
+        box.delete(b)
+    for l in srLabels
+        label.delete(l)
+    for ln in distLines
+        line.delete(ln)
+    for l in distLabels
+        label.delete(l)
+    array.clear(srBoxes)
+    array.clear(srLabels)
+    array.clear(distLines)
+    array.clear(distLabels)
+
+    SrZone[] supBelow = array.new&lt;SrZone&gt;()
+    SrZone[] resAbove = array.new&lt;SrZone&gt;()
+
+    for z in srZones
+        float netSup = z.touches &gt; 0 ? z.bullBounce * 100.0 / z.touches : 0.0
+        float netRes = z.touches &gt; 0 ? z.bearReject * 100.0 / z.touches : 0.0
+        bool majorSup = netSup &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2
+        bool minorSup = netSup &gt;= 50 and z.touches &gt;= 2 and not majorSup
+        bool majorRes = netRes &gt;= 70 and z.touches &gt;= 3 and z.avgVol &gt; volMa * 2
+        bool minorRes = netRes &gt;= 50 and z.touches &gt;= 2 and not majorRes
+        bool neutral  = netSup &gt;= 40 and netSup &lt;= 60 and not majorSup and not majorRes
+
+        if showMajorOnly and not majorSup and not majorRes
+            continue
+
+        color bg = color.new(color.gray, 92)
+        string txt = &quot;&quot;
+        int bWidth = 1
+        if majorSup and z.center &lt; close
+            bg := color.new(color.lime, 75)
+            txt := &quot;🟢 Major Support | 순지지: &quot; + str.tostring(netSup, &quot;#.#&quot;) + &quot;% | Touches: &quot; + str.tostring(z.touches)
+            bWidth := 3
+        else if minorSup and z.center &lt; close
+            bg := color.new(color.green, 88)
+            txt := &quot;Minor Support | 순지지: &quot; + str.tostring(netSup, &quot;#.#&quot;) + &quot;%&quot;
+        else if majorRes and z.center &gt; close
+            bg := color.new(color.red, 75)
+            txt := &quot;🔴 Major Resistance | 순저항: &quot; + str.tostring(netRes, &quot;#.#&quot;) + &quot;% | Touches: &quot; + str.tostring(z.touches)
+            bWidth := 3
+        else if minorRes and z.center &gt; close
+            bg := color.new(color.red, 88)
+            txt := &quot;Minor Resistance | 순저항: &quot; + str.tostring(netRes, &quot;#.#&quot;) + &quot;%&quot;
+        else if neutral
+            bg := color.new(color.gray, 92)
+            txt := &quot;Neutral Zone | S: &quot; + str.tostring(netSup, &quot;#.#&quot;) + &quot;% / R: &quot; + str.tostring(netRes, &quot;#.#&quot;) + &quot;%&quot;
         else
-            askTotal += w.vol / math.max(volMa, 1) * 10.0
-imbRatio := askTotal &gt; 0 ? bidTotal / askTotal : 1.0
+            continue
 
-f_sizeBar(float sz, float maxSz) =&gt;
-    int blocks = int(math.round(sz / math.max(maxSz, 1) * 8))
-    string s = &quot;&quot;
-    for i = 0 to 7
-        s += i &lt; blocks ? &quot;█&quot; : &quot;░&quot;
-    s
+        box sb = box.new(bar_index - srLookback, z.top, bar_index + 30, z.bot,
+             bgcolor=bg, border_width=bWidth)
+        array.push(srBoxes, sb)
+        label sl = label.new(bar_index + 5, z.center, txt, style=label.style_label_left,
+             color=color.new(color.black, 50), textcolor=color.white, size=size.tiny)
+        array.push(srLabels, sl)
 
-var table obTable = na
+        if z.center &lt; close
+            array.push(supBelow, z)
+        else
+            array.push(resAbove, z)
 
-tblPos(pos) =&gt;
-    pos == &quot;top_left&quot; ? position.top_left :
-     pos == &quot;bottom_right&quot; ? position.bottom_right :
-     pos == &quot;bottom_left&quot; ? position.bottom_left : position.top_right
+    // 4-3 Distance labels — 거리 라벨
+    if showDistLabels
+        // nearest 3 support below
+        for n = 0 to 2
+            float bestD = na
+            float bestC = na
+            int bestT = 0
+            int bestB = 0
+            for z in supBelow
+                float d = (close - z.center) / close * 100.0
+                if d &gt; 0 and (na(bestD) or d &lt; bestD)
+                    bestD := d
+                    bestC := z.center
+                    bestT := z.touches
+                    bestB := z.bullBounce
+            if not na(bestC)
+                float ns = bestT &gt; 0 ? bestB * 100.0 / bestT : 0.0
+                bool isMaj = ns &gt;= 70 and bestT &gt;= 3
+                string dTxt = &quot;↓ &quot; + str.tostring(bestD, &quot;#.##&quot;) + &quot;% to &quot; + (isMaj ? &quot;Major&quot; : &quot;Minor&quot;) + &quot; Support&quot;
+                line dl = line.new(bar_index, close, bar_index, bestC,
+                     color=color.new(color.green, 30), style=line.style_dotted)
+                label dll = label.new(bar_index + 2, (close + bestC) / 2, dTxt,
+                     style=label.style_label_left, color=color.new(color.green, 60),
+                     textcolor=color.white, size=isMaj ? size.small : size.tiny)
+                array.push(distLines, dl)
+                array.push(distLabels, dll)
+                array.clear(supBelow)
+                for z2 in srZones
+                    if z2.center &lt; close and z2.center != bestC
+                        array.push(supBelow, z2)
 
-tblSz(sz) =&gt;
-    sz == &quot;tiny&quot; ? size.tiny : sz == &quot;normal&quot; ? size.normal : size.small
-
-if showOrderbook and barstate.islast
-  if na(obTable)
-    obTable := table.new(position.bottom_right, 4, 12, border_width=1)
-  else
-    table.clear(obTable, 0, 0, 3, 11)
-
-  table.cell(obTable, 0, 0, &quot;Price&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 1, 0, &quot;Wall&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 2, 0, &quot;Lvl&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 3, 0, &quot;Tag&quot;, bgcolor=color.gray, text_color=color.white, text_size=size.tiny)
-
-  float maxSz = math.max(math.max(bidTotal, askTotal), 1.0)
-
-  for n = obLevels to 1
-    int row = obLevels - n + 1
-    float askP = close + spacing * n
-    float sz = f_wallSizeAt(askP, 0.25)
-    string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
-    string bar = f_sizeBar(sz, maxSz)
-    string tags = f_obTag(askP, true)
-    bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
-    table.cell(obTable, 0, row, str.tostring(askP, format.mintick), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 3, row, &quot;ASK &quot; + tags, bgcolor=color.new(color.red, highlight ? 20 : 60), text_size=size.tiny)
-
-  table.cell(obTable, 0, 6, str.tostring(close, format.mintick), bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
-  table.cell(obTable, 1, 6, &quot;▶ CURRENT&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
-  table.cell(obTable, 2, 6, &quot;—&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
-  table.cell(obTable, 3, 6, &quot;캔들·벽 기반&quot;, bgcolor=color.yellow, text_color=color.black, text_size=size.tiny)
-
-  for n = 1 to obLevels
-    int row = 6 + n
-    float bidP = close - spacing * n
-    float sz = f_wallSizeAt(bidP, 0.25)
-    string szTxt = sz &gt; 0 ? &quot;WALL 🧱&quot; : &quot;—&quot;
-    string bar = f_sizeBar(sz, maxSz)
-    string tags = f_obTag(bidP, false)
-    bool highlight = sz &gt; 0 or str.length(tags) &gt; 0
-    table.cell(obTable, 0, row, str.tostring(bidP, format.mintick), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 1, row, szTxt + &quot; &quot; + bar, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 2, row, str.tostring(n), bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
-    table.cell(obTable, 3, row, &quot;BID &quot; + tags, bgcolor=color.new(color.green, highlight ? 20 : 60), text_size=size.tiny)
-
-  string imbTxt = imbRatio &gt; 1.5 ? &quot;📈 BID (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; :
-       imbRatio &lt; 0.67 ? &quot;📉 ASK (&quot; + str.tostring(imbRatio, &quot;#.#&quot;) + &quot;x)&quot; : &quot;⚖ BALANCED&quot;
-  color imbCol = imbRatio &gt; 1.5 ? color.green : imbRatio &lt; 0.67 ? color.red : color.gray
-  table.cell(obTable, 0, 11, &quot;Wall Imb&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
-  table.cell(obTable, 1, 11, str.tostring(bidTotal, &quot;#.#&quot;) + &quot;/&quot; + str.tostring(askTotal, &quot;#.#&quot;), bgcolor=color.new(color.black, 30), text_size=size.tiny)
-  table.cell(obTable, 2, 11, imbTxt, bgcolor=color.new(imbCol, 50), text_color=color.white, text_size=size.tiny)
-  table.cell(obTable, 3, 11, &quot;FREE&quot;, bgcolor=color.new(color.black, 30), text_size=size.tiny)
+        for n = 0 to 2
+            float bestD = na
+            float bestC = na
+            int bestT = 0
+            int bestBr = 0
+            for z in resAbove
+                float d = (z.center - close) / close * 100.0
+                if d &gt; 0 and (na(bestD) or d &lt; bestD)
+                    bestD := d
+                    bestC := z.center
+                    bestT := z.touches
+                    bestBr := z.bearReject
+            if not na(bestC)
+                float nr = bestT &gt; 0 ? bestBr * 100.0 / bestT : 0.0
+                bool isMaj = nr &gt;= 70 and bestT &gt;= 3
+                string dTxt = &quot;↑ &quot; + str.tostring(bestD, &quot;#.##&quot;) + &quot;% to &quot; + (isMaj ? &quot;Major&quot; : &quot;Minor&quot;) +
+                     &quot; Resistance (순저항 &quot; + str.tostring(nr, &quot;#.#&quot;) + &quot;%)&quot;
+                line dl = line.new(bar_index, close, bar_index, bestC,
+                     color=color.new(color.red, 30), style=line.style_dotted)
+                label dll = label.new(bar_index + 2, (close + bestC) / 2, dTxt,
+                     style=label.style_label_left, color=color.new(color.red, 60),
+                     textcolor=color.white, size=isMaj ? size.small : size.tiny)
+                array.push(distLines, dl)
+                array.push(distLabels, dll)
+                array.clear(resAbove)
+                for z2 in srZones
+                    if z2.center &gt; close and z2.center != bestC
+                        array.push(resAbove, z2)
 
 </pre>
 
@@ -147,7 +266,7 @@ function copyCode(id, btn) {
   var el = document.getElementById(id);
   var text = el.textContent;
   function ok() {
-    btn.textContent = '✓ 복사됨 — TradingView Pine Editor에 붙여넣기';
+    btn.textContent = '✓ 복사됨 — Pine Editor 맨 아래에 이어 붙이기';
     btn.classList.add('done');
     setTimeout(function() {
       btn.textContent = btn.dataset.label;
@@ -156,9 +275,7 @@ function copyCode(id, btn) {
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(ok).catch(fallback);
-  } else {
-    fallback();
-  }
+  } else { fallback(); }
   function fallback() {
     var ta = document.createElement('textarea');
     ta.value = text;
@@ -166,7 +283,8 @@ function copyCode(id, btn) {
     ta.style.left = '-9999px';
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand('copy'); ok(); } catch (e) { alert('복사 실패 — 아래 코드 영역을 길게 눌러 직접 복사하세요.'); }
+    try { document.execCommand('copy'); ok(); }
+    catch (e) { alert('복사 실패 — 코드 영역을 길게 눌러 직접 복사하세요.'); }
     document.body.removeChild(ta);
   }
 }

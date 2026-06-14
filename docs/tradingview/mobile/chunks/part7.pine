@@ -1,0 +1,149 @@
+// ══════════ SECTION 6: MASTER DASHBOARD ══════════
+// 6 Master dashboard — 통합 대시보드
+f_distPct(float price) =>
+    price > 0 ? (close - price) / price * 100.0 : 0.0
+
+f_session() =>
+    int h = hour(time, "UTC")
+    h >= 0 and h < 8 ? "Asian" : h >= 8 and h < 16 ? "London" : h >= 16 and h < 22 ? "New York" : "Off-hours"
+
+vwapSlope = sessionVwap - sessionVwap[5]
+trendTxt  = vwapSlope > 0 ? "↑ Bullish VWAP" : vwapSlope < 0 ? "↓ Bearish VWAP" : "→ Flat VWAP"
+volRatio  = volMa > 0 ? volume / volMa : 1.0
+volRatioTxt = str.tostring(volRatio, "#.#") + "x" + (volRatio > 2.5 ? " 🔥" : "")
+
+nearSupPct = not na(nearMajorSup) ? (close - nearMajorSup) / close * 100.0 : na
+nearResPct = not na(nearMajorRes) ? (nearMajorRes - close) / close * 100.0 : na
+priceNearSup = not na(nearMajorSup) and math.abs(close - nearMajorSup) / close * 100.0 < 1.5
+priceNearRes = not na(nearMajorRes) and math.abs(nearMajorRes - close) / close * 100.0 < 1.5
+
+longSetup  = close > sessionVwap and priceNearSup and imbRatio > 1.5 and volRatio > 2.0
+shortSetup = close < sessionVwap and priceNearRes and imbRatio < 0.67 and volRatio > 2.0
+signalTxt  = longSetup ? "LONG SETUP 🟢" : shortSetup ? "SHORT SETUP 🔴" : "NEUTRAL ⚪"
+
+// — Flip-only triggers (Zeiierman-style: fire once on setup onset, not every bar)
+flipLong  = longSetup and not longSetup[1]
+flipShort = shortSetup and not shortSetup[1]
+var int lastEntryBar = na
+barOK     = confirmed
+coolOK    = na(lastEntryBar) or bar_index - lastEntryBar >= sigCoolBars
+triggerLong  = flipLong and coolOK and barOK
+triggerShort = flipShort and coolOK and barOK
+if triggerLong or triggerShort
+    lastEntryBar := bar_index
+
+// — Chart markers at recent swing low/high (absolute placement)
+placeBuy  = ta.lowest(low, 5)
+placeSell = ta.highest(high, 5)
+plotshape(showMarks and triggerLong ? placeBuy : na, "Long", shape.triangleup, location.absolute, sigBull, size=size.tiny)
+plotshape(showMarks and triggerShort ? placeSell : na, "Short", shape.triangledown, location.absolute, sigBear, size=size.tiny)
+plotshape(showMarks and triggerLong ? placeBuy : na, "Long Glow", shape.triangleup, location.absolute, color.new(sigBull, 50), size=size.small)
+plotshape(showMarks and triggerShort ? placeSell : na, "Short Glow", shape.triangledown, location.absolute, color.new(sigBear, 50), size=size.small)
+
+var table dash = na
+if showDashboard and barstate.islast
+  if na(dash)
+    dash := table.new(tblPos(dashPosition), 2, 16, border_width=1)
+  else
+    table.clear(dash, 0, 0, 1, 15)
+
+  sz = tblSz(tableSize)
+  vwapDist = f_distPct(sessionVwap)
+  vwapArrow = vwapDist >= 0 ? "▲" : "▼"
+  vwapCol = vwapDist >= 0 ? color.green : color.red
+
+  table.cell(dash, 0, 0, "VWAP", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 0, str.tostring(sessionVwap, format.mintick) + " (" + str.tostring(vwapDist, "#.##") + "% " + vwapArrow + ")",
+       text_size=sz, text_color=vwapCol)
+
+  table.cell(dash, 0, 1, "W-VWAP", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 1, str.tostring(weeklyVwap, format.mintick) + " (" + str.tostring(f_distPct(weeklyVwap), "#.##") + "%)",
+       text_size=sz)
+
+  table.cell(dash, 0, 2, "M-VWAP", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 2, str.tostring(monthlyVwap, format.mintick) + " (" + str.tostring(f_distPct(monthlyVwap), "#.##") + "%)",
+       text_size=sz)
+
+  table.cell(dash, 0, 3, "POC", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 3, str.tostring(poc, format.mintick) + " " + str.tostring(pocDistPct, "#.##") + "% | " +
+       pocStrengthLbl + " (" + str.tostring(pocStrength, "#.#") + "%)", text_size=sz, text_color=pocStrengthCol)
+
+  table.cell(dash, 0, 4, "VAH", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 4, str.tostring(vah, format.mintick) + " (+" + str.tostring((vah - close) / close * 100.0, "#.##") + "% above)", text_size=sz)
+
+  table.cell(dash, 0, 5, "VAL", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 5, str.tostring(val, format.mintick) + " (-" + str.tostring((close - val) / close * 100.0, "#.##") + "% below)", text_size=sz)
+
+  table.cell(dash, 0, 6, "Buy Walls", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 6, str.tostring(activeBuyWalls) + " active | Nearest: " +
+       (na(nearestBw) ? "—" : str.tostring(nearestBw, format.mintick)), text_size=sz, text_color=color.lime)
+
+  table.cell(dash, 0, 7, "Sell Walls", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 7, str.tostring(activeSellWalls) + " active | Nearest: " +
+       (na(nearestSw) ? "—" : str.tostring(nearestSw, format.mintick)), text_size=sz, text_color=color.red)
+
+  table.cell(dash, 0, 8, "Major Sup", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 8, na(nearMajorSup) ? "—" : "↓" + str.tostring(nearSupPct, "#.##") + "% | 순지지 " +
+       str.tostring(nearSupNet, "#.#") + "%", text_size=sz, text_color=color.lime)
+
+  table.cell(dash, 0, 9, "Major Res", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 9, na(nearMajorRes) ? "—" : "↑" + str.tostring(nearResPct, "#.##") + "% | 순저항 " +
+       str.tostring(nearResNet, "#.#") + "%", text_size=sz, text_color=color.red)
+
+  table.cell(dash, 0, 10, "Vol Ratio", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 10, volRatioTxt, text_size=sz, text_color=volRatio > 2.5 ? color.orange : color.white)
+
+  table.cell(dash, 0, 11, "Wall Imb", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 11, str.tostring(imbRatio, "#.##") + "x", text_size=sz,
+       text_color=imbRatio > 1.5 ? color.green : imbRatio < 0.67 ? color.red : color.gray)
+
+  table.cell(dash, 0, 12, "Session", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 12, f_session(), text_size=sz)
+
+  table.cell(dash, 0, 13, "Trend", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 13, trendTxt, text_size=sz, text_color=vwapSlope >= 0 ? color.green : color.red)
+
+  table.cell(dash, 0, 14, "ATR", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 14, str.tostring(atr14, format.mintick) + " (" + str.tostring(atr14 / close * 100.0, "#.##") + "%)", text_size=sz)
+
+  table.cell(dash, 0, 15, "Signal", text_size=sz, bgcolor=color.new(color.black, 30), text_color=color.white)
+  table.cell(dash, 1, 15, signalTxt, text_size=sz,
+       text_color=longSetup ? color.lime : shortSetup ? color.red : color.gray)
+
+// ══════════ SECTION 7: ALERTS ══════════
+// 7 Alert conditions — 알림 조건
+crossAboveVwap = ta.crossover(close, sessionVwap)
+crossBelowVwap = ta.crossunder(close, sessionVwap)
+inPocZone      = math.abs(close - poc) <= atr14 * 0.3
+buyWallDet     = buyCond
+sellWallDet    = sellCond
+inMajorSup     = not na(nearMajorSup) and low <= nearMajorSup + atr14 * 0.3 and high >= nearMajorSup - atr14 * 0.3
+inMajorRes     = not na(nearMajorRes) and low <= nearMajorRes + atr14 * 0.3 and high >= nearMajorRes - atr14 * 0.3
+strongBidImb   = imbRatio > 2.0
+strongAskImb   = imbRatio < 0.5
+
+alertcondition(crossAboveVwap,  "VWAP Cross Above",  "Price crossed above Session VWAP")
+alertcondition(crossBelowVwap,  "VWAP Cross Below",  "Price crossed below Session VWAP")
+alertcondition(inPocZone,       "POC Zone Entry",    "Price entered POC Zone")
+alertcondition(buyWallDet,      "Buy Wall Detected", "Buy Wall detected")
+alertcondition(sellWallDet,     "Sell Wall Detected","Sell Wall detected")
+alertcondition(buyWallBroken,   "Buy Wall Broken",   "Buy Wall BROKEN")
+alertcondition(sellWallBroken,  "Sell Wall Broken",  "Sell Wall BROKEN")
+alertcondition(inMajorSup,      "Major Support",     "Price entered Major Support Zone")
+alertcondition(inMajorRes,      "Major Resistance",  "Price entered Major Resistance Zone")
+alertcondition(strongBidImb,    "Strong Bid Pressure","Bid/Ask imbalance > 2.0")
+alertcondition(strongAskImb,    "Strong Ask Pressure","Bid/Ask imbalance < 0.5")
+alertcondition(triggerLong,     "LONG SETUP",        "CPE: Composite LONG setup flip (confirmed bar)")
+alertcondition(triggerShort,    "SHORT SETUP",       "CPE: Composite SHORT setup flip (confirmed bar)")
+alertcondition(triggerLong or triggerShort, "Any Setup Signal", "CPE: New LONG or SHORT setup flip")
+
+// — Dynamic alert() with ticker + timeframe (fires once per confirmed bar)
+if confirmed
+    if triggerLong
+        alert("🟢 LONG  |  " + syminfo.ticker + " (" + timeframe.period + ")  VWAP+Sup+Imb+Vol", alert.freq_once_per_bar_close)
+    if triggerShort
+        alert("🔴 SHORT |  " + syminfo.ticker + " (" + timeframe.period + ")  VWAP+Res+Imb+Vol", alert.freq_once_per_bar_close)
+    if crossAboveVwap
+        alert("▲ VWAP Cross Above  |  " + syminfo.ticker + " (" + timeframe.period + ")", alert.freq_once_per_bar_close)
+    if crossBelowVwap
+        alert("▼ VWAP Cross Below  |  " + syminfo.ticker + " (" + timeframe.period + ")", alert.freq_once_per_bar_close)
