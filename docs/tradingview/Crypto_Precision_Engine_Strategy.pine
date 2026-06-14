@@ -1,0 +1,182 @@
+//@version=5
+// ══════════════════════════════════════════════════════════════════════════════
+// CPE Honest Strategy — 정직한 백테스트 전략 (BTC/ETH)
+// 승률을 "표시"하지 않고 strategy() 통계로만 검증합니다.
+// 리페인팅 없음 · 확정 봉 진입 · 수수료·슬리피지 반영
+// ══════════════════════════════════════════════════════════════════════════════
+strategy(
+     title="CPE Honest Strategy [BTC/ETH] — No Repaint",
+     shorttitle="CPE Strategy",
+     overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=10,
+     commission_type=strategy.commission.percent,
+     commission_value=0.04,
+     slippage=2,
+     process_orders_on_close=true,
+     calc_on_order_fills=true,
+     pyramiding=0,
+     max_bars_back=500)
+
+// ── 입력 ──────────────────────────────────────────────────────────────────────
+groupF = "🎯 진입 엄격도 (높을수록 신호↓ 승률↑ 경향)"
+minScore    = input.int(4, "Min Confluence Score (1-5)", minval=3, maxval=5, group=groupF)
+zonePct     = input.float(0.8, "S/R Zone Distance %", minval=0.2, maxval=2.0, step=0.1, group=groupF)
+volMult     = input.float(1.8, "Volume > MA ×", minval=1.0, step=0.1, group=groupF)
+imbLong     = input.float(1.4, "Long Wall Imbalance >", minval=1.0, step=0.1, group=groupF)
+imbShort    = input.float(0.72, "Short Wall Imbalance <", minval=0.3, step=0.05, group=groupF)
+pocStrongMin= input.float(10.0, "Min POC Strength %", minval=5.0, group=groupF)
+
+groupR = "💰 손익 (TP 작을수록 승률↑ · R:R↓)"
+slAtrMult   = input.float(1.2, "Stop Loss × ATR", minval=0.5, step=0.1, group=groupR)
+tpAtrMult   = input.float(0.65, "Take Profit × ATR", minval=0.3, step=0.05, group=groupR,
+     tooltip="TP < SL 이면 승률은 올라가나 1회 손실이 커질 수 있음")
+useTrail    = input.bool(false, "ATR Trailing Stop", group=groupR)
+
+groupS = "📊 표시"
+showStats   = input.bool(true, "Show Honest Stats Table", group=groupS)
+showMarks   = input.bool(true, "Show Entry Marks", group=groupS)
+
+// ── 핵심 계산 (확정 데이터만) ─────────────────────────────────────────────────
+atr14  = ta.atr(14)
+volMa  = ta.sma(volume, 20)
+confirmed = barstate.isconfirmed
+
+// Session VWAP
+var float sCumVol = 0.0, sCumPV = 0.0
+if ta.change(time("D")) != 0
+    sCumVol := 0.0
+    sCumPV  := 0.0
+sCumVol += volume
+sCumPV  += hlc3 * volume
+sessionVwap = sCumVol > 0 ? sCumPV / sCumVol : hlc3
+vwapBull = close > sessionVwap and sessionVwap > sessionVwap[3]
+vwapBear = close < sessionVwap and sessionVwap < sessionVwap[3]
+
+// POC (lightweight VP — 100 bars × 24 bins)
+vpLb = 100
+vpN  = 24
+f_poc() =>
+    float hi = ta.highest(high, vpLb)
+    float lo = ta.lowest(low, vpLb)
+    float step = (hi - lo) / vpN
+    float[] bins = array.new_float(vpN, 0.0)
+    float tot = 0.0
+    for i = 0 to vpLb - 1
+        if bar_index >= i
+            int idx = step > 0 ? int(math.floor((close[i] - lo) / step)) : 0
+            idx := math.min(math.max(idx, 0), vpN - 1)
+            float v = volume[i]
+            array.set(bins, idx, array.get(bins, idx) + v)
+            tot += v
+    int pIdx = 0
+    float mx = 0.0
+    for j = 0 to vpN - 1
+        float b = array.get(bins, j)
+        if b > mx
+            mx := b
+            pIdx := j
+    float pocP = lo + step * (pIdx + 0.5)
+    float str = tot > 0 ? mx / tot * 100.0 : 0.0
+    [pocP, str]
+
+[poc, pocStr] = f_poc()
+nearPoc = math.abs(close - poc) / close * 100.0 <= zonePct * 0.5
+
+// Pivot S/R (confirmed pivots only — no repaint)
+pl = ta.pivotlow(low, 8, 8)
+ph = ta.pivothigh(high, 8, 8)
+var float lastSup = na
+var float lastRes = na
+if confirmed and not na(pl)
+    lastSup := pl
+if confirmed and not na(ph)
+    lastRes := ph
+
+nearSup = not na(lastSup) and math.abs(close - lastSup) / close * 100.0 <= zonePct and close >= lastSup
+nearRes = not na(lastRes) and math.abs(close - lastRes) / close * 100.0 <= zonePct and close <= lastRes
+
+// Buy/Sell wall imbalance (candle-based, same bar only)
+bigLw = low < open - (high - low) * 0.5
+bigUw = high > open + (high - low) * 0.5
+buyWall  = confirmed and volume > volMa * 2.5 and (close >= open or bigLw) and close < sessionVwap
+sellWall = confirmed and volume > volMa * 2.5 and (close <= open or bigUw) and close > sessionVwap
+var float bidP = 0.0
+var float askP = 0.0
+bidP := bidP * 0.98
+askP := askP * 0.98
+if buyWall
+    bidP += volume
+if sellWall
+    askP += volume
+imb = askP > 0 ? bidP / askP : 1.0
+
+// Confluence score 1~5
+longScore  = (vwapBull ? 1 : 0) + (nearSup or nearPoc ? 1 : 0) + (volume > volMa * volMult ? 1 : 0) +
+     (imb > imbLong ? 1 : 0) + (pocStr >= pocStrongMin ? 1 : 0)
+shortScore = (vwapBear ? 1 : 0) + (nearRes or nearPoc ? 1 : 0) + (volume > volMa * volMult ? 1 : 0) +
+     (imb < imbShort ? 1 : 0) + (pocStr >= pocStrongMin ? 1 : 0)
+
+longSig  = confirmed and longScore >= minScore and strategy.position_size <= 0
+shortSig = confirmed and shortScore >= minScore and strategy.position_size >= 0
+
+// ── 주문 (봉 마감 체결 — process_orders_on_close) ───────────────────────────
+slDist = atr14 * slAtrMult
+tpDist = atr14 * tpAtrMult
+
+if longSig
+    strategy.entry("L", strategy.long)
+if shortSig
+    strategy.entry("S", strategy.short)
+
+if strategy.position_size > 0
+    if useTrail
+        strategy.exit("L-exit", "L", trail_offset=slDist, trail_points=slDist / syminfo.mintick)
+    else
+        strategy.exit("L-exit", "L", stop=strategy.position_avg_price - slDist,
+             limit=strategy.position_avg_price + tpDist)
+if strategy.position_size < 0
+    if useTrail
+        strategy.exit("S-exit", "S", trail_offset=slDist, trail_points=slDist / syminfo.mintick)
+    else
+        strategy.exit("S-exit", "S", stop=strategy.position_avg_price + slDist,
+             limit=strategy.position_avg_price - tpDist)
+
+// ── 시각화 ────────────────────────────────────────────────────────────────────
+plot(sessionVwap, "VWAP", color=close >= sessionVwap ? color.green : color.red, linewidth=2)
+plot(poc, "POC", color=color.yellow, linewidth=1, style=plot.style_circles)
+plotshape(showMarks and longSig, "Long", shape.triangleup, location.belowbar, color.lime, size=size.small)
+plotshape(showMarks and shortSig, "Short", shape.triangledown, location.abovebar, color.red, size=size.small)
+
+// ── 정직한 통계 테이블 (TradingView strategy 탭과 동일 소스) ─────────────────
+closed   = strategy.closedtrades
+wins     = strategy.wintrades
+winRate  = closed > 0 ? wins / closed * 100.0 : na
+pf       = strategy.grossloss != 0 ? strategy.grossprofit / math.abs(strategy.grossloss) : na
+avgTrade = closed > 0 ? strategy.netprofit / closed : na
+
+var table st = table.new(position.bottom_left, 2, 8, border_width=1)
+if showStats and barstate.islast
+    table.cell(st, 0, 0, "CPE Honest Stats", bgcolor=color.black, text_color=color.white, text_size=size.small)
+    table.cell(st, 1, 0, "실측 백테스트", bgcolor=color.black, text_color=color.gray, text_size=size.tiny)
+    table.cell(st, 0, 1, "Closed Trades", text_size=size.tiny)
+    table.cell(st, 1, 1, str.tostring(closed), text_size=size.tiny)
+    table.cell(st, 0, 2, "Win Rate", text_size=size.tiny)
+    wrCol = na(winRate) ? color.gray : winRate >= 60 ? color.lime : winRate >= 50 ? color.yellow : color.red
+    table.cell(st, 1, 2, na(winRate) ? "—" : str.tostring(winRate, "#.##") + "%",
+         text_color=wrCol, text_size=size.small)
+    table.cell(st, 0, 3, "Profit Factor", text_size=size.tiny)
+    table.cell(st, 1, 3, na(pf) ? "—" : str.tostring(pf, "#.##"), text_size=size.tiny)
+    table.cell(st, 0, 4, "Net Profit", text_size=size.tiny)
+    table.cell(st, 1, 4, str.tostring(strategy.netprofit, "#.##"), text_size=size.tiny)
+    table.cell(st, 0, 5, "Max DD", text_size=size.tiny)
+    table.cell(st, 1, 5, str.tostring(strategy.max_drawdown, "#.##"), text_size=size.tiny)
+    table.cell(st, 0, 6, "Avg / Trade", text_size=size.tiny)
+    table.cell(st, 1, 6, na(avgTrade) ? "—" : str.tostring(avgTrade, "#.##"), text_size=size.tiny)
+    table.cell(st, 0, 7, "Note", text_size=size.tiny)
+    table.cell(st, 1, 7, "과거≠미래 · 기간/TF마다 다름", text_color=color.orange, text_size=size.tiny)
+
+// 알림
+alertcondition(longSig,  "CPE Long",  "CPE Honest Long entry")
+alertcondition(shortSig, "CPE Short", "CPE Honest Short entry")
