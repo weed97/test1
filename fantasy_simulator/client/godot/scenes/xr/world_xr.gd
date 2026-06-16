@@ -176,6 +176,7 @@ func _update_hud() -> void:
 	_hud.text = "CPoW XR · %s · 모드: %s · NRG: %.1f · 오브젝트: %d" % [
 		xr_label, mode, _energy_total, _object_nodes.size(),
 	]
+	$CanvasLayer/ApiLabel.text = "API: %s" % ApiConfig.base_url()
 
 
 func _log_append(text: String) -> void:

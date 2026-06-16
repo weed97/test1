@@ -119,6 +119,14 @@ offset_bottom = 120.0
 theme_override_colors/font_color = Color(0.75, 0.78, 0.85, 1)
 text = "클릭/트리거=창조 · 1=열 2=재료 · Q/E=회전 · T=텔레포트 · Esc=메뉴"
 
+[node name="ApiLabel" type="Label" parent="CanvasLayer"]
+offset_left = 16.0
+offset_top = 124.0
+offset_right = 900.0
+offset_bottom = 148.0
+theme_override_colors/font_color = Color(0.55, 0.75, 0.95, 1)
+text = "API: …"
+
 [node name="Log" type="RichTextLabel" parent="CanvasLayer"]
 offset_left = 16.0
 offset_top = 520.0
