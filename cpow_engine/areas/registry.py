@@ -12,6 +12,7 @@ from cpow_engine.areas.diplomacy import (
 )
 from cpow_engine.areas.governance import GovernanceLedger, GovernancePolicy
 from cpow_engine.areas.governance_eligibility import validate_governance_area_eligibility
+from cpow_engine.areas.member_identity import MemberIdentityRegistry
 from cpow_engine.areas.system_runtime import SystemRuntime
 from cpow_engine.areas.modes import SimulationMode
 from cpow_engine.areas.roles import ContributorRole
@@ -24,8 +25,10 @@ class AreaRegistry:
         self._areas: dict[str, CreatedArea] = {}
         self.diplomacy: DiplomacyLedger = DiplomacyLedger()
         self.system_runtime = SystemRuntime()
+        resolved_policy = governance_policy or GovernancePolicy()
+        self.identity = MemberIdentityRegistry(resolved_policy.identity)
         self.governance = GovernanceLedger(
-            governance_policy,
+            resolved_policy,
             runtime=self.system_runtime,
             on_enact=self._on_system_enacted,
         )
@@ -213,6 +216,61 @@ class AreaRegistry:
             allied_home_area=home,
         )
 
+    def register_member_identity(self, user_id: str, person_key: str) -> dict:
+        result = self.identity.register(user_id, person_key)
+        out = {
+            "ok": result.ok,
+            "reason": result.reason,
+        }
+        if result.codes:
+            out["codes"] = list(result.codes)
+        if result.binding is not None:
+            out["identity"] = result.binding.to_public_dict()
+        return out
+
+    def member_identity_status(self, user_id: str) -> dict:
+        binding = self.identity.binding_for(user_id)
+        return {
+            "ok": True,
+            "verified": binding is not None,
+            "identity": binding.to_public_dict() if binding else None,
+        }
+
+    def _proposal_participant_ids(self, proposal) -> set[str]:
+        return (
+            set(proposal.composers)
+            | set(proposal.cosponsors)
+            | set(proposal.approvals)
+            | set(proposal.rejections)
+        )
+
+    def _validate_governance_participant(
+        self,
+        area_id: str,
+        user_id: str,
+        *,
+        proposal=None,
+    ) -> dict:
+        id_check = self.identity.validate_for_governance(user_id)
+        if not id_check.ok:
+            return {
+                "ok": False,
+                "reason": id_check.reason,
+                "codes": list(id_check.codes),
+            }
+        if proposal is not None:
+            conflict = self.identity.proposal_person_conflict(
+                user_id,
+                self._proposal_participant_ids(proposal),
+            )
+            if not conflict.ok:
+                return {
+                    "ok": False,
+                    "reason": conflict.reason,
+                    "codes": list(conflict.codes),
+                }
+        return self._validate_governance_standing(area_id, user_id)
+
     def refresh_governance_powers(self) -> None:
         for area in self._areas.values():
             for uid, powers in area.power_ledger.members.items():
@@ -260,7 +318,7 @@ class AreaRegistry:
         area_id: str = "",
     ) -> dict:
         self.refresh_governance_powers()
-        standing = self._validate_governance_standing(area_id, author_id)
+        standing = self._validate_governance_participant(area_id, author_id)
         if not standing["ok"]:
             return standing
         result = self.governance.draft_proposal(
@@ -277,7 +335,9 @@ class AreaRegistry:
         proposal = self.governance.get_proposal(proposal_id)
         if proposal is None:
             return {"ok": False, "reason": "proposal_not_found", "proposal_id": proposal_id}
-        standing = self._validate_governance_standing(proposal.origin_area_id, user_id)
+        standing = self._validate_governance_participant(
+            proposal.origin_area_id, user_id, proposal=proposal,
+        )
         if not standing["ok"]:
             return standing
         return self._governance_response(
@@ -289,7 +349,9 @@ class AreaRegistry:
         proposal = self.governance.get_proposal(proposal_id)
         if proposal is None:
             return {"ok": False, "reason": "proposal_not_found", "proposal_id": proposal_id}
-        standing = self._validate_governance_standing(proposal.origin_area_id, user_id)
+        standing = self._validate_governance_participant(
+            proposal.origin_area_id, user_id, proposal=proposal,
+        )
         if not standing["ok"]:
             return standing
         return self._governance_response(
@@ -304,6 +366,14 @@ class AreaRegistry:
         approve: bool,
     ) -> dict:
         self.refresh_governance_powers()
+        proposal = self.governance.get_proposal(proposal_id)
+        if proposal is None:
+            return {"ok": False, "reason": "proposal_not_found", "proposal_id": proposal_id}
+        standing = self._validate_governance_participant(
+            proposal.origin_area_id, user_id, proposal=proposal,
+        )
+        if not standing["ok"]:
+            return standing
         result = self.governance.vote(proposal_id, user_id, approve=approve)
         return self._governance_response(result)
 
@@ -328,6 +398,7 @@ class AreaRegistry:
             "enacted": self.governance.enacted_systems(),
             "runtime_rules": self.system_runtime.merged_rules().to_dict(),
             "runtime_enacted": self.system_runtime.enacted_systems(),
+            "identity_verified_count": self.identity.verified_count(),
         }
 
     def _governance_response(self, result) -> dict:

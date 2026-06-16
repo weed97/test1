@@ -83,6 +83,8 @@ from api.cpow_areas import (
     handle_governance_vote,
     handle_governance_tick,
     handle_governance_state,
+    handle_identity_register,
+    handle_identity_status,
 )
 
 API_VERSION = 1
@@ -1123,6 +1125,16 @@ def governance_tick() -> dict[str, Any]:
 @app.get("/v1/governance/state")
 def governance_state() -> dict[str, Any]:
     return handle_governance_state()
+
+
+@app.post("/v1/identity/register")
+def identity_register(body: dict[str, Any]) -> dict[str, Any]:
+    return handle_identity_register(body)
+
+
+@app.get("/v1/identity/status")
+def identity_status(user_id: str) -> dict[str, Any]:
+    return handle_identity_status(user_id)
 
 
 @app.get("/v1/areas/list")

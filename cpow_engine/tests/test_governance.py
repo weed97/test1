@@ -15,6 +15,7 @@ from cpow_engine.areas.governance_eligibility import (
     make_long_flow_spec,
     validate_long_flow_proposal,
 )
+from cpow_engine.areas.member_identity import IdentityPolicy
 from cpow_engine.areas.powers import UserPowers
 from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas import SimulationMode
@@ -48,6 +49,13 @@ def _test_living_area_policy() -> LivingAreaPolicy:
     )
 
 
+def _test_identity_policy() -> IdentityPolicy:
+    return IdentityPolicy(
+        require_verified=True,
+        min_person_key_chars=4,
+    )
+
+
 def _test_policy() -> GovernancePolicy:
     return GovernancePolicy(
         min_composers=3,
@@ -59,6 +67,7 @@ def _test_policy() -> GovernancePolicy:
         max_sponsor_share=0.5,
         long_flow=_test_long_flow_policy(),
         living_area=_test_living_area_policy(),
+        identity=_test_identity_policy(),
     )
 
 
@@ -100,6 +109,11 @@ def _destroyer(uid: str) -> UserPowers:
     )
 
 
+def _register_identities(reg: AreaRegistry, *user_ids: str) -> None:
+    for uid in user_ids:
+        reg.register_member_identity(uid, f"person_secret_{uid}")
+
+
 def _seed_living_area(area: CreatedArea) -> None:
     """인간 공동창작 활동 — 모든 구성원이 창조·합의에 참여."""
     instant = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
@@ -138,6 +152,8 @@ def _registry_with_members(n: int) -> tuple[AreaRegistry, CreatedArea]:
             powers = area.power_ledger.get_or_create(uid)
             powers.creation_gauge = max(powers.creation_gauge, 120.0)
     _seed_living_area(area)
+    humans = [uid for uid in area.members if uid not in area.npcs]
+    _register_identities(reg, *humans)
     return reg, area
 
 
@@ -163,6 +179,41 @@ class TestLongFlowEligibility(unittest.TestCase):
         self.assertTrue(result.ok, result.codes)
 
 
+class TestMemberIdentity(unittest.TestCase):
+    def test_unverified_identity_blocks_draft(self) -> None:
+        reg, area = _registry_with_members(4)
+        reg.identity._bindings.clear()
+        reg.identity._person_to_user.clear()
+        reg.identity._user_to_person.clear()
+        draft = reg.draft_system_proposal(
+            "user_1",
+            kind="custom",
+            title="커스텀 시스템 규칙",
+            spec=make_long_flow_spec(
+                "운영 규칙을 단계적으로 정립하고 전체 공지 절차를 따른다.",
+                _flow_steps(3),
+            ),
+            area_id=area.area_id,
+        )
+        self.assertFalse(draft["ok"])
+        self.assertEqual(draft["reason"], "identity_not_verified")
+
+    def test_one_person_one_account(self) -> None:
+        reg = AreaRegistry(governance_policy=_test_policy())
+        first = reg.register_member_identity("alice", "same_person_key_1234")
+        self.assertTrue(first["ok"], first.get("reason"))
+        second = reg.register_member_identity("alice_bot", "same_person_key_1234")
+        self.assertFalse(second["ok"])
+        self.assertEqual(second["reason"], "duplicate_person_account")
+
+    def test_one_account_one_person(self) -> None:
+        reg = AreaRegistry(governance_policy=_test_policy())
+        reg.register_member_identity("bob", "person_alpha_key_1234")
+        rebound = reg.register_member_identity("bob", "person_beta_key_5678")
+        self.assertFalse(rebound["ok"])
+        self.assertEqual(rebound["reason"], "account_identity_locked")
+
+
 class TestLivingAreaEligibility(unittest.TestCase):
     def test_inactive_area_blocks_governance(self) -> None:
         reg = AreaRegistry(governance_policy=_test_policy())
@@ -170,6 +221,7 @@ class TestLivingAreaEligibility(unittest.TestCase):
         reg.join(area.area_id, "alice")
         reg.join(area.area_id, "bob")
         reg.governance.sync_member("alice", _creator("alice"))
+        _register_identities(reg, "alice")
         draft = reg.draft_system_proposal(
             "alice",
             kind="custom",
@@ -190,6 +242,7 @@ class TestLivingAreaEligibility(unittest.TestCase):
         reg.join(area.area_id, "alice")
         reg.join(area.area_id, "bob")
         reg.governance.sync_member("alice", _creator("alice"))
+        _register_identities(reg, "alice")
         assert area.activity is not None
         area.activity.record_human_creation("alice", invested=20.0)
         area.activity.record_human_creation("bob", invested=20.0)

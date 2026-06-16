@@ -427,3 +427,14 @@ def handle_governance_tick() -> dict[str, Any]:
 
 def handle_governance_state() -> dict[str, Any]:
     return _registry.governance_state()
+
+
+def handle_identity_register(payload: dict[str, Any]) -> dict[str, Any]:
+    return _registry.register_member_identity(
+        str(payload.get("user_id", "")),
+        str(payload.get("person_key", "")),
+    )
+
+
+def handle_identity_status(user_id: str) -> dict[str, Any]:
+    return _registry.member_identity_status(user_id)

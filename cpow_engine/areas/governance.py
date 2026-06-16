@@ -22,6 +22,7 @@ from cpow_engine.areas.governance_eligibility import (
     drafting_duration_ok,
     validate_long_flow_proposal,
 )
+from cpow_engine.areas.member_identity import IdentityPolicy
 from cpow_engine.areas.powers import UserPowers
 
 
@@ -63,6 +64,7 @@ class GovernancePolicy:
     proposal_ttl_sec: float = 86_400.0
     long_flow: LongFlowPolicy = field(default_factory=LongFlowPolicy)
     living_area: LivingAreaPolicy = field(default_factory=LivingAreaPolicy)
+    identity: IdentityPolicy = field(default_factory=IdentityPolicy)
 
     def approvals_needed(self, eligible_voters: int) -> int:
         if eligible_voters <= 0:
@@ -86,6 +88,7 @@ class GovernancePolicy:
             "proposal_ttl_sec": self.proposal_ttl_sec,
             "long_flow": self.long_flow.to_dict(),
             "living_area": self.living_area.to_dict(),
+            "identity": self.identity.to_dict(),
         }
 
 

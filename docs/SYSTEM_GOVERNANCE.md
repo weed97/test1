@@ -86,6 +86,25 @@
 
 활동은 `AreaActivityTracker`가 창조 확정·합의 투표·펄스 공동창작 시 자동 기록합니다.
 
+## 1인 1계정 신원 검증
+
+시스템 거버넌스(발의·구성·공동발의·투표)는 **신원 등록된 계정**만 참여할 수 있습니다.
+
+### 등록
+
+```bash
+POST /v1/identity/register  {"user_id","person_key"}
+GET  /v1/identity/status?user_id=...
+```
+
+- `person_key`: 외부 신원·실명 인증 등에서 파생한 **유일 키** (서버에는 해시만 저장)
+- **1인 1계정**: 동일 `person_key`로 두 번째 계정 등록 → `duplicate_person_account`
+- **1계정 1인**: 이미 등록된 계정이 다른 `person_key`로 재등록 → `account_identity_locked`
+- 미등록 계정의 거버넌스 시도 → `identity_not_verified`
+- 동일 인물의 복수 계정이 같은 발의에 참여 → `duplicate_person_in_proposal`
+
+거버넌스 참여 순서 권장: **신원 등록 → 에리어 공동창작 → 긴 흐름 발의**
+
 ## 투표권
 
 **창조력 > 파괴력** 인 구성원만 투표 가능:
@@ -145,6 +164,7 @@ GET  /v1/governance/state
 cpow_engine/areas/governance.py
 cpow_engine/areas/governance_eligibility.py   # 긴 흐름·에리어 생태 검증
 cpow_engine/areas/area_activity.py            # 인간 창작·공동창작 활동 기록
+cpow_engine/areas/member_identity.py         # 1인 1계정 신원
 cpow_engine/areas/system_runtime.py   # 런타임 집행
 cpow_engine/areas/registry.py
 ```

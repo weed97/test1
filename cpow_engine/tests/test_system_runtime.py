@@ -9,6 +9,7 @@ from cpow_engine.areas.governance_eligibility import (
     LongFlowPolicy,
     make_long_flow_spec,
 )
+from cpow_engine.areas.member_identity import IdentityPolicy
 from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas.system_runtime import SystemRuntime
 from cpow_engine.collab.policy import CollabPolicy
@@ -40,6 +41,7 @@ def _runtime_governance_policy() -> GovernancePolicy:
             min_member_creation_invested=5.0,
             min_member_collab_signals=1,
         ),
+        identity=IdentityPolicy(require_verified=True, min_person_key_chars=4),
     )
 
 
@@ -187,6 +189,9 @@ class TestGovernanceEnactmentWiresRuntime(unittest.TestCase):
                 p.creation_gauge = max(p.creation_gauge, 120.0)
 
         _seed_living_area(area)
+        for uid in area.members:
+            if uid not in area.npcs:
+                reg.register_member_identity(uid, f"person_secret_{uid}")
 
         draft = reg.draft_system_proposal(
             "u1",
