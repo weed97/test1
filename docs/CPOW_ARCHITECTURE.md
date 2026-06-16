@@ -97,12 +97,25 @@
 
 ## 확장 로드맵
 
-- [x] L1 프로토콜 레퍼런스 구현 (`cpow_engine/chain/`)
-- [x] Genesis 블록 스키마 (`cpow_engine/config/genesis.json`)
-- [ ] Cosmos SDK `x/cpow` 모듈 마이그레이션
-- [ ] `fantasy_simulator` 어댑터 (`state["cpow"]` 샤드)
-- [ ] `sungjwa_hunter_sim` 어댑터 (ChaosRNG ↔ CPoW entropy)
+**원칙: 엔진 우선, 블록체인은 은행.** → [CPOW_ROADMAP.md](CPOW_ROADMAP.md)
+
+### Phase 1 — 시뮬레이션 엔진 (최우선)
+- [x] 물리 정의 엔진 (`cpow_engine/physics/`)
+- [x] CPoW 환산 (`cpow_engine/cpow/`)
+- [x] 공유 상태 동기화 (`cpow_engine/shared_state/`)
+- [ ] `fantasy_simulator` / Godot 실시간 연동
+- [ ] `sungjwa_hunter_sim` 어댑터
+
+### Phase 2 — CPoW 가치화 정교화
+- [ ] 봇 취약점 시뮬레이션·가중치 튜닝
 - [ ] JSON 스키마 검증 (`config/cpow_schema.json`)
-- [ ] 네트워크 전송 프로토콜 (WebSocket 패치 스트림)
+
+### Phase 3 — 브릿지 (엔진 완성 후)
+- [x] L1 레퍼런스 (`cpow_engine/chain/`, `bridge.py`)
+- [ ] 프로덕션 브릿지 연동
+
+### Phase 4 — L1 프로토콜 (선택·후순위)
+- [x] Genesis 스키마 (`cpow_engine/config/genesis.json`)
+- [ ] Cosmos SDK `x/cpow` 또는 롤업 (가치 모델 검증 후)
 
 → L1 상세: [L1_PROTOCOL_ARCHITECTURE.md](L1_PROTOCOL_ARCHITECTURE.md)

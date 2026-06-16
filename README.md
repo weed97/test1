@@ -54,3 +54,4 @@ python3 -m unittest discover -s cpow_engine/tests -v
 - 에이전트 가이드: [`AGENTS.md`](AGENTS.md)
 - 아키텍처 상세: [`docs/CPOW_ARCHITECTURE.md`](docs/CPOW_ARCHITECTURE.md)
 - L1 프로토콜: [`docs/L1_PROTOCOL_ARCHITECTURE.md`](docs/L1_PROTOCOL_ARCHITECTURE.md)
+- **개발 로드맵**: [`docs/CPOW_ROADMAP.md`](docs/CPOW_ROADMAP.md) — 엔진 우선, 블록체인은 은행

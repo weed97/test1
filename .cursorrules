@@ -21,10 +21,12 @@
 
 ## L1 설계 원칙
 
+- **엔진 우선**: 시뮬레이션·CPoW 가치화 완성 전 L1 착수 금지
+- **블록체인 = 은행**: 게임을 돌리지 않음, 가치만 저장·검증
 - **하이브리드**: Off-chain = 물리 연산, On-chain = 진실(Truth)만
-- **Genesis 유전자**: 열역학 법칙 + 초기 신뢰 점수를 함께 기록
-- **Rollup**: 오프체인 틱 배치 → Merkle root L1 제출로 가스 최적화
-- **프로덕션**: Cosmos SDK / Substrate로 마이그레이션 (현재는 Python 레퍼런스)
+- **Rollup**: 오프체인 틱 배치 → Merkle root L1 제출
+- **Cosmos SDK**: PoS와 괴리 있음. 쓸 경우 `x/cpow` 커스텀 + ABCI 주입
+- **로드맵**: `docs/CPOW_ROADMAP.md` 참조
 
 ## 구현 지침
 

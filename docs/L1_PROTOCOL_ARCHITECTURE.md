@@ -121,14 +121,31 @@ cpow_engine/chain/
 
 현재 `cpow_engine/chain/`은 **Python 레퍼런스 구현** (stdlib only, 테스트·프로토타입용).
 
-프로덕션 L1 전환 시 권장 프레임워크:
+> **중요**: L1 프로덕션 착수는 Phase 1–2(시뮬레이션 엔진 + CPoW 가치화) 완성 **후**에 진행한다.  
+> 블록체인은 게임 엔진이 아니라 가치를 저장하는 **은행**이다.  
+> → 상세 로드맵: [CPOW_ROADMAP.md](CPOW_ROADMAP.md)
 
-| 프레임워크 | 장점 | CPoW 모듈 위치 |
-|-----------|------|----------------|
-| **Cosmos SDK** | Tendermint 합의 검증됨 | `x/cpow` 커스텀 모듈 |
-| **Substrate** | 모듈형 런타임 | `pallet-cpow` |
+### Cosmos SDK가 "안 맞는" 이유
 
-### Cosmos SDK 마이그레이션 단계
+Cosmos SDK는 PoS·자산 이동에 최적화. CPoW(창조성·복잡도 검증)와는 기본 철학이 다름.  
+그러나 **CometBFT + 커스텀 ABCI(`x/cpow`)** 로 뜯어고치면 소버린 체인으로는 유효.
+
+| 괴리 | Cosmos 기본 | CPoW 필요 |
+|------|------------|-----------|
+| 검증 대상 | Stake(지분) | 창조성·fingerprint |
+| 상태 확정 | 블록 단위 | 실시간 물리(오프체인) |
+| 핵심 모듈 | `x/staking` | `x/cpow` (신규) |
+
+### 프레임워크 선택 (Phase 4)
+
+| 전략 | 적합한 경우 |
+|------|------------|
+| **A: Cosmos SDK + x/cpow** | 완전한 소버린 체인, IBC, 독자 경제권 |
+| **B: 롤업 (OP Stack / Orbit)** | 빠른 MVP, ETH 생태계, Solidity 팀 |
+
+**현재 권장**: 어느 쪽도 지금 시작하지 않음. 엔진·CPoW 로직 먼저.
+
+### Cosmos SDK 마이그레이션 (Phase 4 착수 시)
 
 1. `genesis.json` → Cosmos `genesis.json`의 `app_state.cpow` 섹션
 2. `CreationRegistry` → `MsgRegisterCreation` + `Keeper`
