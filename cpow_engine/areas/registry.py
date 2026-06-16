@@ -285,6 +285,8 @@ class AreaRegistry:
             "phase": result.phase,
             "enacted": result.enacted,
         }
+        if getattr(result, "codes", None):
+            out["codes"] = list(result.codes)
         if result.proposal_id:
             proposal = self.governance.get_proposal(result.proposal_id)
             if proposal:

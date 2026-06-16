@@ -4,11 +4,44 @@ import unittest
 
 from cpow_engine.areas import SimulationMode
 from cpow_engine.areas.governance import EnactedSystem, GovernancePolicy, SystemProposalKind
+from cpow_engine.areas.governance_eligibility import LongFlowPolicy, make_long_flow_spec
 from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas.system_runtime import SystemRuntime
 from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.physics import create_heat_object
 from cpow_engine.tests.area_helpers import create_with_consensus, confirmed_object
+
+
+def _runtime_governance_policy() -> GovernancePolicy:
+    return GovernancePolicy(
+        min_composers=2,
+        min_cosponsors=3,
+        announcement_sec=0.0,
+        long_flow=LongFlowPolicy(
+            min_flow_steps=3,
+            min_rationale_chars=30,
+            min_step_description_chars=15,
+            min_title_chars=4,
+            min_drafting_sec=0.0,
+            min_composer_spread_sec=0.0,
+            min_complexity_score=1.0,
+        ),
+    )
+
+
+def _macro_flow_spec(**extra) -> dict:
+    steps = [
+        {"label": "관찰", "description": "봇 탐지 지표와 신고 채널을 설계하고 기록한다."},
+        {"label": "설계", "description": "rate limit과 창조 간격을 단계별로 정의한다."},
+        {"label": "시범", "description": "소규모 에리어에서 시범 적용한다."},
+        {"label": "전면", "description": "전역 적용 전 최종 합의 절차를 밟는다."},
+    ]
+    rationale = "매크로 봇이 단순 창조로 생태계를 교란하지 못하도록 단계적 방어를 둔다."
+    return make_long_flow_spec(
+        rationale,
+        steps,
+        extra={"creations_per_window": 1, "window_sec": 3600.0, **extra},
+    )
 
 
 def _enact_macro(runtime: SystemRuntime) -> None:
@@ -102,11 +135,7 @@ class TestCreativeDestructionRuntime(unittest.TestCase):
 
 class TestGovernanceEnactmentWiresRuntime(unittest.TestCase):
     def test_vote_enactment_applies_runtime(self) -> None:
-        policy = GovernancePolicy(
-            min_composers=2,
-            min_cosponsors=3,
-            announcement_sec=0.0,
-        )
+        policy = _runtime_governance_policy()
         reg = AreaRegistry(governance_policy=policy)
         area = reg.found("aria", "월드", mode=SimulationMode.CREATION_ADVENTURE)
         for i in range(5):
@@ -120,8 +149,8 @@ class TestGovernanceEnactmentWiresRuntime(unittest.TestCase):
         draft = reg.draft_system_proposal(
             "u1",
             kind="macro_bot_defense",
-            title="봇 방지",
-            spec={"creations_per_window": 1, "window_sec": 3600.0},
+            title="봇 방지 시스템",
+            spec=_macro_flow_spec(),
         )
         pid = draft["proposal_id"]
         reg.sign_system_composer(pid, "u2")

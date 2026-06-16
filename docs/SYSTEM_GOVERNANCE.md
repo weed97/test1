@@ -12,7 +12,8 @@
 ## 발의 단계
 
 ```
-1. 초안 (drafting)     — 100+ 창조자 구성 (composer 서명)
+0. 자격 검증           — 긴 흐름 창작만 허용 (단순 spec·봇형 발의 차단)
+1. 초안 (drafting)     — 100+ 창조자 구성 (composer 서명, 최소 기간·시간 분산)
 2. 공동발의 (cosponsoring) — 1000+ 구성원 cosponsor
 3. 전체 공지 (announced)   — 모든 유저에게 공지
 4. 투표 (voting)       — 찬성/반대
@@ -20,6 +21,42 @@
 ```
 
 테스트·소규모 환경에서는 `GovernancePolicy`로 임계값을 낮출 수 있습니다.
+
+## 긴 흐름 창작만 허용 (봇·단순 창작 차단)
+
+거버넌스에 들어가려면 `spec`에 **긴 흐름**이 포함되어야 합니다.  
+`{rate_limit: 10}` 같은 단순 키-값만 있으면 `simple_creation_blocked` 로 거부됩니다.
+
+필수 요소 (`LongFlowPolicy` 기본값):
+
+| 항목 | 기본 임계값 |
+|------|-------------|
+| `rationale` | 120자 이상 |
+| `long_flow.steps` 또는 `flow_steps` | 3단계 이상 (`macro_bot_defense`, `election_war`는 4단계) |
+| 각 단계 `label` + `description` | 설명 40자 이상 |
+| 제목 | 12자 이상 |
+| 초안 기간 | 작성 후 최소 300초 경과 후 cosponsoring 전환 |
+| 구성 서명 분산 | 첫·마지막 composer 서명 간 최소 60초 |
+
+예시 spec:
+
+```json
+{
+  "rationale": "매크로 봇이 단순 창조로 생태계를 교란하지 못하도록...",
+  "long_flow": {
+    "steps": [
+      {"label": "관찰", "description": "봇 행동 패턴을 기록하고 분석한다."},
+      {"label": "설계", "description": "rate limit과 예외 조항을 문서화한다."},
+      {"label": "시범", "description": "소규모 그룹에서 시범 적용한다."},
+      {"label": "전면", "description": "전역 적용 전 최종 검토를 완료한다."}
+    ]
+  },
+  "creations_per_window": 2,
+  "window_sec": 3600
+}
+```
+
+거부 시 API 응답: `reason: "simple_creation_blocked"`, `codes` 배열에 세부 사유.
 
 ## 투표권
 
@@ -78,6 +115,7 @@ GET  /v1/governance/state
 
 ```
 cpow_engine/areas/governance.py
+cpow_engine/areas/governance_eligibility.py   # 긴 흐름 검증
 cpow_engine/areas/system_runtime.py   # 런타임 집행
 cpow_engine/areas/registry.py
 ```

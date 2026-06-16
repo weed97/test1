@@ -15,6 +15,12 @@ from enum import Enum
 
 from typing import Callable
 
+from cpow_engine.areas.governance_eligibility import (
+    LongFlowPolicy,
+    composer_spread_ok,
+    drafting_duration_ok,
+    validate_long_flow_proposal,
+)
 from cpow_engine.areas.powers import UserPowers
 
 
@@ -54,6 +60,7 @@ class GovernancePolicy:
     announcement_sec: float = 60.0
     voting_ttl_sec: float = 600.0
     proposal_ttl_sec: float = 86_400.0
+    long_flow: LongFlowPolicy = field(default_factory=LongFlowPolicy)
 
     def approvals_needed(self, eligible_voters: int) -> int:
         if eligible_voters <= 0:
@@ -75,6 +82,7 @@ class GovernancePolicy:
             "announcement_sec": self.announcement_sec,
             "voting_ttl_sec": self.voting_ttl_sec,
             "proposal_ttl_sec": self.proposal_ttl_sec,
+            "long_flow": self.long_flow.to_dict(),
         }
 
 
@@ -141,6 +149,7 @@ class SystemProposal:
     created_at: float = field(default_factory=time.time)
     announced_at: float | None = None
     voting_open_at: float | None = None
+    composer_signed_at: dict[str, float] = field(default_factory=dict)
 
     def to_public_dict(self, policy: GovernancePolicy, *, eligible_voters: int) -> dict:
         return {
@@ -191,6 +200,7 @@ class GovernanceResult:
     proposal_id: str = ""
     phase: str = ""
     enacted: bool = False
+    codes: list[str] = field(default_factory=list)
 
 
 class GovernanceLedger:
@@ -253,6 +263,19 @@ class GovernanceLedger:
 
         powers = self._member_powers[author_id]
         parsed_kind = SystemProposalKind.from_str(kind)
+        flow_check = validate_long_flow_proposal(
+            kind=parsed_kind,
+            title=title,
+            spec=spec,
+            policy=self.policy.long_flow,
+        )
+        if not flow_check.ok:
+            return GovernanceResult(
+                False,
+                reason=flow_check.reason,
+                codes=list(flow_check.codes),
+            )
+
         if parsed_kind == SystemProposalKind.CREATIVE_DESTRUCTION:
             if not destruction_exceeds_creation(powers):
                 return GovernanceResult(
@@ -268,6 +291,7 @@ class GovernanceLedger:
             lead_author=author_id,
         )
         proposal.composers.add(author_id)
+        proposal.composer_signed_at[author_id] = proposal.created_at
         self._proposals[proposal.proposal_id] = proposal
         self._advance_phase(proposal)
         return GovernanceResult(
@@ -287,6 +311,7 @@ class GovernanceLedger:
             return GovernanceResult(False, reason="not_in_drafting_phase")
 
         proposal.composers.add(user_id)
+        proposal.composer_signed_at[user_id] = time.time()
         self._advance_phase(proposal)
         return GovernanceResult(
             True,
@@ -413,10 +438,15 @@ class GovernanceLedger:
         return proposal
 
     def _advance_phase(self, proposal: SystemProposal) -> None:
-        if (
-            proposal.phase == SystemProposalPhase.DRAFTING
-            and len(proposal.composers) >= self.policy.min_composers
-        ):
+        if proposal.phase == SystemProposalPhase.DRAFTING:
+            if len(proposal.composers) < self.policy.min_composers:
+                return
+            now = time.time()
+            lf = self.policy.long_flow
+            if not drafting_duration_ok(proposal.created_at, now, policy=lf):
+                return
+            if not composer_spread_ok(proposal.composer_signed_at, policy=lf):
+                return
             proposal.phase = SystemProposalPhase.COSPONSORING
 
         if (
