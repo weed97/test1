@@ -73,6 +73,10 @@ from api.cpow_areas import (
     handle_area_npc_tick,
     handle_area_expand,
     handle_area_dominance,
+    handle_area_diplomacy_set,
+    handle_area_diplomacy_status,
+    handle_area_cross_destroy,
+    handle_area_allied_create,
 )
 
 API_VERSION = 1
@@ -1049,6 +1053,38 @@ def area_expand(body: dict[str, Any]) -> dict[str, Any]:
 def area_dominance(area_id_a: str, area_id_b: str) -> dict[str, Any]:
     try:
         return handle_area_dominance(area_id_a, area_id_b)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/diplomacy")
+def area_diplomacy_set(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return handle_area_diplomacy_set(body)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/v1/areas/diplomacy")
+def area_diplomacy_status(area_id: str, target_area_id: str) -> dict[str, Any]:
+    try:
+        return handle_area_diplomacy_status(area_id, target_area_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/cross_destroy")
+def area_cross_destroy(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return handle_area_cross_destroy(body)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/allied_create")
+def area_allied_create(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return handle_area_allied_create(body)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

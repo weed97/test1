@@ -5,6 +5,7 @@ from cpow_engine.areas.economy import RegionalEconomy
 from cpow_engine.areas.laws import AreaLawSet, load_area_templates
 from cpow_engine.areas.modes import SimulationMode
 from cpow_engine.areas.consensus import ConsensusGate, ConsensusPolicy, VoteResult
+from cpow_engine.areas.diplomacy import DiplomaticStance, DiplomacyLedger
 from cpow_engine.areas.law_validator import LawValidationResult, validate_creation
 from cpow_engine.areas.mutations import MutationOp, MutationResult
 from cpow_engine.areas.registry import AreaRegistry
@@ -20,6 +21,8 @@ __all__ = [
     "MutationResult",
     "ConsensusGate",
     "ConsensusPolicy",
+    "DiplomaticStance",
+    "DiplomacyLedger",
     "LawValidationResult",
     "VoteResult",
     "validate_creation",

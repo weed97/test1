@@ -301,9 +301,15 @@ class CreatedArea:
         creativity_score: float = 1.0,
         bypass_consensus: bool = False,
         pre_spent_creation: float | None = None,
+        allied_home_area: CreatedArea | None = None,
     ) -> WorldSubmissionResult:
-        role = self.role_of(creator_id)
-        perms = permissions_for(role)
+        is_allied = allied_home_area is not None
+        if is_allied:
+            role = allied_home_area.role_of(creator_id)
+            perms = permissions_for(role)
+        else:
+            role = self.role_of(creator_id)
+            perms = permissions_for(role)
         npc_record = self.npcs.get(creator_id)
         is_npc_delegate = (
             npc_record is not None
@@ -311,7 +317,9 @@ class CreatedArea:
             and pre_spent_creation is not None
         )
 
-        if creator_id not in self.members:
+        if not is_allied and creator_id not in self.members:
+            return WorldSubmissionResult(False, reason="not_a_member")
+        if is_allied and creator_id not in allied_home_area.members:
             return WorldSubmissionResult(False, reason="not_a_member")
 
         if not is_npc_delegate:
@@ -321,7 +329,8 @@ class CreatedArea:
             if not perms.can_create_objects and not (
                 self.mode == SimulationMode.CREATION_ADVENTURE and perms.can_adventure
             ):
-                return WorldSubmissionResult(False, reason="role_cannot_create")
+                if not is_allied:
+                    return WorldSubmissionResult(False, reason="role_cannot_create")
 
         is_founding_seed = obj.get_property("area_seed") is not None
         if not is_founding_seed and not self.laws.allows_creation_type(creation_type):
@@ -371,6 +380,9 @@ class CreatedArea:
                     live,
                     creation_type=creation_type,
                     pre_spent=pre_spent_creation,
+                    power_ledger_source=(
+                        allied_home_area.power_ledger if is_allied else None
+                    ),
                 )
                 if not ok:
                     self.world.state.objects.pop(obj.id, None)
@@ -780,6 +792,7 @@ class CreatedArea:
             "extent_bonus": round(self.extent_bonus, 2),
             "area_extent": round(self.area_extent(), 2),
             "npcs": {k: v.to_dict() for k, v in self.npcs.items()},
+            "diplomacy_links": [],
             "created_at": self.created_at,
             "world": world_pub,
         }
@@ -825,6 +838,68 @@ class CreatedArea:
                 mark_co_creator(obj, mutation.actor_id)
         self._refresh_economy()
         return result
+
+    def apply_cross_area_destroy(
+        self,
+        actor_id: str,
+        object_id: str,
+        *,
+        attacker_area: CreatedArea,
+        attacker_extent: float,
+        target_extent: float,
+    ) -> MutationResult:
+        """적대 관계 — 타 에리어 오브젝트 파괴."""
+        from cpow_engine.areas.dominance import dominance_ratio
+
+        obj = self.world.state.objects.get(object_id)
+        if obj is None:
+            return MutationResult(
+                False, "destroy", object_id, reason="object_not_found",
+            )
+        if not object_in_area(obj, self.area_id):
+            return MutationResult(
+                False, "destroy", object_id, reason="object_not_in_area",
+            )
+
+        ratio = dominance_ratio(attacker_extent, target_extent)
+        cross_scale = 1.0 / max(ratio, 0.15)
+
+        powers = attacker_area.power_ledger.get_or_create(actor_id)
+        attempt = attempt_powered_destroy(
+            powers,
+            obj,
+            self.rift,
+            area_extent=self.area_extent(),
+            cross_area_scale=cross_scale,
+        )
+        if not attempt.ok:
+            return MutationResult(
+                False,
+                "destroy",
+                object_id,
+                reason=attempt.reason,
+                durability_required=attempt.durability_required,
+            )
+
+        released = apply_destroy(
+            self.world.state,
+            object_id,
+            actor_id,
+            self.area_id,
+        )
+        self._refresh_economy()
+        return MutationResult(
+            True,
+            "destroy",
+            object_id,
+            reason="cross_area_destroyed",
+            energy_delta=released,
+            durability_required=attempt.durability_required,
+            destruction_spent=attempt.destruction_spent,
+            penalty_applied=attempt.penalty_applied,
+            rift_level=float(attempt.rift.get("rift_level", 0)) if attempt.rift else 0.0,
+            monsters_attacking=attempt.monsters_attacking,
+        )
 
     def _apply_powered_destroy(self, mutation: PendingMutation) -> MutationResult:
         obj = self.world.state.objects.get(mutation.object_id)
@@ -873,7 +948,9 @@ class CreatedArea:
         *,
         creation_type: str,
         pre_spent: float | None = None,
+        power_ledger_source: PowerLedger | None = None,
     ) -> tuple[bool, float]:
+        ledger = power_ledger_source or self.power_ledger
         is_material = creation_type.lower() == "material"
         heat = obj.get_property("heat_intensity")
         heat_val = heat.value if heat else 0.0
@@ -885,7 +962,7 @@ class CreatedArea:
             spend = pre_spent
             redeemed = 0.0
         else:
-            powers = self.power_ledger.get_or_create(creator_id)
+            powers = ledger.get_or_create(creator_id)
             if not is_core:
                 projected = compute_durability(
                     cost,

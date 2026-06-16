@@ -58,14 +58,24 @@ def attempt_powered_destroy(
     rift: RiftState,
     *,
     area_extent: float = 1.0,
+    cross_area_scale: float = 1.0,
 ) -> DestroyAttemptResult:
-    allowed, reason, required = can_destroy_object(
-        powers, obj, area_extent=area_extent,
-    )
-    if not allowed:
+    if not is_confirmed(obj):
         return DestroyAttemptResult(
             False,
-            reason=reason,
+            reason="object_not_confirmed",
+            durability_required=0.0,
+        )
+
+    from cpow_engine.areas.imbue import effective_destroy_resistance
+
+    base_required = effective_destroy_resistance(obj, area_extent=area_extent)
+    required = base_required * max(1.0, cross_area_scale)
+
+    if powers.destruction_gauge < required:
+        return DestroyAttemptResult(
+            False,
+            reason="insufficient_destruction_power",
             durability_required=required,
         )
 

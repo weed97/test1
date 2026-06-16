@@ -331,3 +331,59 @@ def handle_area_expand(payload: dict[str, Any]) -> dict[str, Any]:
 
 def handle_area_dominance(area_id_a: str, area_id_b: str) -> dict[str, Any]:
     return {"ok": True, **_registry.dominance_between(area_id_a, area_id_b)}
+
+
+def handle_area_diplomacy_set(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        **_registry.set_diplomatic_stance(
+            str(payload["area_id"]),
+            str(payload["target_area_id"]),
+            str(payload.get("stance", "neutral")),
+            str(payload.get("actor_id", "anonymous")),
+        ),
+    }
+
+
+def handle_area_diplomacy_status(area_id: str, target_area_id: str) -> dict[str, Any]:
+    return {
+        "ok": True,
+        **_registry.diplomatic_status(area_id, target_area_id),
+    }
+
+
+def handle_area_cross_destroy(payload: dict[str, Any]) -> dict[str, Any]:
+    result = _registry.cross_area_destroy(
+        str(payload["attacker_area_id"]),
+        str(payload.get("actor_id", "anonymous")),
+        str(payload["target_area_id"]),
+        str(payload["object_id"]),
+    )
+    target = _registry.get_or_raise(str(payload["target_area_id"]))
+    result["area"] = target.to_public_dict()
+    return result
+
+
+def handle_area_allied_create(payload: dict[str, Any]) -> dict[str, Any]:
+    home_area_id = str(payload["home_area_id"])
+    target_area_id = str(payload["target_area_id"])
+    creator_id = str(payload.get("creator_id", "anonymous"))
+    obj, creation_type = _build_object(payload, creator_id)
+    result = _registry.allied_creation(
+        home_area_id,
+        target_area_id,
+        creator_id,
+        obj,
+        creation_type=creation_type,
+        creativity_score=float(payload.get("creativity_score", 1.0)),
+    )
+    target = _registry.get_or_raise(target_area_id)
+    target.maybe_advance_pulse()
+    return {
+        "ok": result.ok,
+        "reason": result.reason,
+        "object_id": result.object_id,
+        "resolved_stance": _registry.diplomacy.resolved_stance(
+            home_area_id, target_area_id,
+        ).value,
+        "area": target.to_public_dict(),
+    }
