@@ -6,9 +6,11 @@ signal session_created(payload: Dictionary)
 signal position_synced(payload: Dictionary)
 signal maps_loaded(payload: Dictionary)
 signal agents_loaded(payload: Dictionary)
+signal xr_creation_completed(payload: Dictionary)
 signal api_error(message: String)
 
 var session_id: String = ""
+var xr_session_id: String = ""
 var world_maps: Dictionary = {}
 var sim_map_id: String = "ashpoint_01"
 var sim_tile: Vector2i = Vector2i(40, 48)
@@ -265,6 +267,57 @@ func fetch_world_agents(map_id: String = "") -> Dictionary:
 func health_check() -> bool:
 	var parsed := await _post_json("/v1/health", {}, HTTPClient.METHOD_GET)
 	return parsed != null and parsed.get("status") == "ok"
+
+
+func ensure_xr_session() -> bool:
+	if not xr_session_id.is_empty():
+		return true
+	var parsed := await _post_json("/v1/xr/session/new", {})
+	if parsed == null:
+		return false
+	xr_session_id = str(parsed.get("session_id", ""))
+	return not xr_session_id.is_empty()
+
+
+func submit_xr_creation(intent: Dictionary) -> Dictionary:
+	if not await ensure_xr_session():
+		api_error.emit("XR session create failed")
+		return {}
+	var body := {"session_id": xr_session_id, "intent": intent}
+	var parsed := await _post_json("/v1/xr/creation", body)
+	if parsed == null:
+		return {}
+	if parsed.get("session_id"):
+		xr_session_id = str(parsed.get("session_id"))
+	xr_creation_completed.emit(parsed)
+	return parsed
+
+
+func submit_xr_connect(source_id: String, target_id: String, pose: Dictionary) -> Dictionary:
+	if xr_session_id.is_empty():
+		if not await ensure_xr_session():
+			return {}
+	var body := {
+		"session_id": xr_session_id,
+		"source_id": source_id,
+		"target_id": target_id,
+		"pose": pose,
+	}
+	var parsed := await _post_json("/v1/xr/connect", body)
+	if parsed != null and parsed.get("energy"):
+		xr_creation_completed.emit(parsed)
+	return parsed if parsed != null else {}
+
+
+func fetch_xr_world() -> Dictionary:
+	if xr_session_id.is_empty():
+		return {}
+	var parsed := await _post_json(
+		"/v1/xr/world?session_id=%s" % xr_session_id.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	return parsed if parsed != null else {}
 
 
 func _post_json(path: String, body: Dictionary, method: int = HTTPClient.METHOD_POST) -> Variant:

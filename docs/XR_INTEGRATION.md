@@ -138,8 +138,8 @@ XR 클라이언트는 **60–90fps 렌더**, 서버는 **틱 단위(5–10Hz)** 
 
 | Phase | XR 작업 |
 |-------|---------|
-| **1 (지금)** | `cpow_engine/xr/` 브릿지 ✅, 이 문서 |
-| **2** | Godot `world_xr.tscn` + OpenXR 핀치 → API 연동 |
+| **1 (지금)** | `cpow_engine/xr/` 브릿지 ✅, `world_xr.tscn` Godot 씬 ✅ |
+| **2** | Quest APK, 손 추적 핀치 고도화 |
 | **3** | Quest APK 빌드, 로컬 Wi-Fi 서버 테스트 |
 | **4** | 멀티유저 공간 동기화 (`shared_state` + XR pose) |
 

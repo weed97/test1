@@ -45,6 +45,8 @@ from utils.progression import (
 from utils.spatial import maps_manifest
 from utils.temporal import TemporalMode
 
+from api.cpow_xr import handle_xr_connect, handle_xr_creation, handle_xr_world, _store as _xr_store
+
 API_VERSION = 1
 APP_NAME = "Eldoria Simulation API"
 
@@ -729,3 +731,48 @@ def delete_session(session_id: str) -> dict[str, str]:
     if not _store.delete(session_id):
         raise HTTPException(status_code=404, detail="session not found")
     return {"status": "deleted", "session_id": session_id}
+
+
+# --- CPoW XR (Godot OpenXR client) ---
+
+
+class XRCreationRequest(BaseModel):
+    session_id: Optional[str] = None
+    intent: dict[str, Any] = Field(default_factory=dict)
+
+
+class XRConnectRequest(BaseModel):
+    session_id: str
+    source_id: str
+    target_id: str
+    pose: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.post("/v1/xr/session/new")
+def xr_session_new() -> dict[str, str]:
+    sid = _xr_store.create_session()
+    return {"ok": True, "session_id": sid}
+
+
+@app.post("/v1/xr/creation")
+def xr_creation(body: XRCreationRequest) -> dict[str, Any]:
+    try:
+        payload = body.model_dump()
+        if body.intent and not payload.get("intent"):
+            payload["intent"] = body.intent
+        return handle_xr_creation(payload)
+    except (KeyError, ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/v1/xr/connect")
+def xr_connect(body: XRConnectRequest) -> dict[str, Any]:
+    try:
+        return handle_xr_connect(body.model_dump())
+    except (KeyError, ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/v1/xr/world")
+def xr_world(session_id: str) -> dict[str, Any]:
+    return handle_xr_world(session_id)

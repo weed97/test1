@@ -17,18 +17,20 @@
    - XR Mode: `OpenXR`
    - Hand Tracking: `Optional` 또는 `Required`
 
-## 2. 씬 구조 (권장)
+## 2. 씬 구조 (구현됨)
 
 ```
 scenes/xr/
-  world_xr.tscn          # 루트
-  xr_origin.tscn         # XROrigin3D
-  creation_hands.tscn    # 손 추적 + 핀치 감지
+  world_xr.tscn          # CPoW XR 메인 씬 ✅
 scripts/xr/
   xr_creation_controller.gd
+  xr_creation_object.gd
   xr_pose_serializer.gd
-  xr_comfort.gd          # 비네팅·텔레포트
+  xr_comfort.gd
+  xr_desktop_camera.gd   # 헤드셋 없을 때 WASD 시뮬레이터
 ```
+
+메인 메뉴 → **「CPoW XR 월드 (OpenXR)」** 버튼으로 진입.
 
 ```
 WorldXR (Node3D)
@@ -60,11 +62,12 @@ func submit_xr_creation(intent: Dictionary) -> Dictionary:
 
 ## 5. 체크리스트
 
-- [ ] OpenXR 활성화
-- [ ] XROrigin3D 씬 생성
-- [ ] 핀치/트리거 → XRCreationIntent JSON
-- [ ] API `/v1/xr/creation` 연동
-- [ ] 서버 틱 결과 → 3D 오브젝트 VFX (열 glow, 연결 빔)
+- [x] OpenXR 프로젝트 설정 (`project.godot`)
+- [x] `world_xr.tscn` + XROrigin3D
+- [x] 핀치/클릭 → XRCreationIntent JSON
+- [x] API `/v1/xr/creation` 연동
+- [x] 데스크톱 시뮬레이터 폴백 (마우스 클릭)
+- [ ] 서버 틱 결과 → 3D VFX 고도화
 - [ ] Quest APK 빌드 테스트
 
 상세: [../../../docs/XR_INTEGRATION.md](../../../docs/XR_INTEGRATION.md)
