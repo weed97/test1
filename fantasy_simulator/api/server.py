@@ -52,6 +52,14 @@ from api.cpow_collab import (
     handle_collab_pulse,
     handle_collab_state,
 )
+from api.cpow_areas import (
+    handle_area_adventure,
+    handle_area_create,
+    handle_area_found,
+    handle_area_join,
+    handle_area_list,
+    handle_area_state,
+)
 
 API_VERSION = 1
 APP_NAME = "Eldoria Simulation API"
@@ -830,3 +838,75 @@ def collab_world(world_id: str) -> dict[str, Any]:
 @app.post("/v1/collab/pulse")
 def collab_pulse(body: CollabPulseRequest) -> dict[str, Any]:
     return handle_collab_pulse(body.model_dump())
+
+
+# --- Created areas: creation / adventure modes ---
+
+
+class AreaFoundRequest(BaseModel):
+    founder_id: str = "anonymous"
+    label: str = "이름 없는 에리어"
+    mode: str = "creation_adventure"
+    template: Optional[str] = None
+
+
+class AreaJoinRequest(BaseModel):
+    area_id: str
+    creator_id: str = "anonymous"
+    role: Optional[str] = None
+
+
+class AreaCreateRequest(BaseModel):
+    area_id: str
+    creator_id: str = "anonymous"
+    creativity_score: float = 1.0
+    type: Optional[str] = None
+    heat_intensity: Optional[float] = None
+    label: Optional[str] = None
+    material: Optional[str] = None
+    intent: dict[str, Any] = Field(default_factory=dict)
+    object: dict[str, Any] = Field(default_factory=dict)
+
+
+class AreaAdventureRequest(BaseModel):
+    area_id: str
+    actor_id: str = "anonymous"
+    action: str = "explore"
+    target_object_id: Optional[str] = None
+    label: Optional[str] = None
+
+
+@app.post("/v1/areas/found")
+def area_found(body: AreaFoundRequest) -> dict[str, Any]:
+    return handle_area_found(body.model_dump(exclude_none=True))
+
+
+@app.post("/v1/areas/join")
+def area_join(body: AreaJoinRequest) -> dict[str, Any]:
+    return handle_area_join(body.model_dump(exclude_none=True))
+
+
+@app.post("/v1/areas/create")
+def area_create(body: AreaCreateRequest) -> dict[str, Any]:
+    try:
+        return handle_area_create(body.model_dump(exclude_none=True))
+    except (KeyError, ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/adventure")
+def area_adventure(body: AreaAdventureRequest) -> dict[str, Any]:
+    return handle_area_adventure(body.model_dump(exclude_none=True))
+
+
+@app.get("/v1/areas/list")
+def area_list() -> dict[str, Any]:
+    return handle_area_list()
+
+
+@app.get("/v1/areas/state")
+def area_state(area_id: str) -> dict[str, Any]:
+    try:
+        return handle_area_state(area_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc

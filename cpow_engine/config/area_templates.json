@@ -1,0 +1,49 @@
+{
+  "templates": {
+    "foundry": {
+      "name": "대장간 에리어",
+      "description": "창조 모드 — 초기 창조자가 법칙과 열원을 세우는 틀",
+      "heat_baseline": 60.0,
+      "physics_constants": {
+        "max_heat_intensity": 400.0,
+        "transfer_coefficient": 0.012
+      },
+      "allowed_creation_types": ["heat", "material", "connection"],
+      "collab_overrides": {
+        "pulse_interval_sec": 10.0,
+        "min_creator_cooldown_sec": 5.0,
+        "damp_factor": 0.3
+      }
+    },
+    "wilderness": {
+      "name": "황야 에리어",
+      "description": "모험 모드 — 창조된 틀 안에서 탐험·상호작용 중심",
+      "heat_baseline": 40.0,
+      "physics_constants": {
+        "max_heat_intensity": 120.0,
+        "transfer_coefficient": 0.008
+      },
+      "allowed_creation_types": ["connection"],
+      "collab_overrides": {
+        "pulse_interval_sec": 6.0,
+        "max_creations_per_creator_per_pulse": 1,
+        "damp_factor": 0.5
+      }
+    },
+    "settlement": {
+      "name": "정착 에리어",
+      "description": "창조모험 모드 — 창시자와 협력자가 함께 영역을 키움",
+      "heat_baseline": 55.0,
+      "physics_constants": {
+        "max_heat_intensity": 250.0,
+        "transfer_coefficient": 0.01
+      },
+      "allowed_creation_types": ["heat", "material", "connection"],
+      "collab_overrides": {
+        "pulse_interval_sec": 8.0,
+        "min_creator_cooldown_sec": 4.0,
+        "max_creations_per_creator_per_pulse": 1
+      }
+    }
+  }
+}

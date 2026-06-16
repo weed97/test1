@@ -8,6 +8,7 @@ import sys
 
 from cpow_engine.chain.bridge import OffChainBridge
 from cpow_engine.chain.genesis import load_genesis
+from cpow_engine.areas import AreaRegistry, SimulationMode
 from cpow_engine.collab import CollaborativeWorld
 from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.cpow import CPoWEngine
@@ -180,6 +181,45 @@ def run_collab_demo(ticks: int = 3) -> None:
     print("=== 협동 데모 완료 ===")
 
 
+def run_areas_demo() -> None:
+    from cpow_engine.areas.roles import ContributorRole
+    from cpow_engine.physics import create_material_object
+
+    reg = AreaRegistry()
+    area = reg.found(
+        "aria",
+        "불의 정원",
+        mode=SimulationMode.CREATION_ADVENTURE,
+        template="settlement",
+    )
+
+    print("=== CPoW 창조 에리어 데모 ===")
+    print(f"에리어: {area.label} ({area.area_id})")
+    print(f"모드: {area.mode.value} | 창시자: {area.founder_id}")
+    print(f"법칙: {area.laws.description or area.laws.name}")
+    print(f"문명: {area.economy.stage()['label']} (Lv.{area.economy.civilization_level})")
+    print()
+
+    reg.join(area.area_id, "bob")
+    area.join("carol", requested_role=ContributorRole.ADVENTURER)
+
+    mat = create_material_object("bob", "정원 철괴", "iron")
+    r1 = area.submit_creation("bob", mat, creation_type="material")
+    print(f"  [협력 창조] bob: 철괴 → {r1.reason}")
+
+    adv = area.submit_adventure("carol", "explore", label="정원 외곽")
+    print(f"  [모험] carol: 탐험 → {adv.reason}")
+
+    pulse = area.advance_pulse(force=True)
+    print(f"  [펄스] #{pulse.pulse_number} — {pulse.applied_count}개 반영")
+    print(
+        f"  문명 성장: {area.economy.stage()['label']} "
+        f"| 시스템: {', '.join(area.economy.systems_unlocked) or '없음'}"
+    )
+    print(f"  오브젝트: {len(area.world.state.objects)} | 에너지: {area.world.state.energy_pool:.1f}")
+    print("=== 에리어 데모 완료 ===")
+
+
 def _demo_shared_state(engine: SimulationEngine) -> None:
     """다중 유저 충돌 병합 데모."""
     print("--- Shared State: 충돌 병합 ---")
@@ -223,6 +263,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="JSON 출력")
     parser.add_argument("--chain", action="store_true", help="L1 프로토콜 통합 데모")
     parser.add_argument("--collab", action="store_true", help="협동 오픈월드 + 노이즈 감쇄 데모")
+    parser.add_argument("--areas", action="store_true", help="창조 에리어 · 모드 · 문명 데모")
     args = parser.parse_args(argv)
 
     if args.chain:
@@ -231,6 +272,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.collab:
         run_collab_demo(ticks=args.ticks)
+        return 0
+
+    if args.areas:
+        run_areas_demo()
         return 0
 
     if args.json:
