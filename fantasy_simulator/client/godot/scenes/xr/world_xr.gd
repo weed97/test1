@@ -5,6 +5,7 @@ extends Node3D
 @onready var _xr_camera: XRCamera3D = $XROrigin3D/XRCamera3D
 @onready var _sim_camera: Camera3D = $DesktopSimulator/Camera3D
 @onready var _objects: Node3D = $CreationObjects
+@onready var _pinch_visuals: Node3D = $PinchVisuals
 @onready var _creation: XRCreationController = $XRCreationController
 @onready var _comfort: XRComfort = $XRComfort
 @onready var _hud: Label = $CanvasLayer/HUD
@@ -23,6 +24,7 @@ func _ready() -> void:
 	ApiClient.api_error.connect(_on_api_error)
 	_creation.creation_requested.connect(_on_creation_requested)
 	_creation.connect_requested.connect(_on_connect_requested)
+	_creation.dual_pinch_connect.connect(_on_dual_pinch_connect)
 
 	_try_start_xr()
 	_comfort.setup(_xr_origin, _active_camera())
@@ -51,13 +53,14 @@ func _try_start_xr() -> void:
 		get_viewport().use_xr = true
 		_xr_camera.current = true
 		_sim_camera.current = false
-		_creation.setup_xr(_xr_origin)
-		_log_append("[XR] OpenXR 활성 — 트리거로 창조")
+		_creation.setup_xr(_xr_origin, _pinch_visuals)
+		var ht := "손 추적" if _creation.uses_hand_tracking() else "컨트롤러/핀치"
+		_log_append("[XR] OpenXR — %s 핀치로 창조" % ht)
 	else:
 		_xr_camera.current = false
 		_sim_camera.current = true
 		_creation.setup_simulator(_sim_camera)
-		_log_append("[시뮬레이터] 마우스 클릭으로 창조 (1=열, 2=재료)")
+		_log_append("[시뮬레이터] 클릭-홀드-놓기 = 핀치 (1=열, 2=재료)")
 
 
 func _active_camera() -> Node3D:
@@ -75,17 +78,49 @@ func _ensure_session() -> void:
 
 func _on_creation_requested(intent: Dictionary) -> void:
 	var pose: Dictionary = intent.get("pose", {})
-	_log_append("창조: %s @ (%.1f, %.1f, %.1f)" % [
-		intent.get("label", "?"),
-		float(pose.get("x", 0)),
-		float(pose.get("y", 0)),
-		float(pose.get("z", 0)),
-	])
+	var pinch := float(intent.get("pinch_strength", intent.get("intensity", 1.0)))
+	_log_append(
+		"창조: %s @ (%.1f, %.1f, %.1f) 핀치=%.0f%%" % [
+			intent.get("label", "?"),
+			float(pose.get("x", 0)),
+			float(pose.get("y", 0)),
+			float(pose.get("z", 0)),
+			pinch * 100.0,
+		]
+	)
 	var result: Dictionary = await ApiClient.submit_xr_creation(intent)
 	if result.is_empty():
 		_spawn_local_preview(intent, {})
 	else:
 		_spawn_from_response(result, intent)
+
+
+func _on_dual_pinch_connect(pose_a: Dictionary, pose_b: Dictionary, strength: float) -> void:
+	_log_append("양손 핀치 연결 (%.0f%%)" % (strength * 100.0))
+	var ids := _object_nodes.keys()
+	if ids.size() >= 2:
+		var source_id: String = ids[ids.size() - 2]
+		var target_id: String = ids[ids.size() - 1]
+		var mid := Vector3(
+			(float(pose_a.get("x", 0)) + float(pose_b.get("x", 0))) * 0.5,
+			(float(pose_a.get("y", 0)) + float(pose_b.get("y", 0))) * 0.5,
+			(float(pose_a.get("z", 0)) + float(pose_b.get("z", 0))) * 0.5,
+		)
+		_creation.try_connect(source_id, target_id, Transform3D(Basis.IDENTITY, mid))
+		return
+	# 오브젝트 부족 시 양손 중간에 재료 창조
+	var intent := {
+		"creator_id": ApiConfig.creator_id,
+		"gesture": "dual_hand_pinch",
+		"property_hint": "heat_intensity",
+		"intensity": strength,
+		"pinch_strength": strength,
+		"label": "양손 열원",
+		"pose": pose_a,
+		"target_pose": pose_b,
+		"device": ApiConfig.xr_device_dict(),
+	}
+	_on_creation_requested(intent)
 
 
 func _on_connect_requested(source_id: String, target_id: String, pose: Dictionary) -> void:
@@ -173,8 +208,9 @@ func _draw_connection_beam(source_id: String, target_id: String) -> void:
 func _update_hud() -> void:
 	var mode := "열원" if _creation.creation_mode == XRCreationController.CreationMode.HEAT else "재료"
 	var xr_label := "OpenXR" if _xr_running else "시뮬레이터"
-	_hud.text = "CPoW XR · %s · 모드: %s · NRG: %.1f · 오브젝트: %d" % [
-		xr_label, mode, _energy_total, _object_nodes.size(),
+	var input_mode := "손핀치" if _creation.uses_hand_tracking() else "핀치/클릭"
+	_hud.text = "CPoW XR · %s · %s · %s · NRG: %.1f · %d개" % [
+		xr_label, input_mode, mode, _energy_total, _object_nodes.size(),
 	]
 	$CanvasLayer/ApiLabel.text = "API: %s" % ApiConfig.base_url()
 

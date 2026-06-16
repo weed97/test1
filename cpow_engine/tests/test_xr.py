@@ -69,6 +69,28 @@ class TestXRIntents(unittest.TestCase):
         self.assertEqual(restored.creator_id, "u1")
         self.assertEqual(restored.device.device_type, "quest3")  # type: ignore[union-attr]
 
+    def test_pinch_strength_scales_heat(self) -> None:
+        weak = XRCreationIntent(
+            creator_id="u1",
+            gesture="heat_pinch",
+            pose=XRSpatialPose(0, 0, 0),
+            property_hint="heat_intensity",
+            intensity=1.0,
+            pinch_strength=0.3,
+        )
+        strong = XRCreationIntent(
+            creator_id="u1",
+            gesture="heat_pinch",
+            pose=XRSpatialPose(0, 0, 0),
+            property_hint="heat_intensity",
+            intensity=1.0,
+            pinch_strength=1.0,
+        )
+        w = intent_to_creative_object(weak).get_property("heat_intensity")
+        s = intent_to_creative_object(strong).get_property("heat_intensity")
+        assert w is not None and s is not None
+        self.assertGreater(s.value, w.value)
+
     def test_xr_intent_through_engine(self) -> None:
         engine = SimulationEngine()
         intent = XRCreationIntent(

@@ -81,6 +81,7 @@ class XRCreationIntent:
     target_pose: XRSpatialPose | None = None
     property_hint: str = ""  # heat_intensity, material_type, etc.
     intensity: float = 1.0
+    pinch_strength: float = 1.0
     label: str = ""
     device: XRDeviceInfo | None = None
     timestamp: float = field(default_factory=time.time)
@@ -93,6 +94,7 @@ class XRCreationIntent:
             "target_pose": self.target_pose.to_dict() if self.target_pose else None,
             "property_hint": self.property_hint,
             "intensity": self.intensity,
+            "pinch_strength": self.pinch_strength,
             "label": self.label,
             "device": self.device.to_dict() if self.device else None,
             "timestamp": self.timestamp,
@@ -109,6 +111,7 @@ class XRCreationIntent:
             target_pose=XRSpatialPose.from_dict(target) if target else None,
             property_hint=str(data.get("property_hint", "")),
             intensity=float(data.get("intensity", 1.0)),
+            pinch_strength=float(data.get("pinch_strength", data.get("intensity", 1.0))),
             label=str(data.get("label", "")),
             device=XRDeviceInfo(**device) if device else None,
             timestamp=float(data.get("timestamp", time.time())),
@@ -118,7 +121,8 @@ class XRCreationIntent:
 def intent_to_creative_object(intent: XRCreationIntent) -> CreativeObject:
     """XR 창조 의도 → CPoW CreativeObject 변환."""
     spatial_entropy = _spatial_entropy(intent.pose, intent.target_pose)
-    base_intensity = intent.intensity * (1.0 + spatial_entropy * 0.1)
+    pinch = max(0.2, min(1.0, intent.pinch_strength))
+    base_intensity = intent.intensity * pinch * (1.0 + spatial_entropy * 0.1)
 
     if intent.property_hint == "heat_intensity" or intent.gesture == "heat_pinch":
         return create_heat_object(
@@ -137,7 +141,7 @@ def intent_to_creative_object(intent: XRCreationIntent) -> CreativeObject:
             thermal_conductivity=conductivity,
         )
 
-    if intent.gesture == "pinch_spawn":
+    if intent.gesture == "pinch_spawn" or intent.gesture == "dual_hand_pinch":
         return CreativeObject(
             creator_id=intent.creator_id,
             label=intent.label or "XR 창조물",
