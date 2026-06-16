@@ -27,6 +27,9 @@ Guidance for AI agents working in this repository.
 # Demo: create Heat object → energy generation
 python3 -m cpow_engine.demo --seed 42 --ticks 3
 
+# L1 protocol demo: off-chain → on-chain submission
+python3 -m cpow_engine.demo --chain --seed 42 --ticks 5
+
 # Tests
 python3 -m unittest discover -s cpow_engine/tests -v
 

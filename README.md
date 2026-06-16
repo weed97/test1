@@ -14,12 +14,16 @@
 | **물리 정의 엔진** | `cpow_engine/physics/` | HeatSource, Material, EnergyTransfer 등 속성 조합 → 물리적 결과 |
 | **CPoW 환산 엔진** | `cpow_engine/cpow/` | Action Data + World Delta → 에너지·경제 점수 (봇 억제 휴리스틱 포함) |
 | **공유 상태 동기화** | `cpow_engine/shared_state/` | 다중 유저 물리 정의 충돌 시 Merge/Negotiation 프로토콜 |
+| **L1 프로토콜** | `cpow_engine/chain/` | Genesis, Registry, Consensus, Validator, Rollup, Bridge |
 
 ## 빠른 실행 (MVP)
 
 ```bash
 # CPoW 엔진 데모: Heat 속성 오브젝트 생성 → 에너지 발생
-python3 -m cpow_engine.demo --seed 42
+python3 -m cpow_engine.demo --seed 42 --ticks 3
+
+# L1 프로토콜 통합 데모: 오프체인 연산 → 온체인 제출
+python3 -m cpow_engine.demo --chain --seed 42 --ticks 5
 
 # 단위 테스트
 python3 -m unittest discover -s cpow_engine/tests -v
@@ -49,3 +53,4 @@ python3 -m unittest discover -s cpow_engine/tests -v
 - Cursor 규칙: [`.cursorrules`](.cursorrules)
 - 에이전트 가이드: [`AGENTS.md`](AGENTS.md)
 - 아키텍처 상세: [`docs/CPOW_ARCHITECTURE.md`](docs/CPOW_ARCHITECTURE.md)
+- L1 프로토콜: [`docs/L1_PROTOCOL_ARCHITECTURE.md`](docs/L1_PROTOCOL_ARCHITECTURE.md)

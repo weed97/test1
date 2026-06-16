@@ -17,6 +17,14 @@
 | 물리 정의 엔진 | `cpow_engine/physics/` | 속성 정의 → 상호작용 결과 |
 | CPoW 환산 | `cpow_engine/cpow/` | Action Data + World Delta → 에너지·경제 점수 |
 | 공유 상태 동기화 | `cpow_engine/shared_state/` | 충돌 시 Merge/Negotiation 프로토콜 |
+| L1 프로토콜 | `cpow_engine/chain/` | Genesis, Registry, Consensus, Validator, Rollup |
+
+## L1 설계 원칙
+
+- **하이브리드**: Off-chain = 물리 연산, On-chain = 진실(Truth)만
+- **Genesis 유전자**: 열역학 법칙 + 초기 신뢰 점수를 함께 기록
+- **Rollup**: 오프체인 틱 배치 → Merkle root L1 제출로 가스 최적화
+- **프로덕션**: Cosmos SDK / Substrate로 마이그레이션 (현재는 Python 레퍼런스)
 
 ## 구현 지침
 
@@ -38,6 +46,7 @@
 cd /workspace
 python3 -m unittest discover -s cpow_engine/tests -v
 python3 -m cpow_engine.demo --seed 42
+python3 -m cpow_engine.demo --chain --seed 42 --ticks 5
 ```
 
 ## 초기 프롬프트 예시

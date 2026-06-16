@@ -97,7 +97,12 @@
 
 ## 확장 로드맵
 
+- [x] L1 프로토콜 레퍼런스 구현 (`cpow_engine/chain/`)
+- [x] Genesis 블록 스키마 (`cpow_engine/config/genesis.json`)
+- [ ] Cosmos SDK `x/cpow` 모듈 마이그레이션
 - [ ] `fantasy_simulator` 어댑터 (`state["cpow"]` 샤드)
 - [ ] `sungjwa_hunter_sim` 어댑터 (ChaosRNG ↔ CPoW entropy)
 - [ ] JSON 스키마 검증 (`config/cpow_schema.json`)
 - [ ] 네트워크 전송 프로토콜 (WebSocket 패치 스트림)
+
+→ L1 상세: [L1_PROTOCOL_ARCHITECTURE.md](L1_PROTOCOL_ARCHITECTURE.md)
