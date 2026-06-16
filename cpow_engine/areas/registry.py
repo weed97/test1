@@ -10,7 +10,7 @@ from cpow_engine.areas.diplomacy import (
     can_cross_area_combat,
     observer_can_intervene_cross_area,
 )
-from cpow_engine.areas.laws import AreaLawSet
+from cpow_engine.areas.governance import GovernanceLedger, GovernancePolicy
 from cpow_engine.areas.modes import SimulationMode
 from cpow_engine.areas.roles import ContributorRole
 from cpow_engine.collab import WorldSubmissionResult
@@ -18,9 +18,15 @@ from cpow_engine.models import CreativeObject
 
 
 class AreaRegistry:
-    def __init__(self) -> None:
+    def __init__(self, *, governance_policy: GovernancePolicy | None = None) -> None:
         self._areas: dict[str, CreatedArea] = {}
         self.diplomacy: DiplomacyLedger = DiplomacyLedger()
+        self.governance: GovernanceLedger = GovernanceLedger(governance_policy)
+
+    def _sync_member_powers(self, area: CreatedArea, user_id: str) -> None:
+        powers = area.power_ledger.members.get(user_id)
+        if powers is not None:
+            self.governance.sync_member(user_id, powers)
 
     def found(
         self,
@@ -39,6 +45,7 @@ class AreaRegistry:
             laws=laws,
         )
         self._areas[area.area_id] = area
+        self._sync_member_powers(area, founder_id)
         return area
 
     def get(self, area_id: str) -> CreatedArea | None:
@@ -62,6 +69,7 @@ class AreaRegistry:
     ) -> CreatedArea:
         area = self.get_or_raise(area_id)
         area.join(creator_id, requested_role=role)
+        self._sync_member_powers(area, creator_id)
         area.maybe_advance_pulse()
         return area
 
@@ -191,3 +199,87 @@ class AreaRegistry:
             bypass_consensus=True,
             allied_home_area=home,
         )
+
+    def refresh_governance_powers(self) -> None:
+        for area in self._areas.values():
+            for uid, powers in area.power_ledger.members.items():
+                self.governance.sync_member(uid, powers)
+
+    def draft_system_proposal(
+        self,
+        author_id: str,
+        *,
+        kind: str,
+        title: str,
+        spec: dict | None = None,
+    ) -> dict:
+        self.refresh_governance_powers()
+        result = self.governance.draft_proposal(
+            author_id, kind=kind, title=title, spec=spec,
+        )
+        return self._governance_response(result)
+
+    def sign_system_composer(self, proposal_id: str, user_id: str) -> dict:
+        self.refresh_governance_powers()
+        return self._governance_response(
+            self.governance.sign_composer(proposal_id, user_id),
+        )
+
+    def cosponsor_system_proposal(self, proposal_id: str, user_id: str) -> dict:
+        self.refresh_governance_powers()
+        return self._governance_response(
+            self.governance.cosponsor(proposal_id, user_id),
+        )
+
+    def vote_system_proposal(
+        self,
+        proposal_id: str,
+        user_id: str,
+        *,
+        approve: bool,
+    ) -> dict:
+        self.refresh_governance_powers()
+        result = self.governance.vote(proposal_id, user_id, approve=approve)
+        return self._governance_response(result)
+
+    def tick_governance(self) -> dict:
+        changed = self.governance.tick()
+        return {
+            "ok": True,
+            "phase_changes": changed,
+            "announcements": self.governance.announcements(),
+            "pending": self.governance.pending_proposals(),
+        }
+
+    def governance_state(self) -> dict:
+        self.refresh_governance_powers()
+        return {
+            "ok": True,
+            "policy": self.governance.policy.to_dict(),
+            "member_count": self.governance.member_count(),
+            "eligible_voters": self.governance.eligible_voter_count(),
+            "pending": self.governance.pending_proposals(),
+            "announcements": self.governance.announcements(),
+            "enacted": self.governance.enacted_systems(),
+        }
+
+    def _governance_response(self, result) -> dict:
+        out = {
+            "ok": result.ok,
+            "reason": result.reason,
+            "proposal_id": result.proposal_id,
+            "phase": result.phase,
+            "enacted": result.enacted,
+        }
+        if result.proposal_id:
+            proposal = self.governance.get_proposal(result.proposal_id)
+            if proposal:
+                out["proposal"] = proposal.to_public_dict(
+                    self.governance.policy,
+                    eligible_voters=self.governance.eligible_voter_count(),
+                )
+        out["governance"] = {
+            "announcements": self.governance.announcements(),
+            "enacted": self.governance.enacted_systems(),
+        }
+        return out

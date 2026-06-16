@@ -77,6 +77,12 @@ from api.cpow_areas import (
     handle_area_diplomacy_status,
     handle_area_cross_destroy,
     handle_area_allied_create,
+    handle_governance_draft,
+    handle_governance_compose,
+    handle_governance_cosponsor,
+    handle_governance_vote,
+    handle_governance_tick,
+    handle_governance_state,
 )
 
 API_VERSION = 1
@@ -1087,6 +1093,36 @@ def area_allied_create(body: dict[str, Any]) -> dict[str, Any]:
         return handle_area_allied_create(body)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/governance/draft")
+def governance_draft(body: dict[str, Any]) -> dict[str, Any]:
+    return handle_governance_draft(body)
+
+
+@app.post("/v1/governance/compose")
+def governance_compose(body: dict[str, Any]) -> dict[str, Any]:
+    return handle_governance_compose(body)
+
+
+@app.post("/v1/governance/cosponsor")
+def governance_cosponsor(body: dict[str, Any]) -> dict[str, Any]:
+    return handle_governance_cosponsor(body)
+
+
+@app.post("/v1/governance/vote")
+def governance_vote(body: dict[str, Any]) -> dict[str, Any]:
+    return handle_governance_vote(body)
+
+
+@app.post("/v1/governance/tick")
+def governance_tick() -> dict[str, Any]:
+    return handle_governance_tick()
+
+
+@app.get("/v1/governance/state")
+def governance_state() -> dict[str, Any]:
+    return handle_governance_state()
 
 
 @app.get("/v1/areas/list")

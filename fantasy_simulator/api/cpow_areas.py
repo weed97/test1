@@ -387,3 +387,42 @@ def handle_area_allied_create(payload: dict[str, Any]) -> dict[str, Any]:
         ).value,
         "area": target.to_public_dict(),
     }
+
+
+def handle_governance_draft(payload: dict[str, Any]) -> dict[str, Any]:
+    return _registry.draft_system_proposal(
+        str(payload.get("author_id", "anonymous")),
+        kind=str(payload.get("kind", "custom")),
+        title=str(payload.get("title", "시스템 발의")),
+        spec=payload.get("spec"),
+    )
+
+
+def handle_governance_compose(payload: dict[str, Any]) -> dict[str, Any]:
+    return _registry.sign_system_composer(
+        str(payload["proposal_id"]),
+        str(payload.get("user_id", "anonymous")),
+    )
+
+
+def handle_governance_cosponsor(payload: dict[str, Any]) -> dict[str, Any]:
+    return _registry.cosponsor_system_proposal(
+        str(payload["proposal_id"]),
+        str(payload.get("user_id", "anonymous")),
+    )
+
+
+def handle_governance_vote(payload: dict[str, Any]) -> dict[str, Any]:
+    return _registry.vote_system_proposal(
+        str(payload["proposal_id"]),
+        str(payload.get("user_id", "anonymous")),
+        approve=bool(payload.get("approve", True)),
+    )
+
+
+def handle_governance_tick() -> dict[str, Any]:
+    return _registry.tick_governance()
+
+
+def handle_governance_state() -> dict[str, Any]:
+    return _registry.governance_state()
