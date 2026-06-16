@@ -58,6 +58,7 @@ from api.cpow_areas import (
     handle_area_found,
     handle_area_join,
     handle_area_list,
+    handle_area_mutate,
     handle_area_state,
 )
 
@@ -876,6 +877,20 @@ class AreaAdventureRequest(BaseModel):
     label: Optional[str] = None
 
 
+class AreaMutateRequest(BaseModel):
+    area_id: str
+    actor_id: str = "anonymous"
+    object_id: str
+    operation: str = "modify"
+    property_name: str = "heat_intensity"
+    value: Optional[float] = None
+    factor: float = 1.0
+    delta: float = 0.0
+    text_value: Optional[str] = None
+    label: Optional[str] = None
+    creativity_score: float = 1.0
+
+
 @app.post("/v1/areas/found")
 def area_found(body: AreaFoundRequest) -> dict[str, Any]:
     return handle_area_found(body.model_dump(exclude_none=True))
@@ -897,6 +912,14 @@ def area_create(body: AreaCreateRequest) -> dict[str, Any]:
 @app.post("/v1/areas/adventure")
 def area_adventure(body: AreaAdventureRequest) -> dict[str, Any]:
     return handle_area_adventure(body.model_dump(exclude_none=True))
+
+
+@app.post("/v1/areas/mutate")
+def area_mutate(body: AreaMutateRequest) -> dict[str, Any]:
+    try:
+        return handle_area_mutate(body.model_dump(exclude_none=True))
+    except (KeyError, ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/v1/areas/list")

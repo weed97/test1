@@ -11,8 +11,18 @@ from cpow_engine.areas.laws import AreaLawSet, load_area_templates, template_for
 from cpow_engine.areas.modes import SimulationMode
 from cpow_engine.areas.roles import (
     ContributorRole,
+    RolePermissions,
     default_role_for_mode,
     permissions_for,
+)
+from cpow_engine.areas.mutations import (
+    MutationOp,
+    MutationResult,
+    PendingMutation,
+    apply_mutation,
+    can_actor_mutate,
+    mark_co_creator,
+    object_in_area,
 )
 from cpow_engine.collab import CollaborativeWorld, WorldSubmissionResult
 from cpow_engine.collab.pulse import PulseResult
@@ -42,6 +52,7 @@ class CreatedArea:
     economy: RegionalEconomy = field(default_factory=RegionalEconomy)
     members: dict[str, ContributorRole] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
+    _pending_mutations: list[PendingMutation] = field(default_factory=list)
 
     def role_of(self, creator_id: str) -> ContributorRole:
         return self.members.get(creator_id, ContributorRole.OBSERVER)
@@ -179,15 +190,78 @@ class CreatedArea:
 
         return AdventureResult(False, action_type, reason="unknown_adventure_action")
 
+    def submit_mutation(
+        self,
+        actor_id: str,
+        object_id: str,
+        operation: str,
+        *,
+        property_name: str = "heat_intensity",
+        value: float | None = None,
+        factor: float = 1.0,
+        delta: float = 0.0,
+        text_value: str = "",
+        creativity_score: float = 1.0,
+    ) -> MutationResult:
+        """구성원이 에리어 오브젝트를 변형 — 펄스에 맞춰 반영."""
+        if actor_id not in self.members:
+            return MutationResult(False, operation, object_id, reason="not_a_member")
+
+        role = self.role_of(actor_id)
+        perms = permissions_for(role)
+        op = MutationOp.from_str(operation)
+
+        if object_id not in self.world.state.objects:
+            return MutationResult(False, operation, object_id, reason="object_not_found")
+
+        target = self.world.state.objects[object_id]
+        if not object_in_area(target, self.area_id):
+            return MutationResult(False, operation, object_id, reason="object_not_in_area")
+
+        allowed, reason = can_actor_mutate(actor_id, role, perms, target, op)
+        if not allowed:
+            return MutationResult(False, operation, object_id, reason=reason)
+
+        mutation = PendingMutation(
+            actor_id=actor_id,
+            object_id=object_id,
+            operation=op,
+            property_name=property_name,
+            value=value,
+            factor=min(factor, perms.max_modify_factor) if op == MutationOp.GROW else factor,
+            delta=delta,
+            text_value=text_value,
+            creativity_score=creativity_score,
+        )
+
+        if self.world.policy.pulse_interval_sec <= 0:
+            return self._apply_mutation_now(mutation, perms)
+
+        if not self.world._pending and self.world.policy.pulse_interval_sec > 0:
+            self.world._pulse_anchor_at = self.world._clock()
+
+        self._pending_mutations.append(mutation)
+        return MutationResult(
+            True,
+            operation,
+            object_id,
+            reason="mutation_queued_for_pulse",
+            queued=True,
+        )
+
     def advance_pulse(self, *, force: bool = False) -> PulseResult:
         pulse = self.world.advance_pulse(force=force)
-        if pulse.advanced:
+        mutation_results = self._flush_mutations()
+        if mutation_results or pulse.advanced:
             self._refresh_economy()
+        if mutation_results:
+            pulse.reason = f"{pulse.reason};mutations={len(mutation_results)}"
         return pulse
 
     def maybe_advance_pulse(self) -> PulseResult:
         pulse = self.world.maybe_advance_pulse()
-        if pulse.advanced:
+        mutation_results = self._flush_mutations()
+        if pulse.advanced or mutation_results:
             self._refresh_economy()
         return pulse
 
@@ -202,6 +276,7 @@ class CreatedArea:
             "economy": self.economy.to_dict(),
             "members": {k: v.value for k, v in self.members.items()},
             "member_count": len(self.members),
+            "pending_mutations": len(self._pending_mutations),
             "created_at": self.created_at,
             "world": world_pub,
         }
@@ -231,6 +306,35 @@ class CreatedArea:
             energy_pool=self.world.state.energy_pool,
             tick=self.world.state.tick,
         )
+
+    def _apply_mutation_now(
+        self, mutation: PendingMutation, perms: RolePermissions,
+    ) -> MutationResult:
+        result = apply_mutation(
+            self.world.state,
+            self.world.gate,
+            mutation,
+            self.laws,
+            perms.max_heat_intensity,
+            self.area_id,
+        )
+        if result.ok and result.operation != MutationOp.DESTROY.value:
+            obj = self.world.state.objects.get(mutation.object_id)
+            if obj:
+                mark_co_creator(obj, mutation.actor_id)
+        self._refresh_economy()
+        return result
+
+    def _flush_mutations(self) -> list[MutationResult]:
+        if not self._pending_mutations:
+            return []
+        results: list[MutationResult] = []
+        pending = list(self._pending_mutations)
+        self._pending_mutations.clear()
+        for mutation in pending:
+            perms = permissions_for(self.role_of(mutation.actor_id))
+            results.append(self._apply_mutation_now(mutation, perms))
+        return results
 
 
 def found_area(

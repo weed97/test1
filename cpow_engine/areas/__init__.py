@@ -4,6 +4,7 @@ from cpow_engine.areas.area import AdventureResult, CreatedArea, found_area
 from cpow_engine.areas.economy import RegionalEconomy
 from cpow_engine.areas.laws import AreaLawSet, load_area_templates
 from cpow_engine.areas.modes import SimulationMode
+from cpow_engine.areas.mutations import MutationOp, MutationResult
 from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas.roles import ContributorRole, permissions_for
 
@@ -13,6 +14,8 @@ __all__ = [
     "AreaRegistry",
     "ContributorRole",
     "CreatedArea",
+    "MutationOp",
+    "MutationResult",
     "RegionalEconomy",
     "SimulationMode",
     "found_area",

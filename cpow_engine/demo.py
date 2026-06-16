@@ -183,7 +183,8 @@ def run_collab_demo(ticks: int = 3) -> None:
 
 def run_areas_demo() -> None:
     from cpow_engine.areas.roles import ContributorRole
-    from cpow_engine.physics import create_material_object
+    from cpow_engine.collab.policy import CollabPolicy
+    from cpow_engine.physics import create_material_object, create_heat_object
 
     reg = AreaRegistry()
     area = reg.found(
@@ -200,6 +201,8 @@ def run_areas_demo() -> None:
     print(f"문명: {area.economy.stage()['label']} (Lv.{area.economy.civilization_level})")
     print()
 
+    area.world.policy = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
+
     reg.join(area.area_id, "bob")
     area.join("carol", requested_role=ContributorRole.ADVENTURER)
 
@@ -211,7 +214,21 @@ def run_areas_demo() -> None:
     print(f"  [모험] carol: 탐험 → {adv.reason}")
 
     pulse = area.advance_pulse(force=True)
-    print(f"  [펄스] #{pulse.pulse_number} — {pulse.applied_count}개 반영")
+    print(f"  [펄스] #{pulse.pulse_number} — 창조 반영")
+
+    seed_id = next(iter(area.world.state.objects))
+    grow = area.submit_mutation("bob", seed_id, "grow", factor=1.1)
+    print(f"  [변형] bob: 심장 grow → {grow.previous_value:.1f} → {grow.new_value:.1f}")
+
+    rename = area.submit_mutation(
+        "bob", seed_id, "rename", text_value="우리의 심장",
+    )
+    print(f"  [이름] bob: {rename.reason}")
+
+    obj = create_heat_object("bob", "없앨 불", 30.0)
+    area.submit_creation("bob", obj, creation_type="heat")
+    area.submit_mutation("bob", obj.id, "destroy")
+    print(f"  [파괴] bob: 임시 오브젝트 제거")
     print(
         f"  문명 성장: {area.economy.stage()['label']} "
         f"| 시스템: {', '.join(area.economy.systems_unlocked) or '없음'}"

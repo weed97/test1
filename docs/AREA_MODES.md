@@ -24,11 +24,11 @@
 
 ## 역할
 
-| 역할 | 창조 | 모험 | 법칙 수정 |
-|------|------|------|-----------|
-| `founder` 창시자 | ✓ (넓은 한도) | ✓ | ✓ |
-| `collaborator` 협력자 | ✓ (협동 펄스) | ✓ | ✗ |
-| `adventurer` 모험가 | ✗ (기여만) | ✓ | ✗ |
+| 역할 | 창조 | 모험 | 오브젝트 변형 |
+|------|------|------|----------------|
+| `founder` 창시자 | ✓ (넓은 한도) | ✓ | ✓ grow/shrink/destroy 전체 |
+| `collaborator` 협력자 | ✓ (협동 펄스) | ✓ | ✓ 변형·파괴 (심장 제외) |
+| `adventurer` 모험가 | ✗ (기여만) | ✓ | 자기가 만든 것만 소규모 |
 | `observer` 관찰자 | ✗ | ✗ | ✗ |
 
 ## 에리어 법칙 (`area_templates.json`)
@@ -83,12 +83,21 @@ POST /v1/areas/adventure  {
   "actor_id": "carol",
   "action": "explore"
 }
-POST /v1/areas/adventure  {
+
+# 구성원 오브젝트 변형
+POST /v1/areas/mutate  {
   "area_id": "area_...",
-  "actor_id": "carol",
-  "action": "interact",
-  "target_object_id": "..."
+  "actor_id": "bob",
+  "object_id": "...",
+  "operation": "grow",
+  "property_name": "heat_intensity",
+  "factor": 1.15
 }
+POST /v1/areas/mutate  {"operation": "shrink", "factor": 0.85, ...}
+POST /v1/areas/mutate  {"operation": "modify", "delta": -10.0, ...}
+POST /v1/areas/mutate  {"operation": "set", "value": 80.0, ...}
+POST /v1/areas/mutate  {"operation": "destroy", ...}
+POST /v1/areas/mutate  {"operation": "rename", "text_value": "공동의 심장", ...}
 
 # 상태·문명·대기 큐
 GET /v1/areas/state?area_id=area_...
@@ -103,6 +112,7 @@ cpow_engine/areas/
   roles.py      # Founder / Collaborator / Adventurer
   laws.py       # AreaLawSet — 지역 물리·펄스 규칙
   economy.py    # RegionalEconomy — 문명·교역
+  mutations.py  # 구성원 오브젝트 변형 (grow/shrink/destroy)
   area.py       # CreatedArea
   registry.py   # AreaRegistry
 ```

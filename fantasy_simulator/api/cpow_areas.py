@@ -149,3 +149,39 @@ def handle_area_list() -> dict[str, Any]:
         "count": len(areas),
         "areas": [a.to_public_dict() for a in areas],
     }
+
+
+def handle_area_mutate(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    actor_id = str(payload.get("actor_id", "anonymous"))
+    object_id = str(payload["object_id"])
+    operation = str(payload.get("operation", "modify"))
+    result = area.submit_mutation(
+        actor_id,
+        object_id,
+        operation,
+        property_name=str(payload.get("property_name", "heat_intensity")),
+        value=float(payload["value"]) if "value" in payload else None,
+        factor=float(payload.get("factor", 1.0)),
+        delta=float(payload.get("delta", 0.0)),
+        text_value=str(payload.get("text_value", payload.get("label", ""))),
+        creativity_score=float(payload.get("creativity_score", 1.0)),
+    )
+    pulse = area.maybe_advance_pulse()
+    out: dict[str, Any] = {
+        "ok": result.ok,
+        "area_id": area.area_id,
+        "role": area.role_of(actor_id).value,
+        "operation": result.operation,
+        "object_id": result.object_id,
+        "reason": result.reason,
+        "queued": result.queued,
+        "previous_value": result.previous_value,
+        "new_value": result.new_value,
+        "energy_delta": result.energy_delta,
+        "pulse_committed": pulse.advanced,
+    }
+    if result.ok and not result.queued and result.object_id in area.world.state.objects:
+        out["object"] = area.world.state.objects[result.object_id].to_dict()
+    out["area"] = area.to_public_dict()
+    return out

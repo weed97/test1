@@ -28,7 +28,11 @@ class RolePermissions:
     can_create_objects: bool
     can_collaborate: bool
     can_adventure: bool
+    can_modify_objects: bool
+    can_destroy_objects: bool
+    can_destroy_founding_core: bool
     max_heat_intensity: float
+    max_modify_factor: float
     creations_per_pulse: int
 
 
@@ -38,7 +42,11 @@ ROLE_PERMISSIONS: dict[ContributorRole, RolePermissions] = {
         can_create_objects=True,
         can_collaborate=True,
         can_adventure=True,
+        can_modify_objects=True,
+        can_destroy_objects=True,
+        can_destroy_founding_core=True,
         max_heat_intensity=500.0,
+        max_modify_factor=2.0,
         creations_per_pulse=2,
     ),
     ContributorRole.COLLABORATOR: RolePermissions(
@@ -46,7 +54,11 @@ ROLE_PERMISSIONS: dict[ContributorRole, RolePermissions] = {
         can_create_objects=True,
         can_collaborate=True,
         can_adventure=True,
+        can_modify_objects=True,
+        can_destroy_objects=True,
+        can_destroy_founding_core=False,
         max_heat_intensity=200.0,
+        max_modify_factor=1.4,
         creations_per_pulse=1,
     ),
     ContributorRole.ADVENTURER: RolePermissions(
@@ -54,7 +66,11 @@ ROLE_PERMISSIONS: dict[ContributorRole, RolePermissions] = {
         can_create_objects=False,
         can_collaborate=False,
         can_adventure=True,
+        can_modify_objects=True,
+        can_destroy_objects=True,
+        can_destroy_founding_core=False,
         max_heat_intensity=80.0,
+        max_modify_factor=1.15,
         creations_per_pulse=1,
     ),
     ContributorRole.OBSERVER: RolePermissions(
@@ -62,7 +78,11 @@ ROLE_PERMISSIONS: dict[ContributorRole, RolePermissions] = {
         can_create_objects=False,
         can_collaborate=False,
         can_adventure=False,
+        can_modify_objects=False,
+        can_destroy_objects=False,
+        can_destroy_founding_core=False,
         max_heat_intensity=0.0,
+        max_modify_factor=1.0,
         creations_per_pulse=0,
     ),
 }
