@@ -58,9 +58,26 @@ POST /v1/governance/tick       # 공지→투표 전환
 GET  /v1/governance/state
 ```
 
+## 시행(Enacted) → 런타임 집행
+
+투표로 `enacted` 된 시스템은 `SystemRuntime`에 등록되어 **실제 동작**을 바꿉니다.
+
+| kind | spec 예시 | 런타임 효과 |
+|------|-----------|-------------|
+| `macro_bot_defense` | `creations_per_window`, `window_sec` | 창조 속도 제한 |
+| | `min_creator_cooldown_sec` | CollabPolicy 쿨다운 강화 |
+| | `block_npc_creation` | NPC 창조 차단 |
+| `creative_destruction` | `max_destroys_per_window` | 파괴 횟수 상한 |
+| | `penalty_multiplier` | 파괴 패널티 배율 |
+| `election_war` | `cross_destroy_scale` | 교차 파괴 비용 |
+| `custom` | `governance_approval_ratio` | 다음 투표 통과 비율 |
+
+`GET /v1/governance/state` → `runtime_rules`, `runtime_enacted`
+
 ## 모듈
 
 ```
 cpow_engine/areas/governance.py
-cpow_engine/areas/registry.py   # GovernanceLedger 통합
+cpow_engine/areas/system_runtime.py   # 런타임 집행
+cpow_engine/areas/registry.py
 ```

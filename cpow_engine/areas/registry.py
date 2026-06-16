@@ -11,6 +11,7 @@ from cpow_engine.areas.diplomacy import (
     observer_can_intervene_cross_area,
 )
 from cpow_engine.areas.governance import GovernanceLedger, GovernancePolicy
+from cpow_engine.areas.system_runtime import SystemRuntime
 from cpow_engine.areas.modes import SimulationMode
 from cpow_engine.areas.roles import ContributorRole
 from cpow_engine.collab import WorldSubmissionResult
@@ -21,7 +22,17 @@ class AreaRegistry:
     def __init__(self, *, governance_policy: GovernancePolicy | None = None) -> None:
         self._areas: dict[str, CreatedArea] = {}
         self.diplomacy: DiplomacyLedger = DiplomacyLedger()
-        self.governance: GovernanceLedger = GovernanceLedger(governance_policy)
+        self.system_runtime = SystemRuntime()
+        self.governance = GovernanceLedger(
+            governance_policy,
+            runtime=self.system_runtime,
+            on_enact=self._on_system_enacted,
+        )
+
+    def _on_system_enacted(self, system) -> None:
+        self.system_runtime.register(system)
+        for area in self._areas.values():
+            area.refresh_runtime_policy()
 
     def _sync_member_powers(self, area: CreatedArea, user_id: str) -> None:
         powers = area.power_ledger.members.get(user_id)
@@ -45,6 +56,7 @@ class AreaRegistry:
             laws=laws,
         )
         self._areas[area.area_id] = area
+        area.attach_system_runtime(self.system_runtime)
         self._sync_member_powers(area, founder_id)
         return area
 
@@ -261,6 +273,7 @@ class AreaRegistry:
             "pending": self.governance.pending_proposals(),
             "announcements": self.governance.announcements(),
             "enacted": self.governance.enacted_systems(),
+            "runtime_rules": self.system_runtime.merged_rules().to_dict(),
         }
 
     def _governance_response(self, result) -> dict:
@@ -281,5 +294,6 @@ class AreaRegistry:
         out["governance"] = {
             "announcements": self.governance.announcements(),
             "enacted": self.governance.enacted_systems(),
+            "runtime_rules": self.system_runtime.merged_rules().to_dict(),
         }
         return out

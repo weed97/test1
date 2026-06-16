@@ -65,6 +65,7 @@ from cpow_engine.areas.mutations import (
     object_in_area,
 )
 from cpow_engine.collab import CollaborativeWorld, WorldSubmissionResult
+from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.collab.pulse import PulseResult
 from cpow_engine.models import ActionRecord, CreativeObject, PropertyDef
 from cpow_engine.physics import create_heat_object
@@ -99,6 +100,33 @@ class CreatedArea:
     carried_cores: dict[str, CarriedCore] = field(default_factory=dict)
     extent_bonus: float = 1.0
     npcs: dict[str, AreaNpc] = field(default_factory=dict)
+    _system_runtime: object | None = field(default=None, repr=False)
+    _base_collab_policy: CollabPolicy | None = field(default=None, repr=False)
+
+    def attach_system_runtime(self, runtime: object) -> None:
+        self._system_runtime = runtime
+        if self._base_collab_policy is None:
+            p = self.world.policy
+            self._base_collab_policy = CollabPolicy(
+                max_relative_change=p.max_relative_change,
+                max_absolute_heat_delta=p.max_absolute_heat_delta,
+                max_creations_per_tick=p.max_creations_per_tick,
+                max_patches_per_batch=p.max_patches_per_batch,
+                damp_factor=p.damp_factor,
+                noise_threshold=p.noise_threshold,
+                min_creativity_for_large_change=p.min_creativity_for_large_change,
+                large_change_multiplier=p.large_change_multiplier,
+                pulse_interval_sec=p.pulse_interval_sec,
+                min_creator_cooldown_sec=p.min_creator_cooldown_sec,
+                max_creations_per_creator_per_pulse=p.max_creations_per_creator_per_pulse,
+            )
+        self.refresh_runtime_policy()
+
+    def refresh_runtime_policy(self) -> None:
+        if self._system_runtime is not None and self._base_collab_policy is not None:
+            self.world.policy = self._system_runtime.apply_collab_policy(
+                self._base_collab_policy,
+            )
 
     def area_extent(self) -> float:
         return compute_extent(
@@ -161,6 +189,16 @@ class CreatedArea:
         for npc in list(self.npcs.values()):
             if npc.task != NpcTask.FARM:
                 continue
+            if self._system_runtime is not None:
+                npc_check = self._system_runtime.check_npc_creation_allowed(npc.npc_id)
+                if not npc_check.ok:
+                    results.append({
+                        "ok": False,
+                        "npc_id": npc.npc_id,
+                        "task": "farm",
+                        "reason": npc_check.reason,
+                    })
+                    continue
             tick_result, plot, cost = tick_npc_farm(npc)
             if not tick_result.ok or plot is None:
                 results.append(tick_result.__dict__)
@@ -180,6 +218,8 @@ class CreatedArea:
             }
             if created.ok and created.object_id:
                 entry["object_id"] = created.object_id
+                if self._system_runtime is not None:
+                    self._system_runtime.record_npc_creation(npc.npc_id)
             else:
                 npc.creation_gauge += cost
             results.append(entry)
@@ -333,6 +373,15 @@ class CreatedArea:
                     return WorldSubmissionResult(False, reason="role_cannot_create")
 
         is_founding_seed = obj.get_property("area_seed") is not None
+        if not is_founding_seed and self._system_runtime is not None:
+            runtime_check = self._system_runtime.check_creation_allowed(creator_id)
+            if not runtime_check.ok:
+                return WorldSubmissionResult(
+                    False,
+                    object_id=obj.id,
+                    reason=runtime_check.reason,
+                )
+
         if not is_founding_seed and not self.laws.allows_creation_type(creation_type):
             return WorldSubmissionResult(False, reason="creation_type_not_allowed_in_area")
 
@@ -390,6 +439,8 @@ class CreatedArea:
                     result.reason = "insufficient_creation_power"
                 else:
                     result.penalty_redeemed = redeemed
+                    if self._system_runtime is not None:
+                        self._system_runtime.record_creation(creator_id)
         self._refresh_economy()
         return result
 
@@ -792,7 +843,10 @@ class CreatedArea:
             "extent_bonus": round(self.extent_bonus, 2),
             "area_extent": round(self.area_extent(), 2),
             "npcs": {k: v.to_dict() for k, v in self.npcs.items()},
-            "diplomacy_links": [],
+            "runtime_rules": (
+                self._system_runtime.merged_rules().to_dict()
+                if self._system_runtime is not None else {}
+            ),
             "created_at": self.created_at,
             "world": world_pub,
         }
@@ -863,14 +917,24 @@ class CreatedArea:
 
         ratio = dominance_ratio(attacker_extent, target_extent)
         cross_scale = 1.0 / max(ratio, 0.15)
+        runtime = self._system_runtime or attacker_area._system_runtime
+        if runtime is not None:
+            cross_scale *= runtime.cross_destroy_scale()
+            destroy_check = runtime.check_destroy_allowed(actor_id)
+            if not destroy_check.ok:
+                return MutationResult(
+                    False, "destroy", object_id, reason=destroy_check.reason,
+                )
 
         powers = attacker_area.power_ledger.get_or_create(actor_id)
+        penalty_mult = runtime.penalty_multiplier() if runtime is not None else 1.0
         attempt = attempt_powered_destroy(
             powers,
             obj,
             self.rift,
             area_extent=self.area_extent(),
             cross_area_scale=cross_scale,
+            penalty_multiplier=penalty_mult,
         )
         if not attempt.ok:
             return MutationResult(
@@ -887,6 +951,8 @@ class CreatedArea:
             actor_id,
             self.area_id,
         )
+        if runtime is not None:
+            runtime.record_destroy(actor_id)
         self._refresh_economy()
         return MutationResult(
             True,
@@ -908,9 +974,27 @@ class CreatedArea:
                 False, "destroy", mutation.object_id, reason="object_not_found",
             )
 
+        if self._system_runtime is not None:
+            destroy_check = self._system_runtime.check_destroy_allowed(mutation.actor_id)
+            if not destroy_check.ok:
+                return MutationResult(
+                    False,
+                    "destroy",
+                    mutation.object_id,
+                    reason=destroy_check.reason,
+                )
+
         powers = self.power_ledger.get_or_create(mutation.actor_id)
+        penalty_mult = (
+            self._system_runtime.penalty_multiplier()
+            if self._system_runtime is not None else 1.0
+        )
         attempt = attempt_powered_destroy(
-            powers, obj, self.rift, area_extent=self.area_extent(),
+            powers,
+            obj,
+            self.rift,
+            area_extent=self.area_extent(),
+            penalty_multiplier=penalty_mult,
         )
         if not attempt.ok:
             return MutationResult(
@@ -927,6 +1011,8 @@ class CreatedArea:
             mutation.actor_id,
             self.area_id,
         )
+        if self._system_runtime is not None:
+            self._system_runtime.record_destroy(mutation.actor_id)
         self._refresh_economy()
         return MutationResult(
             True,

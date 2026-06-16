@@ -13,6 +13,8 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 
+from typing import Callable
+
 from cpow_engine.areas.powers import UserPowers
 
 
@@ -194,8 +196,16 @@ class GovernanceResult:
 class GovernanceLedger:
     """전역 시스템 발의·투표 — 에리어 오브젝트 창조와 분리."""
 
-    def __init__(self, policy: GovernancePolicy | None = None) -> None:
+    def __init__(
+        self,
+        policy: GovernancePolicy | None = None,
+        *,
+        runtime: object | None = None,
+        on_enact: Callable[[EnactedSystem], None] | None = None,
+    ) -> None:
         self.policy = policy or GovernancePolicy()
+        self._runtime = runtime
+        self._on_enact = on_enact
         self._proposals: dict[str, SystemProposal] = {}
         self._enacted: list[EnactedSystem] = []
         self._announcements: list[dict] = []
@@ -212,6 +222,15 @@ class GovernanceLedger:
             1 for p in self._member_powers.values()
             if creation_exceeds_destruction(p)
         )
+
+    def _approval_ratio(self) -> float:
+        base = self.policy.approval_ratio
+        if self._runtime is not None:
+            return self._runtime.governance_approval_ratio(base)
+        return base
+
+    def _reject_ratio(self) -> float:
+        return self.policy.reject_ratio
 
     def draft_proposal(
         self,
@@ -426,8 +445,9 @@ class GovernanceLedger:
 
     def _tally_vote(self, proposal: SystemProposal) -> bool:
         eligible = self.eligible_voter_count()
-        needed = self.policy.approvals_needed(eligible)
-        block = self.policy.rejections_to_block(eligible)
+        ratio = self._approval_ratio()
+        needed = max(1, math.ceil(eligible * ratio)) if eligible > 0 else 1
+        block = max(1, math.ceil(eligible * self._reject_ratio())) if eligible > 0 else 1
 
         if len(proposal.approvals) >= needed:
             proposal.phase = SystemProposalPhase.ENACTED
@@ -439,6 +459,8 @@ class GovernanceLedger:
                 proposal_id=proposal.proposal_id,
             )
             self._enacted.append(enacted)
+            if self._on_enact:
+                self._on_enact(enacted)
             return True
 
         if len(proposal.rejections) >= block:

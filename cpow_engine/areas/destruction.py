@@ -59,6 +59,7 @@ def attempt_powered_destroy(
     *,
     area_extent: float = 1.0,
     cross_area_scale: float = 1.0,
+    penalty_multiplier: float = 1.0,
 ) -> DestroyAttemptResult:
     if not is_confirmed(obj):
         return DestroyAttemptResult(
@@ -88,7 +89,7 @@ def attempt_powered_destroy(
 
     investment = get_creation_investment(obj)
     core_bonus = 1.8 if is_core_facility(obj) else 1.0
-    penalty = (required * 0.3 + investment * 0.6) * core_bonus
+    penalty = (required * 0.3 + investment * 0.6) * core_bonus * penalty_multiplier
     powers.apply_destruction_penalty(penalty)
 
     rift_info = rift.on_destruction(
