@@ -14,6 +14,47 @@ def _new_id() -> str:
     return uuid.uuid4().hex[:12]
 
 
+VISUAL_SLOTS = frozenset(
+    {"avatar", "weapon", "movement", "accessory", "world_prop"}
+)
+
+
+@dataclass
+class ObjectVisual:
+    """3D 클라이언트 렌더링 메타데이터 — glb/VRM 장착 정보."""
+
+    glb_url: str = ""
+    slot: str = "world_prop"
+    attach_bone: str = ""
+    offset: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "glb_url": self.glb_url,
+            "slot": self.slot,
+        }
+        if self.attach_bone:
+            out["attach_bone"] = self.attach_bone
+        if self.offset:
+            out["offset"] = dict(self.offset)
+        return out
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> ObjectVisual | None:
+        if not data:
+            return None
+        slot = str(data.get("slot", "world_prop"))
+        if slot not in VISUAL_SLOTS:
+            slot = "world_prop"
+        offset = data.get("offset", {})
+        return cls(
+            glb_url=str(data.get("glb_url", "")),
+            slot=slot,
+            attach_bone=str(data.get("attach_bone", "")),
+            offset=dict(offset) if isinstance(offset, dict) else {},
+        )
+
+
 @dataclass
 class PropertyDef:
     """유저가 정의한 물리 속성 (하드코딩된 Fire가 아님)."""
@@ -43,6 +84,7 @@ class CreativeObject:
     label: str = ""
     properties: list[PropertyDef] = field(default_factory=list)
     connections: list[str] = field(default_factory=list)
+    visual: ObjectVisual | None = None
     created_at: float = field(default_factory=time.time)
     creativity_fingerprint: str = ""
 
@@ -68,7 +110,7 @@ class CreativeObject:
         return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "id": self.id,
             "creator_id": self.creator_id,
             "label": self.label,
@@ -77,6 +119,9 @@ class CreativeObject:
             "created_at": self.created_at,
             "creativity_fingerprint": self.creativity_fingerprint,
         }
+        if self.visual is not None:
+            out["visual"] = self.visual.to_dict()
+        return out
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CreativeObject:
@@ -88,6 +133,7 @@ class CreativeObject:
                 PropertyDef.from_dict(p) for p in data.get("properties", [])
             ],
             connections=list(data.get("connections", [])),
+            visual=ObjectVisual.from_dict(data.get("visual")),
             created_at=float(data.get("created_at", time.time())),
             creativity_fingerprint=str(data.get("creativity_fingerprint", "")),
         )

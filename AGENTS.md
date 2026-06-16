@@ -12,6 +12,7 @@ Guidance for AI agents working in this repository.
 |------|------|
 | `cpow_engine/` | **Core engine** — physics, CPoW scoring, shared state |
 | `fantasy_simulator/` | Eldoria legacy — transitioning to CPoW adapters |
+| `cpow_client/godot/` | **CPoW World Client** — areas API, VRoid/glb (not Eldoria 2D) |
 | `sungjwa_hunter_sim/` | 성좌 헌터 sim — CPoW adapter planned |
 | `mmorpg_sim/`, `fantasy_mmorpg/` | Legacy text sims |
 | `item_catalog/` | Item catalog web UI |

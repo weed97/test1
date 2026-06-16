@@ -48,7 +48,8 @@ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4
 | `cpow_engine/xr/` | ✅ MVP | XR 제스처 → CreativeObject |
 | `cpow_engine/collab/` | ✅ MVP | 협동 오픈월드 + 노이즈 감쇄 — [COLLABORATIVE_WORLD.md](COLLABORATIVE_WORLD.md) |
 | `cpow_engine/areas/` | ✅ MVP | 창조·모험·창조모험 에리어 — [AREA_MODES.md](AREA_MODES.md), [CREATION_DESTRUCTION_POWERS.md](CREATION_DESTRUCTION_POWERS.md) |
-| Godot OpenXR 클라이언트 | ✅ MVP | `world_xr.tscn` — [XR_INTEGRATION.md](XR_INTEGRATION.md) |
+| `cpow_client/godot/` | ✅ MVP | CPoW 전용 Godot — `/v1/areas/*`, VRoid/glb 골격 — [cpow_client/godot/docs/CLIENT_ARCHITECTURE.md](../cpow_client/godot/docs/CLIENT_ARCHITECTURE.md) |
+| Godot OpenXR (Eldoria) | ✅ MVP | `fantasy_simulator/.../world_xr.tscn` — [XR_INTEGRATION.md](XR_INTEGRATION.md) |
 
 ```bash
 python3 -m cpow_engine.demo --seed 42 --ticks 5

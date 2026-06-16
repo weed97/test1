@@ -58,9 +58,16 @@
     {"name": "heat_intensity", "value": 100.0, "unit": "joules_per_tick"}
   ],
   "connections": ["def456"],
+  "visual": {
+    "glb_url": "https://cdn.example/sword.glb",
+    "slot": "weapon",
+    "attach_bone": "RightHand"
+  },
   "creativity_fingerprint": "a1b2c3..."
 }
 ```
+
+3D 클라이언트(`cpow_client/godot`)용 `visual` 필드 — [cpow_client/godot/docs/CLIENT_ARCHITECTURE.md](../cpow_client/godot/docs/CLIENT_ARCHITECTURE.md)
 
 ### SimulationState
 
