@@ -274,6 +274,7 @@ class AreaRegistry:
             "announcements": self.governance.announcements(),
             "enacted": self.governance.enacted_systems(),
             "runtime_rules": self.system_runtime.merged_rules().to_dict(),
+            "runtime_enacted": self.system_runtime.enacted_systems(),
         }
 
     def _governance_response(self, result) -> dict:
