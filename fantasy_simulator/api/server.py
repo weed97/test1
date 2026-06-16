@@ -59,8 +59,13 @@ from api.cpow_areas import (
     handle_area_join,
     handle_area_list,
     handle_area_mutate,
+    handle_area_restore_core,
     handle_area_state,
     handle_area_vote,
+    handle_area_defend,
+    handle_area_extract_core,
+    handle_area_migrate,
+    handle_area_powers,
 )
 
 API_VERSION = 1
@@ -933,6 +938,56 @@ class AreaVoteRequest(BaseModel):
 @app.post("/v1/areas/vote")
 def area_vote(body: AreaVoteRequest) -> dict[str, Any]:
     return handle_area_vote(body.model_dump())
+
+
+class AreaDefendRequest(BaseModel):
+    area_id: str
+    actor_id: str = "anonymous"
+    power_spend: float = 15.0
+
+
+class AreaExtractCoreRequest(BaseModel):
+    area_id: str
+    actor_id: str = "anonymous"
+
+
+class AreaRestoreCoreRequest(BaseModel):
+    area_id: str
+    actor_id: str = "anonymous"
+    label: Optional[str] = None
+
+
+class AreaMigrateRequest(BaseModel):
+    area_id: str
+    actor_id: str = "anonymous"
+
+
+@app.post("/v1/areas/defend")
+def area_defend(body: AreaDefendRequest) -> dict[str, Any]:
+    return handle_area_defend(body.model_dump())
+
+
+@app.post("/v1/areas/extract_core")
+def area_extract_core(body: AreaExtractCoreRequest) -> dict[str, Any]:
+    return handle_area_extract_core(body.model_dump())
+
+
+@app.post("/v1/areas/restore_core")
+def area_restore_core(body: AreaRestoreCoreRequest) -> dict[str, Any]:
+    return handle_area_restore_core(body.model_dump(exclude_none=True))
+
+
+@app.post("/v1/areas/migrate")
+def area_migrate(body: AreaMigrateRequest) -> dict[str, Any]:
+    return handle_area_migrate(body.model_dump())
+
+
+@app.get("/v1/areas/powers")
+def area_powers(area_id: str, user_id: str) -> dict[str, Any]:
+    try:
+        return handle_area_powers(area_id, user_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.get("/v1/areas/list")

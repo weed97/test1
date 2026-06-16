@@ -184,8 +184,15 @@ def handle_area_mutate(payload: dict[str, Any]) -> dict[str, Any]:
         "previous_value": result.previous_value,
         "new_value": result.new_value,
         "energy_delta": result.energy_delta,
+        "durability_required": result.durability_required,
+        "destruction_spent": result.destruction_spent,
+        "penalty_applied": result.penalty_applied,
+        "rift_level": result.rift_level,
+        "monsters_attacking": result.monsters_attacking,
         "pulse_committed": pulse.advanced,
     }
+    if actor_id in area.power_ledger.members:
+        out["powers"] = area.member_powers(actor_id)
     out["area"] = area.to_public_dict()
     return out
 
@@ -209,3 +216,52 @@ def handle_area_vote(payload: dict[str, Any]) -> dict[str, Any]:
         "pulse_committed": pulse.advanced,
         "area": area.to_public_dict(),
     }
+
+
+def handle_area_defend(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    actor_id = str(payload.get("actor_id", "anonymous"))
+    spend = float(payload.get("power_spend", 15.0))
+    result = area.defend_rift(actor_id, power_spend=spend)
+    return {
+        "ok": result.ok,
+        "reason": result.reason,
+        "threat_reduced": result.threat_reduced,
+        "destruction_spent": result.destruction_spent,
+        "rift": area.rift.to_dict(),
+        "powers": area.member_powers(actor_id),
+        "area": area.to_public_dict(),
+    }
+
+
+def handle_area_extract_core(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    actor_id = str(payload.get("actor_id", "anonymous"))
+    return {**area.extract_core(actor_id), "area": area.to_public_dict()}
+
+
+def handle_area_restore_core(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    actor_id = str(payload.get("actor_id", "anonymous"))
+    label = payload.get("label")
+    result = area.restore_core(actor_id, label=str(label) if label else None)
+    return {
+        "ok": result.ok,
+        "reason": result.reason,
+        "object_id": result.object_id,
+        "area": area.to_public_dict(),
+    }
+
+
+def handle_area_migrate(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    actor_id = str(payload.get("actor_id", "anonymous"))
+    return {**area.migrate_member(actor_id), "area": area.to_public_dict()}
+
+
+def handle_area_powers(area_id: str, user_id: str) -> dict[str, Any]:
+    area = _registry.get_or_raise(area_id)
+    powers = area.member_powers(user_id)
+    if powers is None:
+        return {"ok": False, "reason": "not_a_member"}
+    return {"ok": True, "powers": powers, "rift": area.rift.to_dict()}

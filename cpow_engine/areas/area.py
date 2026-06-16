@@ -6,7 +6,22 @@ import time
 import uuid
 from dataclasses import dataclass, field
 
+from cpow_engine.areas.destruction import (
+    DestroyAttemptResult,
+    DefendResult,
+    attempt_defend_rift,
+    attempt_powered_destroy,
+)
+from cpow_engine.areas.durability import (
+    get_creation_investment,
+    get_durability,
+    is_confirmed,
+    is_core_facility,
+    stamp_creation_powers,
+)
 from cpow_engine.areas.economy import RegionalEconomy
+from cpow_engine.areas.powers import PowerLedger, UserPowers, creation_cost_for_object
+from cpow_engine.areas.rift import CarriedCore, RiftState
 from cpow_engine.areas.laws import AreaLawSet, load_area_templates, template_for_mode
 from cpow_engine.areas.modes import SimulationMode
 from cpow_engine.areas.roles import (
@@ -27,6 +42,7 @@ from cpow_engine.areas.mutations import (
     MutationOp,
     MutationResult,
     PendingMutation,
+    apply_destroy,
     apply_mutation,
     can_actor_mutate,
     mark_co_creator,
@@ -62,6 +78,9 @@ class CreatedArea:
     created_at: float = field(default_factory=time.time)
     _pending_mutations: list[PendingMutation] = field(default_factory=list)
     consensus: ConsensusGate = field(default_factory=ConsensusGate)
+    power_ledger: PowerLedger = field(default_factory=PowerLedger)
+    rift: RiftState = field(default_factory=RiftState)
+    carried_cores: dict[str, CarriedCore] = field(default_factory=dict)
 
     def role_of(self, creator_id: str) -> ContributorRole:
         return self.members.get(creator_id, ContributorRole.OBSERVER)
@@ -79,6 +98,7 @@ class CreatedArea:
         else:
             role = default_role_for_mode(self.mode)
         self.members[creator_id] = role
+        self.power_ledger.get_or_create(creator_id)
         return role
 
     def _resolve_join_role(self, requested: ContributorRole) -> ContributorRole:
@@ -151,6 +171,18 @@ class CreatedArea:
         result = self.world.submit_creation(
             creator_id, obj, creativity_score=creativity_score,
         )
+        if result.ok and result.queued:
+            self.world.advance_pulse(force=True)
+            result.queued = False
+        if result.ok:
+            live = self.world.state.objects.get(obj.id)
+            if live and not is_confirmed(live):
+                if not self._finalize_confirmed_creation(
+                    creator_id, live, creation_type=creation_type,
+                ):
+                    self.world.state.objects.pop(obj.id, None)
+                    result.ok = False
+                    result.reason = "insufficient_creation_power"
         self._refresh_economy()
         return result
 
@@ -243,6 +275,22 @@ class CreatedArea:
             proposal.obj,
             creativity_score=proposal.creativity_score,
         )
+        if result.ok and result.queued:
+            self.world.advance_pulse(force=True)
+            result.queued = False
+        if result.ok:
+            live = self.world.state.objects.get(proposal.obj.id)
+            if live is None:
+                result.ok = False
+                result.reason = "commit_failed"
+            elif not self._finalize_confirmed_creation(
+                proposal.proposer_id,
+                live,
+                creation_type=proposal.creation_type,
+            ):
+                self.world.state.objects.pop(proposal.obj.id, None)
+                result.ok = False
+                result.reason = "insufficient_creation_power"
         self.consensus.pop_approved(proposal.proposal_id)
         self._refresh_economy()
         result.proposal_id = proposal.proposal_id
@@ -326,6 +374,117 @@ class CreatedArea:
 
         return AdventureResult(False, action_type, reason="unknown_adventure_action")
 
+    def attempt_destroy(
+        self,
+        actor_id: str,
+        object_id: str,
+    ) -> MutationResult:
+        """확정된 오브젝트 파괴 — 파괴력 ≥ 내구도 필요."""
+        return self.submit_mutation(actor_id, object_id, "destroy")
+
+    def defend_rift(
+        self,
+        actor_id: str,
+        *,
+        power_spend: float,
+    ) -> DefendResult:
+        if actor_id not in self.members:
+            return DefendResult(False, reason="not_a_member")
+        powers = self.power_ledger.get_or_create(actor_id)
+        return attempt_defend_rift(powers, self.rift, power_spend=power_spend)
+
+    def extract_core(self, actor_id: str) -> dict:
+        """핵심 코어를 들고 다른 지역으로 이주·복원."""
+        if actor_id not in self.members:
+            return {"ok": False, "reason": "not_a_member"}
+
+        core_id = None
+        core_obj = None
+        for oid, obj in self.world.state.objects.items():
+            if is_core_facility(obj) and obj.get_property("area_seed"):
+                core_id = oid
+                core_obj = obj
+                break
+
+        if core_obj is None or core_id is None:
+            return {"ok": False, "reason": "no_core_found"}
+
+        powers = self.power_ledger.get_or_create(actor_id)
+        carry_cost = get_durability(core_obj) * 0.5
+        if powers.destruction_gauge < carry_cost:
+            return {
+                "ok": False,
+                "reason": "insufficient_destruction_power_to_extract",
+                "required": carry_cost,
+            }
+
+        powers.spend_destruction(carry_cost)
+        heat = core_obj.get_property("heat_intensity")
+        carried = CarriedCore(
+            carrier_id=actor_id,
+            source_area_id=self.area_id,
+            label=core_obj.label,
+            creation_investment=get_creation_investment(core_obj),
+            durability=get_durability(core_obj),
+            heat_baseline=heat.value if heat else self.laws.heat_baseline,
+        )
+        self.carried_cores[actor_id] = carried
+        self.world.state.objects.pop(core_id)
+        return {"ok": True, "reason": "core_extracted", "core": carried.to_dict()}
+
+    def restore_core(
+        self,
+        actor_id: str,
+        *,
+        label: str | None = None,
+    ) -> WorldSubmissionResult:
+        """운반 중인 코어로 이 에리어에 심장 복원."""
+        carried = self.carried_cores.get(actor_id)
+        if carried is None:
+            return WorldSubmissionResult(False, reason="no_carried_core")
+
+        seed = create_heat_object(
+            actor_id,
+            label or f"{carried.label} (복원)",
+            heat_intensity=carried.heat_baseline,
+        )
+        seed.properties.append(
+            PropertyDef(name="area_seed", value=1.0, unit="founding_core")
+        )
+        result = self.submit_creation(
+            actor_id, seed, creation_type="heat", bypass_consensus=True,
+        )
+        if result.ok:
+            obj = self.world.state.objects.get(result.object_id)
+            if obj:
+                stamp_creation_powers(
+                    obj, carried.creation_investment, is_core=True,
+                )
+            del self.carried_cores[actor_id]
+            result.reason = "core_restored"
+        return result
+
+    def migrate_member(self, actor_id: str) -> dict:
+        """균열이 크면 이주 권고 — 멤버를 에리어에서 빼고 코어 운반 가능."""
+        if actor_id not in self.members:
+            return {"ok": False, "reason": "not_a_member"}
+        if not self.rift.to_dict().get("migration_recommended"):
+            return {"ok": False, "reason": "migration_not_needed"}
+
+        role = self.members.pop(actor_id)
+        return {
+            "ok": True,
+            "reason": "migrated_out",
+            "actor_id": actor_id,
+            "former_role": role.value,
+            "rift_level": self.rift.level,
+            "carried_core_available": actor_id in self.carried_cores,
+        }
+
+    def member_powers(self, user_id: str) -> dict | None:
+        p = self.power_ledger.members.get(user_id)
+        return p.to_dict() if p else None
+
     def submit_mutation(
         self,
         actor_id: str,
@@ -387,6 +546,7 @@ class CreatedArea:
 
     def advance_pulse(self, *, force: bool = False) -> PulseResult:
         pulse = self.world.advance_pulse(force=force)
+        self._finalize_unconfirmed_objects()
         mutation_results = self._flush_mutations()
         if mutation_results or pulse.advanced:
             self._refresh_economy()
@@ -396,6 +556,7 @@ class CreatedArea:
 
     def maybe_advance_pulse(self) -> PulseResult:
         pulse = self.world.maybe_advance_pulse()
+        self._finalize_unconfirmed_objects()
         mutation_results = self._flush_mutations()
         if pulse.advanced or mutation_results:
             self._refresh_economy()
@@ -415,6 +576,9 @@ class CreatedArea:
             "pending_mutations": len(self._pending_mutations),
             "pending_proposals": self.pending_proposals(),
             "consensus_policy": self.consensus.policy.to_dict(),
+            "powers": self.power_ledger.to_dict(),
+            "rift": self.rift.to_dict(),
+            "carried_cores": {k: v.to_dict() for k, v in self.carried_cores.items()},
             "created_at": self.created_at,
             "world": world_pub,
         }
@@ -443,6 +607,9 @@ class CreatedArea:
     def _apply_mutation_now(
         self, mutation: PendingMutation, perms: RolePermissions,
     ) -> MutationResult:
+        if mutation.operation == MutationOp.DESTROY:
+            return self._apply_powered_destroy(mutation)
+
         result = apply_mutation(
             self.world.state,
             self.world.gate,
@@ -457,6 +624,83 @@ class CreatedArea:
                 mark_co_creator(obj, mutation.actor_id)
         self._refresh_economy()
         return result
+
+    def _apply_powered_destroy(self, mutation: PendingMutation) -> MutationResult:
+        obj = self.world.state.objects.get(mutation.object_id)
+        if obj is None:
+            return MutationResult(
+                False, "destroy", mutation.object_id, reason="object_not_found",
+            )
+
+        powers = self.power_ledger.get_or_create(mutation.actor_id)
+        attempt = attempt_powered_destroy(powers, obj, self.rift)
+        if not attempt.ok:
+            return MutationResult(
+                False,
+                "destroy",
+                mutation.object_id,
+                reason=attempt.reason,
+                durability_required=attempt.durability_required,
+            )
+
+        released = apply_destroy(
+            self.world.state,
+            mutation.object_id,
+            mutation.actor_id,
+            self.area_id,
+        )
+        self._refresh_economy()
+        return MutationResult(
+            True,
+            "destroy",
+            mutation.object_id,
+            reason="destroyed",
+            energy_delta=released,
+            durability_required=attempt.durability_required,
+            destruction_spent=attempt.destruction_spent,
+            penalty_applied=attempt.penalty_applied,
+            rift_level=float(attempt.rift.get("rift_level", 0)) if attempt.rift else 0.0,
+            monsters_attacking=attempt.monsters_attacking,
+        )
+
+    def _finalize_confirmed_creation(
+        self,
+        creator_id: str,
+        obj: CreativeObject,
+        *,
+        creation_type: str,
+    ) -> bool:
+        is_material = creation_type.lower() == "material"
+        heat = obj.get_property("heat_intensity")
+        heat_val = heat.value if heat else 0.0
+        cost = creation_cost_for_object(heat_val, is_material=is_material)
+        is_core = obj.get_property("area_seed") is not None
+        is_facility = obj.get_property("is_core_facility") is not None
+
+        powers = self.power_ledger.get_or_create(creator_id)
+        if not powers.spend_creation(cost):
+            return False
+
+        stamp_creation_powers(
+            obj,
+            cost,
+            is_core=is_core,
+            is_facility=is_facility or is_core,
+        )
+        return True
+
+    def _finalize_unconfirmed_objects(self) -> None:
+        for obj in list(self.world.state.objects.values()):
+            if is_confirmed(obj):
+                continue
+            creator = (obj.creator_id or "unknown").split("|")[0]
+            if creator not in self.members:
+                continue
+            ctype = "material" if obj.get_property("material_type") else "heat"
+            if not self._finalize_confirmed_creation(
+                creator, obj, creation_type=ctype,
+            ):
+                self.world.state.objects.pop(obj.id, None)
 
     def _flush_mutations(self) -> list[MutationResult]:
         if not self._pending_mutations:
@@ -508,5 +752,12 @@ def found_area(
     )
     area.submit_creation(founder_id, seed, creation_type="heat", bypass_consensus=True)
     area.world.advance_pulse(force=True)
+    obj = next(iter(area.world.state.objects.values()), None)
+    if obj:
+        stamp_creation_powers(
+            obj,
+            creation_cost_for_object(law_set.heat_baseline),
+            is_core=True,
+        )
     area._refresh_economy()
     return area

@@ -47,7 +47,7 @@ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4
 | `cpow_engine/engine.py` | ✅ MVP | 틱 루프 |
 | `cpow_engine/xr/` | ✅ MVP | XR 제스처 → CreativeObject |
 | `cpow_engine/collab/` | ✅ MVP | 협동 오픈월드 + 노이즈 감쇄 — [COLLABORATIVE_WORLD.md](COLLABORATIVE_WORLD.md) |
-| `cpow_engine/areas/` | ✅ MVP | 창조·모험·창조모험 에리어 — [AREA_MODES.md](AREA_MODES.md) |
+| `cpow_engine/areas/` | ✅ MVP | 창조·모험·창조모험 에리어 — [AREA_MODES.md](AREA_MODES.md), [CREATION_DESTRUCTION_POWERS.md](CREATION_DESTRUCTION_POWERS.md) |
 | Godot OpenXR 클라이언트 | ✅ MVP | `world_xr.tscn` — [XR_INTEGRATION.md](XR_INTEGRATION.md) |
 
 ```bash

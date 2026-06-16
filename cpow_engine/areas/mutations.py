@@ -55,6 +55,11 @@ class MutationResult:
     new_value: float | None = None
     verdict: ChangeVerdict | None = None
     energy_delta: float = 0.0
+    durability_required: float = 0.0
+    destruction_spent: float = 0.0
+    penalty_applied: float = 0.0
+    rift_level: float = 0.0
+    monsters_attacking: bool = False
 
 
 def is_founding_core(obj: CreativeObject) -> bool:
