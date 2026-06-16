@@ -45,7 +45,8 @@ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4
 | `cpow_engine/cpow/` | ✅ MVP | CPoW 점수·봇 억제 |
 | `cpow_engine/shared_state/` | ✅ MVP | 충돌 병합 |
 | `cpow_engine/engine.py` | ✅ MVP | 틱 루프 |
-| Godot/실시간 클라이언트 | 🔲 | fantasy_simulator 연동 |
+| `cpow_engine/xr/` | ✅ MVP | XR 제스처 → CreativeObject |
+| Godot OpenXR 클라이언트 | 🔲 | Quest/PCVR — [XR_INTEGRATION.md](XR_INTEGRATION.md) |
 
 ```bash
 python3 -m cpow_engine.demo --seed 42 --ticks 5
