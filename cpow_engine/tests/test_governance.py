@@ -2,14 +2,15 @@
 
 import unittest
 
+from cpow_engine.areas.area import CreatedArea
 from cpow_engine.areas.governance import (
     GovernanceLedger,
     GovernancePolicy,
     SystemProposalKind,
     creation_exceeds_destruction,
-    destruction_exceeds_creation,
 )
 from cpow_engine.areas.governance_eligibility import (
+    LivingAreaPolicy,
     LongFlowPolicy,
     make_long_flow_spec,
     validate_long_flow_proposal,
@@ -17,6 +18,8 @@ from cpow_engine.areas.governance_eligibility import (
 from cpow_engine.areas.powers import UserPowers
 from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas import SimulationMode
+from cpow_engine.collab.policy import CollabPolicy
+from cpow_engine.physics import create_heat_object
 
 
 def _test_long_flow_policy() -> LongFlowPolicy:
@@ -32,6 +35,19 @@ def _test_long_flow_policy() -> LongFlowPolicy:
     )
 
 
+def _test_living_area_policy() -> LivingAreaPolicy:
+    return LivingAreaPolicy(
+        min_human_members=2,
+        min_distinct_human_creators=2,
+        min_human_confirmed_creations=2,
+        min_collaborative_events=1,
+        max_npc_creation_share=0.9,
+        min_member_human_creations=1,
+        min_member_creation_invested=5.0,
+        min_member_collab_signals=1,
+    )
+
+
 def _test_policy() -> GovernancePolicy:
     return GovernancePolicy(
         min_composers=3,
@@ -42,6 +58,7 @@ def _test_policy() -> GovernancePolicy:
         voting_ttl_sec=600.0,
         max_sponsor_share=0.5,
         long_flow=_test_long_flow_policy(),
+        living_area=_test_living_area_policy(),
     )
 
 
@@ -83,6 +100,47 @@ def _destroyer(uid: str) -> UserPowers:
     )
 
 
+def _seed_living_area(area: CreatedArea) -> None:
+    """인간 공동창작 활동 — 모든 구성원이 창조·합의에 참여."""
+    instant = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
+    area.world.policy = instant
+    humans = [uid for uid in area.members if uid not in area.npcs]
+    if len(humans) < 2:
+        return
+    needed = area.consensus.policy.approvals_needed(len(area.members))
+    for i, creator in enumerate(humans):
+        obj = create_heat_object(creator, f"collab_work_{i}", 40.0)
+        result = area.submit_creation(creator, obj, creation_type="heat")
+        if result.consensus_pending and result.proposal_id:
+            for j in range(needed):
+                voter = humans[(i + j + 1) % len(humans)]
+                proposal = area.consensus.get_proposal(result.proposal_id)
+                if proposal is None or proposal.status.value != "pending":
+                    break
+                area.vote_on_creation(voter, result.proposal_id, approve=True)
+        area.world.advance_pulse(force=True)
+
+
+def _registry_with_members(n: int) -> tuple[AreaRegistry, CreatedArea]:
+    reg = AreaRegistry(governance_policy=_test_policy())
+    area = reg.found("founder", "테스트 월드", mode=SimulationMode.CREATION_ADVENTURE)
+    for i in range(n):
+        uid = f"user_{i}"
+        reg.join(area.area_id, uid)
+        p = reg.get(area.area_id).power_ledger.get_or_create(uid)
+        if i % 3 == 0:
+            reg.get(area.area_id).power_ledger.members[uid] = _destroyer(uid)
+        else:
+            reg.get(area.area_id).power_ledger.members[uid] = _creator(uid)
+        reg.governance.sync_member(uid, reg.get(area.area_id).power_ledger.members[uid])
+    for uid in area.members:
+        if uid not in area.npcs:
+            powers = area.power_ledger.get_or_create(uid)
+            powers.creation_gauge = max(powers.creation_gauge, 120.0)
+    _seed_living_area(area)
+    return reg, area
+
+
 class TestLongFlowEligibility(unittest.TestCase):
     def test_trivial_spec_blocked(self) -> None:
         result = validate_long_flow_proposal(
@@ -105,6 +163,54 @@ class TestLongFlowEligibility(unittest.TestCase):
         self.assertTrue(result.ok, result.codes)
 
 
+class TestLivingAreaEligibility(unittest.TestCase):
+    def test_inactive_area_blocks_governance(self) -> None:
+        reg = AreaRegistry(governance_policy=_test_policy())
+        area = reg.found("founder", "빈 월드", mode=SimulationMode.CREATION_ADVENTURE)
+        reg.join(area.area_id, "alice")
+        reg.join(area.area_id, "bob")
+        reg.governance.sync_member("alice", _creator("alice"))
+        draft = reg.draft_system_proposal(
+            "alice",
+            kind="custom",
+            title="커스텀 시스템 규칙",
+            spec=make_long_flow_spec(
+                "운영 규칙을 단계적으로 정립하고 전체 공지 절차를 따른다.",
+                _flow_steps(3),
+            ),
+            area_id=area.area_id,
+        )
+        self.assertFalse(draft["ok"])
+        self.assertEqual(draft["reason"], "area_not_living")
+        self.assertIn("insufficient_human_creations", draft["codes"])
+
+    def test_bot_dominated_area_blocked(self) -> None:
+        reg = AreaRegistry(governance_policy=_test_policy())
+        area = reg.found("founder", "봇 월드", mode=SimulationMode.CREATION_ADVENTURE)
+        reg.join(area.area_id, "alice")
+        reg.join(area.area_id, "bob")
+        reg.governance.sync_member("alice", _creator("alice"))
+        assert area.activity is not None
+        area.activity.record_human_creation("alice", invested=20.0)
+        area.activity.record_human_creation("bob", invested=20.0)
+        area.activity.record_consensus_vote("bob")
+        area.activity.record_consensus_vote("alice")
+        area.activity.npc_creations = 50
+        draft = reg.draft_system_proposal(
+            "alice",
+            kind="custom",
+            title="커스텀 시스템 규칙",
+            spec=make_long_flow_spec(
+                "운영 규칙을 단계적으로 정립하고 전체 공지 절차를 따른다.",
+                _flow_steps(3),
+            ),
+            area_id=area.area_id,
+        )
+        self.assertFalse(draft["ok"])
+        self.assertEqual(draft["reason"], "area_not_living")
+        self.assertIn("npc_creation_dominates_area", draft["codes"])
+
+
 class TestVoteEligibility(unittest.TestCase):
     def test_creation_majority_can_vote(self) -> None:
         self.assertTrue(creation_exceeds_destruction(_creator("a")))
@@ -121,6 +227,7 @@ class TestVoteEligibility(unittest.TestCase):
                 "파괴가 창조를 잠식하지 않도록 단계적 규율과 상한을 문서화하여 합의한다.",
                 _flow_steps(3),
             ),
+            area_id="area_test",
         )
         self.assertTrue(result.ok, result.reason)
 
@@ -132,6 +239,7 @@ class TestVoteEligibility(unittest.TestCase):
             kind="macro_bot_defense",
             title="매크로 봇 방지 시스템",
             spec={"rate_limit": 10},
+            area_id="area_test",
         )
         self.assertFalse(result.ok)
         self.assertEqual(result.reason, "simple_creation_blocked")
@@ -139,27 +247,14 @@ class TestVoteEligibility(unittest.TestCase):
 
 
 class TestSystemGovernanceFlow(unittest.TestCase):
-    def _registry_with_members(self, n: int) -> AreaRegistry:
-        reg = AreaRegistry(governance_policy=_test_policy())
-        area = reg.found("founder", "테스트 월드", mode=SimulationMode.CREATION_ADVENTURE)
-        for i in range(n):
-            uid = f"user_{i}"
-            reg.join(area.area_id, uid)
-            p = reg.get(area.area_id).power_ledger.get_or_create(uid)
-            if i % 3 == 0:
-                reg.get(area.area_id).power_ledger.members[uid] = _destroyer(uid)
-            else:
-                reg.get(area.area_id).power_ledger.members[uid] = _creator(uid)
-            reg.governance.sync_member(uid, reg.get(area.area_id).power_ledger.members[uid])
-        return reg
-
     def test_full_enactment_pipeline(self) -> None:
-        reg = self._registry_with_members(8)
+        reg, area = _registry_with_members(8)
         draft = reg.draft_system_proposal(
             "user_1",
             kind="macro_bot_defense",
             title="매크로 봇 방지 시스템",
             spec=_macro_flow_spec(rate_limit=10),
+            area_id=area.area_id,
         )
         self.assertTrue(draft["ok"], draft.get("reason"))
         pid = draft["proposal_id"]
@@ -192,7 +287,7 @@ class TestSystemGovernanceFlow(unittest.TestCase):
         self.assertEqual(enacted[0]["kind"], "macro_bot_defense")
 
     def test_destroyer_cannot_vote(self) -> None:
-        reg = self._registry_with_members(6)
+        reg, area = _registry_with_members(6)
         draft = reg.draft_system_proposal(
             "user_0",
             kind="custom",
@@ -201,6 +296,7 @@ class TestSystemGovernanceFlow(unittest.TestCase):
                 "커뮤니티 합의로 운영 규칙을 단계적으로 정립하고 전체 공지 절차를 따른다.",
                 _flow_steps(3),
             ),
+            area_id=area.area_id,
         )
         self.assertTrue(draft["ok"], draft.get("reason"))
         pid = draft["proposal_id"]
@@ -210,12 +306,15 @@ class TestSystemGovernanceFlow(unittest.TestCase):
             reg.cosponsor_system_proposal(pid, f"user_{i}")
         reg.governance.tick()
 
+        area.power_ledger.members["user_0"] = _destroyer("user_0")
+        reg.governance.sync_member("user_0", _destroyer("user_0"))
+
         vote = reg.vote_system_proposal(pid, "user_0", approve=True)
         self.assertFalse(vote["ok"])
         self.assertEqual(vote["reason"], "creation_must_exceed_destruction_to_vote")
 
     def test_announcement_broadcast(self) -> None:
-        reg = self._registry_with_members(6)
+        reg, area = _registry_with_members(6)
         draft = reg.draft_system_proposal(
             "user_1",
             kind="election_war",
@@ -224,7 +323,9 @@ class TestSystemGovernanceFlow(unittest.TestCase):
                 "선거와 전쟁 규칙을 단계적으로 설계하여 공정성을 확보한다.",
                 _flow_steps(4),
             ),
+            area_id=area.area_id,
         )
+        self.assertTrue(draft["ok"], draft.get("reason"))
         pid = draft["proposal_id"]
         for i in (2, 3):
             reg.sign_system_composer(pid, f"user_{i}")

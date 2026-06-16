@@ -46,6 +46,11 @@ from cpow_engine.areas.roles import (
     default_role_for_mode,
     permissions_for,
 )
+from cpow_engine.areas.area_activity import (
+    AreaActivityTracker,
+    is_human_member,
+    is_npc_creation,
+)
 from cpow_engine.areas.consensus import (
     ConsensusGate,
     ConsensusPolicy,
@@ -100,10 +105,13 @@ class CreatedArea:
     carried_cores: dict[str, CarriedCore] = field(default_factory=dict)
     extent_bonus: float = 1.0
     npcs: dict[str, AreaNpc] = field(default_factory=dict)
+    activity: AreaActivityTracker | None = field(default=None, repr=False)
     _system_runtime: object | None = field(default=None, repr=False)
     _base_collab_policy: CollabPolicy | None = field(default=None, repr=False)
 
     def attach_system_runtime(self, runtime: object) -> None:
+        if self.activity is None:
+            self.activity = AreaActivityTracker(area_id=self.area_id)
         self._system_runtime = runtime
         if self._base_collab_policy is None:
             p = self.world.policy
@@ -265,6 +273,8 @@ class CreatedArea:
         }
         if result.ok:
             mark_co_creator(obj, actor_id)
+            if is_human_member(self, actor_id) and self.activity is not None:
+                self.activity.record_co_creation(actor_id)
         return out
 
     def expand_area(self, actor_id: str) -> dict:
@@ -315,6 +325,10 @@ class CreatedArea:
             role = default_role_for_mode(self.mode)
         self.members[creator_id] = role
         self.power_ledger.get_or_create(creator_id)
+        if self.activity is None:
+            self.activity = AreaActivityTracker(area_id=self.area_id)
+        if is_human_member(self, creator_id):
+            self.activity.record_join(creator_id)
         return role
 
     def _resolve_join_role(self, requested: ContributorRole) -> ContributorRole:
@@ -462,6 +476,9 @@ class CreatedArea:
         )
         if not vote.ok:
             return vote
+
+        if is_human_member(self, voter_id) and self.activity is not None:
+            self.activity.record_consensus_vote(voter_id)
 
         if vote.approved:
             proposal = self.consensus.get_proposal(proposal_id)
@@ -807,6 +824,13 @@ class CreatedArea:
 
     def advance_pulse(self, *, force: bool = False) -> PulseResult:
         pulse = self.world.advance_pulse(force=force)
+        if pulse.advanced and self.activity is not None:
+            humans = {
+                r.creator_id.split("|")[0]
+                for r in pulse.results
+                if r.ok and is_human_member(self, r.creator_id.split("|")[0])
+            }
+            self.activity.record_pulse_collab(humans)
         self._finalize_unconfirmed_objects()
         mutation_results = self._flush_mutations()
         if mutation_results or pulse.advanced:
@@ -817,6 +841,13 @@ class CreatedArea:
 
     def maybe_advance_pulse(self) -> PulseResult:
         pulse = self.world.maybe_advance_pulse()
+        if pulse.advanced and self.activity is not None:
+            humans = {
+                r.creator_id.split("|")[0]
+                for r in pulse.results
+                if r.ok and is_human_member(self, r.creator_id.split("|")[0])
+            }
+            self.activity.record_pulse_collab(humans)
         self._finalize_unconfirmed_objects()
         mutation_results = self._flush_mutations()
         if pulse.advanced or mutation_results:
@@ -1075,7 +1106,36 @@ class CreatedArea:
             is_core=is_core,
             is_facility=is_facility or is_core,
         )
+        self._record_creation_activity(
+            creator_id,
+            obj,
+            invested=spend,
+            is_npc_delegate=(
+                creator_id in self.npcs or is_npc_creation(obj)
+            ),
+        )
         return True, redeemed
+
+    def _record_creation_activity(
+        self,
+        creator_id: str,
+        obj: CreativeObject,
+        *,
+        invested: float,
+        is_npc_delegate: bool,
+    ) -> None:
+        if self.activity is None:
+            self.activity = AreaActivityTracker(area_id=self.area_id)
+        if is_npc_delegate or creator_id in self.npcs or is_npc_creation(obj):
+            self.activity.record_npc_creation()
+            return
+        if not is_human_member(self, creator_id):
+            return
+        self.activity.record_human_creation(creator_id, invested=invested)
+        if "|" in (obj.creator_id or ""):
+            for part in obj.creator_id.split("|"):
+                if part != creator_id and is_human_member(self, part):
+                    self.activity.record_co_creation(part)
 
     def _finalize_unconfirmed_objects(self) -> None:
         for obj in list(self.world.state.objects.values()):

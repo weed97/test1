@@ -200,3 +200,156 @@ def make_long_flow_spec(
     if extra:
         spec.update(extra)
     return spec
+
+
+@dataclass
+class LivingAreaPolicy:
+    """실제 유저가 체류·공동창작하는 에리어에서만 시스템 발의."""
+
+    min_human_members: int = 2
+    min_distinct_human_creators: int = 2
+    min_human_confirmed_creations: int = 3
+    min_collaborative_events: int = 1
+    max_npc_creation_share: float = 0.5
+    min_member_human_creations: int = 1
+    min_member_creation_invested: float = 10.0
+    min_member_collab_signals: int = 1
+
+    def to_dict(self) -> dict[str, float | int]:
+        return {
+            "min_human_members": self.min_human_members,
+            "min_distinct_human_creators": self.min_distinct_human_creators,
+            "min_human_confirmed_creations": self.min_human_confirmed_creations,
+            "min_collaborative_events": self.min_collaborative_events,
+            "max_npc_creation_share": self.max_npc_creation_share,
+            "min_member_human_creations": self.min_member_human_creations,
+            "min_member_creation_invested": self.min_member_creation_invested,
+            "min_member_collab_signals": self.min_member_collab_signals,
+        }
+
+
+@dataclass
+class LivingAreaValidation:
+    ok: bool
+    reason: str = ""
+    codes: list[str] = field(default_factory=list)
+    vitality: dict[str, float | int] = field(default_factory=dict)
+    member: dict[str, float | int] = field(default_factory=dict)
+
+
+def validate_living_area(
+    area,
+    tracker,
+    *,
+    policy: LivingAreaPolicy | None = None,
+) -> LivingAreaValidation:
+    """에리어가 봇 창작이 아닌 실제 인간 공동창작 공간인지."""
+    from cpow_engine.areas.area_activity import is_human_member
+
+    rules = policy or LivingAreaPolicy()
+    vit = tracker.vitality(area)
+    codes: list[str] = []
+
+    if vit.human_members < rules.min_human_members:
+        codes.append("insufficient_human_members")
+    if vit.distinct_human_creators < rules.min_distinct_human_creators:
+        codes.append("insufficient_human_creators")
+    if vit.human_confirmed_creations < rules.min_human_confirmed_creations:
+        codes.append("insufficient_human_creations")
+    if vit.collaborative_events < rules.min_collaborative_events:
+        codes.append("insufficient_collaborative_activity")
+    if vit.npc_creation_share > rules.max_npc_creation_share + 1e-9:
+        codes.append("npc_creation_dominates_area")
+
+    if codes:
+        return LivingAreaValidation(
+            False,
+            reason="area_not_living",
+            codes=codes,
+            vitality=vit.to_dict(),
+        )
+
+    # 최소 한 명 이상의 인간 구성원이 실제로 존재하는지 재확인
+    if not any(is_human_member(area, uid) for uid in area.members):
+        return LivingAreaValidation(
+            False,
+            reason="area_not_living",
+            codes=["no_human_members"],
+            vitality=vit.to_dict(),
+        )
+
+    return LivingAreaValidation(
+        True,
+        reason="living_area_verified",
+        vitality=vit.to_dict(),
+    )
+
+
+def validate_member_governance_standing(
+    area,
+    tracker,
+    user_id: str,
+    *,
+    policy: LivingAreaPolicy | None = None,
+) -> LivingAreaValidation:
+    """시스템 창작 — 해당 에리어에서 영향력 있는 인간 구성원만."""
+    from cpow_engine.areas.area_activity import is_human_member
+
+    rules = policy or LivingAreaPolicy()
+    codes: list[str] = []
+
+    if not is_human_member(area, user_id):
+        codes.append("npc_or_non_member")
+
+    rec = tracker.member_record(user_id)
+    member_info: dict[str, float | int] = {}
+    if rec is not None:
+        member_info = rec.to_dict()
+
+    if rec is None or rec.human_confirmed_creations < rules.min_member_human_creations:
+        codes.append("insufficient_member_creations")
+    if rec is None or rec.creation_power_invested < rules.min_member_creation_invested:
+        codes.append("insufficient_creation_influence")
+    if rec is None or rec.collab_signals() < rules.min_member_collab_signals:
+        codes.append("insufficient_collaborative_standing")
+
+    vit = tracker.vitality(area)
+    if codes:
+        return LivingAreaValidation(
+            False,
+            reason="insufficient_area_influence",
+            codes=codes,
+            vitality=vit.to_dict(),
+            member=member_info,
+        )
+
+    return LivingAreaValidation(
+        True,
+        reason="member_influence_verified",
+        vitality=vit.to_dict(),
+        member=member_info,
+    )
+
+
+def validate_governance_area_eligibility(
+    area,
+    tracker,
+    user_id: str,
+    *,
+    policy: LivingAreaPolicy | None = None,
+) -> LivingAreaValidation:
+    """에리어 생태 + 구성원 영향력 통합 검증."""
+    area_check = validate_living_area(area, tracker, policy=policy)
+    if not area_check.ok:
+        return area_check
+    member_check = validate_member_governance_standing(
+        area, tracker, user_id, policy=policy,
+    )
+    if not member_check.ok:
+        return member_check
+    return LivingAreaValidation(
+        True,
+        reason="governance_area_eligible",
+        vitality=member_check.vitality,
+        member=member_check.member,
+    )

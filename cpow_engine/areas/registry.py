@@ -11,6 +11,7 @@ from cpow_engine.areas.diplomacy import (
     observer_can_intervene_cross_area,
 )
 from cpow_engine.areas.governance import GovernanceLedger, GovernancePolicy
+from cpow_engine.areas.governance_eligibility import validate_governance_area_eligibility
 from cpow_engine.areas.system_runtime import SystemRuntime
 from cpow_engine.areas.modes import SimulationMode
 from cpow_engine.areas.roles import ContributorRole
@@ -217,6 +218,38 @@ class AreaRegistry:
             for uid, powers in area.power_ledger.members.items():
                 self.governance.sync_member(uid, powers)
 
+    def _validate_governance_standing(
+        self,
+        area_id: str,
+        user_id: str,
+    ) -> dict:
+        area = self.get(area_id)
+        if area is None:
+            return {"ok": False, "reason": "unknown_area", "codes": ["area_not_found"]}
+        if area.activity is None:
+            from cpow_engine.areas.area_activity import AreaActivityTracker
+            area.activity = AreaActivityTracker(area_id=area.area_id)
+        check = validate_governance_area_eligibility(
+            area,
+            area.activity,
+            user_id,
+            policy=self.governance.policy.living_area,
+        )
+        if not check.ok:
+            return {
+                "ok": False,
+                "reason": check.reason,
+                "codes": list(check.codes),
+                "vitality": check.vitality,
+                "member": check.member,
+            }
+        return {
+            "ok": True,
+            "reason": check.reason,
+            "vitality": check.vitality,
+            "member": check.member,
+        }
+
     def draft_system_proposal(
         self,
         author_id: str,
@@ -224,21 +257,41 @@ class AreaRegistry:
         kind: str,
         title: str,
         spec: dict | None = None,
+        area_id: str = "",
     ) -> dict:
         self.refresh_governance_powers()
+        standing = self._validate_governance_standing(area_id, author_id)
+        if not standing["ok"]:
+            return standing
         result = self.governance.draft_proposal(
-            author_id, kind=kind, title=title, spec=spec,
+            author_id,
+            kind=kind,
+            title=title,
+            spec=spec,
+            area_id=area_id,
         )
         return self._governance_response(result)
 
     def sign_system_composer(self, proposal_id: str, user_id: str) -> dict:
         self.refresh_governance_powers()
+        proposal = self.governance.get_proposal(proposal_id)
+        if proposal is None:
+            return {"ok": False, "reason": "proposal_not_found", "proposal_id": proposal_id}
+        standing = self._validate_governance_standing(proposal.origin_area_id, user_id)
+        if not standing["ok"]:
+            return standing
         return self._governance_response(
             self.governance.sign_composer(proposal_id, user_id),
         )
 
     def cosponsor_system_proposal(self, proposal_id: str, user_id: str) -> dict:
         self.refresh_governance_powers()
+        proposal = self.governance.get_proposal(proposal_id)
+        if proposal is None:
+            return {"ok": False, "reason": "proposal_not_found", "proposal_id": proposal_id}
+        standing = self._validate_governance_standing(proposal.origin_area_id, user_id)
+        if not standing["ok"]:
+            return standing
         return self._governance_response(
             self.governance.cosponsor(proposal_id, user_id),
         )

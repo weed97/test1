@@ -4,7 +4,11 @@ import unittest
 
 from cpow_engine.areas import SimulationMode
 from cpow_engine.areas.governance import EnactedSystem, GovernancePolicy, SystemProposalKind
-from cpow_engine.areas.governance_eligibility import LongFlowPolicy, make_long_flow_spec
+from cpow_engine.areas.governance_eligibility import (
+    LivingAreaPolicy,
+    LongFlowPolicy,
+    make_long_flow_spec,
+)
 from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas.system_runtime import SystemRuntime
 from cpow_engine.collab.policy import CollabPolicy
@@ -26,7 +30,37 @@ def _runtime_governance_policy() -> GovernancePolicy:
             min_composer_spread_sec=0.0,
             min_complexity_score=1.0,
         ),
+        living_area=LivingAreaPolicy(
+            min_human_members=2,
+            min_distinct_human_creators=2,
+            min_human_confirmed_creations=2,
+            min_collaborative_events=1,
+            max_npc_creation_share=0.9,
+            min_member_human_creations=1,
+            min_member_creation_invested=5.0,
+            min_member_collab_signals=1,
+        ),
     )
+
+
+def _seed_living_area(area) -> None:
+    instant = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
+    area.world.policy = instant
+    humans = [uid for uid in area.members if uid not in area.npcs]
+    if len(humans) < 2:
+        return
+    needed = area.consensus.policy.approvals_needed(len(area.members))
+    for i, creator in enumerate(humans):
+        obj = create_heat_object(creator, f"work_{i}", 40.0)
+        result = area.submit_creation(creator, obj, creation_type="heat")
+        if result.consensus_pending and result.proposal_id:
+            for j in range(needed):
+                voter = humans[(i + j + 1) % len(humans)]
+                proposal = area.consensus.get_proposal(result.proposal_id)
+                if proposal is None or proposal.status.value != "pending":
+                    break
+                area.vote_on_creation(voter, result.proposal_id, approve=True)
+        area.world.advance_pulse(force=True)
 
 
 def _macro_flow_spec(**extra) -> dict:
@@ -145,13 +179,23 @@ class TestGovernanceEnactmentWiresRuntime(unittest.TestCase):
             p.creation_gauge = 90.0
             p.creation_data_score = 50.0
             p.destruction_gauge = 10.0
+            reg.governance.sync_member(uid, p)
+
+        for uid in area.members:
+            if uid not in area.npcs:
+                p = area.power_ledger.get_or_create(uid)
+                p.creation_gauge = max(p.creation_gauge, 120.0)
+
+        _seed_living_area(area)
 
         draft = reg.draft_system_proposal(
             "u1",
             kind="macro_bot_defense",
             title="봇 방지 시스템",
             spec=_macro_flow_spec(),
+            area_id=area.area_id,
         )
+        self.assertTrue(draft["ok"], draft.get("reason", draft))
         pid = draft["proposal_id"]
         reg.sign_system_composer(pid, "u2")
         for i in range(5):
@@ -159,8 +203,7 @@ class TestGovernanceEnactmentWiresRuntime(unittest.TestCase):
         reg.governance.tick()
 
         for i in range(5):
-            if i % 3 != 0:
-                reg.vote_system_proposal(pid, f"u{i}", approve=True)
+            reg.vote_system_proposal(pid, f"u{i}", approve=True)
 
         rules = reg.system_runtime.merged_rules()
         self.assertEqual(rules.creations_per_window, 1)

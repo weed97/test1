@@ -17,6 +17,7 @@ from typing import Callable
 
 from cpow_engine.areas.governance_eligibility import (
     LongFlowPolicy,
+    LivingAreaPolicy,
     composer_spread_ok,
     drafting_duration_ok,
     validate_long_flow_proposal,
@@ -61,6 +62,7 @@ class GovernancePolicy:
     voting_ttl_sec: float = 600.0
     proposal_ttl_sec: float = 86_400.0
     long_flow: LongFlowPolicy = field(default_factory=LongFlowPolicy)
+    living_area: LivingAreaPolicy = field(default_factory=LivingAreaPolicy)
 
     def approvals_needed(self, eligible_voters: int) -> int:
         if eligible_voters <= 0:
@@ -83,6 +85,7 @@ class GovernancePolicy:
             "voting_ttl_sec": self.voting_ttl_sec,
             "proposal_ttl_sec": self.proposal_ttl_sec,
             "long_flow": self.long_flow.to_dict(),
+            "living_area": self.living_area.to_dict(),
         }
 
 
@@ -141,6 +144,7 @@ class SystemProposal:
     title: str
     spec: dict
     lead_author: str
+    origin_area_id: str = ""
     composers: set[str] = field(default_factory=set)
     cosponsors: set[str] = field(default_factory=set)
     approvals: set[str] = field(default_factory=set)
@@ -158,6 +162,7 @@ class SystemProposal:
             "title": self.title,
             "spec": dict(self.spec),
             "lead_author": self.lead_author,
+            "origin_area_id": self.origin_area_id,
             "phase": self.phase.value,
             "composers_count": len(self.composers),
             "composers_needed": policy.min_composers,
@@ -249,7 +254,10 @@ class GovernanceLedger:
         kind: str,
         title: str,
         spec: dict | None = None,
+        area_id: str = "",
     ) -> GovernanceResult:
+        if not area_id:
+            return GovernanceResult(False, reason="area_id_required")
         if self._world_monopolized():
             return GovernanceResult(False, reason="system_monopolized")
         if author_id not in self._member_powers:
@@ -289,6 +297,7 @@ class GovernanceLedger:
             title=title,
             spec=dict(spec or {}),
             lead_author=author_id,
+            origin_area_id=area_id,
         )
         proposal.composers.add(author_id)
         proposal.composer_signed_at[author_id] = proposal.created_at

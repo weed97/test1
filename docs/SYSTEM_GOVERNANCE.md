@@ -58,6 +58,34 @@
 
 거부 시 API 응답: `reason: "simple_creation_blocked"`, `codes` 배열에 세부 사유.
 
+## 살아 있는 에리어 + 실제 영향력 검증
+
+시간 조작만으로 통과하는 봇을 막기 위해, 시스템 발의는 **실제 유저가 체류·공동창작하는 에리어**에서 영향력을 쌓은 구성원만 가능합니다.
+
+`POST /v1/governance/draft` 에 `area_id` 필수.
+
+### 에리어 생태 (`LivingAreaPolicy` 기본값)
+
+| 항목 | 기본 임계값 |
+|------|-------------|
+| 인간 구성원 | 2명 이상 (NPC 제외) |
+| 인간 창조자 수 | 2명 이상 |
+| 인간 확정 창조 | 3건 이상 |
+| 공동창작 이벤트 | 1건 이상 (합의 투표·공동 펄스·co-create) |
+| NPC 창조 비율 | 50% 이하 |
+
+### 구성원 자격
+
+| 항목 | 기본 임계값 |
+|------|-------------|
+| 인간 확정 창조 | 1건 이상 |
+| 창조력 투자 | 10 이상 |
+| 공동창작 신호 | 1건 이상 (합의 투표 / co-create / 다인 펄스) |
+
+거부 사유 예: `area_not_living`, `insufficient_area_influence`, `npc_creation_dominates_area`
+
+활동은 `AreaActivityTracker`가 창조 확정·합의 투표·펄스 공동창작 시 자동 기록합니다.
+
 ## 투표권
 
 **창조력 > 파괴력** 인 구성원만 투표 가능:
@@ -87,7 +115,7 @@ creation_gauge + creation_data_score  >  destruction_gauge + destruction_penalty
 ## API
 
 ```bash
-POST /v1/governance/draft      {"author_id","kind","title","spec":{}}
+POST /v1/governance/draft      {"author_id","area_id","kind","title","spec":{}}
 POST /v1/governance/compose    {"proposal_id","user_id"}
 POST /v1/governance/cosponsor  {"proposal_id","user_id"}
 POST /v1/governance/vote       {"proposal_id","user_id","approve":true}
@@ -115,7 +143,8 @@ GET  /v1/governance/state
 
 ```
 cpow_engine/areas/governance.py
-cpow_engine/areas/governance_eligibility.py   # 긴 흐름 검증
+cpow_engine/areas/governance_eligibility.py   # 긴 흐름·에리어 생태 검증
+cpow_engine/areas/area_activity.py            # 인간 창작·공동창작 활동 기록
 cpow_engine/areas/system_runtime.py   # 런타임 집행
 cpow_engine/areas/registry.py
 ```

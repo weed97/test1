@@ -395,6 +395,7 @@ def handle_governance_draft(payload: dict[str, Any]) -> dict[str, Any]:
         kind=str(payload.get("kind", "custom")),
         title=str(payload.get("title", "시스템 발의")),
         spec=payload.get("spec"),
+        area_id=str(payload.get("area_id", "")),
     )
 
 
