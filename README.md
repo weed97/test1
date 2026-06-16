@@ -15,6 +15,7 @@
 | **CPoW 환산 엔진** | `cpow_engine/cpow/` | Action Data + World Delta → 에너지·경제 점수 (봇 억제 휴리스틱 포함) |
 | **공유 상태 동기화** | `cpow_engine/shared_state/` | 다중 유저 물리 정의 충돌 시 Merge/Negotiation 프로토콜 |
 | **L1 프로토콜** | `cpow_engine/chain/` | Genesis, Registry, Consensus, Validator, Rollup, Bridge |
+| **XR 브릿지** | `cpow_engine/xr/` | 공간 제스처 → CreativeObject 변환 |
 
 ## 빠른 실행 (MVP)
 
@@ -55,3 +56,4 @@ python3 -m unittest discover -s cpow_engine/tests -v
 - 아키텍처 상세: [`docs/CPOW_ARCHITECTURE.md`](docs/CPOW_ARCHITECTURE.md)
 - L1 프로토콜: [`docs/L1_PROTOCOL_ARCHITECTURE.md`](docs/L1_PROTOCOL_ARCHITECTURE.md)
 - **개발 로드맵**: [`docs/CPOW_ROADMAP.md`](docs/CPOW_ROADMAP.md) — 엔진 우선, 블록체인은 은행
+- **XR 활용**: [`docs/XR_INTEGRATION.md`](docs/XR_INTEGRATION.md) — Godot OpenXR 연동
