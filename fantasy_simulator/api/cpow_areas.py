@@ -102,6 +102,7 @@ def handle_area_create(payload: dict[str, Any]) -> dict[str, Any]:
         "approvals_needed": result.approvals_needed,
         "approvals_received": result.approvals_received,
         "law_violations": result.law_violations,
+        "penalty_redeemed": result.penalty_redeemed,
     }
     if result.ok and result.object_id and not result.queued and not result.consensus_pending:
         out["object_id"] = result.object_id

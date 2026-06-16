@@ -177,12 +177,15 @@ class CreatedArea:
         if result.ok:
             live = self.world.state.objects.get(obj.id)
             if live and not is_confirmed(live):
-                if not self._finalize_confirmed_creation(
+                ok, redeemed = self._finalize_confirmed_creation(
                     creator_id, live, creation_type=creation_type,
-                ):
+                )
+                if not ok:
                     self.world.state.objects.pop(obj.id, None)
                     result.ok = False
                     result.reason = "insufficient_creation_power"
+                else:
+                    result.penalty_redeemed = redeemed
         self._refresh_economy()
         return result
 
@@ -283,14 +286,17 @@ class CreatedArea:
             if live is None:
                 result.ok = False
                 result.reason = "commit_failed"
-            elif not self._finalize_confirmed_creation(
+            ok, redeemed = self._finalize_confirmed_creation(
                 proposal.proposer_id,
                 live,
                 creation_type=proposal.creation_type,
-            ):
+            )
+            if not ok:
                 self.world.state.objects.pop(proposal.obj.id, None)
                 result.ok = False
                 result.reason = "insufficient_creation_power"
+            else:
+                result.penalty_redeemed = redeemed
         self.consensus.pop_approved(proposal.proposal_id)
         self._refresh_economy()
         result.proposal_id = proposal.proposal_id
@@ -669,7 +675,7 @@ class CreatedArea:
         obj: CreativeObject,
         *,
         creation_type: str,
-    ) -> bool:
+    ) -> tuple[bool, float]:
         is_material = creation_type.lower() == "material"
         heat = obj.get_property("heat_intensity")
         heat_val = heat.value if heat else 0.0
@@ -678,16 +684,18 @@ class CreatedArea:
         is_facility = obj.get_property("is_core_facility") is not None
 
         powers = self.power_ledger.get_or_create(creator_id)
-        if not powers.spend_creation(cost):
-            return False
+        spend = powers.resolve_creation_spend(cost)
+        if spend <= 0.0 or not powers.spend_creation(spend):
+            return False, 0.0
 
+        redeemed = powers.redeem_penalty_with_creation(spend)
         stamp_creation_powers(
             obj,
-            cost,
+            spend,
             is_core=is_core,
             is_facility=is_facility or is_core,
         )
-        return True
+        return True, redeemed
 
     def _finalize_unconfirmed_objects(self) -> None:
         for obj in list(self.world.state.objects.values()):
@@ -699,7 +707,7 @@ class CreatedArea:
             ctype = "material" if obj.get_property("material_type") else "heat"
             if not self._finalize_confirmed_creation(
                 creator, obj, creation_type=ctype,
-            ):
+            )[0]:
                 self.world.state.objects.pop(obj.id, None)
 
     def _flush_mutations(self) -> list[MutationResult]:

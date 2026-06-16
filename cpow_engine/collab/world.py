@@ -34,6 +34,7 @@ class WorldSubmissionResult:
     consensus_pending: bool = False
     approvals_needed: int = 0
     approvals_received: int = 0
+    penalty_redeemed: float = 0.0
 
 
 @dataclass

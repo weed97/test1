@@ -73,6 +73,36 @@ class TestDestructionPower(unittest.TestCase):
         bob_after = area.power_ledger.get_or_create("bob")
         self.assertLess(bob_after.creation_data_score, bob_before)
 
+    def test_creation_redeems_destruction_penalty(self) -> None:
+        area = _area()
+        obj = create_heat_object("bob", "부술 것", 35.0)
+        create_with_consensus(area, "bob", obj, creation_type="heat")
+        bob = area.power_ledger.get_or_create("bob")
+        area.submit_mutation("bob", obj.id, "destroy")
+        penalty_after_destroy = bob.destruction_penalty
+        self.assertGreater(penalty_after_destroy, 0.0)
+
+        new_obj = create_heat_object("bob", "회복의 불", 70.0)
+        create_with_consensus(area, "bob", new_obj, creation_type="heat")
+        self.assertLess(bob.destruction_penalty, penalty_after_destroy)
+        self.assertGreater(bob.effective_creation_cap(), 0.0)
+        confirmed = confirmed_object(area, new_obj.id)
+        assert confirmed is not None
+        self.assertTrue(is_confirmed(confirmed))
+
+    def test_partial_creation_redeems_when_penalty_caps_gauge(self) -> None:
+        from cpow_engine.areas.powers import REDEMPTION_MIN_SPEND, UserPowers
+
+        powers = UserPowers(user_id="bob", creation_gauge=15.0)
+        powers.destruction_penalty = 20.0
+        spend = powers.resolve_creation_spend(24.6)
+        self.assertGreaterEqual(spend, REDEMPTION_MIN_SPEND)
+        self.assertLess(spend, 24.6)
+        powers.spend_creation(spend)
+        redeemed = powers.redeem_penalty_with_creation(spend)
+        self.assertGreater(redeemed, 0.0)
+        self.assertLess(powers.destruction_penalty, 20.0)
+
     def test_defend_reduces_rift_threat(self) -> None:
         area = _area()
         obj = create_heat_object("bob", "불", 60.0)
