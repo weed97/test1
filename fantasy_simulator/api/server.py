@@ -46,7 +46,12 @@ from utils.spatial import maps_manifest
 from utils.temporal import TemporalMode
 
 from api.cpow_xr import handle_xr_connect, handle_xr_creation, handle_xr_world, _store as _xr_store
-from api.cpow_collab import handle_collab_create, handle_collab_join, handle_collab_state
+from api.cpow_collab import (
+    handle_collab_create,
+    handle_collab_join,
+    handle_collab_pulse,
+    handle_collab_state,
+)
 
 API_VERSION = 1
 APP_NAME = "Eldoria Simulation API"
@@ -799,6 +804,11 @@ class CollabCreateRequest(BaseModel):
     object: dict[str, Any] = Field(default_factory=dict)
 
 
+class CollabPulseRequest(BaseModel):
+    world_id: str
+    force: bool = False
+
+
 @app.post("/v1/collab/join")
 def collab_join(body: CollabJoinRequest) -> dict[str, Any]:
     return handle_collab_join(body.model_dump())
@@ -815,3 +825,8 @@ def collab_create(body: CollabCreateRequest) -> dict[str, Any]:
 @app.get("/v1/collab/world")
 def collab_world(world_id: str) -> dict[str, Any]:
     return handle_collab_state(world_id)
+
+
+@app.post("/v1/collab/pulse")
+def collab_pulse(body: CollabPulseRequest) -> dict[str, Any]:
+    return handle_collab_pulse(body.model_dump())

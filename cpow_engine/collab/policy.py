@@ -19,6 +19,9 @@ class CollabPolicy:
     noise_threshold: float = 0.65
     min_creativity_for_large_change: float = 0.45
     large_change_multiplier: float = 2.0
+    pulse_interval_sec: float = 8.0
+    min_creator_cooldown_sec: float = 4.0
+    max_creations_per_creator_per_pulse: int = 1
 
     def effective_damp(self, magnitude: float) -> float:
         """변화가 클수록 더 강하게 감쇄."""
@@ -37,6 +40,11 @@ class CollabPolicy:
             "noise_threshold": self.noise_threshold,
             "min_creativity_for_large_change": self.min_creativity_for_large_change,
             "large_change_multiplier": self.large_change_multiplier,
+            "pulse_interval_sec": self.pulse_interval_sec,
+            "min_creator_cooldown_sec": self.min_creator_cooldown_sec,
+            "max_creations_per_creator_per_pulse": (
+                self.max_creations_per_creator_per_pulse
+            ),
         }
 
 
@@ -57,4 +65,9 @@ def load_collab_policy(path: Path | None = None) -> CollabPolicy:
             p.get("min_creativity_for_large_change", 0.45)
         ),
         large_change_multiplier=float(p.get("large_change_multiplier", 2.0)),
+        pulse_interval_sec=float(p.get("pulse_interval_sec", 8.0)),
+        min_creator_cooldown_sec=float(p.get("min_creator_cooldown_sec", 4.0)),
+        max_creations_per_creator_per_pulse=int(
+            p.get("max_creations_per_creator_per_pulse", 1)
+        ),
     )

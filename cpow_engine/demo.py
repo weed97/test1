@@ -9,6 +9,7 @@ import sys
 from cpow_engine.chain.bridge import OffChainBridge
 from cpow_engine.chain.genesis import load_genesis
 from cpow_engine.collab import CollaborativeWorld
+from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.cpow import CPoWEngine
 from cpow_engine.engine import SimulationEngine
 from cpow_engine.physics import (
@@ -111,7 +112,11 @@ def run_chain_demo(seed: int = 42, ticks: int = 5) -> None:
 
 
 def run_collab_demo(ticks: int = 3) -> None:
-    world = CollaborativeWorld("open_alpha")
+    policy = CollabPolicy(
+        pulse_interval_sec=0.0,
+        min_creator_cooldown_sec=0.0,
+    )
+    world = CollaborativeWorld("open_alpha", policy=policy)
     creators = [
         ("alice", "작은 불", 55.0),
         ("bob", "큰 불", 500.0),
@@ -120,14 +125,18 @@ def run_collab_demo(ticks: int = 3) -> None:
 
     print("=== CPoW 협동 오픈월드 데모 ===")
     print(f"월드: {world.world_id} | 틱: {ticks}")
-    print(f"정책: damp={world.policy.damp_factor} noise_threshold={world.policy.noise_threshold}")
+    print(
+        f"정책: damp={world.policy.damp_factor} "
+        f"pulse={world.policy.pulse_interval_sec}s "
+        f"cooldown={world.policy.min_creator_cooldown_sec}s"
+    )
     print()
 
     for creator_id, label, heat in creators:
         obj = create_heat_object(creator_id, label, heat_intensity=heat)
         result = world.submit_creation(creator_id, obj)
         status = "✓" if result.ok else "✗"
-        applied = world.state.objects[result.object_id] if result.ok else None
+        applied = world.state.objects.get(result.object_id)
         heat_val = applied.get_property("heat_intensity") if applied else None
         damp_note = ""
         if result.verdict and result.verdict.magnitude > world.policy.noise_threshold:
@@ -136,7 +145,26 @@ def run_collab_demo(ticks: int = 3) -> None:
                 f"damp={result.verdict.applied_damping:.2f})"
             )
         print(f"  [{status}] {creator_id}: {label}{damp_note}")
-        world.advance_tick()
+
+    print()
+    print("--- 펄스 리듬 시뮬레이션 (8초 간격) ---")
+    paced = CollaborativeWorld(
+        "open_alpha_paced",
+        policy=CollabPolicy(
+            pulse_interval_sec=8.0,
+            min_creator_cooldown_sec=4.0,
+        ),
+        now=0.0,
+    )
+    for cid, label, heat in creators:
+        r = paced.submit_creation(cid, create_heat_object(cid, label, heat))
+        print(
+            f"  큐: {cid} → {label} "
+            f"(대기 {r.pending_count}명, {r.seconds_until_pulse:.0f}s 후 펄스)"
+        )
+    pulse = paced.advance_pulse(force=True)
+    print(f"  펄스 #{pulse.pulse_number}: {pulse.applied_count}개 함께 반영")
+    print()
 
     for t in range(1, ticks + 1):
         delta, score = world.advance_tick()
