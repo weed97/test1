@@ -8,6 +8,7 @@ import sys
 
 from cpow_engine.chain.bridge import OffChainBridge
 from cpow_engine.chain.genesis import load_genesis
+from cpow_engine.collab import CollaborativeWorld
 from cpow_engine.cpow import CPoWEngine
 from cpow_engine.engine import SimulationEngine
 from cpow_engine.physics import (
@@ -109,6 +110,48 @@ def run_chain_demo(seed: int = 42, ticks: int = 5) -> None:
     print("=== L1 데모 완료 ===")
 
 
+def run_collab_demo(ticks: int = 3) -> None:
+    world = CollaborativeWorld("open_alpha")
+    creators = [
+        ("alice", "작은 불", 55.0),
+        ("bob", "큰 불", 500.0),
+        ("carol", "중간 불", 80.0),
+    ]
+
+    print("=== CPoW 협동 오픈월드 데모 ===")
+    print(f"월드: {world.world_id} | 틱: {ticks}")
+    print(f"정책: damp={world.policy.damp_factor} noise_threshold={world.policy.noise_threshold}")
+    print()
+
+    for creator_id, label, heat in creators:
+        obj = create_heat_object(creator_id, label, heat_intensity=heat)
+        result = world.submit_creation(creator_id, obj)
+        status = "✓" if result.ok else "✗"
+        applied = world.state.objects[result.object_id] if result.ok else None
+        heat_val = applied.get_property("heat_intensity") if applied else None
+        damp_note = ""
+        if result.verdict and result.verdict.magnitude > world.policy.noise_threshold:
+            damp_note = (
+                f" (요청 {heat:.0f} → 반영 {heat_val.value:.1f}, "
+                f"damp={result.verdict.applied_damping:.2f})"
+            )
+        print(f"  [{status}] {creator_id}: {label}{damp_note}")
+        world.advance_tick()
+
+    for t in range(1, ticks + 1):
+        delta, score = world.advance_tick()
+        print(f"--- Tick {t} --- noise={world.world_noise_level():.3f}")
+        if score:
+            print(f"  CPoW: energy={score.energy:.2f} creativity={score.creativity_score:.2f}")
+        print(f"  오브젝트: {len(world.state.objects)} | 에너지 풀: {world.state.energy_pool:.2f}")
+
+    pub = world.to_public_dict()
+    print()
+    print(f"기여자: {list(pub['contributors'].keys())}")
+    print(f"노이즈 레벨: {pub['noise_level']}")
+    print("=== 협동 데모 완료 ===")
+
+
 def _demo_shared_state(engine: SimulationEngine) -> None:
     """다중 유저 충돌 병합 데모."""
     print("--- Shared State: 충돌 병합 ---")
@@ -151,10 +194,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ticks", type=int, default=3)
     parser.add_argument("--json", action="store_true", help="JSON 출력")
     parser.add_argument("--chain", action="store_true", help="L1 프로토콜 통합 데모")
+    parser.add_argument("--collab", action="store_true", help="협동 오픈월드 + 노이즈 감쇄 데모")
     args = parser.parse_args(argv)
 
     if args.chain:
         run_chain_demo(seed=args.seed, ticks=args.ticks)
+        return 0
+
+    if args.collab:
+        run_collab_demo(ticks=args.ticks)
         return 0
 
     if args.json:
