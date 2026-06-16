@@ -37,51 +37,59 @@ class DefendResult:
 def can_destroy_object(
     powers: UserPowers,
     obj: CreativeObject,
+    *,
+    area_extent: float = 1.0,
 ) -> tuple[bool, str, float]:
     if not is_confirmed(obj):
         return False, "object_not_confirmed", 0.0
 
-    durability = get_durability(obj)
-    if powers.destruction_gauge < durability:
-        return False, "insufficient_destruction_power", durability
+    from cpow_engine.areas.imbue import effective_destroy_resistance
 
-    return True, "ok", durability
+    required = effective_destroy_resistance(obj, area_extent=area_extent)
+    if powers.destruction_gauge < required:
+        return False, "insufficient_destruction_power", required
+
+    return True, "ok", required
 
 
 def attempt_powered_destroy(
     powers: UserPowers,
     obj: CreativeObject,
     rift: RiftState,
+    *,
+    area_extent: float = 1.0,
 ) -> DestroyAttemptResult:
-    allowed, reason, durability = can_destroy_object(powers, obj)
+    allowed, reason, required = can_destroy_object(
+        powers, obj, area_extent=area_extent,
+    )
     if not allowed:
         return DestroyAttemptResult(
             False,
             reason=reason,
-            durability_required=durability,
+            durability_required=required,
         )
 
-    if not powers.spend_destruction(durability):
+    if not powers.spend_destruction(required):
         return DestroyAttemptResult(
             False,
             reason="insufficient_destruction_power",
-            durability_required=durability,
+            durability_required=required,
         )
 
     investment = get_creation_investment(obj)
     core_bonus = 1.8 if is_core_facility(obj) else 1.0
-    penalty = (durability * 0.3 + investment * 0.6) * core_bonus
+    penalty = (required * 0.3 + investment * 0.6) * core_bonus
     powers.apply_destruction_penalty(penalty)
 
     rift_info = rift.on_destruction(
-        powers.user_id, obj.id, durability,
+        powers.user_id, obj.id, required,
     )
 
     return DestroyAttemptResult(
         True,
         reason="destroyed",
-        durability_required=durability,
-        destruction_spent=durability,
+        durability_required=required,
+        destruction_spent=required,
         penalty_applied=penalty,
         rift=rift_info,
         monsters_attacking=bool(rift_info.get("monsters_attacking")),

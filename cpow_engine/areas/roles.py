@@ -31,6 +31,9 @@ class RolePermissions:
     can_modify_objects: bool
     can_destroy_objects: bool
     can_destroy_founding_core: bool
+    can_imbue_destruction: bool
+    can_spawn_npc: bool
+    can_expand_area: bool
     max_heat_intensity: float
     max_modify_factor: float
     creations_per_pulse: int
@@ -45,6 +48,9 @@ ROLE_PERMISSIONS: dict[ContributorRole, RolePermissions] = {
         can_modify_objects=True,
         can_destroy_objects=True,
         can_destroy_founding_core=True,
+        can_imbue_destruction=True,
+        can_spawn_npc=True,
+        can_expand_area=True,
         max_heat_intensity=500.0,
         max_modify_factor=2.0,
         creations_per_pulse=2,
@@ -57,6 +63,9 @@ ROLE_PERMISSIONS: dict[ContributorRole, RolePermissions] = {
         can_modify_objects=True,
         can_destroy_objects=True,
         can_destroy_founding_core=False,
+        can_imbue_destruction=True,
+        can_spawn_npc=True,
+        can_expand_area=False,
         max_heat_intensity=200.0,
         max_modify_factor=1.4,
         creations_per_pulse=1,
@@ -69,6 +78,9 @@ ROLE_PERMISSIONS: dict[ContributorRole, RolePermissions] = {
         can_modify_objects=True,
         can_destroy_objects=True,
         can_destroy_founding_core=False,
+        can_imbue_destruction=False,
+        can_spawn_npc=False,
+        can_expand_area=False,
         max_heat_intensity=80.0,
         max_modify_factor=1.15,
         creations_per_pulse=1,
@@ -81,6 +93,9 @@ ROLE_PERMISSIONS: dict[ContributorRole, RolePermissions] = {
         can_modify_objects=False,
         can_destroy_objects=False,
         can_destroy_founding_core=False,
+        can_imbue_destruction=False,
+        can_spawn_npc=False,
+        can_expand_area=False,
         max_heat_intensity=0.0,
         max_modify_factor=1.0,
         creations_per_pulse=0,

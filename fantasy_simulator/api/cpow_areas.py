@@ -265,4 +265,69 @@ def handle_area_powers(area_id: str, user_id: str) -> dict[str, Any]:
     powers = area.member_powers(user_id)
     if powers is None:
         return {"ok": False, "reason": "not_a_member"}
-    return {"ok": True, "powers": powers, "rift": area.rift.to_dict()}
+    return {
+        "ok": True,
+        "powers": powers,
+        "rift": area.rift.to_dict(),
+        "area_extent": round(area.area_extent(), 2),
+    }
+
+
+def handle_area_imbue(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    actor_id = str(payload.get("actor_id", "anonymous"))
+    amount = float(payload.get("amount", 0.0))
+    return {
+        **area.imbue_object_destruction(
+            actor_id, str(payload["object_id"]), amount,
+        ),
+        "area": area.to_public_dict(),
+    }
+
+
+def handle_area_spawn_npc(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    owner_id = str(payload.get("owner_id", "anonymous"))
+    label = str(payload.get("label", "일꾼"))
+    return {**area.spawn_npc(owner_id, label), "area": area.to_public_dict()}
+
+
+def handle_area_npc_allocate(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    owner_id = str(payload.get("owner_id", "anonymous"))
+    npc_id = str(payload["npc_id"])
+    amount = float(payload.get("amount", 0.0))
+    return {
+        **area.allocate_npc_creation(owner_id, npc_id, amount),
+        "area": area.to_public_dict(),
+    }
+
+
+def handle_area_npc_task(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    owner_id = str(payload.get("owner_id", "anonymous"))
+    npc_id = str(payload["npc_id"])
+    task = str(payload.get("task", "idle"))
+    return {**area.set_npc_task(owner_id, npc_id, task), "area": area.to_public_dict()}
+
+
+def handle_area_npc_tick(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    results = area.tick_npcs()
+    pulse = area.maybe_advance_pulse()
+    return {
+        "ok": True,
+        "results": results,
+        "pulse_committed": pulse.advanced,
+        "area": area.to_public_dict(),
+    }
+
+
+def handle_area_expand(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    actor_id = str(payload.get("actor_id", "anonymous"))
+    return {**area.expand_area(actor_id), "area": area.to_public_dict()}
+
+
+def handle_area_dominance(area_id_a: str, area_id_b: str) -> dict[str, Any]:
+    return {"ok": True, **_registry.dominance_between(area_id_a, area_id_b)}

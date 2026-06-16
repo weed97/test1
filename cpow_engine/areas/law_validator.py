@@ -25,6 +25,10 @@ ALLOWED_PROPERTY_NAMES: frozenset[str] = frozenset({
     "spatial_x",
     "spatial_y",
     "spatial_z",
+    "imbued_destruction",
+    "crop_plot",
+    "is_npc_creation",
+    "npc_owner",
 })
 
 PROPERTY_BOUNDS: dict[str, tuple[float, float]] = {
@@ -34,6 +38,7 @@ PROPERTY_BOUNDS: dict[str, tuple[float, float]] = {
     "transfer_rate": (0.0, 1.0),
     "efficiency": (0.0, 1.0),
     "scale": (0.01, 20.0),
+    "imbued_destruction": (0.0, 500.0),
     "spatial_x": (-100_000.0, 100_000.0),
     "spatial_y": (-100_000.0, 100_000.0),
     "spatial_z": (-100_000.0, 100_000.0),

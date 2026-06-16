@@ -66,6 +66,13 @@ from api.cpow_areas import (
     handle_area_extract_core,
     handle_area_migrate,
     handle_area_powers,
+    handle_area_imbue,
+    handle_area_spawn_npc,
+    handle_area_npc_allocate,
+    handle_area_npc_task,
+    handle_area_npc_tick,
+    handle_area_expand,
+    handle_area_dominance,
 )
 
 API_VERSION = 1
@@ -986,6 +993,62 @@ def area_migrate(body: AreaMigrateRequest) -> dict[str, Any]:
 def area_powers(area_id: str, user_id: str) -> dict[str, Any]:
     try:
         return handle_area_powers(area_id, user_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/imbue")
+def area_imbue(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return handle_area_imbue(body)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/spawn_npc")
+def area_spawn_npc(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return handle_area_spawn_npc(body)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/npc/allocate")
+def area_npc_allocate(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return handle_area_npc_allocate(body)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/npc/task")
+def area_npc_task(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return handle_area_npc_task(body)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/npc/tick")
+def area_npc_tick(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return handle_area_npc_tick(body)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/v1/areas/expand")
+def area_expand(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return handle_area_expand(body)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/v1/areas/dominance")
+def area_dominance(area_id_a: str, area_id_b: str) -> dict[str, Any]:
+    try:
+        return handle_area_dominance(area_id_a, area_id_b)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

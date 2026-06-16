@@ -12,7 +12,23 @@ from cpow_engine.areas.destruction import (
     attempt_defend_rift,
     attempt_powered_destroy,
 )
+from cpow_engine.areas.dominance import dominance_ratio
+from cpow_engine.areas.extent import (
+    compute_extent,
+    expansion_cost,
+    max_object_durability_gate,
+)
+from cpow_engine.areas.imbue import attempt_imbue_destruction, get_imbued_destruction
+from cpow_engine.areas.npcs import (
+    ALLOWED_NPC_TASKS,
+    AreaNpc,
+    NpcTask,
+    allocate_creation,
+    spawn_npc_record,
+    tick_npc_farm,
+)
 from cpow_engine.areas.durability import (
+    compute_durability,
     get_creation_investment,
     get_durability,
     is_confirmed,
@@ -81,6 +97,166 @@ class CreatedArea:
     power_ledger: PowerLedger = field(default_factory=PowerLedger)
     rift: RiftState = field(default_factory=RiftState)
     carried_cores: dict[str, CarriedCore] = field(default_factory=dict)
+    extent_bonus: float = 1.0
+    npcs: dict[str, AreaNpc] = field(default_factory=dict)
+
+    def area_extent(self) -> float:
+        return compute_extent(
+            self.world.state.objects,
+            extent_bonus=self.extent_bonus,
+            member_count=len(self.members),
+        )
+
+    def dominance_vs(self, other: CreatedArea) -> float:
+        return dominance_ratio(self.area_extent(), other.area_extent())
+
+    def spawn_npc(self, owner_id: str, label: str) -> dict:
+        if owner_id not in self.members:
+            return {"ok": False, "reason": "not_a_member"}
+        perms = permissions_for(self.role_of(owner_id))
+        if not perms.can_spawn_npc:
+            return {"ok": False, "reason": "role_cannot_spawn_npc"}
+
+        npc = spawn_npc_record(owner_id, label)
+        self.npcs[npc.npc_id] = npc
+        self.join(npc.npc_id, requested_role=ContributorRole.OBSERVER)
+        return {"ok": True, "npc": npc.to_dict()}
+
+    def allocate_npc_creation(
+        self,
+        owner_id: str,
+        npc_id: str,
+        amount: float,
+    ) -> dict:
+        if owner_id not in self.members:
+            return {"ok": False, "reason": "not_a_member"}
+        npc = self.npcs.get(npc_id)
+        if npc is None:
+            return {"ok": False, "reason": "npc_not_found"}
+        if npc.owner_id != owner_id:
+            return {"ok": False, "reason": "not_npc_owner"}
+
+        powers = self.power_ledger.get_or_create(owner_id)
+        ok, reason = allocate_creation(npc, powers, amount)
+        return {"ok": ok, "reason": reason, "npc": npc.to_dict()}
+
+    def set_npc_task(self, owner_id: str, npc_id: str, task: str) -> dict:
+        if owner_id not in self.members:
+            return {"ok": False, "reason": "not_a_member"}
+        npc = self.npcs.get(npc_id)
+        if npc is None:
+            return {"ok": False, "reason": "npc_not_found"}
+        if npc.owner_id != owner_id:
+            return {"ok": False, "reason": "not_npc_owner"}
+
+        parsed = NpcTask.from_str(task)
+        if parsed not in ALLOWED_NPC_TASKS and parsed != NpcTask.IDLE:
+            return {"ok": False, "reason": "task_not_allowed_in_area"}
+        npc.task = parsed
+        return {"ok": True, "npc": npc.to_dict()}
+
+    def tick_npcs(self) -> list[dict]:
+        """NPC 작업 틱 — 농사 시 밭 오브젝트 창조."""
+        results: list[dict] = []
+        for npc in list(self.npcs.values()):
+            if npc.task != NpcTask.FARM:
+                continue
+            tick_result, plot, cost = tick_npc_farm(npc)
+            if not tick_result.ok or plot is None:
+                results.append(tick_result.__dict__)
+                continue
+
+            created = self.submit_creation(
+                npc.npc_id,
+                plot,
+                creation_type="heat",
+                bypass_consensus=True,
+                pre_spent_creation=cost,
+            )
+            entry = {
+                **tick_result.__dict__,
+                "creation_ok": created.ok,
+                "creation_reason": created.reason,
+            }
+            if created.ok and created.object_id:
+                entry["object_id"] = created.object_id
+            else:
+                npc.creation_gauge += cost
+            results.append(entry)
+        if results:
+            self._refresh_economy()
+        return results
+
+    def imbue_object_destruction(
+        self,
+        actor_id: str,
+        object_id: str,
+        amount: float,
+    ) -> dict:
+        if actor_id not in self.members:
+            return {"ok": False, "reason": "not_a_member"}
+        perms = permissions_for(self.role_of(actor_id))
+        if not perms.can_imbue_destruction:
+            return {"ok": False, "reason": "role_cannot_imbue"}
+
+        obj = self.world.state.objects.get(object_id)
+        if obj is None:
+            return {"ok": False, "reason": "object_not_found"}
+        if not object_in_area(obj, self.area_id):
+            return {"ok": False, "reason": "object_not_in_area"}
+
+        powers = self.power_ledger.get_or_create(actor_id)
+        result = attempt_imbue_destruction(
+            powers,
+            obj,
+            amount,
+            area_extent=self.area_extent(),
+            is_confirmed_obj=is_confirmed(obj),
+        )
+        out = {
+            "ok": result.ok,
+            "reason": result.reason,
+            "amount_applied": result.amount_applied,
+            "imbued_total": result.imbued_total,
+            "destruction_spent": result.destruction_spent,
+            "cap_remaining": result.cap_remaining,
+            "area_extent": round(self.area_extent(), 2),
+            "imbued_destruction": get_imbued_destruction(obj),
+        }
+        if result.ok:
+            mark_co_creator(obj, actor_id)
+        return out
+
+    def expand_area(self, actor_id: str) -> dict:
+        if actor_id not in self.members:
+            return {"ok": False, "reason": "not_a_member"}
+        perms = permissions_for(self.role_of(actor_id))
+        if not perms.can_expand_area:
+            return {"ok": False, "reason": "role_cannot_expand_area"}
+
+        creation_cost, destruction_cost = expansion_cost(self.extent_bonus)
+        powers = self.power_ledger.get_or_create(actor_id)
+        if powers.creation_gauge < creation_cost:
+            return {"ok": False, "reason": "insufficient_creation_power"}
+        if powers.destruction_gauge < destruction_cost:
+            return {"ok": False, "reason": "insufficient_destruction_power"}
+
+        if not powers.spend_creation(creation_cost):
+            return {"ok": False, "reason": "insufficient_creation_power"}
+        if not powers.spend_destruction(destruction_cost):
+            powers.creation_gauge += creation_cost
+            return {"ok": False, "reason": "insufficient_destruction_power"}
+
+        self.extent_bonus += 0.25
+        self._refresh_economy()
+        return {
+            "ok": True,
+            "reason": "area_expanded",
+            "extent_bonus": round(self.extent_bonus, 2),
+            "area_extent": round(self.area_extent(), 2),
+            "creation_spent": creation_cost,
+            "destruction_spent": destruction_cost,
+        }
 
     def role_of(self, creator_id: str) -> ContributorRole:
         return self.members.get(creator_id, ContributorRole.OBSERVER)
@@ -124,20 +300,28 @@ class CreatedArea:
         creation_type: str = "heat",
         creativity_score: float = 1.0,
         bypass_consensus: bool = False,
+        pre_spent_creation: float | None = None,
     ) -> WorldSubmissionResult:
         role = self.role_of(creator_id)
         perms = permissions_for(role)
+        npc_record = self.npcs.get(creator_id)
+        is_npc_delegate = (
+            npc_record is not None
+            and npc_record.task != NpcTask.IDLE
+            and pre_spent_creation is not None
+        )
 
         if creator_id not in self.members:
             return WorldSubmissionResult(False, reason="not_a_member")
 
-        if not self._mode_allows_creation(role):
-            return WorldSubmissionResult(False, reason="mode_blocks_creation")
+        if not is_npc_delegate:
+            if not self._mode_allows_creation(role):
+                return WorldSubmissionResult(False, reason="mode_blocks_creation")
 
-        if not perms.can_create_objects and not (
-            self.mode == SimulationMode.CREATION_ADVENTURE and perms.can_adventure
-        ):
-            return WorldSubmissionResult(False, reason="role_cannot_create")
+            if not perms.can_create_objects and not (
+                self.mode == SimulationMode.CREATION_ADVENTURE and perms.can_adventure
+            ):
+                return WorldSubmissionResult(False, reason="role_cannot_create")
 
         is_founding_seed = obj.get_property("area_seed") is not None
         if not is_founding_seed and not self.laws.allows_creation_type(creation_type):
@@ -145,11 +329,16 @@ class CreatedArea:
 
         self._tag_object_with_area(obj)
 
+        heat_role_max = perms.max_heat_intensity
+        if npc_record is not None:
+            owner_perms = permissions_for(self.role_of(npc_record.owner_id))
+            heat_role_max = owner_perms.max_heat_intensity
+
         law_check = validate_creation(
             obj,
             self.laws,
             creation_type=creation_type,
-            role_max_heat=perms.max_heat_intensity,
+            role_max_heat=heat_role_max,
             state=self.world.state,
             is_founding_seed=is_founding_seed,
         )
@@ -178,7 +367,10 @@ class CreatedArea:
             live = self.world.state.objects.get(obj.id)
             if live and not is_confirmed(live):
                 ok, redeemed = self._finalize_confirmed_creation(
-                    creator_id, live, creation_type=creation_type,
+                    creator_id,
+                    live,
+                    creation_type=creation_type,
+                    pre_spent=pre_spent_creation,
                 )
                 if not ok:
                     self.world.state.objects.pop(obj.id, None)
@@ -585,6 +777,9 @@ class CreatedArea:
             "powers": self.power_ledger.to_dict(),
             "rift": self.rift.to_dict(),
             "carried_cores": {k: v.to_dict() for k, v in self.carried_cores.items()},
+            "extent_bonus": round(self.extent_bonus, 2),
+            "area_extent": round(self.area_extent(), 2),
+            "npcs": {k: v.to_dict() for k, v in self.npcs.items()},
             "created_at": self.created_at,
             "world": world_pub,
         }
@@ -639,7 +834,9 @@ class CreatedArea:
             )
 
         powers = self.power_ledger.get_or_create(mutation.actor_id)
-        attempt = attempt_powered_destroy(powers, obj, self.rift)
+        attempt = attempt_powered_destroy(
+            powers, obj, self.rift, area_extent=self.area_extent(),
+        )
         if not attempt.ok:
             return MutationResult(
                 False,
@@ -675,6 +872,7 @@ class CreatedArea:
         obj: CreativeObject,
         *,
         creation_type: str,
+        pre_spent: float | None = None,
     ) -> tuple[bool, float]:
         is_material = creation_type.lower() == "material"
         heat = obj.get_property("heat_intensity")
@@ -683,12 +881,31 @@ class CreatedArea:
         is_core = obj.get_property("area_seed") is not None
         is_facility = obj.get_property("is_core_facility") is not None
 
-        powers = self.power_ledger.get_or_create(creator_id)
-        spend = powers.resolve_creation_spend(cost)
-        if spend <= 0.0 or not powers.spend_creation(spend):
-            return False, 0.0
+        if pre_spent is not None:
+            spend = pre_spent
+            redeemed = 0.0
+        else:
+            powers = self.power_ledger.get_or_create(creator_id)
+            if not is_core:
+                projected = compute_durability(
+                    cost,
+                    is_core=is_core,
+                    is_facility=is_facility or is_core,
+                    heat_intensity=heat_val,
+                )
+                gate = max_object_durability_gate(
+                    extent=self.area_extent(),
+                    destruction_gauge_max=powers.destruction_gauge_max,
+                    creation_data_score=powers.creation_data_score,
+                )
+                if projected > gate + 1e-6:
+                    return False, 0.0
 
-        redeemed = powers.redeem_penalty_with_creation(spend)
+            spend = powers.resolve_creation_spend(cost)
+            if spend <= 0.0 or not powers.spend_creation(spend):
+                return False, 0.0
+            redeemed = powers.redeem_penalty_with_creation(spend)
+
         stamp_creation_powers(
             obj,
             spend,
