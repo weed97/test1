@@ -2,62 +2,54 @@
 
 Guidance for AI agents working in this repository.
 
+## Project identity
+
+**This is NOT a game.** It is a **data-creation-based autonomous simulation engine** (CPoW — Creativity-Proof of Work). See [`.cursorrules`](.cursorrules) and [`docs/CPOW_ARCHITECTURE.md`](docs/CPOW_ARCHITECTURE.md).
+
 ## Repository layout
 
-| Branch | Contents |
-|--------|----------|
-| `main` | Placeholder (`README.md` only) |
-| `cursor/sungjwa-hunter-simulator-ace2` | **성좌 헌터 시뮬레이션** — Python CLI in `sungjwa_hunter_sim/` |
+| Path | Role |
+|------|------|
+| `cpow_engine/` | **Core engine** — physics, CPoW scoring, shared state |
+| `fantasy_simulator/` | Eldoria legacy — transitioning to CPoW adapters |
+| `sungjwa_hunter_sim/` | 성좌 헌터 sim — CPoW adapter planned |
+| `mmorpg_sim/`, `fantasy_mmorpg/` | Legacy text sims |
+| `item_catalog/` | Item catalog web UI |
 
-If `sungjwa_hunter_sim/` is missing, check out the simulator branch:
+## Stack
+
+- **Python 3.10+** (VM has 3.12). CPoW engine: **stdlib + unittest only**.
+- `fantasy_simulator` API may require `pip install -r requirements-api.txt`.
+
+## CPoW engine (primary)
 
 ```bash
-git fetch origin cursor/sungjwa-hunter-simulator-ace2
-git checkout cursor/sungjwa-hunter-simulator-ace2
+# Demo: create Heat object → energy generation
+python3 -m cpow_engine.demo --seed 42 --ticks 3
+
+# Tests
+python3 -m unittest discover -s cpow_engine/tests -v
+
+# Compile check
+python3 -m compileall -q cpow_engine
 ```
 
-## Cursor Cloud specific instructions
-
-### Stack
-
-- **Python 3.10+** (VM has 3.12). **No pip dependencies** — stdlib + `unittest` only.
-- No Docker, databases, or long-running servers.
-
-### Working directory
-
-All commands assume `cd sungjwa_hunter_sim` (relative to repo root).
-
-### Tests
+## Sungjwa hunter sim (legacy)
 
 ```bash
 cd sungjwa_hunter_sim
 python3 -m unittest discover -s tests -v
+python3 main.py --hunter kim_dokja --seed 42 --turns 4 --no-persist
 ```
 
-### Run the simulator (dev)
+## Implementation rules
 
-```bash
-cd sungjwa_hunter_sim
-python3 main.py --hunter kim_dokja --seed 42 --turns 4
-python3 main.py --list-hunters
-python3 main.py --list-monsters
-python3 main.py --query '[외부 업데이트] 질의: randomness_intensity=2.6'
-```
+1. **No hardcoded physics** — use property definitions (`heat_intensity`, `material_type`, etc.)
+2. **Data is law** — define schemas before writing interaction code
+3. **Anti-bot heuristics** — entropy-based rewards, repetition penalties
+4. **Small MVPs** — e.g. "create heat → generate energy" before "build a world"
+5. **Fantasy → property substitution** — replace `fireball` skill with `heat_intensity` object
 
-Use `--interactive` only when a TTY is available; prefer `--turns`, `--seed`, and `--query` in cloud/CI.
+## Config side effects
 
-### Lint / format
-
-No project-level Ruff, flake8, or mypy config. Optional sanity check:
-
-```bash
-python3 -m compileall -q sungjwa_hunter_sim/src sungjwa_hunter_sim/tests
-```
-
-### Config side effects
-
-`main.py` persists external-update changes to `config/variables.json` unless `--no-persist` is set. Tests use temp copies of config and do not require resetting the repo file after `unittest`.
-
-### Branch checkout note
-
-Cloud VMs may start on `main` (empty tree). The application under test is not on `main`; switch to `cursor/sungjwa-hunter-simulator-ace2` before running tests or the CLI.
+`sungjwa_hunter_sim/main.py` persists external-update changes to `config/variables.json` unless `--no-persist` is set.

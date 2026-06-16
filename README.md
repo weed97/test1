@@ -1,33 +1,51 @@
-# weed97/test1 — 판타지 시뮬레이터 모노레포
+# CPoW Simulation Engine
 
-이 저장소의 **메인 프로젝트**는 `fantasy_simulator/` (Eldoria — Python API + Godot 클라이언트)입니다.
+> **이 프로젝트는 게임이 아닙니다.**  
+> 유저의 창조적 데이터(오브젝트·물리 정의)가 시스템 상태를 변화시키는 **데이터 창조 기반의 자율 시뮬레이션 엔진**입니다.
 
-## 빠른 실행 (Eldoria)
+## 한 줄 정의
+
+**CPoW (Creativity-Proof of Work) 시뮬레이션 엔진** — 물리 법칙을 하드코딩하지 않고, 유저가 정의한 속성 데이터가 실시간으로 상호작용하며, 창조 행위가 에너지·가치로 환산되는 자율 시뮬레이션 시스템.
+
+## 핵심 모듈
+
+| 모듈 | 경로 | 설명 |
+|------|------|------|
+| **물리 정의 엔진** | `cpow_engine/physics/` | HeatSource, Material, EnergyTransfer 등 속성 조합 → 물리적 결과 |
+| **CPoW 환산 엔진** | `cpow_engine/cpow/` | Action Data + World Delta → 에너지·경제 점수 (봇 억제 휴리스틱 포함) |
+| **공유 상태 동기화** | `cpow_engine/shared_state/` | 다중 유저 물리 정의 충돌 시 Merge/Negotiation 프로토콜 |
+
+## 빠른 실행 (MVP)
 
 ```bash
-cd fantasy_simulator
-pip install -r requirements-api.txt
-uvicorn api.server:app --port 8765
-bash scripts/verify.sh
+# CPoW 엔진 데모: Heat 속성 오브젝트 생성 → 에너지 발생
+python3 -m cpow_engine.demo --seed 42
+
+# 단위 테스트
+python3 -m unittest discover -s cpow_engine/tests -v
 ```
 
-Godot 4: `fantasy_simulator/client/godot/project.godot` → **새 게임** (API 서버 필수).
+## 설계 원칙
 
-## 포함 프로젝트
+1. **기능(Function) vs 콘텐츠(Data)** — 엔진은 함수만 제공, 법칙·도구는 데이터 구조.
+2. **동적 상태** — State는 오브젝트 생성·연결에 따라 매 틱마다 변화.
+3. **엔트로피 기반 보상** — 단순 반복(작업장)은 낮은 점수, 고유한 창조물은 높은 점수.
+4. **속성 치환** — `파이어볼` 스킬 대신 `heat_intensity` 속성 오브젝트.
 
-| 경로 | 설명 | 실행 |
+## 레거시 프로젝트 (전환 중)
+
+기존 판타지 시뮬레이터는 **인프라 뼈대**(에셋 로더, UI, Auth)만 유지하고, 하드코딩된 게임 로직(몬스터 스탯, 스킬 리스트, 강화 공식)은 CPoW 속성 시스템으로 점진 전환합니다.
+
+| 경로 | 상태 | 비고 |
 |------|------|------|
-| `fantasy_simulator/` | Eldoria 본편 | `uvicorn api.server:app` |
-| `item_catalog/` | 아이템 도감 웹앱 | `cd item_catalog && python3 -m http.server 8000` |
-| `sungjwa_hunter_sim/` | 성좌 헌터 시뮬 | `python sungjwa_hunter_sim/main.py` |
-| `mmorpg_sim/` | 텍스트 MMORPG | `python -m mmorpg_sim.cli --name Arin` |
-| `fantasy_mmorpg/` | 판타지 MMORPG 엔진 | `python -m fantasy_mmorpg.cli` |
-| `js_medieval_sim/` | JS 중세 판타지 시뮬 | `cd js_medieval_sim && npm test` |
-
-## 세계관
-
-→ `docs/world/ash_crown_setting.md` (잿빛 왕관의 노래)
+| `cpow_engine/` | **핵심 엔진** | CPoW 시뮬레이션 (신규) |
+| `fantasy_simulator/` | 전환 중 | Eldoria — Godot 클라이언트·API 뼈대 유지 |
+| `sungjwa_hunter_sim/` | 전환 중 | 성좌 헌터 — CPoW 어댑터 연동 예정 |
+| `item_catalog/` | 유지 | 아이템 도감 UI |
+| `mmorpg_sim/`, `fantasy_mmorpg/` | 레거시 | 텍스트 MMORPG 참고용 |
 
 ## 개발
 
-`AGENTS.md`
+- Cursor 규칙: [`.cursorrules`](.cursorrules)
+- 에이전트 가이드: [`AGENTS.md`](AGENTS.md)
+- 아키텍처 상세: [`docs/CPOW_ARCHITECTURE.md`](docs/CPOW_ARCHITECTURE.md)

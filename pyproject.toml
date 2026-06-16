@@ -1,7 +1,7 @@
 [project]
 name = "fantasy-monorepo-sims"
 version = "0.1.0"
-description = "Medieval fantasy simulators monorepo (mmorpg_sim + fantasy_mmorpg)."
+description = "CPoW simulation engine monorepo (data-creation-based autonomous simulation)."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
@@ -15,7 +15,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["mmorpg_sim*", "fantasy_mmorpg*"]
+include = ["mmorpg_sim*", "fantasy_mmorpg*", "cpow_engine*"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "fantasy_mmorpg/tests", "mmorpg_sim/tests", "sungjwa_hunter_sim/tests"]
+testpaths = ["tests", "fantasy_mmorpg/tests", "mmorpg_sim/tests", "sungjwa_hunter_sim/tests", "cpow_engine/tests"]
