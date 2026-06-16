@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from cpow_engine.areas.consensus import ConsensusPolicy
 from cpow_engine.areas.modes import SimulationMode
 from cpow_engine.collab.policy import CollabPolicy
 
@@ -21,6 +22,7 @@ class AreaLawSet:
         default_factory=lambda: ["heat", "material", "connection"]
     )
     collab_overrides: dict[str, float | int] = field(default_factory=dict)
+    consensus: ConsensusPolicy = field(default_factory=ConsensusPolicy)
     description: str = ""
 
     def apply_collab_policy(self, base: CollabPolicy | None = None) -> CollabPolicy:
@@ -61,6 +63,7 @@ class AreaLawSet:
             "heat_baseline": self.heat_baseline,
             "allowed_creation_types": list(self.allowed_creation_types),
             "collab_overrides": dict(self.collab_overrides),
+            "consensus": self.consensus.to_dict(),
             "description": self.description,
         }
 
@@ -76,8 +79,18 @@ class AreaLawSet:
                 data.get("allowed_creation_types", ["heat", "material", "connection"])
             ),
             collab_overrides=dict(data.get("collab_overrides", {})),
+            consensus=_consensus_from_dict(data.get("consensus", {})),
             description=str(data.get("description", "")),
         )
+
+
+def _consensus_from_dict(data: dict) -> ConsensusPolicy:
+    return ConsensusPolicy(
+        required_approval_ratio=float(data.get("required_approval_ratio", 0.51)),
+        min_votes=int(data.get("min_votes", 2)),
+        proposal_ttl_sec=float(data.get("proposal_ttl_sec", 600.0)),
+        reject_threshold_ratio=float(data.get("reject_threshold_ratio", 0.5)),
+    )
 
 
 def load_area_templates(path: Path | None = None) -> dict[str, AreaLawSet]:

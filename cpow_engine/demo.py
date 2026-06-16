@@ -208,7 +208,11 @@ def run_areas_demo() -> None:
 
     mat = create_material_object("bob", "정원 철괴", "iron")
     r1 = area.submit_creation("bob", mat, creation_type="material")
-    print(f"  [협력 창조] bob: 철괴 → {r1.reason}")
+    print(f"  [협력 창조] bob: 철괴 → {r1.reason} (합의 {r1.approvals_received}/{r1.approvals_needed})")
+    if r1.consensus_pending:
+        area.vote_on_creation("aria", r1.proposal_id, approve=True)
+        area.world.advance_pulse(force=True)
+        print(f"  [합의] aria 승인 → 반영")
 
     adv = area.submit_adventure("carol", "explore", label="정원 외곽")
     print(f"  [모험] carol: 탐험 → {adv.reason}")
@@ -226,7 +230,9 @@ def run_areas_demo() -> None:
     print(f"  [이름] bob: {rename.reason}")
 
     obj = create_heat_object("bob", "없앨 불", 30.0)
-    area.submit_creation("bob", obj, creation_type="heat")
+    proposed = area.submit_creation("bob", obj, creation_type="heat")
+    if proposed.consensus_pending:
+        area.vote_on_creation("aria", proposed.proposal_id, approve=True)
     area.submit_mutation("bob", obj.id, "destroy")
     print(f"  [파괴] bob: 임시 오브젝트 제거")
     print(

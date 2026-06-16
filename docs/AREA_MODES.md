@@ -22,6 +22,48 @@
               펄스 → 함께 반영 → 경제·문명 성장
 ```
 
+## 합의 & 법칙 검증
+
+**새 오브젝트**는 구성원 **합의(과반 승인)** 후에만 세계에 반영됩니다.  
+법칙 위반 시도는 **감쇄 없이 즉시 거부**됩니다 (버그·해킹 방지).
+
+```
+제안(create) → 법칙 검증 ─실패→ 거부 (law_violation)
+                │
+               통과
+                ▼
+           합의 투표 ─거부→ 폐기
+                │
+              승인
+                ▼
+           펄스 → 월드 반영
+```
+
+### 법칙 검증 (하드 블록)
+
+| 검사 | 거부 코드 |
+|------|-----------|
+| 허용 속성 화이트리스트 | `forbidden_property` |
+| heat 상한 초과 | `heat_exceeds_law_limit` |
+| NaN/Inf | `non_finite_value` |
+| 필수 속성 누락 | `missing_required_property` |
+| 창조 심장 위조 | `forbidden_area_seed` |
+
+### 합의 API
+
+```bash
+# 창조 제안 (합의 대기 가능)
+POST /v1/areas/create  {...}
+
+# 투표
+POST /v1/areas/vote  {
+  "area_id": "area_...",
+  "voter_id": "aria",
+  "proposal_id": "prop_...",
+  "approve": true
+}
+```
+
 ## 역할
 
 | 역할 | 창조 | 모험 | 오브젝트 변형 |

@@ -5,6 +5,7 @@ import unittest
 from cpow_engine.areas import SimulationMode, found_area
 from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.physics import create_heat_object
+from cpow_engine.tests.area_helpers import create_with_consensus
 
 
 def _instant_area(founder: str = "aria"):
@@ -25,7 +26,7 @@ class TestObjectMutations(unittest.TestCase):
         area = _instant_area()
         area.join("bob")
         obj = create_heat_object("bob", "협동 불", 70.0)
-        area.submit_creation("bob", obj, creation_type="heat")
+        create_with_consensus(area, "bob", obj, creation_type="heat")
         oid = obj.id
         before = area.world.state.objects[oid].get_property("heat_intensity")
         assert before is not None
@@ -51,7 +52,7 @@ class TestObjectMutations(unittest.TestCase):
         area = _instant_area()
         area.join("bob")
         obj = create_heat_object("bob", "임시", 50.0)
-        area.submit_creation("bob", obj, creation_type="heat")
+        create_with_consensus(area, "bob", obj, creation_type="heat")
         oid = obj.id
         self.assertIn(oid, area.world.state.objects)
 

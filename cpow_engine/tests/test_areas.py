@@ -9,6 +9,7 @@ from cpow_engine.areas import (
     found_area,
 )
 from cpow_engine.physics import create_heat_object, create_material_object
+from cpow_engine.tests.area_helpers import create_with_consensus
 
 
 class TestAreaFounding(unittest.TestCase):
@@ -39,9 +40,8 @@ class TestCreationMode(unittest.TestCase):
         )
         area.join("bob")
         obj = create_material_object("bob", "철괴", "iron")
-        result = area.submit_creation("bob", obj, creation_type="material")
+        result = create_with_consensus(area, "bob", obj, creation_type="material")
         self.assertTrue(result.ok, result.reason)
-        area.world.advance_pulse(force=True)
 
     def test_adventurer_blocked_from_direct_create(self) -> None:
         area = found_area("aria", "정원", mode=SimulationMode.ADVENTURE)
@@ -66,7 +66,7 @@ class TestAdventureMode(unittest.TestCase):
         self.assertTrue(interact.ok)
         self.assertGreater(interact.energy_delta, 0.0)
 
-    def test_adventurer_contribute_small_creation(self) -> None:
+    def test_adventurer_contribute_requires_consensus(self) -> None:
         area = found_area(
             "aria",
             "정착지",
@@ -74,7 +74,8 @@ class TestAdventureMode(unittest.TestCase):
         )
         area.join("carol", requested_role=ContributorRole.ADVENTURER)
         result = area.submit_adventure("carol", "contribute", label="불씨")
-        self.assertTrue(result.ok, result.reason)
+        self.assertFalse(result.ok)
+        self.assertEqual(result.reason, "consensus_pending")
 
 
 class TestRegionalGrowth(unittest.TestCase):
@@ -89,7 +90,7 @@ class TestRegionalGrowth(unittest.TestCase):
         area.join("carol")
         for i, cid in enumerate(["bob", "carol", "aria"]):
             obj = create_heat_object(cid, f"열{i}", 65.0 + i * 5)
-            area.submit_creation(cid, obj, creation_type="heat")
+            create_with_consensus(area, cid, obj, creation_type="heat")
         area.world.advance_pulse(force=True)
         self.assertGreaterEqual(area.economy.civilization_level, start_level)
         pub = area.to_public_dict()

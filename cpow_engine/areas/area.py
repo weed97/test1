@@ -15,6 +15,14 @@ from cpow_engine.areas.roles import (
     default_role_for_mode,
     permissions_for,
 )
+from cpow_engine.areas.consensus import (
+    ConsensusGate,
+    ConsensusPolicy,
+    CreationProposal,
+    ProposalStatus,
+    VoteResult,
+)
+from cpow_engine.areas.law_validator import validate_creation, validate_mutation
 from cpow_engine.areas.mutations import (
     MutationOp,
     MutationResult,
@@ -53,6 +61,7 @@ class CreatedArea:
     members: dict[str, ContributorRole] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     _pending_mutations: list[PendingMutation] = field(default_factory=list)
+    consensus: ConsensusGate = field(default_factory=ConsensusGate)
 
     def role_of(self, creator_id: str) -> ContributorRole:
         return self.members.get(creator_id, ContributorRole.OBSERVER)
@@ -94,9 +103,13 @@ class CreatedArea:
         *,
         creation_type: str = "heat",
         creativity_score: float = 1.0,
+        bypass_consensus: bool = False,
     ) -> WorldSubmissionResult:
         role = self.role_of(creator_id)
         perms = permissions_for(role)
+
+        if creator_id not in self.members:
+            return WorldSubmissionResult(False, reason="not_a_member")
 
         if not self._mode_allows_creation(role):
             return WorldSubmissionResult(False, reason="mode_blocks_creation")
@@ -111,12 +124,130 @@ class CreatedArea:
             return WorldSubmissionResult(False, reason="creation_type_not_allowed_in_area")
 
         self._tag_object_with_area(obj)
-        self._clamp_object_to_laws(obj, perms.max_heat_intensity)
+
+        law_check = validate_creation(
+            obj,
+            self.laws,
+            creation_type=creation_type,
+            role_max_heat=perms.max_heat_intensity,
+            state=self.world.state,
+            is_founding_seed=is_founding_seed,
+        )
+        if not law_check.ok:
+            return WorldSubmissionResult(
+                False,
+                object_id=obj.id,
+                reason="law_violation",
+                law_violations=law_check.codes,
+            )
+
+        if not bypass_consensus and not is_founding_seed:
+            return self._submit_via_consensus(
+                creator_id, obj,
+                creation_type=creation_type,
+                creativity_score=creativity_score,
+            )
 
         result = self.world.submit_creation(
             creator_id, obj, creativity_score=creativity_score,
         )
         self._refresh_economy()
+        return result
+
+    def vote_on_creation(
+        self,
+        voter_id: str,
+        proposal_id: str,
+        *,
+        approve: bool,
+    ) -> VoteResult:
+        if voter_id not in self.members:
+            return VoteResult(False, proposal_id, reason="not_a_member")
+
+        vote = self.consensus.vote(
+            voter_id,
+            proposal_id,
+            approve=approve,
+            member_count=len(self.members),
+        )
+        if not vote.ok:
+            return vote
+
+        if vote.approved:
+            proposal = self.consensus.get_proposal(proposal_id)
+            if proposal and proposal.status == ProposalStatus.APPROVED:
+                commit = self._commit_proposal(proposal)
+                if not commit.ok:
+                    vote.ok = False
+                    vote.reason = commit.reason
+        return vote
+
+    def pending_proposals(self) -> list[dict]:
+        return [
+            p.to_public_dict(self.consensus.policy, len(self.members))
+            for p in self.consensus.pending_proposals()
+        ]
+
+    def _submit_via_consensus(
+        self,
+        creator_id: str,
+        obj: CreativeObject,
+        *,
+        creation_type: str,
+        creativity_score: float,
+    ) -> WorldSubmissionResult:
+        proposal = self.consensus.propose(
+            creator_id,
+            obj,
+            creation_type=creation_type,
+            creativity_score=creativity_score,
+            member_count=len(self.members),
+        )
+        needed = self.consensus.policy.approvals_needed(len(self.members))
+
+        if proposal.status == ProposalStatus.APPROVED:
+            return self._commit_proposal(proposal)
+
+        return WorldSubmissionResult(
+            True,
+            object_id=obj.id,
+            reason="consensus_pending",
+            proposal_id=proposal.proposal_id,
+            consensus_pending=True,
+            approvals_needed=needed,
+            approvals_received=len(proposal.approvals),
+        )
+
+    def _commit_proposal(self, proposal: CreationProposal) -> WorldSubmissionResult:
+        perms = permissions_for(self.role_of(proposal.proposer_id))
+        law_check = validate_creation(
+            proposal.obj,
+            self.laws,
+            creation_type=proposal.creation_type,
+            role_max_heat=perms.max_heat_intensity,
+            state=self.world.state,
+            is_founding_seed=False,
+        )
+        if not law_check.ok:
+            proposal.status = ProposalStatus.REJECTED
+            return WorldSubmissionResult(
+                False,
+                object_id=proposal.obj.id,
+                reason="law_violation_on_commit",
+                law_violations=law_check.codes,
+                proposal_id=proposal.proposal_id,
+            )
+
+        result = self.world.submit_creation(
+            proposal.proposer_id,
+            proposal.obj,
+            creativity_score=proposal.creativity_score,
+        )
+        self.consensus.pop_approved(proposal.proposal_id)
+        self._refresh_economy()
+        result.proposal_id = proposal.proposal_id
+        result.consensus_pending = False
+        result.reason = "consensus_approved" if result.ok else result.reason
         return result
 
     def submit_adventure(
@@ -183,6 +314,11 @@ class CreatedArea:
             )
             if not created.ok:
                 return AdventureResult(False, action_type, reason=created.reason)
+            if created.consensus_pending:
+                return AdventureResult(
+                    False, action_type,
+                    reason="consensus_pending",
+                )
             return AdventureResult(
                 True, action_type, reason="contributed",
                 tick=self.world.state.tick,
@@ -277,6 +413,8 @@ class CreatedArea:
             "members": {k: v.value for k, v in self.members.items()},
             "member_count": len(self.members),
             "pending_mutations": len(self._pending_mutations),
+            "pending_proposals": self.pending_proposals(),
+            "consensus_policy": self.consensus.policy.to_dict(),
             "created_at": self.created_at,
             "world": world_pub,
         }
@@ -293,11 +431,6 @@ class CreatedArea:
             obj.properties.append(
                 PropertyDef(name="area_id", value=0.0, unit=self.area_id)
             )
-
-    def _clamp_object_to_laws(self, obj: CreativeObject, role_max: float) -> None:
-        heat = obj.get_property("heat_intensity")
-        if heat is not None:
-            heat.value = self.laws.clamp_heat(heat.value, role_max)
 
     def _refresh_economy(self) -> None:
         self.economy.refresh(
@@ -362,6 +495,7 @@ def found_area(
         laws=law_set,
         world=world,
     )
+    area.consensus = ConsensusGate(law_set.consensus)
     area.join(founder_id)
 
     seed = create_heat_object(
@@ -372,7 +506,7 @@ def found_area(
     seed.properties.append(
         PropertyDef(name="area_seed", value=1.0, unit="founding_core")
     )
-    area.submit_creation(founder_id, seed, creation_type="heat")
+    area.submit_creation(founder_id, seed, creation_type="heat", bypass_consensus=True)
     area.world.advance_pulse(force=True)
     area._refresh_economy()
     return area

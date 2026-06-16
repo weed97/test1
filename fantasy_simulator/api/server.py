@@ -60,6 +60,7 @@ from api.cpow_areas import (
     handle_area_list,
     handle_area_mutate,
     handle_area_state,
+    handle_area_vote,
 )
 
 API_VERSION = 1
@@ -920,6 +921,18 @@ def area_mutate(body: AreaMutateRequest) -> dict[str, Any]:
         return handle_area_mutate(body.model_dump(exclude_none=True))
     except (KeyError, ValueError, TypeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+class AreaVoteRequest(BaseModel):
+    area_id: str
+    voter_id: str = "anonymous"
+    proposal_id: str
+    approve: bool = True
+
+
+@app.post("/v1/areas/vote")
+def area_vote(body: AreaVoteRequest) -> dict[str, Any]:
+    return handle_area_vote(body.model_dump())
 
 
 @app.get("/v1/areas/list")

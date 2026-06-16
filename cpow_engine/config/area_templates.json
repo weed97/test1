@@ -43,6 +43,10 @@
         "pulse_interval_sec": 8.0,
         "min_creator_cooldown_sec": 4.0,
         "max_creations_per_creator_per_pulse": 1
+      },
+      "consensus": {
+        "required_approval_ratio": 0.51,
+        "min_votes": 2
       }
     }
   }

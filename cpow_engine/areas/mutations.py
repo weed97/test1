@@ -10,6 +10,7 @@ from enum import Enum
 from cpow_engine.areas.laws import AreaLawSet
 from cpow_engine.areas.roles import ContributorRole, RolePermissions
 from cpow_engine.collab.noise_gate import ChangeVerdict, NoiseGate
+from cpow_engine.areas.law_validator import validate_mutation
 from cpow_engine.models import ActionRecord, CreativeObject, PropertyDef, SimulationState
 
 
@@ -218,6 +219,20 @@ def apply_mutation(
             False, mutation.operation.value, mutation.object_id,
             reason="mutation_failed",
         )
+
+    if mutation.operation != MutationOp.RENAME:
+        law_check = validate_mutation(
+            existing, mutated, laws,
+            role_max_heat=role_max,
+            state=state,
+        )
+        if not law_check.ok:
+            return MutationResult(
+                False,
+                mutation.operation.value,
+                mutation.object_id,
+                reason="law_violation",
+            )
 
     prop_name = mutation.property_name or "heat_intensity"
     prev_prop = existing.get_property(prop_name)

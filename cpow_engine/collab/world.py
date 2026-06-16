@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from cpow_engine.collab.noise_gate import ChangeVerdict, NoiseGate
 from cpow_engine.collab.policy import CollabPolicy, load_collab_policy
@@ -29,6 +29,11 @@ class WorldSubmissionResult:
     contributors_in_pulse: int = 0
     seconds_until_pulse: float = 0.0
     cooldown_remaining: float = 0.0
+    proposal_id: str = ""
+    law_violations: list[str] = field(default_factory=list)
+    consensus_pending: bool = False
+    approvals_needed: int = 0
+    approvals_received: int = 0
 
 
 @dataclass

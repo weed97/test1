@@ -97,8 +97,13 @@ def handle_area_create(payload: dict[str, Any]) -> dict[str, Any]:
         "queued": result.queued,
         "seconds_until_pulse": result.seconds_until_pulse,
         "pending_count": result.pending_count,
+        "consensus_pending": result.consensus_pending,
+        "proposal_id": result.proposal_id,
+        "approvals_needed": result.approvals_needed,
+        "approvals_received": result.approvals_received,
+        "law_violations": result.law_violations,
     }
-    if result.ok and result.object_id and not result.queued:
+    if result.ok and result.object_id and not result.queued and not result.consensus_pending:
         out["object_id"] = result.object_id
         out["object"] = area.world.state.objects[result.object_id].to_dict()
     if pulse.advanced:
@@ -181,7 +186,26 @@ def handle_area_mutate(payload: dict[str, Any]) -> dict[str, Any]:
         "energy_delta": result.energy_delta,
         "pulse_committed": pulse.advanced,
     }
-    if result.ok and not result.queued and result.object_id in area.world.state.objects:
-        out["object"] = area.world.state.objects[result.object_id].to_dict()
     out["area"] = area.to_public_dict()
     return out
+
+
+def handle_area_vote(payload: dict[str, Any]) -> dict[str, Any]:
+    area = _registry.get_or_raise(str(payload["area_id"]))
+    voter_id = str(payload.get("voter_id", "anonymous"))
+    proposal_id = str(payload["proposal_id"])
+    approve = bool(payload.get("approve", True))
+    vote = area.vote_on_creation(voter_id, proposal_id, approve=approve)
+    pulse = area.maybe_advance_pulse()
+    return {
+        "ok": vote.ok,
+        "area_id": area.area_id,
+        "proposal_id": proposal_id,
+        "status": vote.status,
+        "reason": vote.reason,
+        "approved": vote.approved,
+        "approvals_needed": vote.approvals_needed,
+        "approvals_received": vote.approvals_received,
+        "pulse_committed": pulse.advanced,
+        "area": area.to_public_dict(),
+    }
