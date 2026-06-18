@@ -1,0 +1,38 @@
+name: CPoW World
+
+on:
+  push:
+    paths:
+      - "cpow_engine/**"
+      - "cpow_api/**"
+      - "cpow_client/**"
+      - "docs/CPOW*.md"
+      - "docs/TODO_REMAINING.md"
+      - "tests/test_cpow_api_flow.py"
+      - "requirements-cpow-api.txt"
+      - "scripts/verify_cpow.sh"
+      - ".github/workflows/cpow.yml"
+  pull_request:
+    paths:
+      - "cpow_engine/**"
+      - "cpow_api/**"
+      - "cpow_client/**"
+      - "docs/CPOW*.md"
+      - "docs/TODO_REMAINING.md"
+      - "tests/test_cpow_api_flow.py"
+      - "requirements-cpow-api.txt"
+      - "scripts/verify_cpow.sh"
+      - ".github/workflows/cpow.yml"
+
+jobs:
+  cpow-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install API dependencies
+        run: pip install -r requirements-cpow-api.txt
+      - name: Run CPoW verify
+        run: bash scripts/verify_cpow.sh

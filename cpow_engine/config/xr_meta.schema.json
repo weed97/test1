@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cpow/xr_meta",
+  "title": "CPoW XR Session Meta",
+  "description": "XR 헤드셋 세션 메타데이터 — CPoW 엔진이 공간 창조 의도를 처리할 때 사용.",
+  "type": "object",
+  "properties": {
+    "session_id": { "type": "string" },
+    "device_type": {
+      "type": "string",
+      "enum": ["quest3", "quest2", "vision_pro", "pcvr", "hololens", "ar_glasses", "simulator"]
+    },
+    "tracking": {
+      "type": "string",
+      "enum": ["3dof", "6dof"]
+    },
+    "hand_tracking": { "type": "boolean", "default": true },
+    "play_space": {
+      "type": "string",
+      "enum": ["roomscale", "standing", "seated"]
+    },
+    "comfort_vignette": { "type": "boolean", "default": true },
+    "locomotion": {
+      "type": "string",
+      "enum": ["teleport", "smooth", "arm_swing", "none"]
+    },
+    "creator_id": { "type": "string" },
+    "render_target_fps": { "type": "integer", "minimum": 60, "maximum": 120 }
+  },
+  "required": ["session_id", "device_type", "creator_id"],
+  "additionalProperties": true
+}

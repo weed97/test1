@@ -1,0 +1,17 @@
+{
+  "world_id": "open_world_alpha",
+  "policy": {
+    "max_relative_change": 0.15,
+    "max_absolute_heat_delta": 30.0,
+    "max_creations_per_tick": 6,
+    "max_patches_per_batch": 48,
+    "damp_factor": 0.35,
+    "noise_threshold": 0.65,
+    "min_creativity_for_large_change": 0.45,
+    "large_change_multiplier": 2.0,
+    "pulse_interval_sec": 8.0,
+    "min_creator_cooldown_sec": 4.0,
+    "max_creations_per_creator_per_pulse": 1
+  },
+  "description": "협동 오픈월드 — 큰 변화는 감쇄, 펄스마다 함께 반영"
+}
