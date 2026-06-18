@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import uuid
 from pathlib import Path
 from typing import Any
+
+from utils.config_loader import load_config
 
 def _ecology_enabled(state: dict[str, Any]) -> bool:
     mode = state.get("flags", {}).get("game_mode", "story")
@@ -19,9 +20,7 @@ def _get_agents(state: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def load_progression_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "progression.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "progression.json")
 
 
 def _eco_prog(state: dict[str, Any]) -> dict[str, Any]:

@@ -2,24 +2,20 @@
 
 from __future__ import annotations
 
-import json
 import random
 from pathlib import Path
 from typing import Any
 
+from utils.config_loader import load_config
+from utils.ecology_state import ecology_flags
+
 
 def load_civ_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "monster_civilizations.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _eco(state: dict[str, Any]) -> dict[str, Any]:
-    return state.setdefault("flags", {}).setdefault("ecology", {})
+    return load_config(base_dir, "monster_civilizations.json")
 
 
 def get_civilization_state(state: dict[str, Any], civ_id: str) -> dict[str, Any]:
-    civs = _eco(state).setdefault("civilizations", {})
+    civs = ecology_flags(state).setdefault("civilizations", {})
     if civ_id not in civs:
         civs[civ_id] = {"prosperity": 0, "stage_id": None, "wins": 0, "losses": 0}
     return civs[civ_id]
@@ -220,7 +216,7 @@ def tick_npc_competition(
             f"[번영] 마을 경쟁: {lead_name} 쪽이 앞서고, 라이벌 거점은 자원 압박을 받는다."
         )
     decay = int(cfg.get("competition", {}).get("prosperity_decay_if_predator_wins", 5))
-    eco = _eco(state)
+    eco = ecology_flags(state)
     if eco.get("last_predator_npc_kill"):
         soc["prosperity"] = max(0, int(soc.get("prosperity", 0)) - decay)
         eco["last_predator_npc_kill"] = False
@@ -260,7 +256,7 @@ def tick_agent_competition(
     base_dir: str | Path,
     rng: random.Random | None = None,
 ) -> list[str]:
-    eco = _eco(state)
+    eco = ecology_flags(state)
     agents = [a for a in eco.get("agents", []) if a.get("map_id") == map_id]
     r = rng or random.Random()
     lines: list[str] = []

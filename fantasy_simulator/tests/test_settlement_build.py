@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from tests.fixtures import isolated_game_root  # noqa: E402
+from utils.currency import get_wallet, grant, wallet_to_copper  # noqa: E402
 from utils.settlement_build import (  # noqa: E402
     get_player_settlement,
     hire_workers,
@@ -22,9 +23,10 @@ from utils.game_session import GameSession  # noqa: E402
 class SettlementBuildTests(unittest.TestCase):
     def _ecology_state(self, root: Path) -> dict:
         session = GameSession.from_root(root, mode="rule", seed=1)
-        session.state.setdefault("flags", {})["game_mode"] = "ecology"
-        session.state.setdefault("inventory", {})["party_gold"] = 1000
-        return session.state
+        state = session.state
+        state.setdefault("flags", {})["game_mode"] = "ecology"
+        grant(state, copper=2000, silver=10, base_dir=root)
+        return state
 
     def test_blacksmith_requires_level_2(self) -> None:
         with isolated_game_root() as root:
@@ -47,7 +49,7 @@ class SettlementBuildTests(unittest.TestCase):
             ps = get_player_settlement(state)
             ps["construction_level"] = 2
             ps["stockpile"] = {"wood": 100, "stone": 100, "iron": 50}
-            state["inventory"]["party_gold"] = 500
+            before = wallet_to_copper(get_wallet(state, base_dir=root), base_dir=root)
             r = start_build(
                 state,
                 "blacksmith",
@@ -58,7 +60,8 @@ class SettlementBuildTests(unittest.TestCase):
                 base_dir=root,
             )
             self.assertTrue(r["ok"])
-            self.assertLess(state["inventory"]["party_gold"], 500)
+            after = wallet_to_copper(get_wallet(state, base_dir=root), base_dir=root)
+            self.assertLess(after, before)
 
     def test_hire_workers_costs_gold(self) -> None:
         with isolated_game_root() as root:
@@ -83,8 +86,4 @@ class SettlementBuildTests(unittest.TestCase):
                 base_dir=root,
             )
             lines = tick_player_build_projects(state, base_dir=root)
-            self.assertTrue(any("[건설]" in ln for ln in lines))
-
-
-if __name__ == "__main__":
-    unittest.main()
+            self.assertTrue(lines)

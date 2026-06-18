@@ -76,14 +76,22 @@ offset_right = 300.0
 offset_bottom = 680.0
 text = "도감"
 
-[node name="BackButton" type="Button" parent="CanvasLayer"]
+[node name="KingdomButton" type="Button" parent="CanvasLayer"]
 offset_left = 310.0
 offset_top = 648.0
-offset_right = 400.0
+offset_right = 390.0
+offset_bottom = 680.0
+text = "왕국"
+
+[node name="BackButton" type="Button" parent="CanvasLayer"]
+offset_left = 400.0
+offset_top = 648.0
+offset_right = 490.0
 offset_bottom = 680.0
 text = "메뉴"
 
 [connection signal="pressed" from="CanvasLayer/ExploreButton" to="." method="_on_explore_pressed"]
 [connection signal="pressed" from="CanvasLayer/InvButton" to="." method="_on_inventory_pressed"]
 [connection signal="pressed" from="CanvasLayer/CatalogButton" to="." method="_on_catalog_pressed"]
+[connection signal="pressed" from="CanvasLayer/KingdomButton" to="." method="_on_kingdom_pressed"]
 [connection signal="pressed" from="CanvasLayer/BackButton" to="." method="_on_back_pressed"]

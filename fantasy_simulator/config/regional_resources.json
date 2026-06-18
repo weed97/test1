@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "zones": {
+    "ashpoint": {
+      "danger_level": 1,
+      "danger_label": "안전",
+      "loot_copper_mult": 0.35,
+      "loot_silver_chance": 0.0,
+      "resources": {
+        "food": {
+          "max": 100,
+          "regen_per_beat": 2,
+          "gather": { "explore": 3, "investigate": 2, "rest": 1 }
+        },
+        "wood": {
+          "max": 160,
+          "regen_per_beat": 3,
+          "gather": { "explore": 4, "investigate": 1 }
+        },
+        "stone": {
+          "max": 60,
+          "regen_per_beat": 1,
+          "gather": { "investigate": 2 }
+        }
+      }
+    },
+    "forest": {
+      "danger_level": 3,
+      "danger_label": "위험",
+      "loot_copper_mult": 1.0,
+      "loot_silver_chance": 0.12,
+      "resources": {
+        "food": {
+          "max": 70,
+          "regen_per_beat": 1,
+          "gather": { "explore": 5, "investigate": 3 }
+        },
+        "wood": {
+          "max": 220,
+          "regen_per_beat": 2,
+          "gather": { "explore": 6, "investigate": 2 }
+        },
+        "stone": {
+          "max": 90,
+          "regen_per_beat": 1,
+          "gather": { "explore": 2, "investigate": 4 }
+        },
+        "iron": {
+          "max": 45,
+          "regen_per_beat": 0,
+          "gather": { "explore": 2, "investigate": 3 }
+        }
+      }
+    },
+    "tower": {
+      "danger_level": 5,
+      "danger_label": "극위험",
+      "loot_copper_mult": 2.2,
+      "loot_silver_chance": 0.28,
+      "resources": {
+        "food": {
+          "max": 25,
+          "regen_per_beat": 0,
+          "gather": { "explore": 2, "investigate": 1 }
+        },
+        "wood": {
+          "max": 40,
+          "regen_per_beat": 0,
+          "gather": { "explore": 2 }
+        },
+        "stone": {
+          "max": 120,
+          "regen_per_beat": 1,
+          "gather": { "investigate": 5, "explore": 3 }
+        },
+        "iron": {
+          "max": 80,
+          "regen_per_beat": 1,
+          "gather": { "explore": 4, "investigate": 4 }
+        },
+        "crystal": {
+          "max": 12,
+          "regen_per_beat": 0,
+          "gather": { "investigate": 1 }
+        }
+      }
+    }
+  },
+  "combat_loot": {
+    "base_copper": 18,
+    "copper_per_danger_level": 14,
+    "silver_every_danger": 3
+  },
+  "depleted_message": "이 지역의 {resource}은(는) 고갈됐다. 더 위험한 변경으로 나가야 한다."
+}

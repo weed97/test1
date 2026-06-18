@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import copy
-import json
 import random
 from pathlib import Path
 from typing import Any
+
+from utils.config_loader import load_config
 
 from utils.agent_mind import (
     _iq,
@@ -26,9 +27,7 @@ from utils.spatial import load_world_maps, resolve_zone_from_world
 
 
 def load_parallel_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "parallel_beat.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "parallel_beat.json")
 
 
 def parallel_beat_enabled(state: dict[str, Any], *, base_dir: str | Path) -> bool:
@@ -529,11 +528,13 @@ def run_macro_parallel_lanes(
         state.get("flags", {}).get("ecology", {}).get("civilizations", {})
     )
 
+    from utils.kingdom_system import tick_kingdom
     from utils.settlement_build import tick_player_build_projects
     from utils.civilization_coupling import tick_civilization_coupling
     from utils.world_conflicts import tick_world_conflicts
 
     lines.extend(tick_player_build_projects(state, base_dir=base_dir))
+    lines.extend(tick_kingdom(state, base_dir=base_dir))
     lines.extend(tick_civilization_coupling(state, base_dir=base_dir, rng=r))
     lines.extend(tick_world_conflicts(state, base_dir=base_dir, rng=r))
 
@@ -556,6 +557,9 @@ def run_world_parallel_beat(
     r = ecology_rng(state, rng)
     lines: list[str] = []
     lines.extend(tick_field_ecology(state, base_dir=base_dir, rng=r))
+    from utils.regional_resources import tick_regional_regen
+
+    lines.extend(tick_regional_regen(state, base_dir=base_dir))
     lines.extend(run_macro_parallel_lanes(state, base_dir=base_dir, turn=turn, rng=r))
     persist_ecology_rng(state, r)
     world = state.get("world", {})

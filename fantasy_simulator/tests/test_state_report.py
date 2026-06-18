@@ -19,8 +19,9 @@ class StateReportTests(unittest.TestCase):
         with isolated_game_root() as root:
             loader = StateLoader.from_package_root(root)
             state = loader.load_world_state()
-            text = format_summary(state)
+            text = format_summary(state, base_dir=root)
             self.assertIn("Gold:", text)
+            self.assertIn("Copper:", text)
             self.assertIn(state["world"]["name"], text)
 
     def test_format_status_report_delegates_party_block(self) -> None:

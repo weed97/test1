@@ -192,6 +192,21 @@ class GameSession:
             mode=self.mode,
         )
 
+    def run_sim_tick(self, *, dt_real_seconds: float) -> dict[str, Any]:
+        """Advance continuous simulation clock (ecology, siege) without a player turn."""
+        from utils.sim_tick import tick_simulation
+
+        result = tick_simulation(
+            self.state,
+            dt_real_seconds=dt_real_seconds,
+            base_dir=self.manager.base_dir,
+            rng=self.rng,
+        )
+        if result.get("ok"):
+            self.manager.save(self.state)
+            self.manager.refresh_state(self.state)
+        return result
+
     def save(self) -> None:
         self.manager.save(self.state)
 

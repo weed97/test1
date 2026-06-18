@@ -23,7 +23,7 @@ def _bootstrap_state(root: Path) -> None:
         "world.json": {"name": "Eldoria", "day": 1, "time_of_day": "morning", "location": "test"},
         "factions.json": {},
         "party.json": {"party": ["hero"], "active_characters": ["hero"], "npc_locations": {}},
-        "inventory.json": {"party_gold": 10},
+        "inventory.json": {"wallet": {"copper": 10, "silver": 0, "gold": 0}},
         "flags.json": {},
         "combat.json": None,
         "event_log.json": {"next_turn": 1, "entries": []},
@@ -65,10 +65,10 @@ class SharedStateStoreTests(unittest.TestCase):
             _bootstrap_state(root)
             manager = StateManager(root)
             state = manager.load()
-            state["inventory"]["party_gold"] = 999
+            state["inventory"]["wallet"] = {"copper": 999, "silver": 0, "gold": 0}
             manager.save(state)
             hub = json.loads((root / "world_state.json").read_text(encoding="utf-8"))
-            self.assertEqual(hub["inventory"]["party_gold"], 999)
+            self.assertEqual(hub["inventory"]["wallet"]["copper"], 999)
 
 
 if __name__ == "__main__":

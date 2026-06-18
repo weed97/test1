@@ -45,12 +45,9 @@
     "unlock_construction_level": 2
   },
   "kingdom": {
+    "_note": "비용·결계·군사는 config/kingdom_system.json — 선포 시 직접+부대 120,000G",
     "label": "왕국 승격",
     "min_construction_level": 5,
-    "gold_cost": 5000,
-    "labor_cost": 500,
-    "materials": { "wood": 200, "stone": 300, "iron": 80 },
-    "build_points": 400,
     "requires_buildings": ["hall", "blacksmith", "barracks", "market"]
   },
   "buildings": {
