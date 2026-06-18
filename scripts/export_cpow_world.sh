@@ -32,8 +32,13 @@ CPOW_DOCS=(
 rm -rf "$DEST"
 mkdir -p "$DEST/docs" "$DEST/scripts" "$DEST/.github/workflows"
 
-echo "==> Copy cpow_engine, cpow_api, cpow_client, tests"
-cp -a "$ROOT/cpow_engine" "$ROOT/cpow_api" "$ROOT/cpow_client" "$ROOT/tests" "$DEST/"
+echo "==> Copy cpow_engine, cpow_api, cpow_client"
+cp -a "$ROOT/cpow_engine" "$ROOT/cpow_api" "$ROOT/cpow_client" "$DEST/"
+
+echo "==> Copy CPoW tests only"
+mkdir -p "$DEST/tests"
+[[ -f "$ROOT/tests/__init__.py" ]] && cp "$ROOT/tests/__init__.py" "$DEST/tests/"
+cp "$ROOT/tests/test_cpow_api_flow.py" "$DEST/tests/"
 
 echo "==> Copy docs"
 for f in "${CPOW_DOCS[@]}"; do
@@ -44,6 +49,7 @@ done
 
 echo "==> Copy scripts & requirements"
 cp "$ROOT/scripts/verify_cpow.sh" "$DEST/scripts/verify.sh"
+cp "$ROOT/scripts/export_cpow_world.sh" "$DEST/scripts/"
 cp "$ROOT/requirements-cpow-api.txt" "$DEST/requirements-api.txt"
 
 if [[ -f "$ROOT/scripts/clone_cpow_world.sh" ]]; then

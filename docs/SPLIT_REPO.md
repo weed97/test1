@@ -27,12 +27,13 @@ bash scripts/verify.sh
 
 ## test1 모노레포와의 관계
 
-| 저장소 | 내용 |
+| 저장소 | 역할 |
 |--------|------|
-| [weed97/cpow_world](https://github.com/weed97/cpow_world) | CPoW 전용 (엔진·API·**Unity** 클라이언트) |
-| [weed97/test1](https://github.com/weed97/test1) | Eldoria + 기타 시뮬 (`fantasy_simulator` 등) |
+| **[weed97/cpow_world](https://github.com/weed97/cpow_world)** | **정식** — 엔진·API·Unity 클라이언트. 여기서 clone·작업 |
+| [weed97/test1](https://github.com/weed97/test1) | 모노레포 **미러** — Agent가 `cpow_*` 수정 후 Actions로 cpow_world에 export |
 
-`test1/main`의 `cpow_*` 폴더는 레거시 미러입니다. 신규 작업은 **cpow_world** repo에서 진행하세요.
+`test1/main` push 시 (PAT 등록 후) **자동** cpow_world 동기화.  
+수동 1회: [SYNC_CPOW_WORLD.md](SYNC_CPOW_WORLD.md)
 
 ## 실행 확인
 

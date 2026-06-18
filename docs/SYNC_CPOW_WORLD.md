@@ -1,7 +1,11 @@
 # cpow_world 동기화 — PAT 설정 (5분)
 
+**정식 repo는 cpow_world 입니다.** test1의 `cpow_*` 는 미러·export 소스입니다.
+
 `test1/main` 에 머지된 CPoW 코드(Unity·월드 모듈 포함)를  
 **https://github.com/weed97/cpow_world** 에 올리는 방법입니다.
+
+PAT 등록 후 **main에 cpow 관련 push 할 때마다 자동 동기화**됩니다.
 
 ---
 

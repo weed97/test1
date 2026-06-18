@@ -3,6 +3,18 @@ name: Publish CPoW World
 # test1/main 의 cpow_* 트리만 export → weed97/cpow_world 로 push
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "cpow_engine/**"
+      - "cpow_api/**"
+      - "cpow_client/**"
+      - "tests/test_cpow_api_flow.py"
+      - "scripts/export_cpow_world.sh"
+      - "scripts/verify_cpow.sh"
+      - "requirements-cpow-api.txt"
+      - "README_CPOW.md"
+      - "CPOW_CANONICAL.md"
 
 jobs:
   publish:

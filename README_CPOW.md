@@ -1,12 +1,15 @@
 # CPoW World — 3D 창조 시뮬레이터
 
+> **⚠️ test1 미러입니다.** 정식 개발 저장소 → **https://github.com/weed97/cpow_world**  
+> 이 파일·`cpow_*` 폴더는 export 소스. [CPOW_CANONICAL.md](CPOW_CANONICAL.md) 참고.
+
 > **게임이 아닙니다.** 유저 창조 데이터가 물리 법칙이 되는 **CPoW (Creativity-Proof of Work) 자율 시뮬레이션**입니다.
 
 Eldoria (`fantasy_simulator`)와 **완전 분리**된 독립 프로젝트입니다.
 
-## 독립 저장소 (권장)
+## 정식 저장소 (여기서 작업)
 
-**전용 repo:** https://github.com/weed97/cpow_world
+**https://github.com/weed97/cpow_world**
 
 ```bash
 git clone https://github.com/weed97/cpow_world.git
