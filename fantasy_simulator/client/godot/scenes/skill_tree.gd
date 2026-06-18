@@ -79,6 +79,19 @@ func _render_tree(payload: Dictionary) -> void:
 			payload.get("counts", {}).get("job_total", 300),
 		]
 	)
+	var bands: Array = payload.get("skill_grade_bands", [])
+	if not bands.is_empty():
+		lines.append("등급 구간 (캐릭터 Lv):")
+		for b in bands:
+			if b is Dictionary:
+				lines.append(
+					"  %s Lv%s–%s (쿨 %s)" % [
+						b.get("label_ko", b.get("grade")),
+						b.get("min"),
+						b.get("max"),
+						b.get("cooldown_beats", 0),
+					]
+				)
 	lines.append("")
 	var cats: Dictionary = payload.get("categories", {})
 	for cat in cats.keys():
@@ -92,12 +105,15 @@ func _render_tree(payload: Dictionary) -> void:
 			var mark := "[✓]" if e.get("unlocked") else "[ ]"
 			if e.get("signature"):
 				mark = "[★]" + mark
+			var grade_lbl: String = str(e.get("grade_label_ko", e.get("skill_grade", "")))
 			lines.append(
-				"  %s %s (tier %s, power %s)" % [
+				"  %s [%s] %s (tier %s, power %s, cd %s)" % [
 					mark,
+					grade_lbl,
 					e.get("label", e.get("skill_id")),
 					e.get("tier"),
 					e.get("power"),
+					e.get("cooldown_beats", 0),
 				]
 			)
 			shown += 1
@@ -114,8 +130,14 @@ func _render_tree(payload: Dictionary) -> void:
 					lines.append("  … (%d more)" % (entries.size() - shown_w))
 					break
 				var mark := "[✓]" if e.get("unlocked") else "[ ]"
+				var grade_lbl: String = str(e.get("grade_label_ko", e.get("skill_grade", "")))
 				lines.append(
-					"  %s %s (tier %s)" % [mark, e.get("label", e.get("skill_id")), e.get("tier")]
+					"  %s [%s] %s (tier %s)" % [
+						mark,
+						grade_lbl,
+						e.get("label", e.get("skill_id")),
+						e.get("tier"),
+					]
 				)
 				shown_w += 1
 			lines.append("")

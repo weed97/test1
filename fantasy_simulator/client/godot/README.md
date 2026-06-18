@@ -23,6 +23,14 @@ pip install -r requirements-api.txt
 uvicorn api.server:app --reload --port 8765
 ```
 
+**공성·왕국 데모** (선택, 플레이테스트용):
+
+```bash
+export ELDORIA_DEMO=1
+uvicorn api.server:app --reload --port 8765
+# 다른 터미널: python3 scripts/play_demo.py --live
+```
+
 2. **Godot 4.6+** → Import → 이 폴더의 `project.godot` → F5
 
 3. **Cursor** → 레포 루트 또는 이 폴더 열기 → [docs/CURSOR_GODOT.md](../../docs/CURSOR_GODOT.md)
@@ -33,14 +41,20 @@ uvicorn api.server:app --reload --port 8765
 client/godot/
   project.godot
   scenes/main_menu.tscn      # 새 게임 → 2D 탐험
-  scenes/exploration.tscn   # WASD + 타일 ↔ 시뮬 좌표
+  scenes/exploration.tscn   # WASD + 타일 ↔ 시뮬 좌표 · sim tick · 라이브 공성 HUD
   scenes/inventory.tscn     # 인벤 · 착용/사용
   scenes/item_catalog.tscn  # 아이템 도감 (213+)
-  scripts/net/api_client.gd # sync_position, run_turn
+  scenes/kingdom.tscn       # 왕국 관리 · 선포 · 요새/군사
+  scenes/siege_battle.tscn  # 실시간 2D 공성전 (sim tick 연동)
+  scripts/net/api_client.gd # sync_position, run_turn, kingdom/war/sim API
+  scripts/kingdom/siege_battle.gd
+  scripts/kingdom/siege_battlefield.gd
+  scripts/kingdom/siege_unit.gd
   scripts/player/player_controller.gd
 ```
 
 **좌표 연동:** 이동 시 `POST /v1/world/position` · 탐험 시 `POST /v1/turn` + position.  
+**공성:** sim clock이 켜진 hybrid 세션에서 `POST /v1/sim/tick`으로 라운드 진행 · `siege_battle` 패널에 실시간 반영.  
 설계: `docs/design/19_SPATIAL_SIMULATION.md`
 
 ## Cursor 연동

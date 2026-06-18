@@ -47,7 +47,13 @@ def _job_skill_kind(job_id: str, category: str, cat_cfg: dict[str, Any], unlocks
     return str(cat_cfg.get("default_skill_kind", "melee_phys_single"))
 
 
-def _build_job_skills(job_id: str, unlocks: dict[str, Any], jobs_cfg: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _build_job_skills(
+    job_id: str,
+    unlocks: dict[str, Any],
+    jobs_cfg: dict[str, Any],
+    *,
+    base_dir: str | Path,
+) -> dict[str, dict[str, Any]]:
     catalog = unlocks["skill_catalog"]
     scaling = catalog["scaling"]
     max_lv = int(unlocks.get("max_level", 999))
@@ -102,16 +108,23 @@ def _build_job_skills(job_id: str, unlocks: dict[str, Any], jobs_cfg: dict[str, 
                 "unlock_requirements": reqs,
                 "combat_pipeline": "catalog",
             }
+            from utils.skill_grade import enrich_skill_grade
             from utils.skill_names import apply_name_overrides
 
-            skills[skill_id] = apply_name_overrides(entry)
+            skills[skill_id] = enrich_skill_grade(
+                apply_name_overrides(entry), base_dir=base_dir
+            )
             global_index += 1
 
     return skills
 
 
 def _build_weapon_class_skills(
-    weapon_class: str, unlocks: dict[str, Any], mastery_cfg: dict[str, Any]
+    weapon_class: str,
+    unlocks: dict[str, Any],
+    mastery_cfg: dict[str, Any],
+    *,
+    base_dir: str | Path,
 ) -> dict[str, dict[str, Any]]:
     wcat = unlocks["weapon_skill_catalog"]
     scaling = wcat["scaling"]
@@ -149,9 +162,12 @@ def _build_weapon_class_skills(
                 "unlock_requirements": {"weapon_mastery_level": unlock_level, "weapon_class": weapon_class},
                 "combat_pipeline": "catalog",
             }
+            from utils.skill_grade import enrich_skill_grade
             from utils.skill_names import apply_name_overrides
 
-            skills[skill_id] = apply_name_overrides(entry)
+            skills[skill_id] = enrich_skill_grade(
+                apply_name_overrides(entry), base_dir=base_dir
+            )
             idx += 1
     return skills
 
@@ -163,11 +179,12 @@ def _full_catalog(base_dir: str) -> dict[str, dict[str, Any]]:
     mastery_cfg = _read_json(base_dir, "config/weapon_mastery.json")
     merged: dict[str, dict[str, Any]] = {}
 
+    root = Path(base_dir)
     for job_id in unlocks.get("jobs", []):
-        merged.update(_build_job_skills(job_id, unlocks, jobs_cfg))
+        merged.update(_build_job_skills(job_id, unlocks, jobs_cfg, base_dir=root))
 
     for wclass in mastery_cfg.get("classes", {}):
-        merged.update(_build_weapon_class_skills(wclass, unlocks, mastery_cfg))
+        merged.update(_build_weapon_class_skills(wclass, unlocks, mastery_cfg, base_dir=root))
 
     return merged
 

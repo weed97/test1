@@ -1,0 +1,294 @@
+{
+  "version": 1,
+  "founding": {
+    "label": "왕국 선포 의식",
+    "min_construction_level": 5,
+    "requires_buildings": ["hall", "blacksmith", "barracks", "market"],
+    "min_hired_workers": 8,
+    "gold_cost": 85000,
+    "ancillary_gold": 35000,
+    "ancillary_note": "외교·의식·봉헌·인력 유지 — 선포와 동시에 소멸",
+    "materials": {
+      "wood": 800,
+      "stone": 1200,
+      "iron": 400,
+      "crystal": 50
+    },
+    "build_points": 2500,
+    "mode": "hire"
+  },
+  "barrier": {
+    "label": "왕국 결계",
+    "base_max_hp": 12000,
+    "hp_per_level": 8000,
+    "regen_per_beat": 80,
+    "physical_destroy_blocked": true,
+    "siege_damage_reduction": 0.65,
+    "notes": "결계가 붕괴하기 전에는 왕국 영토를 물리적으로 멸망시킬 수 없음"
+  },
+  "fortifications": {
+    "walls": {
+      "label": "성벽",
+      "max_level": 5,
+      "levels": [
+        { "level": 1, "gold": 12000, "materials": { "stone": 200, "wood": 80 }, "hp_bonus": 2000, "wall_defense": 15 },
+        { "level": 2, "gold": 22000, "materials": { "stone": 350, "iron": 60 }, "hp_bonus": 3500, "wall_defense": 28 },
+        { "level": 3, "gold": 38000, "materials": { "stone": 500, "iron": 120 }, "hp_bonus": 5500, "wall_defense": 45 },
+        { "level": 4, "gold": 60000, "materials": { "stone": 700, "iron": 200, "crystal": 20 }, "hp_bonus": 8000, "wall_defense": 65 },
+        { "level": 5, "gold": 95000, "materials": { "stone": 1000, "iron": 350, "crystal": 40 }, "hp_bonus": 12000, "wall_defense": 90 }
+      ]
+    },
+    "tower": {
+      "label": "방어 포탑",
+      "max_count": 8,
+      "gold_each": 15000,
+      "materials_each": { "stone": 120, "iron": 80, "wood": 40 },
+      "attack_per_tower": 25,
+      "range_bonus": 2
+    },
+    "barrier_ritual": {
+      "label": "결계 강화 의식",
+      "max_level": 5,
+      "levels": [
+        { "level": 1, "gold": 25000, "materials": { "crystal": 30 }, "hp_mult": 1.15 },
+        { "level": 2, "gold": 45000, "materials": { "crystal": 60 }, "hp_mult": 1.35 },
+        { "level": 3, "gold": 75000, "materials": { "crystal": 100, "iron": 100 }, "hp_mult": 1.6 },
+        { "level": 4, "gold": 120000, "materials": { "crystal": 150, "iron": 200 }, "hp_mult": 1.9 },
+        { "level": 5, "gold": 200000, "materials": { "crystal": 250, "iron": 400 }, "hp_mult": 2.2 }
+      ]
+    }
+  },
+  "interior": {
+    "farmland": {
+      "label": "농경지",
+      "max_plots": 12,
+      "gold_each": 8000,
+      "materials_each": { "wood": 30 },
+      "food_per_beat_each": 6,
+      "build_points": 40
+    },
+    "city_district": {
+      "label": "도시 구역",
+      "max_level": 4,
+      "levels": [
+        { "level": 1, "gold": 30000, "materials": { "wood": 150, "stone": 200 }, "population_cap": 200, "tax_bonus": 0.02 },
+        { "level": 2, "gold": 65000, "materials": { "wood": 250, "stone": 400, "iron": 80 }, "population_cap": 500, "tax_bonus": 0.04 },
+        { "level": 3, "gold": 120000, "materials": { "stone": 600, "iron": 150 }, "population_cap": 1200, "tax_bonus": 0.06 },
+        { "level": 4, "gold": 220000, "materials": { "stone": 900, "iron": 300, "crystal": 40 }, "population_cap": 3000, "tax_bonus": 0.08 }
+      ]
+    },
+    "training_ground": {
+      "label": "훈련소",
+      "max_level": 4,
+      "levels": [
+        { "level": 1, "gold": 18000, "materials": { "wood": 80, "iron": 40 }, "train_slots": 2, "xp_mult": 1.0 },
+        { "level": 2, "gold": 40000, "materials": { "wood": 120, "iron": 90, "stone": 60 }, "train_slots": 4, "xp_mult": 1.3 },
+        { "level": 3, "gold": 75000, "materials": { "stone": 150, "iron": 150 }, "train_slots": 6, "xp_mult": 1.6 },
+        { "level": 4, "gold": 130000, "materials": { "stone": 250, "iron": 250, "crystal": 20 }, "train_slots": 10, "xp_mult": 2.0 }
+      ]
+    }
+  },
+  "military": {
+    "unit_caps_base": 20,
+    "unit_caps_per_training_level": 15,
+    "units": {
+      "scout": {
+        "label": "정찰병",
+        "gold": 400,
+        "food": 2,
+        "attack": 8,
+        "defense": 5,
+        "role": "scout",
+        "train_beats": 3
+      },
+      "guard": {
+        "label": "경비병",
+        "gold": 800,
+        "food": 4,
+        "attack": 12,
+        "defense": 18,
+        "role": "garrison",
+        "train_beats": 5
+      },
+      "wall_archer": {
+        "label": "성벽 궁수",
+        "gold": 1200,
+        "food": 4,
+        "attack": 22,
+        "defense": 10,
+        "role": "wall",
+        "requires_walls_level": 1,
+        "train_beats": 6
+      },
+      "elite": {
+        "label": "정예 전투원",
+        "gold": 2500,
+        "food": 8,
+        "attack": 35,
+        "defense": 28,
+        "role": "elite",
+        "requires_training_ground": 2,
+        "train_beats": 10
+      }
+    }
+  },
+  "default_laws": {
+    "tax_rate": 0.08,
+    "pvp_policy": "safe_in_settlement",
+    "trade_policy": "regulated",
+    "curfew": false,
+    "conscription": false
+  },
+  "monarchy": {
+    "default_doctrine": "feudal_balance",
+    "change_stability_cost": 12,
+    "change_gold_cost": 8000,
+    "doctrines": {
+      "martial_ascendancy": {
+        "label": "무력 우대",
+        "motto": "이 왕국은 강한 자에게 높은 지위를 준다.",
+        "description": "전투력·군사 공적이 관직과 지휘권의 기준이다. 약자는 병역과 경비에, 강자는 장군직과 성책 방어를 맡는다.",
+        "authority_basis": "might",
+        "rank_ladder": [
+          { "rank": 1, "title": "징집병", "authority": "low", "requirement": "신병 훈련" },
+          { "rank": 2, "title": "백인대장", "authority": "medium", "requirement": "전투 공적" },
+          { "rank": 3, "title": "군단장", "authority": "high", "requirement": "정예 전투원 이상" },
+          { "rank": 4, "title": "대장군", "authority": "supreme", "requirement": "왕국 방어 핵심" }
+        ],
+        "effects": {
+          "elite_train_beats_mult": 0.8,
+          "garrison_defense_mult": 1.2,
+          "wall_archer_attack_mult": 1.1,
+          "stability_per_elite": 2,
+          "tax_rate_bias": 0.02
+        },
+        "law_hints": { "conscription": true, "pvp_policy": "safe_in_settlement" }
+      },
+      "plutocracy": {
+        "label": "부의 권력",
+        "motto": "이 왕국은 돈이 많은 자에게 큰 권한을 준다.",
+        "description": "골드·교역 이익·시장 지배력이 관직 임명과 세금 면제의 기준이다.",
+        "authority_basis": "wealth",
+        "rank_ladder": [
+          { "rank": 1, "title": "상인", "authority": "low", "requirement": "시장 등록" },
+          { "rank": 2, "title": "금고 관리", "authority": "medium", "requirement": "보유 골드 5,000+" },
+          { "rank": 3, "title": "무역 대행", "authority": "high", "requirement": "보유 골드 20,000+" },
+          { "rank": 4, "title": "재정 대신", "authority": "supreme", "requirement": "왕국 재정 총괄" }
+        ],
+        "effects": {
+          "trade_income_mult": 1.25,
+          "tax_rate_bias": -0.03,
+          "stability_per_10k_gold": 1,
+          "office_min_gold": 5000,
+          "market_upgrade_cost_mult": 0.9
+        },
+        "law_hints": { "trade_policy": "open", "tax_rate": 0.06 }
+      },
+      "scholarship": {
+        "label": "지혜 우대",
+        "motto": "이 왕국은 지식이 많은 자에게 큰 권한을 준다.",
+        "description": "학문·마법·기록 보존이 관직의 기준이다. 무식한 폭군보다 현자 회의가 법을 해석한다.",
+        "authority_basis": "knowledge",
+        "rank_ladder": [
+          { "rank": 1, "title": "필경사", "authority": "low", "requirement": "문서 관리" },
+          { "rank": 2, "title": "현자", "authority": "medium", "requirement": "훈련소 Lv2+" },
+          { "rank": 3, "title": "대현자", "authority": "high", "requirement": "도시 Lv2+" },
+          { "rank": 4, "title": "국师(국사)", "authority": "supreme", "requirement": "왕국 법전 해석" }
+        ],
+        "effects": {
+          "training_beats_mult": 0.75,
+          "stability_per_city_level": 4,
+          "barrier_regen_mult": 1.15,
+          "tax_rate_bias": 0.0
+        },
+        "law_hints": { "trade_policy": "regulated", "curfew": false }
+      },
+      "feudal_balance": {
+        "label": "봉건 균형",
+        "motto": "이 왕국은 검과 곡물과 맹세가 함께 지배한다.",
+        "description": "기본 왕정 — 군사·경제·지식을 한쪽으로 치우치지 않는다.",
+        "authority_basis": "mixed",
+        "rank_ladder": [
+          { "rank": 1, "title": "자유민", "authority": "low", "requirement": "거주 등록" },
+          { "rank": 2, "title": "기사", "authority": "medium", "requirement": "봉역 수행" },
+          { "rank": 3, "title": "영주", "authority": "high", "requirement": "건물·인구" },
+          { "rank": 4, "title": "섭정", "authority": "supreme", "requirement": "왕 대리" }
+        ],
+        "effects": {
+          "stability_base_bonus": 5
+        },
+        "law_hints": { "tax_rate": 0.08, "trade_policy": "regulated" }
+      },
+      "divine_mandate": {
+        "label": "신권 왕정",
+        "motto": "이 왕국은 신의 뜻을 따르는 자만이 높은 자리에 오른다.",
+        "description": "신전·의식·결계가 정통성의 근거다. 이단과 무신론은 낮은 지위에서 시작한다.",
+        "authority_basis": "faith",
+        "rank_ladder": [
+          { "rank": 1, "title": "신도", "authority": "low", "requirement": "신전 참배" },
+          { "rank": 2, "title": "사제", "authority": "medium", "requirement": "신전 건립" },
+          { "rank": 3, "title": "대사제", "authority": "high", "requirement": "결계 의식 Lv2+" },
+          { "rank": 4, "title": "성왕", "authority": "supreme", "requirement": "신권과 왕권 일치" }
+        ],
+        "effects": {
+          "barrier_regen_mult": 1.3,
+          "barrier_ritual_cost_mult": 0.85,
+          "stability_per_shrine": 3,
+          "tax_rate_bias": 0.01
+        },
+        "law_hints": { "curfew": true, "pvp_policy": "safe_in_settlement" }
+      },
+      "meritocracy": {
+        "label": "공적 제도",
+        "motto": "이 왕국은 공적 있는 자에게 지위를 준다 — 출신은 묻지 않는다.",
+        "description": "건설·농경·전투·교역 실적이 승진의 유일한 잣대다.",
+        "authority_basis": "merit",
+        "rank_ladder": [
+          { "rank": 1, "title": "노동자", "authority": "low", "requirement": "왕국 기여" },
+          { "rank": 2, "title": "장인", "authority": "medium", "requirement": "건물 완공" },
+          { "rank": 3, "title": "총감", "authority": "high", "requirement": "다부서 실적" },
+          { "rank": 4, "title": "수상", "authority": "supreme", "requirement": "왕국 번영" }
+        ],
+        "effects": {
+          "construction_xp_pulse": 1.2,
+          "farmland_food_mult": 1.15,
+          "stability_per_completed_interior": 3
+        },
+        "law_hints": { "tax_rate": 0.07, "conscription": false }
+      },
+      "egalitarian": {
+        "label": "평등 연방",
+        "motto": "이 왕국은 누구도 타인보다 낮은 법을 받지 않는다.",
+        "description": "지위 격차를 최소화한다. 세금은 낮지만 대규모 군사 동원은 어렵다.",
+        "authority_basis": "equality",
+        "rank_ladder": [
+          { "rank": 1, "title": "시민", "authority": "equal", "requirement": "거주" },
+          { "rank": 2, "title": "대표", "authority": "equal", "requirement": "선출" },
+          { "rank": 3, "title": "의장", "authority": "equal", "requirement": "회의 주재" },
+          { "rank": 4, "title": "연방장", "authority": "equal", "requirement": "왕국 대표" }
+        ],
+        "effects": {
+          "tax_rate_bias": -0.04,
+          "military_cap_mult": 0.85,
+          "stability_base_bonus": 8,
+          "upkeep_gold_mult": 0.9
+        },
+        "law_hints": { "tax_rate": 0.04, "conscription": false, "trade_policy": "open" }
+      }
+    }
+  },
+  "upkeep": {
+    "base_gold_per_beat": 35,
+    "gold_per_military": 3,
+    "food_per_military": 1,
+    "gold_per_tower": 12,
+    "gold_per_city_level": 20,
+    "stability_penalty_if_unpaid": 8,
+    "barrier_offline_if_unpaid_beats": 3
+  },
+  "siege": {
+    "barrier_must_break_before_physical_destroy": true,
+    "wall_archer_damage_mult_on_walls": 1.8,
+    "elite_defense_bonus_in_city": 1.25
+  }
+}

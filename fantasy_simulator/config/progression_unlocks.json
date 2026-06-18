@@ -2,6 +2,33 @@
   "version": 1,
   "max_level": 999,
   "comment": "직업당 300 스킬 + 무기클래스당 60 스킬 — 레벨축별 정밀 해금",
+  "skill_grade_bands": {
+    "comment": "캐릭터 Lv 구간별 스킬 등급 — 해당 등급 스킬은 min Lv 이상에서만 습득 가능",
+    "bands": [
+      { "grade": "common", "min": 1, "max": 100, "label_ko": "일반" },
+      { "grade": "high", "min": 101, "max": 200, "label_ko": "고급" },
+      { "grade": "rare", "min": 201, "max": 400, "label_ko": "희귀" },
+      { "grade": "hero", "min": 401, "max": 600, "label_ko": "영웅" },
+      { "grade": "legend", "min": 601, "max": 800, "label_ko": "전설" },
+      { "grade": "mythic", "min": 801, "max": 999, "label_ko": "신화" }
+    ],
+    "labels": {
+      "common": "일반",
+      "high": "고급",
+      "rare": "희귀",
+      "hero": "영웅",
+      "legend": "전설",
+      "mythic": "신화"
+    },
+    "cooldown_beats": {
+      "common": 0,
+      "high": 1,
+      "rare": 2,
+      "hero": 4,
+      "legend": 8,
+      "mythic": 15
+    }
+  },
   "jobs": [
     "knight",
     "ranger",
