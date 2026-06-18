@@ -1,91 +1,57 @@
-# 모바일에서 cpow-world로 push하기
+# 모바일에서 cpow_world로 push하기
 
 PC 터미널 없이 **GitHub 앱/브라우저**만으로 초기 push 하는 방법입니다.
+
+**전용 repo:** https://github.com/weed97/cpow_world
 
 ---
 
 ## ⚠️ 403 `Permission denied to github-actions[bot]` 나올 때
 
-Actions 로그에 이렇게 보이면 **토큰 권한 문제**입니다:
-
 ```text
-Permission to weed97/cpow-world.git denied to github-actions[bot]
+Permission to weed97/cpow_world.git denied to github-actions[bot]
 ```
 
 → 토큰은 맞는데 **checkout 이 bot 토큰을 git 에 남겨서** push 가 실패한 경우입니다.  
-`main` 최신 워크플로( `persist-credentials: false` )로 다시 Run workflow 하세요.
+`main` 최신 워크플로(`persist-credentials: false`)로 다시 Run workflow 하세요.
 
-### 해결 (weed97 계정으로 로그인한 브라우저에서)
+### 토큰 재등록 (필요 시)
 
-1. **기존 시크릿 삭제**  
-   https://github.com/weed97/test1/settings/secrets/actions  
-   → `CPOW_WORLD_PUSH_TOKEN` 있으면 **Remove**
-
-2. **새 토큰 — Classic 권장**  
-   https://github.com/settings/tokens → **Generate new token (classic)**  
-   - Note: `cpow-world-push`  
-   - Expiration: 90 days (원하는 기간)  
-   - ✅ **`repo`** 전체 체크 (private repo면 필수)  
-   - Generate → `ghp_...` 로 시작하는 문자열 **전부 복사**
-
-   > Fine-grained 쓸 경우:  
-   > https://github.com/settings/tokens?type=beta  
-   > - Repository access: **Only select** → **`cpow-world`만** 선택  
-   > - Permissions → **Contents: Read and write**  
-   > - Metadata는 Read (기본)
-
-3. **시크릿 다시 등록**  
-   https://github.com/weed97/test1/settings/secrets/actions  
-   - Name: `CPOW_WORLD_PUSH_TOKEN` (철자 정확히)  
-   - Secret: 붙여넣기 (앞뒤 공백 없이)
-
-4. **워크플로 재실행**  
-   https://github.com/weed97/test1/actions/workflows/publish-cpow-world.yml  
-   → **Run workflow**  
-   → Branch: **`main`** 선택 (다른 브랜치 말고 main)  
-   → Run workflow
+1. https://github.com/weed97/test1/settings/secrets/actions → `CPOW_WORLD_PUSH_TOKEN` 삭제 후 재등록  
+2. Classic PAT: **`repo`** 전체 체크  
+3. Fine-grained: 저장소 **`cpow_world`** 선택, **Contents: Read and write**
 
 ---
 
 ## 방법 A — Actions 버튼 (추천)
 
-위 403 해결 후:
-
 1. https://github.com/weed97/test1/actions/workflows/publish-cpow-world.yml  
-2. **Run workflow** → Branch **`main`** 선택 → Run workflow  
-3. https://github.com/weed97/cpow-world 에 `cpow_engine/` 등 확인
+   (파일명은 **하이픈** `publish-cpow-world`, repo 이름 **밑줄** `cpow_world`)
+2. **Run workflow** → Branch **`main`** → Run workflow  
+3. https://github.com/weed97/cpow_world 에 `cpow_engine/` 등 확인
 
 ---
 
-## 방법 B — GitHub.dev (토큰 없이, 더 쉬울 수 있음)
+## 방법 B — GitHub.dev (토큰 없이)
 
-**weed97**으로 로그인한 모바일 브라우저에서:
-
-1. 열기: **https://github.dev/weed97/test1/tree/cpow-world**  
-   (일반 github.com 말고 **github.dev** 주소)
-
-2. 메뉴(≡) → **Terminal** (터미널)
-
-3. 한 줄씩 입력:
+1. **https://github.dev/weed97/test1/tree/cpow-world**  
+2. **Terminal** →  
 
 ```bash
 git branch -M main
-git remote set-url origin https://github.com/weed97/cpow-world.git
+git remote set-url origin https://github.com/weed97/cpow_world.git
 git push -u origin main
 ```
 
-4. GitHub 로그인/권한 창 → **Authorize**  
-   (본인 계정이면 토큰 없이 push 됨)
-
 ---
 
-## 방법 C — PC에서 나중에
+## 방법 C — PC
 
 ```bash
-git clone -b cpow-world https://github.com/weed97/test1.git cpow-world
-cd cpow-world
+git clone -b cpow-world https://github.com/weed97/test1.git cpow_world
+cd cpow_world
 git branch -M main
-git remote set-url origin https://github.com/weed97/cpow-world.git
+git remote set-url origin https://github.com/weed97/cpow_world.git
 git push -u origin main
 ```
 
@@ -93,5 +59,4 @@ git push -u origin main
 
 ## 확인
 
-push 성공 후 https://github.com/weed97/cpow-world 에  
-`cpow_engine/`, `cpow_api/`, `README.md` 가 보이면 완료입니다.
+https://github.com/weed97/cpow_world 에 `cpow_engine/`, `cpow_api/`, `README.md` 가 보이면 완료입니다.
