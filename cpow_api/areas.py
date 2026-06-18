@@ -80,9 +80,23 @@ def handle_area_create(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def handle_area_adventure(payload: dict[str, Any]) -> dict[str, Any]:
-    area = _registry.get_or_raise(str(payload["area_id"]))
+    area_id = str(payload["area_id"])
     actor_id = str(payload.get("actor_id", "anonymous"))
     action_type = str(payload.get("action", "explore"))
+
+    if action_type == "mine":
+        from cpow_api.world import handle_world_mine
+
+        mine_out = handle_world_mine({**payload, "area_id": area_id, "actor_id": actor_id})
+        return {
+            "ok": mine_out.get("ok", False),
+            "area_id": area_id,
+            "action": "mine",
+            "reason": mine_out.get("reason", ""),
+            **mine_out,
+        }
+
+    area = _registry.get_or_raise(area_id)
     result = area.submit_adventure(
         actor_id,
         action_type,

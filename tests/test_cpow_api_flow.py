@@ -125,6 +125,106 @@ class TestCpowGodotClientFlow(unittest.TestCase):
 
 
 @unittest.skipIf(not _HAS_API, "fastapi not installed")
+class TestCpowWorldApiFlow(unittest.TestCase):
+    """오픈월드 — 바이옴·채굴·건축 API 스모크."""
+
+    def setUp(self) -> None:
+        self.client = TestClient(app)  # type: ignore[arg-type]
+
+    def test_world_catalog_and_cell(self) -> None:
+        catalog = self.client.get("/v1/world/catalog")
+        self.assertEqual(catalog.status_code, 200)
+        body = catalog.json()
+        self.assertTrue(body.get("ok"))
+        self.assertIn("biomes", body)
+        self.assertIn("ores", body)
+
+        found = self.client.post(
+            "/v1/areas/found",
+            json={"founder_id": "world_u", "label": "월드 테스트"},
+        )
+        area_id = found.json()["area"]["area_id"]
+
+        cell = self.client.post(
+            "/v1/world/cell",
+            json={"area_id": area_id, "x": 64.0, "z": -32.0, "advance_tick": True},
+        )
+        self.assertEqual(cell.status_code, 200, cell.json())
+        self.assertTrue(cell.json().get("ok"), cell.json())
+        self.assertIn("hazard", cell.json())
+
+    def test_world_mine_and_adventure_mine(self) -> None:
+        found = self.client.post(
+            "/v1/areas/found",
+            json={"founder_id": "miner_u", "label": "채굴 테스트"},
+        )
+        area_id = found.json()["area"]["area_id"]
+
+        mined = self.client.post(
+            "/v1/world/mine",
+            json={
+                "area_id": area_id,
+                "actor_id": "miner_u",
+                "x": 10.0,
+                "z": 10.0,
+                "depth_y": 40,
+                "tool_type": "pickaxe",
+                "tool_tier": 2,
+                "ore_id": "coal",
+            },
+        )
+        self.assertEqual(mined.status_code, 200, mined.json())
+        self.assertTrue(mined.json().get("ok"), mined.json())
+
+        adventure = self.client.post(
+            "/v1/areas/adventure",
+            json={
+                "area_id": area_id,
+                "actor_id": "miner_u",
+                "action": "mine",
+                "x": 10.0,
+                "z": 10.0,
+                "depth_y": 40,
+                "tool_type": "pickaxe",
+                "tool_tier": 2,
+                "ore_id": "coal",
+            },
+        )
+        self.assertEqual(adventure.status_code, 200, adventure.json())
+        self.assertTrue(adventure.json().get("ok"), adventure.json())
+        self.assertEqual(adventure.json().get("action"), "mine")
+
+    def test_world_build_validate_and_boss_loot(self) -> None:
+        build = self.client.post(
+            "/v1/world/build/validate",
+            json={
+                "biome_id": "desert",
+                "blueprint_id": "camp_kit",
+                "placed_modules": {
+                    "foundation_1x1": 1,
+                    "wall_t1": 4,
+                    "heater_core": 1,
+                },
+                "placed_materials": {"wood_plank": 8, "stone_brick": 4},
+            },
+        )
+        self.assertEqual(build.status_code, 200, build.json())
+        self.assertTrue(build.json().get("ok"), build.json())
+
+        found = self.client.post(
+            "/v1/areas/found",
+            json={"founder_id": "boss_u", "label": "보스 루트"},
+        )
+        area_id = found.json()["area"]["area_id"]
+        loot = self.client.post(
+            "/v1/world/boss_loot",
+            json={"area_id": area_id, "actor_id": "boss_u", "amount": 1.0},
+        )
+        self.assertEqual(loot.status_code, 200, loot.json())
+        self.assertTrue(loot.json().get("ok"), loot.json())
+
+
+@unittest.skipIf(not _HAS_API, "fastapi not installed")
 class TestCpowAuthFlow(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)  # type: ignore[arg-type]

@@ -29,6 +29,17 @@ ALLOWED_PROPERTY_NAMES: frozenset[str] = frozenset({
     "crop_plot",
     "is_npc_creation",
     "npc_owner",
+    "purpose",
+    "biome",
+    "source",
+    "stack_amount",
+    "material_tier",
+    "tool_type",
+    "mining_tier",
+    "module_id",
+    "blueprint_id",
+    "building_type",
+    "construction_stage",
 })
 
 PROPERTY_BOUNDS: dict[str, tuple[float, float]] = {

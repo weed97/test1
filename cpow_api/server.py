@@ -57,6 +57,13 @@ from cpow_api.collab import (
     handle_collab_pulse,
     handle_collab_state,
 )
+from cpow_api.world import (
+    handle_world_boss_loot,
+    handle_world_build_validate,
+    handle_world_catalog,
+    handle_world_cell,
+    handle_world_mine,
+)
 from cpow_api.route_helpers import authed_call, authed_call_400, authed_call_404
 from cpow_api.xr import _store as _xr_store
 from cpow_api.xr import handle_xr_connect, handle_xr_creation, handle_xr_world
@@ -217,6 +224,45 @@ class AreaAdventureRequest(BaseModel):
     action: str = "explore"
     target_object_id: Optional[str] = None
     label: Optional[str] = None
+    x: Optional[float] = None
+    z: Optional[float] = None
+    depth_y: Optional[int] = None
+    tool_type: Optional[str] = None
+    tool_tier: Optional[int] = None
+    ore_id: Optional[str] = None
+    consumable: Optional[str] = None
+    cell_size: Optional[int] = None
+
+
+class WorldCellRequest(BaseModel):
+    area_id: str
+    x: float = 0.0
+    z: float = 0.0
+    depth_y: int = 48
+    cell_size: int = 64
+    advance_tick: bool = False
+
+
+class WorldMineRequest(BaseModel):
+    area_id: str
+    actor_id: str = "anonymous"
+    x: float = 0.0
+    z: float = 0.0
+    depth_y: int = 48
+    cell_size: int = 64
+    tool_type: str = "pickaxe"
+    tool_tier: int = 1
+    ore_id: Optional[str] = None
+    consumable: Optional[str] = None
+
+
+class WorldBuildValidateRequest(BaseModel):
+    area_id: str = ""
+    biome_id: str = "plains"
+    blueprint_id: str
+    placed_modules: dict[str, int] = Field(default_factory=dict)
+    placed_materials: dict[str, int] = Field(default_factory=dict)
+    civilization_level: int = 0
 
 
 class AreaMutateRequest(BaseModel):
@@ -552,6 +598,41 @@ def identity_register(
 @app.get("/v1/identity/status")
 def identity_status(user_id: str) -> dict[str, Any]:
     return handle_identity_status(user_id)
+
+
+@app.get("/v1/world/catalog")
+def world_catalog() -> dict[str, Any]:
+    return handle_world_catalog()
+
+
+@app.post("/v1/world/cell")
+def world_cell(body: WorldCellRequest) -> dict[str, Any]:
+    return handle_world_cell(body.model_dump())
+
+
+@app.post("/v1/world/mine")
+def world_mine(
+    body: WorldMineRequest,
+    auth_user: str | None = Depends(optional_user),
+) -> dict[str, Any]:
+    return authed_call(
+        handle_world_mine, body, auth_user, "actor_id", exclude_none=True,
+    )
+
+
+@app.post("/v1/world/build/validate")
+def world_build_validate(body: WorldBuildValidateRequest) -> dict[str, Any]:
+    return handle_world_build_validate(body.model_dump())
+
+
+@app.post("/v1/world/boss_loot")
+def world_boss_loot(
+    body: dict[str, Any],
+    auth_user: str | None = Depends(optional_user),
+) -> dict[str, Any]:
+    return authed_call(
+        handle_world_boss_loot, body, auth_user, "actor_id", exclude_none=True,
+    )
 
 
 @app.get("/v1/areas/list")
