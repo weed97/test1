@@ -20,7 +20,7 @@ Godot 4: `fantasy_simulator/client/godot/project.godot` → **새 게임** (API 
 | `fantasy_simulator/` | Eldoria 본편 | `uvicorn api.server:app` |
 | `item_catalog/` | 아이템 도감 웹앱 | `cd item_catalog && python3 -m http.server 8000` |
 | `sungjwa_hunter_sim/` | 성좌 헌터 시뮬 | `python sungjwa_hunter_sim/main.py` |
-| **CPoW 3D** (`cpow_engine/`, `cpow_api/`, `cpow_client/`) | 창조 시뮬 (Eldoria와 분리) | → [README_CPOW.md](README_CPOW.md) |
+| **CPoW 3D** | 창조 시뮬 (분리됨) | → **[github.com/weed97/cpow-world](https://github.com/weed97/cpow-world)** · [README_CPOW.md](README_CPOW.md) |
 | `mmorpg_sim/` | 텍스트 MMORPG | `python -m mmorpg_sim.cli --name Arin` |
 | `fantasy_mmorpg/` | 판타지 MMORPG 엔진 | `python -m fantasy_mmorpg.cli` |
 | `js_medieval_sim/` | JS 중세 판타지 시뮬 | `cd js_medieval_sim && npm test` |

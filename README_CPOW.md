@@ -2,8 +2,21 @@
 
 > **게임이 아닙니다.** 유저 창조 데이터가 물리 법칙이 되는 **CPoW (Creativity-Proof of Work) 자율 시뮬레이션**입니다.
 
-Eldoria (`fantasy_simulator`)와 **완전 분리**된 독립 프로젝트 스캐폴드입니다.  
-이 디렉터리들만 복사하면 별도 GitHub 저장소로 즉시 분리할 수 있습니다.
+Eldoria (`fantasy_simulator`)와 **완전 분리**된 독립 프로젝트입니다.
+
+## 독립 저장소 (권장)
+
+**전용 repo:** https://github.com/weed97/cpow-world
+
+```bash
+git clone https://github.com/weed97/cpow-world.git
+cd cpow-world
+pip install -r requirements-api.txt
+bash scripts/verify.sh
+```
+
+`test1`에 아직 코드가 남아 있으면 → [docs/SPLIT_REPO.md](docs/SPLIT_REPO.md)  
+(최초 push 전이면 `test1`의 `cpow-world` 브랜치에서 push — 아래 참고)
 
 ## 구조
 
