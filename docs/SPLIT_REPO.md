@@ -29,7 +29,7 @@ bash scripts/verify.sh
 
 | 저장소 | 내용 |
 |--------|------|
-| [weed97/cpow_world](https://github.com/weed97/cpow_world) | CPoW 전용 (엔진·API·3D Godot) |
+| [weed97/cpow_world](https://github.com/weed97/cpow_world) | CPoW 전용 (엔진·API·**Unity** 클라이언트) |
 | [weed97/test1](https://github.com/weed97/test1) | Eldoria + 기타 시뮬 (`fantasy_simulator` 등) |
 
 `test1/main`의 `cpow_*` 폴더는 레거시 미러입니다. 신규 작업은 **cpow_world** repo에서 진행하세요.
@@ -39,5 +39,6 @@ bash scripts/verify.sh
 - [ ] `python3 -m cpow_engine.demo --areas`
 - [ ] `uvicorn cpow_api.server:app --port 8765`
 - [ ] `curl http://127.0.0.1:8765/v1/health`
-- [ ] Godot `cpow_client/godot` → 에리어 개척·입장
+- [ ] Unity `cpow_client/unity/CPoWWorld` → 청크 스트리밍·채굴 UI
+- [ ] (레거시) Godot `cpow_client/godot` → 에리어 개척·입장
 - [ ] `bash scripts/verify.sh`

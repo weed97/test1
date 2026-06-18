@@ -1,4 +1,7 @@
-# CPoW World Client (Godot 4)
+# CPoW World Client (Godot 4) — 레거시
+
+> **신규 3D 클라이언트는 Unity** (`cpow_client/unity/CPoWWorld`) 입니다.  
+> Godot은 초기 프로토타입만 유지합니다. 청크 스트리밍·메모리 풀은 Unity 쪽에서 구현합니다.
 
 **Eldoria `fantasy_simulator`와 분리된** CPoW 전용 Godot 클라이언트입니다.
 
