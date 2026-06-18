@@ -77,6 +77,7 @@ Boot.unity
 ## 다음 단계 (로드맵)
 
 - [x] 채굴 HUD — 도구·깊이·POST `/v1/world/mine` (`MiningHud`, `MiningController`)
+- [x] 채굴 결과 → `submit_creation` (`attach_mined_resource_to_area`, `creation` in mine response)
 - [ ] Addressables / GLTFast 로 glb 스트리밍
 - [ ] WebSocket delta (`/v1/stream`) — 멀티플레이어 AOI 동기화
 - [ ] VRM / Universal RP 아바타

@@ -79,6 +79,29 @@ def handle_area_create(payload: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def attach_mined_resource_to_area(
+    payload: dict[str, Any],
+    mine_out: dict[str, Any],
+) -> dict[str, Any]:
+    """채굴·보스 드롭 resource → 에리어 submit_creation (material)."""
+    resource = mine_out.get("resource")
+    if not mine_out.get("ok") or not isinstance(resource, dict):
+        return {"ok": False, "reason": "no_resource"}
+    area_id = str(payload.get("area_id", mine_out.get("area_id", "")))
+    if not area_id:
+        return {"ok": False, "reason": "missing_area_id"}
+    creator_id = str(
+        payload.get("actor_id", payload.get("creator_id", resource.get("creator_id", "anonymous")))
+    )
+    return handle_area_create({
+        "area_id": area_id,
+        "creator_id": creator_id,
+        "type": "material",
+        "object": resource,
+        "creativity_score": float(payload.get("creativity_score", 1.0)),
+    })
+
+
 def handle_area_adventure(payload: dict[str, Any]) -> dict[str, Any]:
     area_id = str(payload["area_id"])
     actor_id = str(payload.get("actor_id", "anonymous"))

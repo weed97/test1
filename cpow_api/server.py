@@ -254,6 +254,7 @@ class WorldMineRequest(BaseModel):
     tool_tier: int = 1
     ore_id: Optional[str] = None
     consumable: Optional[str] = None
+    submit_to_area: bool = True
 
 
 class WorldBuildValidateRequest(BaseModel):

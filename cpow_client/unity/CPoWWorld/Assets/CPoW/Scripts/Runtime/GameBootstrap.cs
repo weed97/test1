@@ -67,6 +67,7 @@ namespace CPoW.Runtime
                 if (hud == null)
                     hud = gameObject.AddComponent<CPoW.UI.MiningHud>();
                 hud.Bind(_mining);
+                _mining.MineCompleted += _ => _ = RefreshAreaStateAsync();
 
                 await RefreshAreaStateAsync();
             }

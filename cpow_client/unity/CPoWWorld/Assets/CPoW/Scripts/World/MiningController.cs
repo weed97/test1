@@ -67,6 +67,8 @@ namespace CPoW.World
         public WorldCatalogCache Catalog { get; private set; } = new();
         public string StatusLine { get; private set; } = "셀 조사 대기…";
 
+        public event System.Action<MineResult> MineCompleted;
+
         public void Initialize(CpowSession session, Transform player, WorldCatalogCache catalog = null)
         {
             _session = session;
@@ -142,7 +144,13 @@ namespace CPoW.World
                 LastMine = MineResult.FromJson(json);
                 if (LastMine.Ok)
                 {
-                    StatusLine = $"채굴 성공: {LastMine.ResourceLabel} x{LastMine.Amount:F2} | XP {LastMine.MiningXp:F0} T{LastMine.MiningTier}";
+                    if (LastMine.CreationOk && !string.IsNullOrEmpty(LastMine.CreationObjectId))
+                        StatusLine = $"채굴+창조: {LastMine.ResourceLabel} x{LastMine.Amount:F2} → 오브젝트 {LastMine.CreationObjectId}";
+                    else if (!string.IsNullOrEmpty(LastMine.CreationReason))
+                        StatusLine = $"채굴 OK, 창조 실패: {LastMine.CreationReason}";
+                    else
+                        StatusLine = $"채굴 성공: {LastMine.ResourceLabel} x{LastMine.Amount:F2} | XP {LastMine.MiningXp:F0} T{LastMine.MiningTier}";
+                    MineCompleted?.Invoke(LastMine);
                 }
                 else
                 {

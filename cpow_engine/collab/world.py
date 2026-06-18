@@ -94,8 +94,10 @@ class CollaborativeWorld:
         stats = self._stats_for(creator_id)
         stats.submissions += 1
 
+        resource_yield = self._is_resource_yield(obj)
+
         cooldown_left = self._cooldown_remaining(creator_id, now)
-        if cooldown_left > 0:
+        if cooldown_left > 0 and not resource_yield:
             stats.rejected += 1
             return self._queue_response(
                 False,
@@ -105,7 +107,7 @@ class CollaborativeWorld:
 
         if self._creator_pending_count(creator_id) >= (
             self.policy.max_creations_per_creator_per_pulse
-        ):
+        ) and not resource_yield:
             stats.rejected += 1
             return self._queue_response(
                 False,
@@ -355,6 +357,15 @@ class CollaborativeWorld:
             verdict=verdict,
             reason=verdict.reason,
         )
+
+    @staticmethod
+    def _is_resource_yield(obj: CreativeObject) -> bool:
+        """채굴·드롭 자원 — 창조 쿨다운·펄스 한도 제외."""
+        purpose = obj.get_property("purpose")
+        if purpose is not None and str(purpose.unit).lower() == "resource":
+            return True
+        mat = obj.get_property("material_type")
+        return mat is not None and bool(str(mat.unit).strip())
 
     def _cooldown_remaining(self, creator_id: str, now: float) -> float:
         cooldown = self.policy.min_creator_cooldown_sec

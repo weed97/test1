@@ -174,7 +174,14 @@ class TestCpowWorldApiFlow(unittest.TestCase):
             },
         )
         self.assertEqual(mined.status_code, 200, mined.json())
-        self.assertTrue(mined.json().get("ok"), mined.json())
+        mined_body = mined.json()
+        self.assertTrue(mined_body.get("ok"), mined_body)
+        self.assertIn("creation", mined_body)
+        self.assertTrue(mined_body["creation"].get("ok"), mined_body.get("creation"))
+        self.assertIn("object_id", mined_body)
+
+        state = self.client.get(f"/v1/areas/state?area_id={area_id}")
+        self.assertGreaterEqual(len(state.json()["state"]["objects"]), 1)
 
         adventure = self.client.post(
             "/v1/areas/adventure",
@@ -193,6 +200,31 @@ class TestCpowWorldApiFlow(unittest.TestCase):
         self.assertEqual(adventure.status_code, 200, adventure.json())
         self.assertTrue(adventure.json().get("ok"), adventure.json())
         self.assertEqual(adventure.json().get("action"), "mine")
+        self.assertIn("creation", adventure.json())
+
+    def test_world_mine_skip_area_submit(self) -> None:
+        found = self.client.post(
+            "/v1/areas/found",
+            json={"founder_id": "skip_u", "label": "미등록 채굴"},
+        )
+        area_id = found.json()["area"]["area_id"]
+        mined = self.client.post(
+            "/v1/world/mine",
+            json={
+                "area_id": area_id,
+                "actor_id": "skip_u",
+                "x": 5.0,
+                "z": 5.0,
+                "depth_y": 40,
+                "tool_type": "pickaxe",
+                "tool_tier": 2,
+                "ore_id": "coal",
+                "submit_to_area": False,
+            },
+        )
+        body = mined.json()
+        self.assertTrue(body.get("ok"), body)
+        self.assertNotIn("creation", body)
 
     def test_world_build_validate_and_boss_loot(self) -> None:
         build = self.client.post(

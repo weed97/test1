@@ -62,6 +62,9 @@ namespace CPoW.World
         public string ResourceLabel = "";
         public string AudioCue = "";
         public int AudioStage;
+        public bool CreationOk;
+        public string CreationObjectId = "";
+        public string CreationReason = "";
         public string RawJson = "";
 
         public static MineResult FromJson(string json)
@@ -75,6 +78,12 @@ namespace CPoW.World
             r.ResourceLabel = JsonField.GetStringAfter(json, "\"resource\":", "label", "");
             r.AudioCue = JsonField.GetStringAfter(json, "\"hazard_audio\":", "audio_cue", "");
             r.AudioStage = JsonField.GetInt(JsonFieldSlice(json, "\"hazard_audio\":"), "audio_stage", 0);
+            var creationSlice = JsonFieldSlice(json, "\"creation\":");
+            r.CreationOk = JsonField.IsOk(creationSlice);
+            r.CreationObjectId = JsonField.GetString(json, "object_id", "");
+            if (string.IsNullOrEmpty(r.CreationObjectId))
+                r.CreationObjectId = JsonField.GetStringAfter(json, "\"creation\":", "object_id", "");
+            r.CreationReason = JsonField.GetStringAfter(json, "\"creation\":", "reason", "");
             return r;
         }
 

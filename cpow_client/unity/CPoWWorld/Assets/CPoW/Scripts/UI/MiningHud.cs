@@ -94,7 +94,13 @@ namespace CPoW.UI
             if (!string.IsNullOrEmpty(last.Reason) && last.Reason != "mined")
                 GUILayout.Label($"결과: {last.Reason}");
             else if (last.Ok)
+            {
                 GUILayout.Label($"획득 T{last.MiningTier} | +{last.Amount:F2} {last.OreId}");
+                if (!string.IsNullOrEmpty(last.CreationObjectId))
+                    GUILayout.Label($"에리어 등록: {last.CreationObjectId}", GUI.skin.box);
+                else if (!string.IsNullOrEmpty(last.CreationReason))
+                    GUILayout.Label($"창조 미등록: {last.CreationReason}");
+            }
 
             GUILayout.Label("Tab: 패널 숨기기 | WASD: 이동", GUI.skin.label);
 
