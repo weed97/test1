@@ -9,7 +9,7 @@ from cpow_engine.areas.imbue import get_imbued_destruction
 from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.physics import create_heat_object
-from cpow_engine.tests.area_helpers import create_with_consensus, confirmed_object
+from cpow_engine.tests.area_helpers import create_with_consensus, confirmed_object, ensure_member_collab
 
 
 def _area():
@@ -26,6 +26,8 @@ class TestAreaExtent(unittest.TestCase):
         aria = area.power_ledger.get_or_create("aria")
         aria.creation_gauge = 200.0
         aria.destruction_gauge = 200.0
+        ensure_member_collab(area, "aria", min_signals=1)
+        ensure_member_collab(area, "bob", min_signals=1)
         result = area.expand_area("aria")
         self.assertTrue(result["ok"], result.get("reason"))
         self.assertGreater(area.area_extent(), before)

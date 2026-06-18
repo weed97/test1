@@ -43,10 +43,29 @@ class DiplomaticLink:
 
 
 @dataclass
+class PendingHostileDeclaration:
+    from_area_id: str
+    to_area_id: str
+    endorsers: set[str] = field(default_factory=set)
+    created_at: float = field(default_factory=time.time)
+
+    def to_dict(self) -> dict:
+        return {
+            "from_area_id": self.from_area_id,
+            "to_area_id": self.to_area_id,
+            "endorsers": sorted(self.endorsers),
+            "endorsers_count": len(self.endorsers),
+        }
+
+
+@dataclass
 class DiplomacyLedger:
     """에리어 쌍별 외교 상태 — 비대칭 선언 후 해석."""
 
     _links: dict[tuple[str, str], DiplomaticLink] = field(default_factory=dict)
+    _pending_hostile: dict[tuple[str, str], PendingHostileDeclaration] = field(
+        default_factory=dict,
+    )
 
     def _key(self, from_area_id: str, to_area_id: str) -> tuple[str, str]:
         return (from_area_id, to_area_id)
@@ -69,6 +88,33 @@ class DiplomacyLedger:
         )
         self._links[self._key(from_area_id, to_area_id)] = link
         return link
+
+    def endorse_hostile(
+        self,
+        from_area_id: str,
+        to_area_id: str,
+        actor_id: str,
+        *,
+        min_endorsers: int = 2,
+    ) -> tuple[bool, PendingHostileDeclaration | None, str]:
+        """적대 선언 — 단독 창립자 불가, 공동 확인 필요."""
+        key = self._key(from_area_id, to_area_id)
+        pending = self._pending_hostile.get(key)
+        if pending is None:
+            pending = PendingHostileDeclaration(from_area_id, to_area_id)
+            self._pending_hostile[key] = pending
+        pending.endorsers.add(actor_id)
+        if len(pending.endorsers) < min_endorsers:
+            return False, pending, "hostile_pending_endorsement"
+        self._pending_hostile.pop(key, None)
+        return True, pending, "hostile_confirmed"
+
+    def pending_hostile_for(self, area_id: str) -> list[dict]:
+        out: list[dict] = []
+        for (src, dst), pending in self._pending_hostile.items():
+            if src == area_id or dst == area_id:
+                out.append(pending.to_dict())
+        return out
 
     def direct_stance(self, from_area_id: str, to_area_id: str) -> DiplomaticStance:
         link = self._links.get(self._key(from_area_id, to_area_id))

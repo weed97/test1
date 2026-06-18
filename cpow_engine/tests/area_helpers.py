@@ -65,3 +65,30 @@ def _is_confirmed(area: CreatedArea, object_id: str) -> bool:
 
 def confirmed_object(area: CreatedArea, object_id: str):
     return area.world.state.objects.get(object_id)
+
+
+def ensure_member_collab(area: CreatedArea, user_id: str, *, min_signals: int = 1) -> None:
+    """테스트용 — 확장·투표 등 협력 신호 충족."""
+    if area.activity is None:
+        return
+    rec = area.activity.member_record(user_id)
+    if rec is None:
+        return
+    while rec.collab_signals() < min_signals:
+        rec.consensus_votes_cast += 1
+
+
+def declare_hostile_bilateral(
+    reg,
+    area_a_id: str,
+    founder_a: str,
+    confirmer_a: str,
+    area_b_id: str,
+    founder_b: str,
+    confirmer_b: str,
+) -> None:
+    """적대 2단계 — 창립자 발의, 구성원 확인."""
+    reg.set_diplomatic_stance(area_a_id, area_b_id, "hostile", founder_a)
+    reg.set_diplomatic_stance(area_a_id, area_b_id, "hostile", confirmer_a)
+    reg.set_diplomatic_stance(area_b_id, area_a_id, "hostile", founder_b)
+    reg.set_diplomatic_stance(area_b_id, area_a_id, "hostile", confirmer_b)

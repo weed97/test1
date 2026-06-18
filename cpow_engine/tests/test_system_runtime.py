@@ -14,7 +14,7 @@ from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas.system_runtime import SystemRuntime
 from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.physics import create_heat_object
-from cpow_engine.tests.area_helpers import create_with_consensus, confirmed_object
+from cpow_engine.tests.area_helpers import create_with_consensus, confirmed_object, ensure_member_collab
 
 
 def _runtime_governance_policy() -> GovernancePolicy:
@@ -181,7 +181,7 @@ class TestGovernanceEnactmentWiresRuntime(unittest.TestCase):
             p.creation_gauge = 90.0
             p.creation_data_score = 50.0
             p.destruction_gauge = 10.0
-            reg.governance.sync_member(uid, p)
+            reg.governance.sync_member(uid, p, area.area_id)
 
         for uid in area.members:
             if uid not in area.npcs:
@@ -189,6 +189,9 @@ class TestGovernanceEnactmentWiresRuntime(unittest.TestCase):
                 p.creation_gauge = max(p.creation_gauge, 120.0)
 
         _seed_living_area(area)
+        for uid in area.members:
+            if uid not in area.npcs:
+                ensure_member_collab(area, uid, min_signals=2)
         for uid in area.members:
             if uid not in area.npcs:
                 reg.register_member_identity(uid, f"person_secret_{uid}")

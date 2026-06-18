@@ -38,6 +38,7 @@ class AreaRegistry:
             resolved_policy,
             runtime=self.system_runtime,
             on_enact=self._on_system_enacted,
+            identity=self.identity,
         )
 
     def _on_system_enacted(self, system) -> None:
@@ -48,7 +49,7 @@ class AreaRegistry:
     def _sync_member_powers(self, area: CreatedArea, user_id: str) -> None:
         powers = area.power_ledger.members.get(user_id)
         if powers is not None:
-            self.governance.sync_member(user_id, powers)
+            self.governance.sync_member(user_id, powers, area.area_id)
 
     def found(
         self,
@@ -121,9 +122,45 @@ class AreaRegistry:
     ) -> dict:
         area = self.get_or_raise(area_id)
         self.get_or_raise(target_area_id)
-        if area.role_of(actor_id) != ContributorRole.FOUNDER:
-            return {"ok": False, "reason": "founder_only"}
         parsed = DiplomaticStance.from_str(stance)
+
+        if parsed == DiplomaticStance.HOSTILE:
+            if actor_id not in area.members:
+                return {"ok": False, "reason": "not_a_member"}
+            from cpow_engine.areas.area_activity import is_human_member
+
+            if not is_human_member(area, actor_id):
+                return {"ok": False, "reason": "npc_cannot_declare_hostile"}
+            humans = [m for m in area.members if is_human_member(area, m)]
+            if len(humans) < 2:
+                return {"ok": False, "reason": "hostile_requires_multiple_humans"}
+            pending_list = self.diplomacy.pending_hostile_for(area_id)
+            already_pending = any(
+                p.get("from_area_id") == area_id
+                and p.get("to_area_id") == target_area_id
+                for p in pending_list
+            )
+            if not already_pending and area.role_of(actor_id) != ContributorRole.FOUNDER:
+                return {"ok": False, "reason": "founder_must_initiate_hostile"}
+            confirmed, pending, reason = self.diplomacy.endorse_hostile(
+                area_id,
+                target_area_id,
+                actor_id,
+                min_endorsers=self.governance.policy.min_hostile_endorsers,
+            )
+            if not confirmed:
+                return {
+                    "ok": True,
+                    "reason": reason,
+                    "pending_hostile": pending.to_dict() if pending else None,
+                    "resolved_stance": self.diplomacy.resolved_stance(
+                        area_id, target_area_id,
+                    ).value,
+                }
+            parsed = DiplomaticStance.HOSTILE
+        elif area.role_of(actor_id) != ContributorRole.FOUNDER:
+            return {"ok": False, "reason": "founder_only"}
+
         link = self.diplomacy.declare(
             area_id,
             target_area_id,
@@ -418,7 +455,7 @@ class AreaRegistry:
     def refresh_governance_powers(self) -> None:
         for area in self._areas.values():
             for uid, powers in area.power_ledger.members.items():
-                self.governance.sync_member(uid, powers)
+                self.governance.sync_member(uid, powers, area.area_id)
 
     def _validate_governance_standing(
         self,
@@ -518,6 +555,16 @@ class AreaRegistry:
         )
         if not standing["ok"]:
             return standing
+        member = standing.get("member", {})
+        min_collab = self.governance.policy.min_collab_signals_for_vote
+        collab = int(member.get("collab_signals", 0))
+        if collab < min_collab:
+            return {
+                "ok": False,
+                "reason": "insufficient_collab_for_vote",
+                "codes": ["vote_requires_collaboration"],
+                "required_collab_signals": min_collab,
+            }
         result = self.governance.vote(proposal_id, user_id, approve=approve)
         return self._governance_response(result)
 
@@ -536,7 +583,10 @@ class AreaRegistry:
             "ok": True,
             "policy": self.governance.policy.to_dict(),
             "member_count": self.governance.member_count(),
-            "eligible_voters": self.governance.eligible_voter_count(),
+            "eligible_voters": sum(
+                self.governance.eligible_voter_count(a.area_id)
+                for a in self._areas.values()
+            ),
             "pending": self.governance.pending_proposals(),
             "announcements": self.governance.announcements(),
             "enacted": self.governance.enacted_systems(),
@@ -560,7 +610,12 @@ class AreaRegistry:
             if proposal:
                 out["proposal"] = proposal.to_public_dict(
                     self.governance.policy,
-                    eligible_voters=self.governance.eligible_voter_count(),
+                    eligible_voters=self.governance.eligible_voter_count(
+                        proposal.origin_area_id,
+                    ),
+                )
+                out["proposal"]["unique_cosponsors_count"] = (
+                    self.governance._unique_cosponsor_persons(proposal)
                 )
         out["governance"] = {
             "announcements": self.governance.announcements(),

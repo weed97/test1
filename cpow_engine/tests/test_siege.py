@@ -13,7 +13,7 @@ from cpow_engine.areas.siege import (
 from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.models import PropertyDef
 from cpow_engine.physics import create_heat_object
-from cpow_engine.tests.area_helpers import create_with_consensus
+from cpow_engine.tests.area_helpers import create_with_consensus, declare_hostile_bilateral
 from cpow_engine.areas.durability import is_confirmed
 
 
@@ -47,8 +47,9 @@ class TestSiegeCombat(unittest.TestCase):
             )
         atk.join("raider")
         defn.join("guardian")
-        reg.set_diplomatic_stance(atk.area_id, defn.area_id, "hostile", "atk")
-        reg.set_diplomatic_stance(defn.area_id, atk.area_id, "hostile", "def")
+        declare_hostile_bilateral(
+            reg, atk.area_id, "atk", "raider", defn.area_id, "def", "guardian",
+        )
         return reg, atk, defn
 
     def test_hostile_enables_siege_context_without_start_button(self) -> None:

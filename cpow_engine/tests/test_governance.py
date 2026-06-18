@@ -135,6 +135,14 @@ def _seed_living_area(area: CreatedArea) -> None:
         area.world.advance_pulse(force=True)
 
 
+def _ensure_vote_collab(area: CreatedArea) -> None:
+    from cpow_engine.tests.area_helpers import ensure_member_collab
+
+    for uid in area.members:
+        if uid not in area.npcs:
+            ensure_member_collab(area, uid, min_signals=2)
+
+
 def _registry_with_members(n: int) -> tuple[AreaRegistry, CreatedArea]:
     reg = AreaRegistry(governance_policy=_test_policy())
     area = reg.found("founder", "테스트 월드", mode=SimulationMode.CREATION_ADVENTURE)
@@ -146,12 +154,13 @@ def _registry_with_members(n: int) -> tuple[AreaRegistry, CreatedArea]:
             reg.get(area.area_id).power_ledger.members[uid] = _destroyer(uid)
         else:
             reg.get(area.area_id).power_ledger.members[uid] = _creator(uid)
-        reg.governance.sync_member(uid, reg.get(area.area_id).power_ledger.members[uid])
+        reg.governance.sync_member(uid, reg.get(area.area_id).power_ledger.members[uid], area.area_id)
     for uid in area.members:
         if uid not in area.npcs:
             powers = area.power_ledger.get_or_create(uid)
             powers.creation_gauge = max(powers.creation_gauge, 120.0)
     _seed_living_area(area)
+    _ensure_vote_collab(area)
     humans = [uid for uid in area.members if uid not in area.npcs]
     _register_identities(reg, *humans)
     return reg, area
@@ -220,7 +229,7 @@ class TestLivingAreaEligibility(unittest.TestCase):
         area = reg.found("founder", "빈 월드", mode=SimulationMode.CREATION_ADVENTURE)
         reg.join(area.area_id, "alice")
         reg.join(area.area_id, "bob")
-        reg.governance.sync_member("alice", _creator("alice"))
+        reg.governance.sync_member("alice", _creator("alice"), area.area_id)
         _register_identities(reg, "alice")
         draft = reg.draft_system_proposal(
             "alice",
@@ -241,7 +250,7 @@ class TestLivingAreaEligibility(unittest.TestCase):
         area = reg.found("founder", "봇 월드", mode=SimulationMode.CREATION_ADVENTURE)
         reg.join(area.area_id, "alice")
         reg.join(area.area_id, "bob")
-        reg.governance.sync_member("alice", _creator("alice"))
+        reg.governance.sync_member("alice", _creator("alice"), area.area_id)
         _register_identities(reg, "alice")
         assert area.activity is not None
         area.activity.record_human_creation("alice", invested=20.0)
@@ -271,7 +280,7 @@ class TestVoteEligibility(unittest.TestCase):
 
     def test_destroyer_can_draft_creative_destruction(self) -> None:
         ledger = GovernanceLedger(_test_policy())
-        ledger.sync_member("d", _destroyer("d"))
+        ledger.sync_member("d", _destroyer("d"), "area_test")
         result = ledger.draft_proposal(
             "d",
             kind="creative_destruction",
@@ -286,7 +295,7 @@ class TestVoteEligibility(unittest.TestCase):
 
     def test_simple_creation_blocked_at_draft(self) -> None:
         ledger = GovernanceLedger(_test_policy())
-        ledger.sync_member("a", _creator("a"))
+        ledger.sync_member("a", _creator("a"), "area_test")
         result = ledger.draft_proposal(
             "a",
             kind="macro_bot_defense",
@@ -360,7 +369,7 @@ class TestSystemGovernanceFlow(unittest.TestCase):
         reg.governance.tick()
 
         area.power_ledger.members["user_0"] = _destroyer("user_0")
-        reg.governance.sync_member("user_0", _destroyer("user_0"))
+        reg.governance.sync_member("user_0", _destroyer("user_0"), area.area_id)
 
         vote = reg.vote_system_proposal(pid, "user_0", approve=True)
         self.assertFalse(vote["ok"])

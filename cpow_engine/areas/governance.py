@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 from cpow_engine.areas.governance_eligibility import (
     LongFlowPolicy,
@@ -22,7 +22,10 @@ from cpow_engine.areas.governance_eligibility import (
     drafting_duration_ok,
     validate_long_flow_proposal,
 )
-from cpow_engine.areas.member_identity import IdentityPolicy
+from cpow_engine.areas.member_identity import IdentityPolicy, MemberIdentityRegistry
+
+if TYPE_CHECKING:
+    pass
 from cpow_engine.areas.powers import UserPowers
 
 
@@ -62,6 +65,9 @@ class GovernancePolicy:
     announcement_sec: float = 60.0
     voting_ttl_sec: float = 600.0
     proposal_ttl_sec: float = 86_400.0
+    min_collab_signals_for_vote: int = 2
+    max_active_cosponsors_per_user: int = 2
+    min_hostile_endorsers: int = 2
     long_flow: LongFlowPolicy = field(default_factory=LongFlowPolicy)
     living_area: LivingAreaPolicy = field(default_factory=LivingAreaPolicy)
     identity: IdentityPolicy = field(default_factory=IdentityPolicy)
@@ -86,6 +92,9 @@ class GovernancePolicy:
             "announcement_sec": self.announcement_sec,
             "voting_ttl_sec": self.voting_ttl_sec,
             "proposal_ttl_sec": self.proposal_ttl_sec,
+            "min_collab_signals_for_vote": self.min_collab_signals_for_vote,
+            "max_active_cosponsors_per_user": self.max_active_cosponsors_per_user,
+            "min_hostile_endorsers": self.min_hostile_endorsers,
             "long_flow": self.long_flow.to_dict(),
             "living_area": self.living_area.to_dict(),
             "identity": self.identity.to_dict(),
@@ -97,6 +106,16 @@ def creation_exceeds_destruction(powers: UserPowers) -> bool:
     creation_total = powers.creation_gauge + powers.creation_data_score
     destruction_total = powers.destruction_gauge + powers.destruction_penalty
     return creation_total > destruction_total
+
+
+def vote_weight(powers: UserPowers) -> float:
+    """창조 점수 그라인드 완화 — 로그 스케일 가중치."""
+    creation_total = powers.creation_gauge + powers.creation_data_score
+    destruction_total = powers.destruction_gauge + powers.destruction_penalty
+    margin = creation_total - destruction_total
+    if margin <= 0:
+        return 0.0
+    return min(1.0, 0.15 + math.log1p(margin) * 0.12)
 
 
 def destruction_exceeds_creation(powers: UserPowers) -> bool:
@@ -152,6 +171,8 @@ class SystemProposal:
     cosponsors: set[str] = field(default_factory=set)
     approvals: set[str] = field(default_factory=set)
     rejections: set[str] = field(default_factory=set)
+    approval_weight: float = 0.0
+    rejection_weight: float = 0.0
     phase: SystemProposalPhase = SystemProposalPhase.DRAFTING
     created_at: float = field(default_factory=time.time)
     announced_at: float | None = None
@@ -171,8 +192,11 @@ class SystemProposal:
             "composers_needed": policy.min_composers,
             "cosponsors_count": len(self.cosponsors),
             "cosponsors_needed": policy.min_cosponsors,
+            "unique_cosponsors_count": len(self.cosponsors),
             "approvals": sorted(self.approvals),
             "rejections": sorted(self.rejections),
+            "approval_weight": round(self.approval_weight, 4),
+            "rejection_weight": round(self.rejection_weight, 4),
             "approvals_needed": policy.approvals_needed(eligible_voters),
             "eligible_voters": eligible_voters,
             "announced_at": self.announced_at,
@@ -220,25 +244,66 @@ class GovernanceLedger:
         *,
         runtime: object | None = None,
         on_enact: Callable[[EnactedSystem], None] | None = None,
+        identity: MemberIdentityRegistry | None = None,
     ) -> None:
         self.policy = policy or GovernancePolicy()
         self._runtime = runtime
         self._on_enact = on_enact
+        self._identity = identity
         self._proposals: dict[str, SystemProposal] = {}
         self._enacted: list[EnactedSystem] = []
         self._announcements: list[dict] = []
-        self._member_powers: dict[str, UserPowers] = {}
+        self._powers_by_area: dict[str, dict[str, UserPowers]] = {}
 
-    def sync_member(self, user_id: str, powers: UserPowers) -> None:
-        self._member_powers[user_id] = powers
+    def sync_member(
+        self, user_id: str, powers: UserPowers, area_id: str,
+    ) -> None:
+        self._powers_by_area.setdefault(area_id, {})[user_id] = powers
 
-    def member_count(self) -> int:
-        return len(self._member_powers)
+    def powers_for(self, user_id: str, area_id: str) -> UserPowers | None:
+        return self._powers_by_area.get(area_id, {}).get(user_id)
 
-    def eligible_voter_count(self) -> int:
+    def member_count(self, area_id: str | None = None) -> int:
+        if area_id:
+            return len(self._powers_by_area.get(area_id, {}))
+        return sum(len(m) for m in self._powers_by_area.values())
+
+    def eligible_voter_count(self, area_id: str) -> int:
+        area_powers = self._powers_by_area.get(area_id, {})
         return sum(
-            1 for p in self._member_powers.values()
+            1 for p in area_powers.values()
             if creation_exceeds_destruction(p)
+        )
+
+    def eligible_vote_weight(self, area_id: str) -> float:
+        area_powers = self._powers_by_area.get(area_id, {})
+        return sum(
+            vote_weight(p)
+            for p in area_powers.values()
+            if creation_exceeds_destruction(p)
+        )
+
+    def _unique_cosponsor_persons(self, proposal: SystemProposal) -> int:
+        persons: set[str] = set()
+        for uid in proposal.cosponsors:
+            if self._identity is not None:
+                pid = self._identity.person_id_for(uid)
+                persons.add(pid if pid else uid)
+            else:
+                persons.add(uid)
+        return len(persons)
+
+    def _active_cosponsor_count(self, user_id: str) -> int:
+        return sum(
+            1
+            for p in self._proposals.values()
+            if user_id in p.cosponsors
+            and p.phase
+            not in (
+                SystemProposalPhase.ENACTED,
+                SystemProposalPhase.REJECTED,
+                SystemProposalPhase.EXPIRED,
+            )
         )
 
     def _approval_ratio(self) -> float:
@@ -263,7 +328,7 @@ class GovernanceLedger:
             return GovernanceResult(False, reason="area_id_required")
         if self._world_monopolized():
             return GovernanceResult(False, reason="system_monopolized")
-        if author_id not in self._member_powers:
+        if author_id not in self._powers_by_area.get(area_id, {}):
             return GovernanceResult(False, reason="not_a_registered_member")
         if lead_author_monopoly(
             list(self._proposals.values()),
@@ -272,7 +337,9 @@ class GovernanceLedger:
         ):
             return GovernanceResult(False, reason="monopoly_limit_exceeded")
 
-        powers = self._member_powers[author_id]
+        powers = self.powers_for(author_id, area_id)
+        if powers is None:
+            return GovernanceResult(False, reason="not_a_registered_member")
         parsed_kind = SystemProposalKind.from_str(kind)
         flow_check = validate_long_flow_proposal(
             kind=parsed_kind,
@@ -317,7 +384,7 @@ class GovernanceLedger:
         proposal = self._get_open_proposal(proposal_id)
         if proposal is None:
             return GovernanceResult(False, proposal_id=proposal_id, reason="proposal_not_open")
-        if user_id not in self._member_powers:
+        if user_id not in self._powers_by_area.get(proposal.origin_area_id, {}):
             return GovernanceResult(False, reason="not_a_registered_member")
         if proposal.phase != SystemProposalPhase.DRAFTING:
             return GovernanceResult(False, reason="not_in_drafting_phase")
@@ -336,7 +403,7 @@ class GovernanceLedger:
         proposal = self._get_open_proposal(proposal_id)
         if proposal is None:
             return GovernanceResult(False, proposal_id=proposal_id, reason="proposal_not_open")
-        if user_id not in self._member_powers:
+        if user_id not in self._powers_by_area.get(proposal.origin_area_id, {}):
             return GovernanceResult(False, reason="not_a_registered_member")
         if proposal.phase not in (
             SystemProposalPhase.COSPONSORING,
@@ -346,6 +413,9 @@ class GovernanceLedger:
 
         if proposal.phase == SystemProposalPhase.DRAFTING:
             return GovernanceResult(False, reason="composers_not_complete")
+
+        if self._active_cosponsor_count(user_id) >= self.policy.max_active_cosponsors_per_user:
+            return GovernanceResult(False, reason="cosponsor_limit_exceeded")
 
         proposal.cosponsors.add(user_id)
         self._advance_phase(proposal)
@@ -363,7 +433,7 @@ class GovernanceLedger:
         if proposal.phase != SystemProposalPhase.VOTING:
             return GovernanceResult(False, reason="not_in_voting_phase")
 
-        powers = self._member_powers.get(user_id)
+        powers = self.powers_for(user_id, proposal.origin_area_id)
         if powers is None:
             return GovernanceResult(False, reason="not_a_registered_member")
         if not creation_exceeds_destruction(powers):
@@ -372,10 +442,13 @@ class GovernanceLedger:
         if user_id in proposal.approvals or user_id in proposal.rejections:
             return GovernanceResult(False, reason="already_voted")
 
+        weight = vote_weight(powers)
         if approve:
             proposal.approvals.add(user_id)
+            proposal.approval_weight += weight
         else:
             proposal.rejections.add(user_id)
+            proposal.rejection_weight += weight
 
         enacted = self._tally_vote(proposal)
         return GovernanceResult(
@@ -405,22 +478,35 @@ class GovernanceLedger:
                 proposal.phase = SystemProposalPhase.VOTING
                 proposal.voting_open_at = ts
                 changed.append(proposal.proposal_id)
+                continue
+            if (
+                proposal.phase == SystemProposalPhase.VOTING
+                and proposal.voting_open_at is not None
+                and (ts - proposal.voting_open_at) >= self.policy.voting_ttl_sec
+            ):
+                if not self._tally_vote(proposal):
+                    if proposal.phase == SystemProposalPhase.VOTING:
+                        proposal.phase = SystemProposalPhase.EXPIRED
+                changed.append(proposal.proposal_id)
         return changed
 
     def get_proposal(self, proposal_id: str) -> SystemProposal | None:
         return self._proposals.get(proposal_id)
 
     def pending_proposals(self) -> list[dict]:
-        eligible = self.eligible_voter_count()
-        return [
-            p.to_public_dict(self.policy, eligible_voters=eligible)
-            for p in self._proposals.values()
-            if p.phase not in (
+        out: list[dict] = []
+        for p in self._proposals.values():
+            if p.phase in (
                 SystemProposalPhase.ENACTED,
                 SystemProposalPhase.REJECTED,
                 SystemProposalPhase.EXPIRED,
-            )
-        ]
+            ):
+                continue
+            eligible = self.eligible_voter_count(p.origin_area_id)
+            pub = p.to_public_dict(self.policy, eligible_voters=eligible)
+            pub["unique_cosponsors_count"] = self._unique_cosponsor_persons(p)
+            out.append(pub)
+        return out
 
     def announcements(self) -> list[dict]:
         return list(self._announcements)
@@ -463,7 +549,7 @@ class GovernanceLedger:
 
         if (
             proposal.phase == SystemProposalPhase.COSPONSORING
-            and len(proposal.cosponsors) >= self.policy.min_cosponsors
+            and self._unique_cosponsor_persons(proposal) >= self.policy.min_cosponsors
         ):
             proposal.phase = SystemProposalPhase.ANNOUNCED
             proposal.announced_at = time.time()
@@ -486,12 +572,17 @@ class GovernanceLedger:
         self._announcements.append(notice)
 
     def _tally_vote(self, proposal: SystemProposal) -> bool:
-        eligible = self.eligible_voter_count()
+        area_id = proposal.origin_area_id
+        eligible_weight = self.eligible_vote_weight(area_id)
         ratio = self._approval_ratio()
-        needed = max(1, math.ceil(eligible * ratio)) if eligible > 0 else 1
-        block = max(1, math.ceil(eligible * self._reject_ratio())) if eligible > 0 else 1
+        needed = max(1.0, eligible_weight * ratio) if eligible_weight > 0 else 1.0
+        block = (
+            max(1.0, eligible_weight * self._reject_ratio())
+            if eligible_weight > 0
+            else 1.0
+        )
 
-        if len(proposal.approvals) >= needed:
+        if proposal.approval_weight >= needed:
             proposal.phase = SystemProposalPhase.ENACTED
             enacted = EnactedSystem(
                 system_id=f"enacted_{uuid.uuid4().hex[:8]}",
@@ -505,6 +596,6 @@ class GovernanceLedger:
                 self._on_enact(enacted)
             return True
 
-        if len(proposal.rejections) >= block:
+        if proposal.rejection_weight >= block:
             proposal.phase = SystemProposalPhase.REJECTED
         return False

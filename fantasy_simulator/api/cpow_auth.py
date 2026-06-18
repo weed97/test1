@@ -1,0 +1,55 @@
+"""CPoW account auth — register / login / session tokens."""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from typing import Any
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from cpow_engine.auth import AccountRegistry, issue_session_token
+
+_accounts = AccountRegistry()
+
+
+def handle_auth_register(payload: dict[str, Any]) -> dict[str, Any]:
+    user_id = str(payload.get("user_id", "")).strip()
+    password = str(payload.get("password", ""))
+    result = _accounts.register(user_id, password)
+    if not result.ok:
+        return {"ok": False, "reason": result.reason}
+    token = issue_session_token(result.user_id)
+    return {
+        "ok": True,
+        "reason": result.reason,
+        "user_id": result.user_id,
+        "token": token,
+        "token_type": "Bearer",
+    }
+
+
+def handle_auth_login(payload: dict[str, Any]) -> dict[str, Any]:
+    user_id = str(payload.get("user_id", "")).strip()
+    password = str(payload.get("password", ""))
+    result = _accounts.authenticate(user_id, password)
+    if not result.ok:
+        return {"ok": False, "reason": result.reason}
+    token = issue_session_token(result.user_id)
+    return {
+        "ok": True,
+        "reason": result.reason,
+        "user_id": result.user_id,
+        "token": token,
+        "token_type": "Bearer",
+    }
+
+
+def handle_auth_me(auth_user_id: str) -> dict[str, Any]:
+    return {
+        "ok": True,
+        "user_id": auth_user_id,
+        "registered": _accounts.exists(auth_user_id),
+    }

@@ -13,7 +13,7 @@ from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas.roles import ContributorRole
 from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.physics import create_heat_object
-from cpow_engine.tests.area_helpers import create_with_consensus, confirmed_object
+from cpow_engine.tests.area_helpers import create_with_consensus, declare_hostile_bilateral
 
 
 class TestDiplomacyResolution(unittest.TestCase):
@@ -21,7 +21,9 @@ class TestDiplomacyResolution(unittest.TestCase):
         reg = AreaRegistry()
         a = reg.found("fa", "A", mode=SimulationMode.CREATION_ADVENTURE)
         b = reg.found("fb", "B", mode=SimulationMode.CREATION_ADVENTURE)
-        reg.set_diplomatic_stance(a.area_id, b.area_id, "hostile", "fa")
+        a.join("fa2")
+        b.join("fb2")
+        declare_hostile_bilateral(reg, a.area_id, "fa", "fa2", b.area_id, "fb", "fb2")
         reg.set_diplomatic_stance(b.area_id, a.area_id, "neutral", "fb")
         stance = reg.diplomacy.resolved_stance(a.area_id, b.area_id)
         self.assertEqual(stance, DiplomaticStance.HOSTILE)
@@ -50,8 +52,10 @@ class TestHostileCombat(unittest.TestCase):
         atk.world.policy = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
         defn.world.policy = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
         atk.join("fighter")
-        reg.set_diplomatic_stance(atk.area_id, defn.area_id, "hostile", "atk")
-        reg.set_diplomatic_stance(defn.area_id, atk.area_id, "hostile", "def")
+        defn.join("defender")
+        declare_hostile_bilateral(
+            reg, atk.area_id, "atk", "fighter", defn.area_id, "def", "defender",
+        )
         return reg, atk, defn
 
     def test_neutral_blocks_cross_destroy(self) -> None:
@@ -127,8 +131,10 @@ class TestObserverNeutral(unittest.TestCase):
         atk = reg.found("atk", "A", mode=SimulationMode.CREATION_ADVENTURE)
         defn = reg.found("def", "B", mode=SimulationMode.CREATION_ADVENTURE)
         atk.join("spy", requested_role=ContributorRole.OBSERVER)
-        reg.set_diplomatic_stance(atk.area_id, defn.area_id, "hostile", "atk")
-        reg.set_diplomatic_stance(defn.area_id, atk.area_id, "hostile", "def")
+        defn.join("def2")
+        declare_hostile_bilateral(
+            reg, atk.area_id, "atk", "spy", defn.area_id, "def", "def2",
+        )
         obj = create_heat_object("def", "x", 10.0)
         defn.world.policy = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
         create_with_consensus(defn, "def", obj, creation_type="heat")

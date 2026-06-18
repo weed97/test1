@@ -284,6 +284,16 @@ class CreatedArea:
         if not perms.can_expand_area:
             return {"ok": False, "reason": "role_cannot_expand_area"}
 
+        from cpow_engine.areas.area_activity import is_human_member
+
+        human_members = [m for m in self.members if is_human_member(self, m)]
+        if len(human_members) < 2:
+            return {"ok": False, "reason": "expand_requires_collaborative_area"}
+        if self.activity is not None:
+            rec = self.activity.member_record(actor_id)
+            if rec is None or rec.collab_signals() < 1:
+                return {"ok": False, "reason": "expand_requires_member_collaboration"}
+
         creation_cost, destruction_cost = expansion_cost(self.extent_bonus)
         powers = self.power_ledger.get_or_create(actor_id)
         if powers.creation_gauge < creation_cost:
