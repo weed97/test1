@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "rewards": {
+    "explore": { "max_count": 12, "copper_each": 6, "silver_each": 0, "label": "탐험 발견" },
+    "investigate": { "max_count": 6, "copper_each": 8, "silver_each": 0, "label": "조사 보상" },
+    "rest": { "max_count": 4, "copper_each": 3, "silver_each": 0, "label": "휴식 여비" }
+  },
+  "progress_path": [
+    "안전한 애쉬포인트에서 식량·목재를 모으되, 지역 자원은 한정됨",
+    "실버우드 숲·관측탑 등 위험 지역에서 철·결정·몬스터 전리품(실버) 확보",
+    "정착지 건설(쿠퍼/실버) → 왕국 선포는 골드·자재 대량 필요"
+  ]
+}

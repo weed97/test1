@@ -2,26 +2,22 @@
 
 from __future__ import annotations
 
-import json
 import uuid
 from pathlib import Path
 from typing import Any, Literal
+
+from utils.config_loader import load_config
+from utils.ecology_state import ecology_flags
 
 BuildMode = Literal["self", "hire"]
 
 
 def load_buildings_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "settlement_buildings.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _eco(state: dict[str, Any]) -> dict[str, Any]:
-    return state.setdefault("flags", {}).setdefault("ecology", {})
+    return load_config(base_dir, "settlement_buildings.json")
 
 
 def get_player_settlement(state: dict[str, Any]) -> dict[str, Any]:
-    eco = _eco(state)
+    eco = ecology_flags(state)
     ps = eco.setdefault(
         "player_settlement",
         {
@@ -38,12 +34,32 @@ def get_player_settlement(state: dict[str, Any]) -> dict[str, Any]:
     return ps
 
 
-def _party_gold(state: dict[str, Any]) -> int:
-    return int(state.get("inventory", {}).get("party_gold", 0))
+def _party_gold(state: dict[str, Any], *, base_dir: str | Path) -> int:
+    from utils.currency import party_gold
+
+    return party_gold(state, base_dir=base_dir)
 
 
-def _set_party_gold(state: dict[str, Any], amount: int) -> None:
-    state.setdefault("inventory", {})["party_gold"] = max(0, int(amount))
+def _set_party_gold(state: dict[str, Any], amount: int, *, base_dir: str | Path) -> None:
+    from utils.currency import set_party_gold
+
+    set_party_gold(state, amount, base_dir=base_dir)
+
+
+def _spend_build_cost(
+    state: dict[str, Any], cost_spec: int | dict[str, Any], *, base_dir: str | Path
+) -> bool:
+    from utils.currency import normalize_cost, spend
+
+    return spend(state, normalize_cost(cost_spec, base_dir=base_dir), base_dir=base_dir)
+
+
+def _can_afford_build_cost(
+    state: dict[str, Any], cost_spec: int | dict[str, Any], *, base_dir: str | Path
+) -> bool:
+    from utils.currency import can_afford, normalize_cost
+
+    return can_afford(state, normalize_cost(cost_spec, base_dir=base_dir), base_dir=base_dir)
 
 
 def construction_level_info(cfg: dict[str, Any], level: int) -> dict[str, Any]:
@@ -71,11 +87,12 @@ def list_buildable(
     cfg = load_buildings_config(base_dir)
     ps = get_player_settlement(state)
     lvl = int(ps.get("construction_level", 1))
-    gold = _party_gold(state)
     result: list[dict[str, Any]] = []
     for bid in unlocked_building_ids(state, base_dir):
         bdef = cfg["buildings"][bid]
-        afford_gold = gold >= int(bdef.get("gold_cost", 0))
+        afford_gold = _can_afford_build_cost(
+            state, int(bdef.get("gold_cost", 0)), base_dir=base_dir
+        )
         mats_ok = _materials_available(ps, bdef.get("materials", {}))
         result.append(
             {
@@ -150,10 +167,14 @@ def hire_workers(
     if current + count > max_h:
         return {"ok": False, "error": f"고용 한도 {max_h}명"}
     cost = int(hire.get("gold_per_worker", 120)) * count
-    gold = _party_gold(state)
-    if gold < cost:
-        return {"ok": False, "error": f"골드 부족 (필요 {cost}, 보유 {gold})"}
-    _set_party_gold(state, gold - cost)
+    if not _can_afford_build_cost(state, cost, base_dir=base_dir):
+        from utils.currency import format_wallet, get_wallet
+
+        return {
+            "ok": False,
+            "error": f"화폐 부족 (필요 {cost}쿠퍼 상당, 보유 {format_wallet(get_wallet(state, base_dir=base_dir), base_dir=base_dir)})",
+        }
+    _spend_build_cost(state, cost, base_dir=base_dir)
     ps["hired_workers"] = current + count
     return {
         "ok": True,
@@ -200,8 +221,8 @@ def start_build(
             return {"ok": False, "error": "고용 인력 없음 — hire_workers 먼저"}
 
     gold_cost = int(bdef.get("gold_cost", 0))
-    if _party_gold(state) < gold_cost:
-        return {"ok": False, "error": "골드 부족"}
+    if not _can_afford_build_cost(state, gold_cost, base_dir=base_dir):
+        return {"ok": False, "error": "화폐 부족 (쿠퍼/실버)"}
     if not _materials_available(ps, bdef.get("materials", {})):
         return {"ok": False, "error": "자재 부족", "need": bdef.get("materials")}
 
@@ -209,7 +230,7 @@ def start_build(
     if site.get("active_project"):
         return {"ok": False, "error": "이 타일에 이미 건설 중"}
 
-    _set_party_gold(state, _party_gold(state) - gold_cost)
+    _spend_build_cost(state, gold_cost, base_dir=base_dir)
     _deduct_materials(ps, bdef.get("materials", {}))
 
     site["active_project"] = {
@@ -263,12 +284,11 @@ def tick_player_build_projects(
     hire_cfg = cfg.get("hire", {})
     wages = int(ps.get("hired_workers", 0)) * int(hire_cfg.get("wage_gold_per_beat", 8))
     if wages > 0:
-        gold = _party_gold(state)
-        if gold < wages:
+        if not _can_afford_build_cost(state, wages, base_dir=base_dir):
             lines.append("[건설] 임금 지불 실패 — 일꾼들이 작업을 멈췄다.")
         else:
-            _set_party_gold(state, gold - wages)
-            lines.append(f"[건설] 임금 -{wages}G ({ps['hired_workers']}명)")
+            _spend_build_cost(state, wages, base_dir=base_dir)
+            lines.append(f"[건설] 임금 -{wages}쿠퍼 ({ps['hired_workers']}명)")
 
     labor_self = int(level_info.get("self_labor_per_beat", 2))
     labor_hire = int(ps.get("hired_workers", 0)) * int(
@@ -289,13 +309,21 @@ def tick_player_build_projects(
         bdef = cfg.get("buildings", {}).get(bid, {})
         if int(proj["progress"]) >= int(proj.get("required", 1)):
             if proj.get("is_kingdom_project"):
-                ps["is_kingdom"] = True
-                site["name"] = "플레이어 왕국"
+                from utils.kingdom_system import complete_kingdom_founding
+
+                site["name"] = str(proj.get("kingdom_name", "플레이어 왕국"))
                 site["active_project"] = None
-                lines.append(
-                    f"[왕국] '{site['name']}' 이(가) 이 세계에 세워졌다. "
-                    f"({site['map_id']} {site['x']},{site['y']})"
+                founded = complete_kingdom_founding(
+                    state,
+                    map_id=str(site.get("map_id", "")),
+                    x=int(site.get("x", 0)),
+                    y=int(site.get("y", 0)),
+                    name=site["name"],
+                    doctrine_id=str(proj.get("doctrine_id", "")),
+                    custom_decree=str(proj.get("custom_decree", "")),
+                    base_dir=base_dir,
                 )
+                lines.append(founded.get("message", "[왕국] 선포 완료"))
                 continue
             completed = {
                 "building_id": bid,
@@ -324,16 +352,23 @@ def tick_player_build_projects(
 
 
 def settlement_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
+    from utils.currency import wallet_summary
+    from utils.regional_resources import regional_status
+
     ps = get_player_settlement(state)
     cfg = load_buildings_config(base_dir)
     lvl = int(ps.get("construction_level", 1))
     next_lvl = construction_level_info(cfg, min(lvl + 1, 5))
+    money = wallet_summary(state, base_dir=base_dir)
     return {
         "construction_level": lvl,
         "construction_title": construction_level_info(cfg, lvl).get("title"),
         "construction_xp": int(ps.get("construction_xp", 0)),
         "next_level_xp": int(next_lvl.get("xp_required", 0)) if lvl < 5 else None,
-        "party_gold": _party_gold(state),
+        "wallet": money["wallet"],
+        "wallet_formatted": money["formatted"],
+        "party_gold": money["party_gold"],
+        "regional_resources": regional_status(state, base_dir=base_dir),
         "hired_workers": int(ps.get("hired_workers", 0)),
         "self_labor_per_beat": construction_level_info(cfg, lvl).get("self_labor_per_beat"),
         "stockpile": dict(ps.get("stockpile", {})),
@@ -345,38 +380,49 @@ def settlement_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[st
 
 
 def try_start_kingdom(
-    state: dict[str, Any], *, map_id: str, x: int, y: int, base_dir: str | Path
+    state: dict[str, Any],
+    *,
+    map_id: str,
+    x: int,
+    y: int,
+    base_dir: str | Path,
+    kingdom_name: str = "플레이어 왕국",
+    doctrine_id: str = "",
+    custom_decree: str = "",
 ) -> dict[str, Any]:
-    cfg = load_buildings_config(base_dir)
-    kdef = cfg.get("kingdom", {})
+    from utils.kingdom_system import (
+        can_found_kingdom,
+        deduct_founding_costs,
+        founding_cost_preview,
+        load_kingdom_config,
+    )
+
+    ok, err = can_found_kingdom(state, base_dir=base_dir)
+    if not ok:
+        return {"ok": False, "error": err, "preview": founding_cost_preview(state, base_dir=base_dir)}
     ps = get_player_settlement(state)
-    if ps.get("is_kingdom"):
-        return {"ok": False, "error": "이미 왕국 승격됨"}
-    lvl = int(ps.get("construction_level", 1))
-    if lvl < int(kdef.get("min_construction_level", 5)):
-        return {"ok": False, "error": "건축 레벨 5 (왕국 설계자) 필요"}
-    required = set(kdef.get("requires_buildings", []))
-    done = {b.get("building_id") for b in ps.get("completed_buildings", [])}
-    if not required.issubset(done):
-        return {"ok": False, "error": "필수 건물 미완공", "need": sorted(required - done)}
-    if int(ps.get("hired_workers", 0)) < 3:
-        return {"ok": False, "error": "왕국 선포에는 고용 인력 3명 이상"}
     site = _get_or_create_site(state, map_id=map_id, x=x, y=y)
     if site.get("active_project"):
         return {"ok": False, "error": "이 타일에 이미 건설 중"}
-    gold_cost = int(kdef.get("gold_cost", 0))
-    if _party_gold(state) < gold_cost:
-        return {"ok": False, "error": "골드 부족"}
-    if not _materials_available(ps, kdef.get("materials", {})):
-        return {"ok": False, "error": "자재 부족"}
-    _set_party_gold(state, _party_gold(state) - gold_cost)
-    _deduct_materials(ps, kdef.get("materials", {}))
+    paid = deduct_founding_costs(state, base_dir=base_dir)
+    if not paid.get("ok"):
+        return paid
+    fdef = load_kingdom_config(base_dir).get("founding", {})
     site["active_project"] = {
         "building_id": "kingdom",
-        "label": kdef.get("label", "왕국"),
+        "label": fdef.get("label", "왕국 선포 의식"),
         "progress": 0,
-        "required": int(kdef.get("build_points", 400)),
-        "mode": "hire",
+        "required": int(fdef.get("build_points", 2500)),
+        "mode": str(fdef.get("mode", "hire")),
         "is_kingdom_project": True,
+        "kingdom_name": kingdom_name,
+        "doctrine_id": doctrine_id,
+        "custom_decree": custom_decree,
     }
-    return {"ok": True, "site_id": site["site_id"], "project": site["active_project"]}
+    return {
+        "ok": True,
+        "site_id": site["site_id"],
+        "project": site["active_project"],
+        "costs": paid,
+        "preview": founding_cost_preview(state, base_dir=base_dir),
+    }

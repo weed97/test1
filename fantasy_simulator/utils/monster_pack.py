@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import random
 from pathlib import Path
 from typing import Any
 
+from utils.config_loader import load_config
+
 
 def load_pack_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "monster_pack_behavior.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "monster_pack_behavior.json")
 
 
 def _manhattan(a: dict[str, Any], b: dict[str, Any]) -> int:

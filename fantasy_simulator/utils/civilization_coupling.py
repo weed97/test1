@@ -7,12 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from utils.agent_competition import get_civilization_state, load_civ_config
+from utils.ecology_state import ecology_flags
 from utils.field_agents import ecology_enabled
 from utils.settlement_build import get_player_settlement
-
-
-def _eco(state: dict[str, Any]) -> dict[str, Any]:
-    return state.setdefault("flags", {}).setdefault("ecology", {})
 
 
 def _all_civ_defs(cfg: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -41,7 +38,7 @@ def _stage_label(cfg: dict[str, Any], civ_id: str, stage_id: str) -> str:
 def _append_event(state: dict[str, Any], event: dict[str, Any], *, base_dir: str | Path) -> None:
     cfg = load_civ_config(base_dir)
     cap = int(cfg.get("coupling", {}).get("max_recent_events", 24))
-    events = _eco(state).setdefault("civilization_events", [])
+    events = ecology_flags(state).setdefault("civilization_events", [])
     events.append(event)
     if len(events) > cap:
         del events[: len(events) - cap]
@@ -61,7 +58,7 @@ def init_player_civilization(
         race_def = cfg["player_races"]["human"]
 
     player_civ_id = str(race_def["player_civilization_id"])
-    eco = _eco(state)
+    eco = ecology_flags(state)
     eco["player_profile"] = {
         "race": player_race,
         "race_label": race_def.get("label", player_race),
@@ -189,7 +186,7 @@ def tick_civilization_coupling(
     if not ecology_enabled(state):
         return []
 
-    eco = _eco(state)
+    eco = ecology_flags(state)
     profile = eco.get("player_profile")
     if not profile:
         return []
@@ -280,7 +277,7 @@ def tick_civilization_coupling(
 
 def civilization_world_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[str, Any]:
     cfg = load_civ_config(base_dir)
-    eco = _eco(state)
+    eco = ecology_flags(state)
     civs = eco.get("civilizations", {})
     enriched: dict[str, Any] = {}
     for cid, cs in civs.items():

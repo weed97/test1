@@ -2,25 +2,22 @@
 
 from __future__ import annotations
 
-import json
 import random
 from pathlib import Path
 from typing import Any
+
+from utils.config_loader import load_config
 
 _FIXED_SCALE = 1000
 _RATE_SCALE = 100000
 
 
 def load_combat_precision_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "combat_precision.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "combat_precision.json")
 
 
 def load_power_tiers_config(base_dir: str | Path) -> dict[str, Any]:
-    path = Path(base_dir) / "config" / "power_tiers.json"
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return load_config(base_dir, "power_tiers.json")
 
 
 def attacker_has_armor_pierce(attacker: dict[str, Any], *, cfg: dict[str, Any]) -> bool:

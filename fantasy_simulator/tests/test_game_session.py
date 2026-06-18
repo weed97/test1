@@ -68,12 +68,16 @@ class GameSessionTests(unittest.TestCase):
         self.assertIn("파티:", report)
 
     def test_save_persists_without_touching_package_root(self) -> None:
-        self.session.state["inventory"]["party_gold"] = 12345
+        from utils.currency import grant, party_gold
+
+        grant(self.session.state, gold=12, silver=3, copper=45, base_dir=self.root)
         self.session.save()
         reloaded = GameSession.from_root(self.root, mode="rule", seed=42)
-        self.assertEqual(reloaded.state["inventory"]["party_gold"], 12345)
-        package_gold = GameSession.from_root(ROOT, mode="rule", seed=42).state["inventory"]["party_gold"]
-        self.assertNotEqual(package_gold, 12345)
+        self.assertEqual(party_gold(reloaded.state, base_dir=self.root), 12)
+        package_gold = party_gold(
+            GameSession.from_root(ROOT, mode="rule", seed=42).state, base_dir=ROOT
+        )
+        self.assertNotEqual(package_gold, 12)
 
 
 class GameSessionLLMModeTests(unittest.TestCase):
