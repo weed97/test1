@@ -139,6 +139,53 @@ func create_with_visual(
 	})
 
 
+func fetch_siege(attacker_area_id: String, defender_area_id: String) -> Dictionary:
+	return await _request(
+		"/v1/areas/siege?attacker_area_id=%s&defender_area_id=%s" % [
+			attacker_area_id.uri_encode(),
+			defender_area_id.uri_encode(),
+		],
+		{},
+		HTTPClient.METHOD_GET,
+	)
+
+
+func fetch_active_sieges(area_id: String = "") -> Dictionary:
+	var aid := area_id if not area_id.is_empty() else current_area_id
+	return await _request(
+		"/v1/areas/siege/active?area_id=%s" % aid.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+
+
+func repulse_siege(
+	attacker_area_id: String,
+	defender_area_id: String,
+	power_spend: float = 15.0,
+) -> Dictionary:
+	return await _request("/v1/areas/siege/repulse", {
+		"attacker_area_id": attacker_area_id,
+		"defender_area_id": defender_area_id,
+		"actor_id": current_user_id,
+		"power_spend": power_spend,
+	})
+
+
+func cross_destroy(
+	target_area_id: String,
+	object_id: String,
+	home_area_id: String = "",
+) -> Dictionary:
+	var aid := home_area_id if not home_area_id.is_empty() else current_area_id
+	return await _request("/v1/areas/cross_destroy", {
+		"attacker_area_id": aid,
+		"target_area_id": target_area_id,
+		"actor_id": current_user_id,
+		"object_id": object_id,
+	})
+
+
 func register_identity(person_key: String) -> Dictionary:
 	return await _request("/v1/identity/register", {
 		"user_id": current_user_id,

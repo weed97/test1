@@ -12,6 +12,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from cpow_engine.areas import AreaRegistry, ContributorRole, SimulationMode
+from cpow_engine.areas.siege import area_fortification_strength
 from cpow_engine.models import CreativeObject
 from cpow_engine.physics import create_heat_object, create_material_object
 from cpow_engine.xr import XRCreationIntent, intent_to_creative_object
@@ -139,6 +140,7 @@ def handle_area_adventure(payload: dict[str, Any]) -> dict[str, Any]:
 
 def handle_area_state(area_id: str) -> dict[str, Any]:
     area = _registry.get_or_raise(area_id)
+    _registry.tick_sieges()
     pulse = area.maybe_advance_pulse()
     return {
         "ok": True,
@@ -224,6 +226,27 @@ def handle_area_defend(payload: dict[str, Any]) -> dict[str, Any]:
     actor_id = str(payload.get("actor_id", "anonymous"))
     spend = float(payload.get("power_spend", 15.0))
     result = area.defend_rift(actor_id, power_spend=spend)
+    siege_repulses: list[dict] = []
+    if result.ok and spend > 0:
+        area_id = area.area_id
+        for contest in _registry.siege.contests_for(area_id):
+            if contest.defender_area_id != area_id:
+                continue
+            share = spend * 0.25
+            updated = _registry.siege.on_repulse(
+                contest.attacker_area_id,
+                area_id,
+                actor_id,
+                power_spent=share,
+            )
+            fort = area_fortification_strength(area.world.state.objects)
+            attacker = _registry.get_or_raise(contest.attacker_area_id)
+            siege_repulses.append(
+                updated.to_dict(
+                    fortification=fort,
+                    dominance_ratio=attacker.dominance_vs(area),
+                )
+            )
     return {
         "ok": result.ok,
         "reason": result.reason,
@@ -231,6 +254,7 @@ def handle_area_defend(payload: dict[str, Any]) -> dict[str, Any]:
         "destruction_spent": result.destruction_spent,
         "rift": area.rift.to_dict(),
         "powers": area.member_powers(actor_id),
+        "siege_repulses": siege_repulses,
         "area": area.to_public_dict(),
     }
 
@@ -427,6 +451,23 @@ def handle_governance_tick() -> dict[str, Any]:
 
 def handle_governance_state() -> dict[str, Any]:
     return _registry.governance_state()
+
+
+def handle_area_siege_status(attacker_area_id: str, defender_area_id: str) -> dict[str, Any]:
+    return _registry.siege_between(attacker_area_id, defender_area_id)
+
+
+def handle_area_siege_active(area_id: str) -> dict[str, Any]:
+    return _registry.active_sieges(area_id)
+
+
+def handle_area_siege_repulse(payload: dict[str, Any]) -> dict[str, Any]:
+    return _registry.repulse_siege(
+        str(payload["defender_area_id"]),
+        str(payload["attacker_area_id"]),
+        str(payload.get("actor_id", "anonymous")),
+        power_spend=float(payload.get("power_spend", 15.0)),
+    )
 
 
 def handle_identity_register(payload: dict[str, Any]) -> dict[str, Any]:

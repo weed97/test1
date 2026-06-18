@@ -932,6 +932,7 @@ class CreatedArea:
         attacker_area: CreatedArea,
         attacker_extent: float,
         target_extent: float,
+        siege_cross_multiplier: float = 1.0,
     ) -> MutationResult:
         """적대 관계 — 타 에리어 오브젝트 파괴."""
         from cpow_engine.areas.dominance import dominance_ratio
@@ -947,7 +948,7 @@ class CreatedArea:
             )
 
         ratio = dominance_ratio(attacker_extent, target_extent)
-        cross_scale = 1.0 / max(ratio, 0.15)
+        cross_scale = (1.0 / max(ratio, 0.15)) * max(0.4, siege_cross_multiplier)
         runtime = self._system_runtime or attacker_area._system_runtime
         if runtime is not None:
             cross_scale *= runtime.cross_destroy_scale()

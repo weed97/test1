@@ -12,7 +12,13 @@ from cpow_engine.areas.diplomacy import (
 )
 from cpow_engine.areas.governance import GovernanceLedger, GovernancePolicy
 from cpow_engine.areas.governance_eligibility import validate_governance_area_eligibility
+from cpow_engine.areas.laws import AreaLawSet
 from cpow_engine.areas.member_identity import MemberIdentityRegistry
+from cpow_engine.areas.siege import (
+    SiegeLedger,
+    area_fortification_strength,
+    siege_cross_scale_modifier,
+)
 from cpow_engine.areas.system_runtime import SystemRuntime
 from cpow_engine.areas.modes import SimulationMode
 from cpow_engine.areas.roles import ContributorRole
@@ -24,6 +30,7 @@ class AreaRegistry:
     def __init__(self, *, governance_policy: GovernancePolicy | None = None) -> None:
         self._areas: dict[str, CreatedArea] = {}
         self.diplomacy: DiplomacyLedger = DiplomacyLedger()
+        self.siege: SiegeLedger = SiegeLedger()
         self.system_runtime = SystemRuntime()
         resolved_policy = governance_policy or GovernancePolicy()
         self.identity = MemberIdentityRegistry(resolved_policy.identity)
@@ -124,10 +131,13 @@ class AreaRegistry:
             declared_by=actor_id,
         )
         resolved = self.diplomacy.resolved_stance(area_id, target_area_id)
+        if resolved == DiplomaticStance.HOSTILE:
+            self.siege.on_hostile_declared(area_id, target_area_id)
         return {
             "ok": True,
             "link": link.to_dict(),
             "resolved_stance": resolved.value,
+            "siege_active": resolved == DiplomaticStance.HOSTILE,
         }
 
     def diplomatic_status(self, area_id: str, target_area_id: str) -> dict:
@@ -171,8 +181,11 @@ class AreaRegistry:
             attacker_area=attacker,
             attacker_extent=attacker.area_extent(),
             target_extent=target.area_extent(),
+            siege_cross_multiplier=self._siege_cross_multiplier(
+                attacker_area_id, target_area_id, target,
+            ),
         )
-        return {
+        out = {
             "ok": result.ok,
             "reason": result.reason,
             "operation": result.operation,
@@ -183,6 +196,137 @@ class AreaRegistry:
             "rift_level": result.rift_level,
             "resolved_stance": stance.value,
         }
+        if result.ok:
+            contest = self.siege.on_assault(
+                attacker_area_id,
+                target_area_id,
+                actor_id,
+                durability_destroyed=float(result.destruction_spent or 0),
+            )
+            fort = area_fortification_strength(target.world.state.objects)
+            out["siege"] = contest.to_dict(
+                fortification=fort,
+                dominance_ratio=attacker.dominance_vs(target),
+            )
+        return out
+
+    def _siege_cross_multiplier(
+        self,
+        attacker_area_id: str,
+        defender_area_id: str,
+        defender: CreatedArea,
+    ) -> float:
+        contest = self.siege.get(attacker_area_id, defender_area_id)
+        fort = area_fortification_strength(defender.world.state.objects)
+        if contest is None:
+            return siege_cross_scale_modifier(0.0, fort, 0.0)
+        return siege_cross_scale_modifier(
+            contest.assault_momentum,
+            fort,
+            contest.repulse_reserve,
+        )
+
+    def repulse_siege(
+        self,
+        defender_area_id: str,
+        attacker_area_id: str,
+        actor_id: str,
+        *,
+        power_spend: float,
+    ) -> dict:
+        """수성 — 파괴력으로 공성 압력을 밀어냄."""
+        stance = self.diplomacy.resolved_stance(attacker_area_id, defender_area_id)
+        if not can_cross_area_combat(stance):
+            return {"ok": False, "reason": "diplomacy_not_hostile"}
+
+        defender = self.get_or_raise(defender_area_id)
+        if actor_id not in defender.members:
+            return {"ok": False, "reason": "not_a_member"}
+
+        role = defender.role_of(actor_id)
+        if not observer_can_intervene_cross_area(stance, role):
+            return {"ok": False, "reason": "observer_cannot_intervene"}
+
+        powers = defender.power_ledger.get_or_create(actor_id)
+        if power_spend <= 0:
+            return {"ok": False, "reason": "invalid_power_spend"}
+        if powers.destruction_gauge < power_spend:
+            return {"ok": False, "reason": "insufficient_destruction_power"}
+        if not powers.spend_destruction(power_spend):
+            return {"ok": False, "reason": "insufficient_destruction_power"}
+
+        contest = self.siege.on_repulse(
+            attacker_area_id,
+            defender_area_id,
+            actor_id,
+            power_spent=power_spend,
+        )
+        fort = area_fortification_strength(defender.world.state.objects)
+        attacker = self.get_or_raise(attacker_area_id)
+        return {
+            "ok": True,
+            "reason": "repulsed",
+            "power_spent": power_spend,
+            "siege": contest.to_dict(
+                fortification=fort,
+                dominance_ratio=attacker.dominance_vs(defender),
+            ),
+            "powers": defender.member_powers(actor_id),
+        }
+
+    def siege_between(self, attacker_area_id: str, defender_area_id: str) -> dict:
+        self.get_or_raise(attacker_area_id)
+        defender = self.get_or_raise(defender_area_id)
+        attacker = self.get_or_raise(attacker_area_id)
+        contest = self.siege.get(attacker_area_id, defender_area_id)
+        fort = area_fortification_strength(defender.world.state.objects)
+        stance = self.diplomacy.resolved_stance(attacker_area_id, defender_area_id)
+        if contest is None:
+            flow_only = {
+                "attacker_area_id": attacker_area_id,
+                "defender_area_id": defender_area_id,
+                "assault_momentum": 0.0,
+                "fortification_strength": round(fort, 2),
+                "resolved_stance": stance.value,
+                "flow": {
+                    "flow": "border_tension" if stance == DiplomaticStance.HOSTILE else "peace",
+                    "pressure": 0.0,
+                    "label": "적대 관계 — 교전 가능" if stance == DiplomaticStance.HOSTILE else "교전 없음",
+                },
+            }
+            return {"ok": True, "siege": flow_only}
+        return {
+            "ok": True,
+            "siege": contest.to_dict(
+                fortification=fort,
+                dominance_ratio=attacker.dominance_vs(defender),
+            ),
+            "resolved_stance": stance.value,
+        }
+
+    def active_sieges(self, area_id: str) -> dict:
+        self.get_or_raise(area_id)
+        self.tick_sieges()
+        contests = self.siege.contests_for(area_id)
+        entries: list[dict] = []
+        for contest in contests:
+            defender = self.get_or_raise(contest.defender_area_id)
+            attacker = self.get_or_raise(contest.attacker_area_id)
+            fort = area_fortification_strength(defender.world.state.objects)
+            entries.append(
+                contest.to_dict(
+                    fortification=fort,
+                    dominance_ratio=attacker.dominance_vs(defender),
+                )
+            )
+        return {"ok": True, "area_id": area_id, "contests": entries, "count": len(entries)}
+
+    def tick_sieges(self) -> int:
+        forts = {
+            aid: area_fortification_strength(a.world.state.objects)
+            for aid, a in self._areas.items()
+        }
+        return self.siege.tick(forts)
 
     def allied_creation(
         self,
