@@ -1,0 +1,27 @@
+; Engine configuration file.
+; Godot 4.2+ — CPoW dedicated client (areas API, not Eldoria /v1/turn).
+config_version=5
+
+[application]
+
+config/name="CPoW World Client"
+config/description="User-created areas — VRoid avatar, glb equip, area viewer"
+config/version="0.1.0"
+run/main_scene="res://scenes/boot.tscn"
+config/features=PackedStringArray("4.2", "Forward Plus")
+config/icon="res://icon.svg"
+
+[autoload]
+
+AreasConfig="*res://scripts/net/areas_config.gd"
+AreasClient="*res://scripts/net/areas_client.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
