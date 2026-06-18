@@ -11,6 +11,8 @@ from cpow_engine.models import (
     WorldDelta,
 )
 from cpow_engine.physics import DefinitionPhysicsEngine
+from cpow_engine.physics.crossover import CrossoverPhysics
+from cpow_engine.physics.equilibrium import EquilibriumRegulator, EquilibriumReport
 from cpow_engine.shared_state import SharedStateSync, StatePatch
 
 
@@ -20,8 +22,11 @@ class SimulationEngine:
     def __init__(self, seed_state: SimulationState | None = None) -> None:
         self.state = seed_state or SimulationState()
         self.physics = DefinitionPhysicsEngine()
+        self.crossover = CrossoverPhysics()
+        self.equilibrium = EquilibriumRegulator()
         self.cpow = CPoWEngine()
         self.sync = SharedStateSync()
+        self.last_equilibrium: EquilibriumReport | None = None
 
     def create_object(self, obj: CreativeObject) -> ActionRecord:
         """유저 창조 행위 — 오브젝트 등록."""
@@ -48,17 +53,32 @@ class SimulationEngine:
         return action
 
     def tick(self) -> tuple[WorldDelta, CPoWScore | None]:
-        """한 틱 진행: 물리 상호작용 → 에너지 환산 → 상태 갱신."""
+        """한 틱 진행: 물리 상호작용 → 교차 결합 → 피드백 → 균형 조절."""
         self.state.tick += 1
 
-        interactions = self.physics.resolve_interactions(self.state.objects)
+        base_interactions = self.physics.resolve_interactions(self.state.objects)
+        cross_interactions = self.crossover.resolve(
+            self.state.objects,
+            energy_pool=self.state.energy_pool,
+        )
+        interactions = base_interactions + cross_interactions
+        self.crossover.apply_feedback(self.state.objects, interactions)
+
         energy_from_physics = sum(i.energy_delta for i in interactions)
         self.state.energy_pool += energy_from_physics
+
+        eq_report = self.equilibrium.regulate(self.state, interactions)
+        self.last_equilibrium = eq_report
 
         delta = WorldDelta(
             tick=self.state.tick,
             interactions=interactions,
-            state_changes={"energy_pool": self.state.energy_pool},
+            state_changes={
+                "energy_pool": self.state.energy_pool,
+                "balance_index": eq_report.balance_index,
+                "crossover_count": len(cross_interactions),
+                "interaction_count": len(interactions),
+            },
         )
 
         score: CPoWScore | None = None

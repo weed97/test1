@@ -1,0 +1,17 @@
+{
+  "crossover_enabled": true,
+  "hub_bleed_factor": 0.18,
+  "two_hop_bleed_factor": 0.08,
+  "ambient_coupling": 0.04,
+  "feedback_heat_drain": 0.12,
+  "feedback_residual_gain": 0.65,
+  "max_property_delta_per_tick": 25.0,
+  "equilibrium_enabled": true,
+  "target_energy_per_object": 18.0,
+  "pool_dissipation_rate": 0.22,
+  "pool_injection_rate": 0.06,
+  "pool_injection_floor": 0.15,
+  "heat_pull_to_ambient": 0.08,
+  "residual_decay": 0.35,
+  "balance_smoothing": 0.4
+}

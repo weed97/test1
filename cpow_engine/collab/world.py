@@ -301,6 +301,11 @@ class CollaborativeWorld:
             "pending": self.pending_preview(),
             "policy": self.policy.to_dict(),
             "contributors": self.contributor_stats(),
+            "physics_balance": (
+                self.engine.last_equilibrium.to_dict()
+                if self.engine.last_equilibrium is not None
+                else {}
+            ),
         }
 
     def _apply_pending(self, pending: PendingCreation) -> AppliedCreationResult:

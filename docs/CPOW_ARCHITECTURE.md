@@ -27,6 +27,7 @@
 
 - **원칙**: Fire 클래스를 개발자가 만들지 않음. 유저가 `heat_intensity` 속성을 정의.
 - **역할 인터페이스**: `HeatSource`, `Material`, `EnergyTransfer`
+- **교차·균형**: `crossover.py` (허브·2-hop·환경장), `equilibrium.py` — [PHYSICS_BALANCE.md](PHYSICS_BALANCE.md)
 - **규칙**: `PhysicsRule` 데이터 구조 — `heat_transfer`, `energy_emission` 등
 - **출력**: `InteractionResult` (effect_type, magnitude, energy_delta)
 
