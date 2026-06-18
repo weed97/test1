@@ -21,6 +21,11 @@ class TestObjectFactory(unittest.TestCase):
         self.assertEqual(kind, "material")
         self.assertIsNotNone(obj.get_property("material_type"))
 
+    def test_empty_object_dict_ignored(self) -> None:
+        obj, kind = build_object_from_payload({"object": {}, "label": "불"}, "u")
+        self.assertEqual(kind, "heat")
+        self.assertIsNotNone(obj.get_property("heat_intensity"))
+
 
 if __name__ == "__main__":
     unittest.main()

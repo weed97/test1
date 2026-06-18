@@ -18,11 +18,11 @@ def build_object_from_payload(
     default_material_label: str = "재료",
 ) -> tuple[CreativeObject, str]:
     """창조 요청 페이로드를 CreativeObject와 creation_type으로 변환."""
-    if "intent" in payload:
+    if payload.get("intent"):
         intent = XRCreationIntent.from_dict(payload["intent"])
         obj = intent_to_creative_object(intent)
         return obj, str(payload.get("type", default_type))
-    if "object" in payload:
+    if payload.get("object"):
         return CreativeObject.from_dict(payload["object"]), str(
             payload.get("type", default_type)
         )
