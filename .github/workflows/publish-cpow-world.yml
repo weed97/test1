@@ -1,0 +1,30 @@
+name: Publish CPoW World
+
+# test1/cpow-world 브랜치 → weed97/cpow-world repo 로 push (모바일에서 Run workflow 가능)
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cpow-world export branch
+        uses: actions/checkout@v4
+        with:
+          ref: cpow-world
+          fetch-depth: 0
+
+      - name: Push to weed97/cpow-world
+        env:
+          PUSH_TOKEN: ${{ secrets.CPOW_WORLD_PUSH_TOKEN }}
+        run: |
+          if [ -z "$PUSH_TOKEN" ]; then
+            echo "::error::CPOW_WORLD_PUSH_TOKEN secret is not set."
+            echo "See docs/MOBILE_PUSH_CPOW.md"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git branch -M main
+          git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/weed97/cpow-world.git"
+          git push -u origin main --force

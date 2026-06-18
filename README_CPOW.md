@@ -16,7 +16,7 @@ bash scripts/verify.sh
 ```
 
 `test1`에 아직 코드가 남아 있으면 → [docs/SPLIT_REPO.md](docs/SPLIT_REPO.md)  
-(최초 push 전이면 `test1`의 `cpow-world` 브랜치에서 push — 아래 참고)
+**모바일에서 push:** → [docs/MOBILE_PUSH_CPOW.md](docs/MOBILE_PUSH_CPOW.md)
 
 ## 구조
 
