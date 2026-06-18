@@ -21,5 +21,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICXxx15zC/KHCT2pMK8MjHWwXyds+l1bWgRrZ+dR1Ptn
 
 ## 또는 Actions (토큰 이미 있으면)
 
+**PAT 만들기·Secret 등록:** [docs/SYNC_CPOW_WORLD.md](SYNC_CPOW_WORLD.md)
+
 https://github.com/weed97/test1/actions/workflows/publish-cpow-world.yml  
-→ Run workflow → Branch **main**
+→ Run workflow → (workflow 파일은 main 에서 checkout)

@@ -25,10 +25,12 @@ Permission to weed97/cpow_world.git denied to github-actions[bot]
 
 ## 방법 A — Actions 버튼 (추천)
 
-1. https://github.com/weed97/test1/actions/workflows/publish-cpow-world.yml  
-   (파일명은 **하이픈** `publish-cpow-world`, repo 이름 **밑줄** `cpow_world`)
-2. **Run workflow** → Branch **`main`** → Run workflow  
-3. https://github.com/weed97/cpow_world 에 `cpow_engine/` 등 확인
+1. **먼저** [SYNC_CPOW_WORLD.md](SYNC_CPOW_WORLD.md) 에서 `CPOW_WORLD_PUSH_TOKEN` Secret 등록  
+2. https://github.com/weed97/test1/actions/workflows/publish-cpow-world.yml  
+3. **Run workflow** → Branch **`main`** → Run workflow  
+4. https://github.com/weed97/cpow_world 에 `cpow_client/unity/`, `cpow_engine/world/` 확인
+
+> 구버전 workflow는 `cpow-world` 브랜치만 push 했습니다. **main 최신**이면 Unity·월드 모듈이 포함됩니다.
 
 ---
 

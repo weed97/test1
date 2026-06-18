@@ -1,6 +1,6 @@
 name: Publish CPoW World
 
-# test1/cpow-world 브랜치 → weed97/cpow_world repo 로 push (모바일에서 Run workflow 가능)
+# test1/main 의 cpow_* 트리만 export → weed97/cpow_world 로 push
 on:
   workflow_dispatch:
 
@@ -8,13 +8,11 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout cpow-world export branch
+      - name: Checkout test1 main
         uses: actions/checkout@v4
         with:
-          ref: cpow-world
-          fetch-depth: 0
-          # 중요: false — checkout 이 test1 GITHUB_TOKEN 을 git credential 에 남기면
-          # push 단계가 PAT 대신 github-actions[bot] 으로 cpow-world 에 push 해 403 남
+          ref: main
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Validate push token
@@ -23,7 +21,7 @@ jobs:
         run: |
           if [ -z "$PUSH_TOKEN" ]; then
             echo "::error::CPOW_WORLD_PUSH_TOKEN secret is not set on weed97/test1."
-            echo "See docs/MOBILE_PUSH_CPOW.md"
+            echo "See docs/SYNC_CPOW_WORLD.md"
             exit 1
           fi
           CODE=$(curl -s -o /tmp/repo_check.json -w "%{http_code}" \
@@ -32,25 +30,29 @@ jobs:
             "https://api.github.com/repos/weed97/cpow_world")
           if [ "$CODE" != "200" ]; then
             echo "::error::Token cannot access weed97/cpow_world (HTTP ${CODE})."
-            echo "Use a **weed97** account classic PAT with repo scope,"
-            echo "or fine-grained PAT with cpow_world Contents read/write."
             cat /tmp/repo_check.json || true
             exit 1
           fi
           if ! git ls-remote "https://x-access-token:${PUSH_TOKEN}@github.com/weed97/cpow_world.git" HEAD >/dev/null 2>&1; then
-            echo "::error::Token can read API but cannot push to cpow_world."
-            echo "Classic: check full repo scope. Fine-grained: Contents write on cpow_world."
+            echo "::error::Token cannot push to cpow_world. Check Contents write."
             exit 1
           fi
-          echo "Token OK — can access cpow_world."
+          echo "Token OK."
+
+      - name: Build cpow_world export from main
+        run: bash scripts/export_cpow_world.sh /tmp/cpow_world_export
 
       - name: Push to weed97/cpow_world
         env:
           PUSH_TOKEN: ${{ secrets.CPOW_WORLD_PUSH_TOKEN }}
+          SOURCE_SHA: ${{ github.sha }}
         run: |
-          git config --global --unset-all credential.helper || true
+          cd /tmp/cpow_world_export
+          git init -q
           git config user.name "weed97"
           git config user.email "weed97@users.noreply.github.com"
+          git add -A
+          git commit -m "Sync from test1/main (${SOURCE_SHA:0:7})"
           git branch -M main
-          git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/weed97/cpow_world.git"
+          git remote add origin "https://x-access-token:${PUSH_TOKEN}@github.com/weed97/cpow_world.git"
           git push -u origin main --force

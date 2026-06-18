@@ -14,7 +14,7 @@ git remote set-url origin https://github.com/weed97/cpow_world.git
 git push -u origin main
 ```
 
-또는 Actions: https://github.com/weed97/test1/actions/workflows/publish-cpow-world.yml (Branch: **main**)
+또는 Actions: [publish-cpow-world.yml](https://github.com/weed97/test1/actions/workflows/publish-cpow-world.yml) — **PAT 설정:** [SYNC_CPOW_WORLD.md](SYNC_CPOW_WORLD.md)
 
 이후 일반 clone:
 
