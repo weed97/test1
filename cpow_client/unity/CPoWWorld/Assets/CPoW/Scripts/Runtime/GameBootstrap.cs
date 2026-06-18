@@ -18,6 +18,7 @@ namespace CPoW.Runtime
         CpowSession _session;
         ChunkStreamer _streamer;
         AreaObjectRenderer _renderer;
+        MiningController _mining;
         float _nextPoll;
 
         async void Start()
@@ -51,10 +52,22 @@ namespace CPoW.Runtime
                 _session.AreaId = _session.Areas.CurrentAreaId;
                 Debug.Log($"[CPoW] Founded area {_session.AreaId}");
 
-                var catalog = await _session.World.GetCatalogAsync();
-                Debug.Log($"[CPoW] World catalog bytes={catalog.Length}");
+                var catalogJson = await _session.World.GetCatalogAsync();
+                var catalog = WorldCatalogCache.Parse(catalogJson);
+                Debug.Log($"[CPoW] World catalog ores={catalog.OreIds.Count}");
 
                 _streamer.Initialize(_session.World, _session.AreaId, playerProxy);
+
+                _mining = gameObject.GetComponent<MiningController>();
+                if (_mining == null)
+                    _mining = gameObject.AddComponent<MiningController>();
+                _mining.Initialize(_session, playerProxy, catalog);
+
+                var hud = gameObject.GetComponent<CPoW.UI.MiningHud>();
+                if (hud == null)
+                    hud = gameObject.AddComponent<CPoW.UI.MiningHud>();
+                hud.Bind(_mining);
+
                 await RefreshAreaStateAsync();
             }
             catch (System.Exception ex)

@@ -30,6 +30,8 @@ uvicorn cpow_api.server:app --host 127.0.0.1 --port 8765
 2. Inspector에서 `GameBootstrap` 의 `Api Base Url` 확인 (`http://127.0.0.1:8765`)
 3. Play — 자동으로 에리어 개척 후 청크 링 로드
 
+**채굴:** WASD 이동 → 오른쪽 **채굴** 패널 → 곡괭이/드릴·깊이 → **E** 또는 [채굴] (Tab: 패널 숨김)
+
 환경 변수 (에디터/OS):
 
 | 변수 | 기본값 | 설명 |
