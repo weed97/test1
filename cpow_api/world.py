@@ -7,8 +7,15 @@ from typing import Any
 from cpow_engine.world.service import get_world_service
 
 
-def _maybe_submit_mined_resource(payload: dict[str, Any], out: dict[str, Any]) -> dict[str, Any]:
+def _should_submit_area_object(payload: dict[str, Any]) -> bool:
     if payload.get("submit_to_area") is False:
+        return False
+    deposit = str(payload.get("deposit_mode", "inventory")).lower()
+    return deposit in ("area_object", "both")
+
+
+def _maybe_submit_mined_resource(payload: dict[str, Any], out: dict[str, Any]) -> dict[str, Any]:
+    if not _should_submit_area_object(payload):
         return out
     if not out.get("ok") or not out.get("resource"):
         return out
@@ -37,6 +44,31 @@ def handle_world_cell(payload: dict[str, Any]) -> dict[str, Any]:
         cell_size=int(payload.get("cell_size", 64)),
         advance_tick=bool(payload.get("advance_tick", False)),
     )
+
+
+def handle_world_inventory(area_id: str, actor_id: str) -> dict[str, Any]:
+    if not area_id:
+        return {"ok": False, "reason": "missing_area_id"}
+    return get_world_service().get_inventory(area_id, actor_id)
+
+
+def handle_world_drops(payload: dict[str, Any]) -> dict[str, Any]:
+    area_id = str(payload.get("area_id", ""))
+    if not area_id:
+        return {"ok": False, "reason": "missing_area_id"}
+    return get_world_service().drops_in_aoi(
+        area_id,
+        float(payload.get("x", 0.0)),
+        float(payload.get("z", 0.0)),
+        float(payload.get("radius_m", 128.0)),
+    )
+
+
+def handle_world_pickup(payload: dict[str, Any]) -> dict[str, Any]:
+    area_id = str(payload.get("area_id", ""))
+    if not area_id:
+        return {"ok": False, "reason": "missing_area_id"}
+    return get_world_service().pickup_drop(area_id, payload)
 
 
 def handle_world_mine(payload: dict[str, Any]) -> dict[str, Any]:

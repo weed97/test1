@@ -5,10 +5,11 @@
 협업 에리어 + 오픈월드(바이옴·채굴·모듈 건축)를 **메모리 상한이 있는 청크 스트림**으로 표현합니다.
 
 ```
-┌─────────────────────────┐     REST      ┌──────────────────────┐
-│  Unity CPoWWorld        │ ◄───────────► │  cpow_api            │
-│  ChunkStreamer (AOI)    │  /v1/world/*  │  cpow_engine/world   │
-│  AreaObjectRenderer     │  /v1/areas/*  │  cpow_engine/areas   │
+┌─────────────────────────┐  REST + WS   ┌──────────────────────┐
+│  Unity CPoWWorld        │ ◄──────────► │  cpow_api            │
+│  ChunkStreamer (AOI)    │ /v1/world/*  │  cpow_engine/world   │
+│  WorldStreamClient      │ /v1/world/   │  inventory · drops   │
+│  AreaObjectRenderer     │   stream     │  stream_hub (AOI)    │
 └───────────┬─────────────┘               └──────────────────────┘
             │
    ┌────────┴────────┬──────────────┐
@@ -60,8 +61,22 @@
 |--------|------|------|
 | `GetCatalogAsync` | GET `/v1/world/catalog` | 바이옴·광물·도구 |
 | `InspectCellAsync` | POST `/v1/world/cell` | 셀 + hazard audio |
-| `MineAsync` | POST `/v1/world/mine` | 채굴 |
+| `MineAsync` | POST `/v1/world/mine` | 채굴 (기본 `deposit_mode=inventory`) |
+| `GetInventoryAsync` | GET `/v1/world/inventory` | 액터 스택 조회 |
 | `ValidateBuildAsync` | POST `/v1/world/build/validate` | 모듈 건축 검증 |
+
+### World stream (`WorldStreamClient`)
+
+| 메시지 | 방향 | 용도 |
+|--------|------|------|
+| `subscribe` | C→S | area_id, actor_id, x, z, radius_m |
+| `subscribed` | S→C | 초기 inventory + AOI drops |
+| `pose` | C→S | 관찰 위치 갱신 |
+| `inventory_delta` | S→C | 채굴·줍기 스택 변경 |
+| `drop_spawn` / `drop_despawn` | S→C | `WorldDropRenderer` 큐브 |
+
+채굴 기본값은 **CreativeObject 1개씩 늘리지 않고** `ActorInventory` SoA에 적재합니다.  
+`deposit_mode`: `inventory` | `area_object` | `both` | `drop` — `submit_to_area` 로 창조 등록 여부 제어.
 
 ## 씬 흐름
 
@@ -71,18 +86,20 @@ Boot.unity
         ├─ CpowSession (area_id, user_id)
         ├─ AreasApiClient + WorldApiClient
         ├─ ChunkStreamer → ChunkPool → BiomeChunkView
+        ├─ MiningController + MiningHud (inventory SoA)
+        ├─ WorldStreamClient → WorldDropRenderer
         └─ AreaObjectRenderer (state poll)
 ```
 
 ## 다음 단계 (로드맵)
 
 - [x] 채굴 HUD — 도구·깊이·POST `/v1/world/mine` (`MiningHud`, `MiningController`)
-- [x] 채굴 결과 → `submit_creation` (`attach_mined_resource_to_area`, `creation` in mine response)
+- [x] 인벤토리 SoA + 월드 드롭 (`inventory.py`, `drops.py`, `/v1/world/inventory`)
+- [x] WebSocket AOI delta (`/v1/world/stream`, `WorldStreamClient`)
+- [x] 채굴 결과 → `submit_creation` (옵션: `deposit_mode=both`, `submit_to_area=true`)
 - [ ] Addressables / GLTFast 로 glb 스트리밍
-- [ ] WebSocket delta (`/v1/stream`) — 멀티플레이어 AOI 동기화
 - [ ] VRM / Universal RP 아바타
 - [ ] 모듈 건축 고스트 메시 프리뷰
-- [ ] 채굴 결과 → `submit_creation` 자동 연동
 
 ## Godot 클라이언트
 

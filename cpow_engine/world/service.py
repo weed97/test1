@@ -12,6 +12,7 @@ from cpow_engine.world.hazards import advance_hazard, hazard_snapshot
 from cpow_engine.world.mining import attempt_mine, parse_tool_from_payload
 from cpow_engine.world.ores import ORE_CATALOG, ore_catalog_public
 from cpow_engine.world.state import AreaWorldRuntime
+from cpow_engine.world.stream_hub import get_stream_hub
 from cpow_engine.world.tools import tool_catalog_public
 
 
@@ -59,6 +60,109 @@ class WorldService:
         snap["area_id"] = area_id
         return snap
 
+    def _emit_stream(self, area_id: str, event: dict) -> None:
+        get_stream_hub().publish_sync(area_id, event)
+
+    def _deposit_mine_yield(
+        self,
+        runtime: AreaWorldRuntime,
+        area_id: str,
+        actor_id: str,
+        x: float,
+        z: float,
+        payload: dict,
+        out: dict,
+    ) -> None:
+        ore_id = str(out.get("ore_id", ""))
+        amount = float(out.get("amount", 0.0))
+        if not ore_id or amount <= 0.0:
+            return
+
+        deposit_mode = str(payload.get("deposit_mode", "inventory")).lower()
+        spawn_drop = bool(payload.get("spawn_world_drop", True))
+
+        if deposit_mode in ("inventory", "both"):
+            inv = runtime.inventory.for_actor(actor_id)
+            total = inv.add(ore_id, amount)
+            out["inventory"] = inv.to_dict()
+            delta = {
+                "type": "inventory_delta",
+                "area_id": area_id,
+                "actor_id": actor_id,
+                "ore_id": ore_id,
+                "amount": amount,
+                "total": total,
+                "x": x,
+                "z": z,
+            }
+            out["inventory_delta"] = delta
+            self._emit_stream(area_id, delta)
+
+        if spawn_drop and deposit_mode in ("inventory", "both", "drop"):
+            drop = runtime.drops.spawn(ore_id, amount, x, z, actor_id)
+            out["world_drop"] = drop.to_dict()
+            self._emit_stream(area_id, {
+                "type": "drop_spawn",
+                "area_id": area_id,
+                **drop.to_dict(),
+            })
+
+    def get_inventory(self, area_id: str, actor_id: str) -> dict:
+        runtime = self.runtime_for(area_id)
+        return runtime.inventory.to_public_dict(actor_id)
+
+    def drops_in_aoi(
+        self,
+        area_id: str,
+        x: float,
+        z: float,
+        radius_m: float = 128.0,
+    ) -> dict:
+        runtime = self.runtime_for(area_id)
+        drops = [d.to_dict() for d in runtime.drops.in_radius(x, z, radius_m)]
+        return {"ok": True, "area_id": area_id, "drops": drops, "count": len(drops)}
+
+    def pickup_drop(
+        self,
+        area_id: str,
+        payload: dict,
+    ) -> dict:
+        runtime = self.runtime_for(area_id)
+        actor_id = str(payload.get("actor_id", "anonymous"))
+        drop_id = str(payload.get("drop_id", ""))
+        drop = runtime.drops.remove(drop_id)
+        if drop is None:
+            return {"ok": False, "reason": "drop_not_found", "area_id": area_id}
+        inv = runtime.inventory.for_actor(actor_id)
+        total = inv.add(drop.ore_id, drop.amount)
+        out = {
+            "ok": True,
+            "reason": "picked_up",
+            "area_id": area_id,
+            "drop_id": drop_id,
+            "ore_id": drop.ore_id,
+            "amount": drop.amount,
+            "inventory": inv.to_dict(),
+        }
+        self._emit_stream(area_id, {
+            "type": "drop_despawn",
+            "area_id": area_id,
+            "drop_id": drop_id,
+            "x": drop.x,
+            "z": drop.z,
+        })
+        self._emit_stream(area_id, {
+            "type": "inventory_delta",
+            "area_id": area_id,
+            "actor_id": actor_id,
+            "ore_id": drop.ore_id,
+            "amount": drop.amount,
+            "total": total,
+            "x": drop.x,
+            "z": drop.z,
+        })
+        return out
+
     def mine(
         self,
         area_id: str,
@@ -105,6 +209,8 @@ class WorldService:
             "audio_stage": phase.audio_stage,
             "phase_id": phase.phase_id,
         }
+        if out.get("ok"):
+            self._deposit_mine_yield(runtime, area_id, actor_id, x, z, payload, out)
         return out
 
     def validate_build(self, payload: dict) -> dict:
@@ -142,13 +248,19 @@ class WorldService:
         profile = runtime.miner_profile(actor_id)
         amount = float(payload.get("amount", 1.0))
         apply_mining_xp(profile, ore.ore_id, amount)
-        return {
+        out = {
             "ok": True,
             "reason": "boss_loot",
             "area_id": area_id,
+            "ore_id": ore.ore_id,
+            "amount": amount,
             "resource": build_resource_object(actor_id, ore.ore_id, amount).to_dict(),
             "mining": profile.to_dict(),
         }
+        x = float(payload.get("x", 0.0))
+        z = float(payload.get("z", 0.0))
+        self._deposit_mine_yield(runtime, area_id, actor_id, x, z, payload, out)
+        return out
 
 
 _DEFAULT = WorldService()

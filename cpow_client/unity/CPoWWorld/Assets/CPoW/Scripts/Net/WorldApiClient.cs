@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Text;
 using System.Threading;
@@ -75,6 +76,12 @@ namespace CPoW.Net
             sb.Append('}');
             return HttpJson.PostAsync(Url("/v1/world/boss_loot"), sb.ToString(), ct);
         }
+
+        public Task<string> GetInventoryAsync(string areaId, string actorId, CancellationToken ct = default)
+            => HttpJson.GetAsync(
+                Url("/v1/world/inventory?area_id=" + Uri.EscapeDataString(areaId)
+                    + "&actor_id=" + Uri.EscapeDataString(actorId)),
+                ct);
 
         static string Escape(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
