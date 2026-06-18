@@ -2,7 +2,39 @@
 
 `test1` 모노레포에서 CPoW 3D 시뮬레이터만 잘라내 새 GitHub repo로 옮기는 방법입니다.
 
-## 복사할 경로
+## 가장 빠른 방법: `cpow-world` 브랜치
+
+이미 **독립 레이아웃**으로 export된 브랜치가 있습니다:
+
+```bash
+git clone -b cpow-world https://github.com/weed97/test1.git cpow-world
+cd cpow-world
+pip install -r requirements-api.txt
+bash scripts/verify.sh
+```
+
+브랜치 루트 = `cpow_engine/`, `cpow_api/`, `cpow_client/` (Eldoria 없음).
+
+### `weed97/cpow-world` repo 생성 후 push
+
+GitHub에서 빈 repo `cpow-world`를 만든 뒤:
+
+```bash
+cd cpow-world
+git remote rename origin test1   # 또는 clone 시 remote 이름 조정
+git remote add origin https://github.com/weed97/cpow-world.git
+git push -u origin main
+```
+
+또는 한 줄:
+
+```bash
+gh repo create weed97/cpow-world --public --source=. --push
+```
+
+## test1 `main`에서 수동 복사 (대안)
+
+`main` 브랜치에 CPoW가 모노레포 하위 경로로 있을 때 복사할 경로:
 
 ```text
 cpow_engine/
