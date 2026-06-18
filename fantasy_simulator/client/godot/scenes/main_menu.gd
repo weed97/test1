@@ -75,6 +75,12 @@ func _on_catalog_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/item_catalog.tscn")
 
 
+func _on_kingdom_pressed() -> void:
+	if _session_busy or ApiClient.session_id.is_empty():
+		return
+	get_tree().change_scene_to_file("res://scenes/kingdom.tscn")
+
+
 func _on_turn_completed(payload: Dictionary) -> void:
 	for line in payload.get("lines", []):
 		$VBox/Narrative.text += str(line) + "\n"
@@ -84,6 +90,9 @@ func _on_turn_completed(payload: Dictionary) -> void:
 		payload.get("clock", world.get("time_of_day", "?")),
 		world.get("tension", "?"),
 	]
+	var siege: Variant = payload.get("siege_simulation")
+	if siege is Dictionary and not siege.get("wars", []).is_empty():
+		$VBox/Narrative.text += "\n[공성전] 시뮬레이션 발생 — 왕국 메뉴에서 재생 가능\n"
 
 
 func _on_api_error(message: String) -> void:
@@ -99,3 +108,4 @@ func _set_play_buttons(enabled: bool) -> void:
 	$VBox/SkillTreeButton.disabled = not enabled
 	$VBox/InventoryButton.disabled = not enabled
 	$VBox/CatalogButton.disabled = not enabled
+	$VBox/KingdomButton.disabled = not enabled

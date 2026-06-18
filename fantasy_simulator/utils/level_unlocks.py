@@ -11,6 +11,7 @@ from utils.skill_catalog import (
     catalog_skills_for_weapon_class,
     load_progression_unlocks_config,
 )
+from utils.skill_grade import hero_can_learn_grade
 
 
 def _read_json(base_dir: str | Path, rel: str) -> dict[str, Any]:
@@ -199,15 +200,25 @@ def _requirements_met(reqs: dict[str, Any], snap: dict[str, Any], *, job_id: str
     return True
 
 
+def _grade_gate_met(sdef: dict[str, Any], character_level: int, *, base_dir: str | Path) -> bool:
+    grade = str(sdef.get("skill_grade", "common"))
+    return hero_can_learn_grade(character_level, grade, base_dir=base_dir)
+
+
 def skills_available_for_hero(hero: dict[str, Any], *, base_dir: str | Path) -> list[str]:
     snap = hero_level_snapshot(hero, base_dir=base_dir)
     job_id = snap["job_id"]
+    char_lv = int(snap["character_level"])
     available: list[str] = []
     for sdef in catalog_skills_for_job(job_id, base_dir=base_dir):
+        if not _grade_gate_met(sdef, char_lv, base_dir=base_dir):
+            continue
         if _requirements_met(sdef.get("unlock_requirements", {}), snap, job_id=job_id):
             available.append(str(sdef["skill_id"]))
     for wclass, wlv in snap["weapon_masteries"].items():
         for sdef in catalog_skills_for_weapon_class(wclass, base_dir=base_dir):
+            if not _grade_gate_met(sdef, char_lv, base_dir=base_dir):
+                continue
             reqs = dict(sdef.get("unlock_requirements", {}))
             reqs.setdefault("weapon_mastery_level", 1)
             reqs.setdefault("weapon_class", wclass)

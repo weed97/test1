@@ -1,0 +1,173 @@
+[gd_scene load_steps=3 format=3 uid="uid://eldoria_kingdom"]
+
+[ext_resource type="Script" path="res://scenes/kingdom.gd" id="1_kingdom"]
+[ext_resource type="PackedScene" uid="uid://eldoria_siege_replay" path="res://scenes/siege_replay.tscn" id="2_siege"]
+
+[node name="Kingdom" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_kingdom")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="TopRow" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="VBox/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "왕국 관리"
+
+[node name="RefreshButton" type="Button" parent="VBox/TopRow"]
+layout_mode = 2
+text = "새로고침"
+
+[node name="BackButton" type="Button" parent="VBox/TopRow"]
+layout_mode = 2
+text = "메인 메뉴"
+
+[node name="StatusLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "—"
+
+[node name="Summary" type="RichTextLabel" parent="VBox"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+
+[node name="DoctrinePanel" type="PanelContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="VBox/DoctrinePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="DoctrineVBox" type="VBoxContainer" parent="VBox/DoctrinePanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DoctrineTitle" type="Label" parent="VBox/DoctrinePanel/Margin/DoctrineVBox"]
+layout_mode = 2
+text = "왕정 이념"
+
+[node name="DoctrineGrid" type="GridContainer" parent="VBox/DoctrinePanel/Margin/DoctrineVBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 3
+
+[node name="DecreeInput" type="LineEdit" parent="VBox/DoctrinePanel/Margin/DoctrineVBox"]
+layout_mode = 2
+placeholder_text = "칙령 문구 (선택)"
+
+[node name="ApplyDoctrineButton" type="Button" parent="VBox/DoctrinePanel/Margin/DoctrineVBox"]
+layout_mode = 2
+visible = false
+text = "왕정 개혁 적용"
+
+[node name="FoundingPanel" type="PanelContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="VBox/FoundingPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="FoundingVBox" type="VBoxContainer" parent="VBox/FoundingPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="FoundingTitle" type="Label" parent="VBox/FoundingPanel/Margin/FoundingVBox"]
+layout_mode = 2
+text = "선포 조건 · 왕정 이념"
+
+[node name="FoundingChecks" type="RichTextLabel" parent="VBox/FoundingPanel/Margin/FoundingVBox"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+fit_content = true
+
+[node name="FoundingForm" type="VBoxContainer" parent="VBox/FoundingPanel/Margin/FoundingVBox"]
+layout_mode = 2
+
+[node name="KingdomName" type="LineEdit" parent="VBox/FoundingPanel/Margin/FoundingVBox/FoundingForm"]
+layout_mode = 2
+placeholder_text = "왕국 이름"
+
+[node name="FoundBtn" type="Button" parent="VBox/FoundingPanel/Margin/FoundingVBox"]
+layout_mode = 2
+text = "왕국 선포 의식 시작 (120,000G)"
+
+[node name="ManagePanel" type="PanelContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="VBox/ManagePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ManageVBox" type="VBoxContainer" parent="VBox/ManagePanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ManageTitle" type="Label" parent="VBox/ManagePanel/Margin/ManageVBox"]
+layout_mode = 2
+text = "요새 · 내정 · 군사"
+
+[node name="ManageInfo" type="RichTextLabel" parent="VBox/ManagePanel/Margin/ManageVBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+fit_content = true
+
+[node name="FortifyRow" type="HBoxContainer" parent="VBox/ManagePanel/Margin/ManageVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="InteriorRow" type="HBoxContainer" parent="VBox/ManagePanel/Margin/ManageVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="RecruitRow" type="HBoxContainer" parent="VBox/ManagePanel/Margin/ManageVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="WarsLabel" type="RichTextLabel" parent="VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+fit_content = true
+
+[node name="SiegeReplayHost" type="Control" parent="VBox"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SiegeReplay" parent="VBox/SiegeReplayHost" instance=ExtResource("2_siege")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

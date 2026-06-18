@@ -338,8 +338,15 @@ def execute_turn(
         base_dir=loader.base_dir,
         turn=ctx.turn,
         rng=ctx.rules.rng if hasattr(ctx.rules, "rng") else None,
+        temporal_mode=ctx.temporal_mode,
+        minutes_advanced=minutes_advanced,
     )
     lines.extend(world_lines)
+    siege_sim = (
+        ctx.state.get("flags", {})
+        .get("ecology", {})
+        .get("_last_siege_sim")
+    )
     ctx.manager.save(ctx.state)
     return TurnResult(
         turn=ctx.turn,
@@ -352,4 +359,5 @@ def execute_turn(
         time_steps=time_steps,
         minutes_advanced=minutes_advanced,
         clock=format_clock_line(ctx.state["world"]),
+        siege_simulation=siege_sim,
     )

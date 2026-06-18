@@ -262,6 +262,123 @@ func fetch_world_agents(map_id: String = "") -> Dictionary:
 	return parsed if parsed != null else {}
 
 
+func fetch_kingdom_status() -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/kingdom/status?session_id=%s" % session_id.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	return parsed if parsed != null else {}
+
+
+func fetch_kingdom_doctrines() -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/kingdom/doctrines?session_id=%s" % session_id.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	return parsed if parsed != null else {}
+
+
+func fetch_kingdom_wars() -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/kingdom/wars?session_id=%s" % session_id.uri_encode(),
+		{},
+		HTTPClient.METHOD_GET,
+	)
+	return parsed if parsed != null else {}
+
+
+func start_kingdom_founding(
+	kingdom_name: String,
+	doctrine_id: String,
+	custom_decree: String = "",
+	map_id: String = "",
+	x: int = -1,
+	y: int = -1,
+) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var mid := map_id if not map_id.is_empty() else sim_map_id
+	var tx := x if x >= 0 else sim_tile.x
+	var ty := y if y >= 0 else sim_tile.y
+	var parsed := await _post_json(
+		"/v1/settlement/kingdom",
+		{
+			"session_id": session_id,
+			"map_id": mid,
+			"x": tx,
+			"y": ty,
+			"kingdom_name": kingdom_name,
+			"doctrine_id": doctrine_id,
+			"custom_decree": custom_decree,
+		},
+	)
+	return parsed if parsed != null else {}
+
+
+func set_kingdom_doctrine(doctrine_id: String, custom_decree: String = "") -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/kingdom/doctrine",
+		{
+			"session_id": session_id,
+			"doctrine_id": doctrine_id,
+			"custom_decree": custom_decree,
+		},
+	)
+	return parsed if parsed != null else {}
+
+
+func fortify_kingdom(upgrade_type: String) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/kingdom/fortify",
+		{"session_id": session_id, "upgrade_type": upgrade_type},
+	)
+	return parsed if parsed != null else {}
+
+
+func build_kingdom_interior(build_type: String) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/kingdom/build_interior",
+		{"session_id": session_id, "build_type": build_type},
+	)
+	return parsed if parsed != null else {}
+
+
+func recruit_kingdom_military(unit_type: String, count: int = 1) -> Dictionary:
+	if session_id.is_empty():
+		api_error.emit("no session")
+		return {}
+	var parsed := await _post_json(
+		"/v1/kingdom/recruit",
+		{
+			"session_id": session_id,
+			"unit_type": unit_type,
+			"count": count,
+		},
+	)
+	return parsed if parsed != null else {}
+
+
 func health_check() -> bool:
 	var parsed := await _post_json("/v1/health", {}, HTTPClient.METHOD_GET)
 	return parsed != null and parsed.get("status") == "ok"

@@ -36,7 +36,10 @@ client/godot/
   scenes/exploration.tscn   # WASD + 타일 ↔ 시뮬 좌표
   scenes/inventory.tscn     # 인벤 · 착용/사용
   scenes/item_catalog.tscn  # 아이템 도감 (213+)
-  scripts/net/api_client.gd # sync_position, run_turn
+  scenes/kingdom.tscn       # 왕국 관리 · 선포 · 요새/군사
+  scenes/siege_replay.tscn  # 공성전 t_ms 이벤트 재생 HUD
+  scripts/net/api_client.gd # sync_position, run_turn, kingdom/war API
+  scripts/kingdom/siege_replay.gd
   scripts/player/player_controller.gd
 ```
 

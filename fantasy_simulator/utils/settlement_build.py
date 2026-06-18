@@ -289,13 +289,21 @@ def tick_player_build_projects(
         bdef = cfg.get("buildings", {}).get(bid, {})
         if int(proj["progress"]) >= int(proj.get("required", 1)):
             if proj.get("is_kingdom_project"):
-                ps["is_kingdom"] = True
-                site["name"] = "플레이어 왕국"
+                from utils.kingdom_system import complete_kingdom_founding
+
+                site["name"] = str(proj.get("kingdom_name", "플레이어 왕국"))
                 site["active_project"] = None
-                lines.append(
-                    f"[왕국] '{site['name']}' 이(가) 이 세계에 세워졌다. "
-                    f"({site['map_id']} {site['x']},{site['y']})"
+                founded = complete_kingdom_founding(
+                    state,
+                    map_id=str(site.get("map_id", "")),
+                    x=int(site.get("x", 0)),
+                    y=int(site.get("y", 0)),
+                    name=site["name"],
+                    doctrine_id=str(proj.get("doctrine_id", "")),
+                    custom_decree=str(proj.get("custom_decree", "")),
+                    base_dir=base_dir,
                 )
+                lines.append(founded.get("message", "[왕국] 선포 완료"))
                 continue
             completed = {
                 "building_id": bid,
@@ -345,38 +353,49 @@ def settlement_status(state: dict[str, Any], *, base_dir: str | Path) -> dict[st
 
 
 def try_start_kingdom(
-    state: dict[str, Any], *, map_id: str, x: int, y: int, base_dir: str | Path
+    state: dict[str, Any],
+    *,
+    map_id: str,
+    x: int,
+    y: int,
+    base_dir: str | Path,
+    kingdom_name: str = "플레이어 왕국",
+    doctrine_id: str = "",
+    custom_decree: str = "",
 ) -> dict[str, Any]:
-    cfg = load_buildings_config(base_dir)
-    kdef = cfg.get("kingdom", {})
+    from utils.kingdom_system import (
+        can_found_kingdom,
+        deduct_founding_costs,
+        founding_cost_preview,
+        load_kingdom_config,
+    )
+
+    ok, err = can_found_kingdom(state, base_dir=base_dir)
+    if not ok:
+        return {"ok": False, "error": err, "preview": founding_cost_preview(state, base_dir=base_dir)}
     ps = get_player_settlement(state)
-    if ps.get("is_kingdom"):
-        return {"ok": False, "error": "이미 왕국 승격됨"}
-    lvl = int(ps.get("construction_level", 1))
-    if lvl < int(kdef.get("min_construction_level", 5)):
-        return {"ok": False, "error": "건축 레벨 5 (왕국 설계자) 필요"}
-    required = set(kdef.get("requires_buildings", []))
-    done = {b.get("building_id") for b in ps.get("completed_buildings", [])}
-    if not required.issubset(done):
-        return {"ok": False, "error": "필수 건물 미완공", "need": sorted(required - done)}
-    if int(ps.get("hired_workers", 0)) < 3:
-        return {"ok": False, "error": "왕국 선포에는 고용 인력 3명 이상"}
     site = _get_or_create_site(state, map_id=map_id, x=x, y=y)
     if site.get("active_project"):
         return {"ok": False, "error": "이 타일에 이미 건설 중"}
-    gold_cost = int(kdef.get("gold_cost", 0))
-    if _party_gold(state) < gold_cost:
-        return {"ok": False, "error": "골드 부족"}
-    if not _materials_available(ps, kdef.get("materials", {})):
-        return {"ok": False, "error": "자재 부족"}
-    _set_party_gold(state, _party_gold(state) - gold_cost)
-    _deduct_materials(ps, kdef.get("materials", {}))
+    paid = deduct_founding_costs(state, base_dir=base_dir)
+    if not paid.get("ok"):
+        return paid
+    fdef = load_kingdom_config(base_dir).get("founding", {})
     site["active_project"] = {
         "building_id": "kingdom",
-        "label": kdef.get("label", "왕국"),
+        "label": fdef.get("label", "왕국 선포 의식"),
         "progress": 0,
-        "required": int(kdef.get("build_points", 400)),
-        "mode": "hire",
+        "required": int(fdef.get("build_points", 2500)),
+        "mode": str(fdef.get("mode", "hire")),
         "is_kingdom_project": True,
+        "kingdom_name": kingdom_name,
+        "doctrine_id": doctrine_id,
+        "custom_decree": custom_decree,
     }
-    return {"ok": True, "site_id": site["site_id"], "project": site["active_project"]}
+    return {
+        "ok": True,
+        "site_id": site["site_id"],
+        "project": site["active_project"],
+        "costs": paid,
+        "preview": founding_cost_preview(state, base_dir=base_dir),
+    }

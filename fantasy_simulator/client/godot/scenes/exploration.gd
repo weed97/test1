@@ -7,6 +7,9 @@ extends Node2D
 @onready var _zone_label: Label = $CanvasLayer/ZoneLabel
 @onready var _agents_layer: Node2D = $AgentsLayer
 
+var _siege_replay: PanelContainer
+var _kingdom_status_cache: Dictionary = {}
+
 
 func _ready() -> void:
 	add_to_group("exploration_root")
@@ -32,6 +35,17 @@ func _ready() -> void:
 	)
 	if ok:
 		await ApiClient.fetch_world_agents(ApiClient.sim_map_id)
+	_setup_siege_overlay()
+
+
+func _setup_siege_overlay() -> void:
+	var scene: PackedScene = load("res://scenes/siege_replay.tscn")
+	if scene == null:
+		return
+	_siege_replay = scene.instantiate() as PanelContainer
+	_siege_replay.visible = false
+	$CanvasLayer.add_child(_siege_replay)
+	_siege_replay.set_anchors_preset(Control.PRESET_CENTER)
 
 
 func _setup_camera() -> void:
@@ -116,6 +130,24 @@ func _on_turn_completed(payload: Dictionary) -> void:
 	for line in payload.get("lines", []):
 		_narrative.text += str(line) + "\n"
 	_update_hud(payload)
+	await _maybe_play_siege(payload)
+
+
+func _maybe_play_siege(payload: Dictionary) -> void:
+	var siege: Variant = payload.get("siege_simulation")
+	if not siege is Dictionary:
+		return
+	var wars: Array = siege.get("wars", [])
+	if wars.is_empty() or _siege_replay == null:
+		return
+	if _kingdom_status_cache.is_empty():
+		_kingdom_status_cache = await ApiClient.fetch_kingdom_status()
+	var barrier_max := 12000
+	var charter: Dictionary = _kingdom_status_cache.get("charter", {})
+	if not charter.is_empty():
+		barrier_max = int(charter.get("barrier", {}).get("max_hp", barrier_max))
+	_narrative.text += "\n[공성전] 이벤트 재생 중…\n"
+	_siege_replay.play_simulation(siege, barrier_max)
 
 
 func _on_agents_loaded(payload: Dictionary) -> void:
@@ -158,6 +190,10 @@ func _on_inventory_pressed() -> void:
 
 func _on_catalog_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/item_catalog.tscn")
+
+
+func _on_kingdom_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/kingdom.tscn")
 
 
 func _on_back_pressed() -> void:

@@ -529,11 +529,13 @@ def run_macro_parallel_lanes(
         state.get("flags", {}).get("ecology", {}).get("civilizations", {})
     )
 
+    from utils.kingdom_system import tick_kingdom
     from utils.settlement_build import tick_player_build_projects
     from utils.civilization_coupling import tick_civilization_coupling
     from utils.world_conflicts import tick_world_conflicts
 
     lines.extend(tick_player_build_projects(state, base_dir=base_dir))
+    lines.extend(tick_kingdom(state, base_dir=base_dir))
     lines.extend(tick_civilization_coupling(state, base_dir=base_dir, rng=r))
     lines.extend(tick_world_conflicts(state, base_dir=base_dir, rng=r))
 
