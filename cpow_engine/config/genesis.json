@@ -1,0 +1,78 @@
+{
+  "chain_id": "cpow-mainnet-1",
+  "timestamp": 0,
+  "protocol_version": "0.1.0",
+  "genesis_message": "창조가 에너지가 되고, 물리 법칙이 자산이 되는 프로토콜",
+
+  "protocol_physics": {
+    "description": "이 세계의 불변 열역학 법칙 — 유전자(Genesis)로서 모든 오프체인 연산의 검증 기준",
+    "laws": [
+      {
+        "id": "thermo_001",
+        "name": "energy_conservation",
+        "formula": "energy_emission",
+        "expression": "output = heat_intensity * emission_factor",
+        "constants": {"emission_factor": 0.9},
+        "immutable": true
+      },
+      {
+        "id": "thermo_002",
+        "name": "heat_transfer",
+        "formula": "heat_transfer",
+        "expression": "transfer = heat_intensity * thermal_conductivity * transfer_coefficient",
+        "constants": {"transfer_coefficient": 0.01},
+        "immutable": true
+      },
+      {
+        "id": "thermo_003",
+        "name": "conductive_transfer",
+        "formula": "conductive_transfer",
+        "expression": "flow = transfer_rate * efficiency * thermal_conductivity",
+        "constants": {"default_efficiency": 0.85},
+        "immutable": true
+      }
+    ]
+  },
+
+  "genesis_validators": [
+    {
+      "id": "validator_genesis_0",
+      "trust_score": 1.0,
+      "role": "founding_validator",
+      "pubkey": "genesis_validator_0"
+    }
+  ],
+
+  "genesis_creators": [
+    {
+      "id": "creator_genesis_0",
+      "trust_score": 1.0,
+      "role": "founding_creator",
+      "initial_energy_grant": 0.0
+    }
+  ],
+
+  "token_params": {
+    "symbol": "NRG",
+    "name": "Creativity Energy",
+    "decimals": 6,
+    "emission_model": "cpow_weighted",
+    "base_emission_rate": 1.0,
+    "max_supply": null,
+    "min_creativity_score": 0.3,
+    "bot_rejection_threshold": 0.7
+  },
+
+  "rollup_params": {
+    "batch_size_ticks": 10,
+    "submission_interval_seconds": 60,
+    "merkle_proof_required": true
+  },
+
+  "consensus_params": {
+    "algorithm": "cpow_tendermint_hybrid",
+    "block_time_seconds": 5,
+    "validator_threshold": 0.67,
+    "cpow_weight_enabled": true
+  }
+}

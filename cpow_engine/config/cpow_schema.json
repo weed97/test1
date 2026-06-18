@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cpow/core",
+  "title": "CPoW Core Data Schemas",
+  "description": "CreativeObject, ActionRecord, WorldDelta — 엔진 입출력 검증.",
+  "definitions": {
+    "PropertyDef": {
+      "type": "object",
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": "number" },
+        "unit": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ObjectVisual": {
+      "type": "object",
+      "properties": {
+        "glb_url": { "type": "string" },
+        "slot": {
+          "type": "string",
+          "enum": ["avatar", "weapon", "movement", "accessory", "world_prop"]
+        },
+        "attach_bone": { "type": "string" },
+        "offset": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "CreativeObject": {
+      "type": "object",
+      "required": ["id", "creator_id", "label", "properties"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "creator_id": { "type": "string" },
+        "label": { "type": "string" },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PropertyDef" }
+        },
+        "connections": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "visual": { "$ref": "#/definitions/ObjectVisual" },
+        "created_at": { "type": "number" },
+        "creativity_fingerprint": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ActionRecord": {
+      "type": "object",
+      "required": ["actor_id", "action_type"],
+      "properties": {
+        "actor_id": { "type": "string", "minLength": 1 },
+        "action_type": { "type": "string", "minLength": 1 },
+        "payload": { "type": "object" },
+        "timestamp": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "InteractionResult": {
+      "type": "object",
+      "required": ["source_id", "effect_type", "magnitude", "energy_delta"],
+      "properties": {
+        "source_id": { "type": "string" },
+        "target_id": { "type": ["string", "null"] },
+        "effect_type": { "type": "string" },
+        "magnitude": { "type": "number" },
+        "energy_delta": { "type": "number" },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "WorldDelta": {
+      "type": "object",
+      "required": ["tick"],
+      "properties": {
+        "tick": { "type": "integer", "minimum": 0 },
+        "objects_added": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "objects_removed": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "interactions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/InteractionResult" }
+        },
+        "state_changes": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/CreativeObject" },
+    { "$ref": "#/definitions/ActionRecord" },
+    { "$ref": "#/definitions/WorldDelta" }
+  ]
+}

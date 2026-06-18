@@ -2,3 +2,5 @@
 *.import
 export/
 export_presets.cfg
+build/*.apk
+build/*.aab

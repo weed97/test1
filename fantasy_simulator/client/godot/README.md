@@ -1,6 +1,43 @@
-# Eldoria — Godot 4.6+ 클라이언트 (Steam)
+# CPoW XR — Godot 4.6+ 클라이언트
 
-이 폴더는 **완성된 Godot 프로젝트**입니다. Cursor와 Godot 에디터 모두에서 열 수 있습니다.
+OpenXR(Meta Quest) + 데스크톱 시뮬레이터. Python CPoW API = 물리·가치 산정 권위.
+
+## 빠른 시작 (데스크톱)
+
+1. **API 서버**:
+
+```bash
+cd fantasy_simulator
+pip install -r requirements-api.txt
+uvicorn api.server:app --reload --port 8765
+```
+
+2. **Godot 4.6+** → `project.godot` → F5 → **CPoW XR 월드**
+
+## Meta Quest APK
+
+→ **[docs/QUEST_APK_BUILD.md](docs/QUEST_APK_BUILD.md)** (전체 가이드)
+
+```bash
+cd fantasy_simulator/client/godot
+cp export_presets.quest.cfg export_presets.cfg
+GODOT_BIN=/path/to/godot bash scripts/build_quest_apk.sh
+adb install -r build/cpow-quest.apk
+```
+
+Quest는 PC API에 LAN으로 접속: `uvicorn api.server:app --host 0.0.0.0 --port 8765`
+
+## 구조
+
+```
+client/godot/
+  scenes/boot.tscn           # Android→XR / Desktop→메뉴
+  scenes/xr/world_xr.tscn  # CPoW XR 창조 월드
+  export_presets.quest.cfg # Quest Export 템플릿
+  scripts/build_quest_apk.sh
+  docs/QUEST_APK_BUILD.md
+  docs/XR_SETUP.md
+```
 
 ## 자주 보는 오류 (원인)
 

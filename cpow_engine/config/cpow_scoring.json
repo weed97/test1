@@ -1,0 +1,30 @@
+{
+  "base_energy_rate": 1.0,
+  "uniqueness_weight": 2.0,
+  "repetition_decay": 0.85,
+  "bot_threshold": 0.7,
+  "creation_bonus_per_object": 5.0,
+  "first_fingerprint_bonus": 1.5,
+  "property_bonus_per_prop": 0.1,
+  "max_property_bonus": 0.5,
+  "duplicate_fingerprint_floor": 0.3,
+  "duplicate_fingerprint_decay": 0.5,
+  "weights": {
+    "entropy_diversity": 0.30,
+    "entropy_connections": 0.05,
+    "entropy_cap": 0.5,
+    "complexity_properties": 0.12,
+    "complexity_connections": 0.10,
+    "complexity_interactions": 0.15,
+    "complexity_cap": 0.6
+  },
+  "bot_signals": {
+    "interval_uniformity": 0.4,
+    "payload_repetition": 0.35,
+    "action_monotony": 0.25
+  },
+  "repetition_window": 20,
+  "repetition_same_type_threshold": 0.8,
+  "bot_history_window": 30,
+  "bot_min_history": 5
+}

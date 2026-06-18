@@ -3,6 +3,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 echo "==> Eldoria (fantasy_simulator)"
 bash "$ROOT/fantasy_simulator/scripts/verify.sh"
+echo "==> CPoW engine"
+python3 -m unittest discover -s cpow_engine/tests -q
 echo "==> Monorepo Python sims"
 python3 -m unittest \
   tests.test_mmorpg_sim_engine \

@@ -75,6 +75,10 @@ func _on_catalog_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/item_catalog.tscn")
 
 
+func _on_xr_world_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/xr/world_xr.tscn")
+
+
 func _on_turn_completed(payload: Dictionary) -> void:
 	for line in payload.get("lines", []):
 		$VBox/Narrative.text += str(line) + "\n"
