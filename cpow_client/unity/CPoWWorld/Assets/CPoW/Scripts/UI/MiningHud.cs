@@ -88,6 +88,16 @@ namespace CPoW.UI
             GUI.enabled = true;
 
             GUILayout.Space(6);
+            GUILayout.Label("— 인벤토리 (SoA) —");
+            if (_mining.Inventory.Stacks.Count == 0)
+                GUILayout.Label("(비어 있음)");
+            else
+            {
+                foreach (var kv in _mining.Inventory.Stacks)
+                    GUILayout.Label($"  {kv.Key}: {kv.Value:F2}");
+            }
+
+            GUILayout.Space(6);
             GUILayout.Label(_mining.StatusLine, GUI.skin.box);
 
             var last = _mining.LastMine;

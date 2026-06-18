@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from cpow_engine.world.drops import DropRegistry
 from cpow_engine.world.hazards import HazardState
+from cpow_engine.world.inventory import InventoryLedger
 from cpow_engine.world.mining import MiningProfile
 
 
@@ -14,6 +16,8 @@ class AreaWorldRuntime:
     world_seed: str
     cell_hazards: dict[tuple[int, int], HazardState] = field(default_factory=dict)
     miners: dict[str, MiningProfile] = field(default_factory=dict)
+    inventory: InventoryLedger = field(default_factory=InventoryLedger)
+    drops: DropRegistry = field(default_factory=DropRegistry)
     world_tick: int = 0
 
     def hazard_state_for(self, cell_x: int, cell_z: int) -> HazardState:
@@ -34,4 +38,5 @@ class AreaWorldRuntime:
             "world_tick": self.world_tick,
             "miner_count": len(self.miners),
             "hazard_cells": len(self.cell_hazards),
+            "drop_count": self.drops.count(),
         }

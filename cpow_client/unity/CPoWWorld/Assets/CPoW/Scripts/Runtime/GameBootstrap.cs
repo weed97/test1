@@ -19,7 +19,10 @@ namespace CPoW.Runtime
         ChunkStreamer _streamer;
         AreaObjectRenderer _renderer;
         MiningController _mining;
+        WorldStreamClient _worldStream;
+        WorldDropRenderer _dropRenderer;
         float _nextPoll;
+        float _nextPose;
 
         async void Start()
         {
@@ -68,6 +71,21 @@ namespace CPoW.Runtime
                     hud = gameObject.AddComponent<CPoW.UI.MiningHud>();
                 hud.Bind(_mining);
                 _mining.MineCompleted += _ => _ = RefreshAreaStateAsync();
+                await _mining.RefreshInventoryAsync();
+
+                _dropRenderer = gameObject.GetComponent<WorldDropRenderer>();
+                if (_dropRenderer == null)
+                    _dropRenderer = gameObject.AddComponent<WorldDropRenderer>();
+
+                _worldStream = gameObject.GetComponent<WorldStreamClient>();
+                if (_worldStream == null)
+                    _worldStream = gameObject.AddComponent<WorldStreamClient>();
+                _worldStream.MessageReceived += OnStreamMessage;
+                await _worldStream.ConnectAsync(
+                    _session.AreaId,
+                    _session.UserId,
+                    playerProxy.position.x,
+                    playerProxy.position.z);
 
                 await RefreshAreaStateAsync();
             }
@@ -85,6 +103,31 @@ namespace CPoW.Runtime
                 return;
             _nextPoll = Time.time + statePollSeconds;
             await RefreshAreaStateAsync();
+        }
+
+        void OnStreamMessage(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+
+            if (json.Contains("\"type\":\"subscribed\""))
+            {
+                var dropsIdx = json.IndexOf("\"drops\":[", System.StringComparison.Ordinal);
+                if (dropsIdx >= 0 && _dropRenderer != null)
+                {
+                    var start = dropsIdx + "\"drops\":".Length;
+                    var end = json.IndexOf(']', start);
+                    if (end > start)
+                        _dropRenderer.SyncDropsJson(json.Substring(start, end - start + 1));
+                }
+                if (_mining != null)
+                    _mining.ApplyInventoryJson(json);
+                return;
+            }
+
+            if (_dropRenderer != null)
+                _dropRenderer.ApplyStreamJson(json);
+            if (_mining != null && json.Contains("inventory_delta"))
+                _ = _mining.RefreshInventoryAsync();
         }
 
         async Task RefreshAreaStateAsync()
@@ -110,6 +153,17 @@ namespace CPoW.Runtime
                 return;
             var move = new Vector3(dx, 0f, dz).normalized * (8f * Time.deltaTime);
             playerProxy.position += move;
+            if (_worldStream != null && Time.time >= _nextPose)
+            {
+                _nextPose = Time.time + 0.4f;
+                _ = _worldStream.SendPoseAsync(playerProxy.position.x, playerProxy.position.z);
+            }
+        }
+
+        async void OnDestroy()
+        {
+            if (_worldStream != null)
+                await _worldStream.DisconnectAsync();
         }
     }
 }
