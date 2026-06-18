@@ -13,6 +13,9 @@ jobs:
         with:
           ref: cpow-world
           fetch-depth: 0
+          # 중요: false — checkout 이 test1 GITHUB_TOKEN 을 git credential 에 남기면
+          # push 단계가 PAT 대신 github-actions[bot] 으로 cpow-world 에 push 해 403 남
+          persist-credentials: false
 
       - name: Validate push token
         env:
@@ -45,6 +48,7 @@ jobs:
         env:
           PUSH_TOKEN: ${{ secrets.CPOW_WORLD_PUSH_TOKEN }}
         run: |
+          git config --global --unset-all credential.helper || true
           git config user.name "weed97"
           git config user.email "weed97@users.noreply.github.com"
           git branch -M main
