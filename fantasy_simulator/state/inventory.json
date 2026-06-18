@@ -1,5 +1,5 @@
 {
-  "party_gold": 80,
+  "wallet": { "copper": 45, "silver": 0, "gold": 0 },
   "shared_items": [
     "치유 물약 x2",
     "여행 지도 (실버우드 일대)"

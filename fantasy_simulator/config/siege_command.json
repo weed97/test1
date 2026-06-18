@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "roster_size": 5,
+  "max_fielded_per_side": 5,
+  "commander_base": {
+    "hp": 900,
+    "defense": 130,
+    "attack": 42,
+    "hp_per_elite_in_roster": 55,
+    "defense_per_wall_level": 18,
+    "kingdom_support_mult": 1.4,
+    "hp_per_city_level": 80,
+    "hp_per_barrier_ritual": 120
+  },
+  "attacker_commander": {
+    "hp_base": 650,
+    "defense_base": 85,
+    "hp_per_legion_size": 4
+  },
+  "doctrines": {
+    "focus_barrier": {
+      "label": "결계 집중",
+      "side": "attacker",
+      "barrier_weight": 1.45,
+      "gate_weight": 0.65,
+      "commander_snipe_weight": 0.45,
+      "coordination": 1.0
+    },
+    "focus_gate": {
+      "label": "성문 돌파",
+      "side": "attacker",
+      "barrier_weight": 0.75,
+      "gate_weight": 1.5,
+      "commander_snipe_weight": 0.55,
+      "coordination": 1.0
+    },
+    "focus_commander": {
+      "label": "지휘관 암살",
+      "side": "attacker",
+      "barrier_weight": 0.55,
+      "gate_weight": 0.6,
+      "commander_snipe_weight": 1.55,
+      "coordination": 1.05
+    },
+    "protect_commanders": {
+      "label": "지휘관 최우선 호위",
+      "side": "defender",
+      "barrier_weight": 0.9,
+      "gate_weight": 0.85,
+      "commander_snipe_weight": 0.2,
+      "bodyguard_mult": 1.65,
+      "coordination": 1.1
+    },
+    "coordinate_defense": {
+      "label": "전선 통합 방어",
+      "side": "defender",
+      "barrier_weight": 1.15,
+      "gate_weight": 1.1,
+      "commander_snipe_weight": 0.35,
+      "bodyguard_mult": 1.15,
+      "coordination": 1.2
+    }
+  },
+  "postures": {
+    "forward_command": {
+      "label": "전선 지휘",
+      "depth": 0,
+      "safety_bonus": -0.15,
+      "command_effectiveness": 0.22,
+      "snipe_resistance": -0.2
+    },
+    "behind_wall": {
+      "label": "성벽 뒤 지휘",
+      "depth": 1,
+      "safety_bonus": 0.42,
+      "command_effectiveness": -0.32,
+      "snipe_resistance": 0.55
+    },
+    "citadel": {
+      "label": "심성 지휘",
+      "depth": 2,
+      "safety_bonus": 0.68,
+      "command_effectiveness": -0.48,
+      "snipe_resistance": 0.78
+    }
+  },
+  "combat": {
+    "snipe_net_factor": 1.35,
+    "defense_divisor": 58,
+    "min_snipe_damage": 95
+  },
+  "command_lost": {
+    "morale_loss": 20,
+    "defense_coordination_penalty": 0.38,
+    "attack_coordination_penalty": 0.35,
+    "autonomous_aggression": 1.18,
+    "autonomous_variance": 0.35
+  },
+  "commander_titles": [
+    "대장군",
+    "군단장",
+    "성벽 사령",
+    "결계 수호",
+    "전선 감독"
+  ]
+}

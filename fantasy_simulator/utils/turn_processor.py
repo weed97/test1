@@ -324,6 +324,20 @@ def execute_turn(
     lines.extend(proc["lines"])
 
     action_lower = action.lower().strip()
+    from utils.regional_resources import try_regional_gather
+    from utils.tutorial_rewards import apply_tutorial_reward
+
+    lines.extend(
+        apply_tutorial_reward(ctx.state, action, base_dir=loader.base_dir)
+    )
+    lines.extend(
+        try_regional_gather(
+            ctx.state,
+            action,
+            base_dir=loader.base_dir,
+            rng=getattr(ctx.rules, "rng", None),
+        )
+    )
     if "explore" in action_lower or "탐험" in action:
         from utils.field_agents import ecology_enabled
         from utils.progression import on_explore_progression
@@ -338,8 +352,15 @@ def execute_turn(
         base_dir=loader.base_dir,
         turn=ctx.turn,
         rng=ctx.rules.rng if hasattr(ctx.rules, "rng") else None,
+        temporal_mode=ctx.temporal_mode,
+        minutes_advanced=minutes_advanced,
     )
     lines.extend(world_lines)
+    siege_sim = (
+        ctx.state.get("flags", {})
+        .get("ecology", {})
+        .get("_last_siege_sim")
+    )
     ctx.manager.save(ctx.state)
     return TurnResult(
         turn=ctx.turn,
@@ -352,4 +373,5 @@ def execute_turn(
         time_steps=time_steps,
         minutes_advanced=minutes_advanced,
         clock=format_clock_line(ctx.state["world"]),
+        siege_simulation=siege_sim,
     )

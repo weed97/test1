@@ -134,10 +134,37 @@ class EventEngine:
         lines: list[str] = []
         if "tension_delta" in outcome:
             self._adjust_tension(state, int(outcome["tension_delta"]))
-        if "gold_delta" in outcome:
-            inv = state.setdefault("inventory", {})
-            inv["party_gold"] = inv.get("party_gold", 0) + int(outcome["gold_delta"])
-            lines.append(f"골드 {outcome['gold_delta']:+d}")
+        if "gold_delta" in outcome or "currency_delta" in outcome:
+            from utils.currency import grant
+
+            delta = outcome.get("currency_delta") or {}
+            if not delta and "gold_delta" in outcome:
+                raw = int(outcome["gold_delta"])
+                if abs(raw) >= 100:
+                    delta = {"gold": raw}
+                elif abs(raw) >= 5:
+                    delta = {"silver": max(1, abs(raw) // 10) * (1 if raw > 0 else -1)}
+                else:
+                    delta = {"copper": raw}
+            copper = int(delta.get("copper", 0))
+            silver = int(delta.get("silver", 0))
+            gold = int(delta.get("gold", 0))
+            if copper or silver or gold:
+                grant(
+                    state,
+                    copper=max(0, copper),
+                    silver=max(0, silver),
+                    gold=max(0, gold),
+                    base_dir=self.content.base_dir,
+                )
+                parts = []
+                if copper:
+                    parts.append(f"{copper:+d}쿠퍼")
+                if silver:
+                    parts.append(f"{silver:+d}실버")
+                if gold:
+                    parts.append(f"{gold:+d}골드")
+                lines.append("화폐 " + ", ".join(parts))
         lines.extend(self.factions.apply_reputation_outcome(state, outcome))
         lines.extend(self.main_story.on_outcome(state, outcome, turn=turn))
         for flag, val in (outcome.get("flags_set") or {}).items():

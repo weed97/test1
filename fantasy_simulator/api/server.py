@@ -15,12 +15,26 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from api.session_store import SessionStore, package_root, turn_payload
+from api.session_store import SessionStore, package_root, sim_tick_payload, turn_payload
 from utils.field_agents import (
     agents_manifest,
     ensure_ecology_seeds,
     ecology_enabled,
     init_world_sovereign,
+)
+from utils.kingdom_system import (
+    build_interior,
+    kingdom_status,
+    list_government_doctrines,
+    recruit_military,
+    set_kingdom_doctrine,
+    set_kingdom_laws,
+    upgrade_fortification,
+)
+from utils.kingdom_war import (
+    kingdom_wars_status,
+    simulate_siege_round,
+    start_siege_war,
 )
 from utils.settlement_build import (
     get_player_settlement,
@@ -113,6 +127,62 @@ class KingdomRequest(BaseModel):
     map_id: str
     x: int
     y: int
+    kingdom_name: str = "플레이어 왕국"
+    doctrine_id: str = "feudal_balance"
+    custom_decree: str = ""
+
+
+class KingdomDoctrineRequest(BaseModel):
+    session_id: str
+    doctrine_id: str
+    custom_decree: str = ""
+
+
+class KingdomLawsRequest(BaseModel):
+    session_id: str
+    laws: dict[str, Any]
+
+
+class KingdomFortifyRequest(BaseModel):
+    session_id: str
+    upgrade_type: str = Field(..., pattern="^(walls|tower|barrier_ritual)$")
+
+
+class KingdomInteriorRequest(BaseModel):
+    session_id: str
+    build_type: str = Field(..., pattern="^(farmland|city_district|training_ground)$")
+
+
+class KingdomRecruitRequest(BaseModel):
+    session_id: str
+    unit_type: str = Field(..., pattern="^(scout|guard|wall_archer|elite)$")
+    count: int = Field(1, ge=1, le=20)
+
+
+class KingdomSiegeStartRequest(BaseModel):
+    session_id: str
+    attacker_civ: str = "goblin_tribe"
+    goal_id: str = "plunder"
+    goal_label: str = "약탈"
+
+
+class KingdomSiegeRoundRequest(BaseModel):
+    session_id: str
+    war_id: str
+
+
+class KingdomSiegeCommandRequest(BaseModel):
+    session_id: str
+    war_id: str
+    side: Literal["defender", "attacker"] = "defender"
+    doctrine: str = Field(
+        ...,
+        pattern="^(protect_commanders|coordinate_defense|focus_barrier|focus_gate|focus_commander)$",
+    )
+    posture: Optional[str] = Field(
+        None,
+        pattern="^(forward_command|behind_wall|citadel)$",
+    )
 
 
 class ProgressionUnlockRequest(BaseModel):
@@ -180,10 +250,20 @@ class TurnRequest(BaseModel):
     position: Optional[PositionBody] = None
 
 
+class SimTickRequest(BaseModel):
+    session_id: str
+    dt_real_ms: int = Field(..., ge=0, le=30_000)
+
+
+class DemoBootstrapRequest(BaseModel):
+    session_id: str
+
+
 class HealthResponse(BaseModel):
     api_version: int
     status: str
     package_root: str
+    demo_mode: bool = False
 
 
 @app.get("/v1/health", response_model=HealthResponse)
@@ -192,7 +272,74 @@ def health() -> HealthResponse:
         api_version=API_VERSION,
         status="ok",
         package_root=str(package_root()),
+        demo_mode=_demo_mode_enabled(),
     )
+
+
+def _demo_mode_enabled() -> bool:
+    import os
+
+    return os.environ.get("ELDORIA_DEMO", "").strip() in ("1", "true", "yes")
+
+
+@app.post("/v1/demo/bootstrap")
+def demo_bootstrap(body: DemoBootstrapRequest) -> dict[str, Any]:
+    """Dev/demo: kingdom + military + active siege for playtesting (ELDORIA_DEMO=1)."""
+    if not _demo_mode_enabled():
+        raise HTTPException(status_code=403, detail="set ELDORIA_DEMO=1 on API server")
+    from tests.test_kingdom_system import _ready_for_kingdom
+    from utils.kingdom_system import complete_kingdom_founding, recruit_military
+    from utils.kingdom_war import start_siege_war
+    from utils.sim_clock import enable_sim_clock
+
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    root = package_root()
+    state = session.state
+    state.setdefault("flags", {})["game_mode"] = "hybrid"
+    _ready_for_kingdom(state, root)
+    from utils.currency import grant
+
+    grant(state, gold=500, silver=200, copper=0, base_dir=root)
+    enable_sim_clock(state, base_dir=root)
+    complete_kingdom_founding(
+        state,
+        map_id="ashpoint_01",
+        x=40,
+        y=48,
+        name="데모 왕국",
+        doctrine_id="martial_ascendancy",
+        base_dir=root,
+    )
+    recruit_military(state, "guard", 8, base_dir=root)
+    recruit_military(state, "wall_archer", 6, base_dir=root)
+    recruit_military(state, "elite", 4, base_dir=root)
+    import random
+
+    siege = start_siege_war(
+        state,
+        attacker_civ="goblin_tribe",
+        goal_id="plunder",
+        goal_label="약탈",
+        base_dir=root,
+        rng=random.Random(42),
+    )
+    if not siege.get("ok"):
+        raise HTTPException(status_code=400, detail=siege.get("error", "siege failed"))
+    session.manager.save(state)
+    war = siege["war"]
+    return {
+        "api_version": API_VERSION,
+        "session_id": body.session_id,
+        "ok": True,
+        "kingdom_name": "데모 왕국",
+        "war_id": war.get("war_id"),
+        "defender_commanders": len(
+            war.get("command", {}).get("defender", {}).get("commanders", [])
+        ),
+        "message": "왕국·군대·공성전 준비 완료 — Godot 탐험 또는 sim/tick으로 진행",
+    }
 
 
 @app.post("/v1/session/new", response_model=NewSessionResponse)
@@ -213,6 +360,9 @@ def new_session(body: NewSessionRequest) -> NewSessionResponse:
         ensure_ecology_seeds(session.state, base_dir=root)
         get_player_settlement(session.state)
         init_world_conflicts(session.state, base_dir=root)
+        from utils.sim_clock import enable_sim_clock
+
+        enable_sim_clock(session.state, base_dir=root)
     session.manager.save(session.state)
     return NewSessionResponse(
         session_id=session_id,
@@ -277,10 +427,223 @@ def settlement_kingdom(body: KingdomRequest) -> dict[str, Any]:
         map_id=body.map_id,
         x=body.x,
         y=body.y,
+        kingdom_name=body.kingdom_name,
+        doctrine_id=body.doctrine_id,
+        custom_decree=body.custom_decree,
         base_dir=package_root(),
     )
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail=result.get("error", "kingdom failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.get("/v1/kingdom/status")
+def kingdom_status_route(session_id: str) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        **kingdom_status(session.state, base_dir=package_root()),
+    }
+
+
+@app.get("/v1/kingdom/wars")
+def kingdom_wars_route(session_id: str) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        **kingdom_wars_status(session.state, base_dir=package_root()),
+    }
+
+
+@app.post("/v1/kingdom/war/start")
+def kingdom_war_start_route(body: KingdomSiegeStartRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    if not ecology_enabled(session.state):
+        raise HTTPException(status_code=400, detail="ecology or hybrid mode required")
+    import random
+
+    result = start_siege_war(
+        session.state,
+        attacker_civ=body.attacker_civ,
+        goal_id=body.goal_id,
+        goal_label=body.goal_label,
+        base_dir=package_root(),
+        rng=random.Random(),
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "siege start failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/kingdom/war/round")
+def kingdom_war_round_route(body: KingdomSiegeRoundRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    import random
+
+    result = simulate_siege_round(
+        session.state,
+        body.war_id,
+        base_dir=package_root(),
+        rng=random.Random(),
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "round failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/kingdom/war/command")
+def kingdom_war_command_route(body: KingdomSiegeCommandRequest) -> dict[str, Any]:
+    from utils.kingdom_war import find_active_siege
+    from utils.siege_command import (
+        command_live_view,
+        set_attacker_siege_command,
+        set_defender_siege_command,
+    )
+
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    root = package_root()
+    war = find_active_siege(session.state, body.war_id)
+    if war is None:
+        raise HTTPException(status_code=404, detail="active siege not found")
+    if body.side == "attacker":
+        result = set_attacker_siege_command(
+            war,
+            doctrine=body.doctrine,
+            posture=body.posture,
+            base_dir=root,
+        )
+    else:
+        result = set_defender_siege_command(
+            war,
+            doctrine=body.doctrine,
+            posture=body.posture,
+            base_dir=root,
+        )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "command failed"))
+    session.manager.save(session.state)
+    return {
+        "api_version": API_VERSION,
+        "session_id": body.session_id,
+        **result,
+        "command": command_live_view(war, base_dir=root),
+    }
+
+
+@app.get("/v1/kingdom/commanders")
+def kingdom_commanders_route(session_id: str) -> dict[str, Any]:
+    from utils.siege_command import kingdom_commander_roster_status
+
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        **kingdom_commander_roster_status(session.state, base_dir=package_root()),
+    }
+
+
+@app.get("/v1/kingdom/doctrines")
+def kingdom_doctrines_catalog_route(session_id: str) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    root = package_root()
+    status = kingdom_status(session.state, base_dir=root)
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        "doctrines": list_government_doctrines(base_dir=root),
+        "current_monarchy": status.get("monarchy"),
+        "is_kingdom": status.get("is_kingdom", False),
+    }
+
+
+@app.post("/v1/kingdom/doctrine")
+def kingdom_doctrine_route(body: KingdomDoctrineRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    result = set_kingdom_doctrine(
+        session.state,
+        body.doctrine_id,
+        base_dir=package_root(),
+        custom_decree=body.custom_decree,
+        is_founding=False,
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "doctrine failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/kingdom/laws")
+def kingdom_laws_route(body: KingdomLawsRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    result = set_kingdom_laws(session.state, body.laws, base_dir=package_root())
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "laws failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/kingdom/fortify")
+def kingdom_fortify_route(body: KingdomFortifyRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    result = upgrade_fortification(
+        session.state, body.upgrade_type, base_dir=package_root()
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "fortify failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/kingdom/build_interior")
+def kingdom_interior_route(body: KingdomInteriorRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    result = build_interior(session.state, body.build_type, base_dir=package_root())
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "build failed"))
+    session.manager.save(session.state)
+    return {"api_version": API_VERSION, "session_id": body.session_id, **result}
+
+
+@app.post("/v1/kingdom/recruit")
+def kingdom_recruit_route(body: KingdomRecruitRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    result = recruit_military(
+        session.state,
+        body.unit_type,
+        body.count,
+        base_dir=package_root(),
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "recruit failed"))
     session.manager.save(session.state)
     return {"api_version": API_VERSION, "session_id": body.session_id, **result}
 
@@ -683,12 +1046,51 @@ def session_status(session_id: str) -> dict[str, Any]:
     session = _store.get(session_id)
     if session is None:
         raise HTTPException(status_code=404, detail="session not found")
+    from utils.sim_clock import sim_clock_status
+
+    root = package_root()
     return {
         "api_version": API_VERSION,
         "session_id": session_id,
         "report": session.status_report(),
         "world": session.state.get("world", {}),
+        "sim_clock": sim_clock_status(session.state, base_dir=root),
     }
+
+
+@app.get("/v1/sim/status")
+def sim_status(session_id: str) -> dict[str, Any]:
+    session = _store.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    from utils.sim_clock import sim_clock_status
+
+    root = package_root()
+    return {
+        "api_version": API_VERSION,
+        "session_id": session_id,
+        "sim_clock": sim_clock_status(session.state, base_dir=root),
+    }
+
+
+@app.post("/v1/sim/tick")
+def sim_tick(body: SimTickRequest) -> dict[str, Any]:
+    session = _store.get(body.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    dt_seconds = body.dt_real_ms / 1000.0
+    try:
+        result = session.run_sim_tick(dt_real_seconds=dt_seconds)
+    except (RuntimeError, KeyError, ValueError) as exc:
+        raise HTTPException(status_code=500, detail=f"sim tick failed: {exc}") from exc
+    if not result.get("ok"):
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("error", "sim tick rejected"),
+        )
+    payload = sim_tick_payload(session, result)
+    payload["session_id"] = body.session_id
+    return payload
 
 
 @app.post("/v1/turn")

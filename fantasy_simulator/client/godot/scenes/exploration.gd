@@ -7,6 +7,11 @@ extends Node2D
 @onready var _zone_label: Label = $CanvasLayer/ZoneLabel
 @onready var _agents_layer: Node2D = $AgentsLayer
 
+var _siege_battle: PanelContainer
+var _sim_tick_accum: float = 0.0
+var _sim_tick_busy: bool = false
+const SIM_TICK_INTERVAL := 1.0
+
 
 func _ready() -> void:
 	add_to_group("exploration_root")
@@ -19,6 +24,7 @@ func _ready() -> void:
 	ApiClient.position_synced.connect(_on_position_synced)
 	ApiClient.api_error.connect(_on_api_error)
 	ApiClient.agents_loaded.connect(_on_agents_loaded)
+	ApiClient.sim_tick_completed.connect(_on_sim_tick_completed)
 	await ApiClient.fetch_world_maps()
 	_apply_map_bounds(ApiClient.sim_map_id)
 	_apply_map_theme(ApiClient.sim_map_id)
@@ -32,6 +38,65 @@ func _ready() -> void:
 	)
 	if ok:
 		await ApiClient.fetch_world_agents(ApiClient.sim_map_id)
+	_setup_siege_overlay()
+	await _refresh_live_siege()
+
+
+func _process(delta: float) -> void:
+	if not ApiClient.sim_clock_enabled or _sim_tick_busy:
+		return
+	_sim_tick_accum += delta
+	if _sim_tick_accum < SIM_TICK_INTERVAL:
+		return
+	var ms := int(_sim_tick_accum * 1000.0)
+	_sim_tick_accum = 0.0
+	_poll_sim_tick(ms)
+
+
+func _poll_sim_tick(dt_ms: int) -> void:
+	_sim_tick_busy = true
+	var payload: Dictionary = await ApiClient.sim_tick(dt_ms)
+	_sim_tick_busy = false
+	if payload.is_empty():
+		return
+	_on_sim_tick_completed(payload)
+
+
+func _on_sim_tick_completed(payload: Dictionary) -> void:
+	_update_hud(payload)
+	_sync_live_siege(payload)
+
+
+func _setup_siege_overlay() -> void:
+	var scene: PackedScene = load("res://scenes/siege_battle.tscn")
+	if scene == null:
+		return
+	_siege_battle = scene.instantiate() as PanelContainer
+	_siege_battle.visible = false
+	$CanvasLayer.add_child(_siege_battle)
+	_siege_battle.set_anchors_preset(Control.PRESET_CENTER)
+
+
+func _sync_live_siege(payload: Dictionary) -> void:
+	if _siege_battle == null:
+		return
+	var live: Dictionary = payload.get("siege_live", {})
+	if not live is Dictionary or live.is_empty():
+		return
+	if not _siege_battle.visible:
+		_siege_battle.open_live(live)
+	else:
+		_siege_battle.sync_live(live)
+	var events: Array = payload.get("new_siege_events", [])
+	if not events.is_empty():
+		_siege_battle.pulse_events(events)
+
+
+func _refresh_live_siege() -> void:
+	var wars: Dictionary = await ApiClient.fetch_kingdom_wars()
+	var live: Dictionary = wars.get("siege_live", {})
+	if live is Dictionary and not live.is_empty():
+		_sync_live_siege({"siege_live": live, "new_siege_events": []})
 
 
 func _setup_camera() -> void:
@@ -116,6 +181,7 @@ func _on_turn_completed(payload: Dictionary) -> void:
 	for line in payload.get("lines", []):
 		_narrative.text += str(line) + "\n"
 	_update_hud(payload)
+	_sync_live_siege(payload)
 
 
 func _on_agents_loaded(payload: Dictionary) -> void:
@@ -140,12 +206,25 @@ func _on_agents_loaded(payload: Dictionary) -> void:
 
 func _update_hud(payload: Dictionary) -> void:
 	var world: Dictionary = payload.get("world", {})
-	_hud.text = "맵 %s · 타일 (%d,%d) · 긴장 %s" % [
+	var clock: Dictionary = payload.get("sim_clock", {})
+	var time_str := "?"
+	if world.has("minute_of_day"):
+		var mod := int(world["minute_of_day"])
+		time_str = "%02d:%02d" % [mod / 60, mod % 60]
+	elif payload.has("clock"):
+		time_str = str(payload.get("clock", "?"))
+	var scale := float(clock.get("realtime_scale", ApiClient.sim_realtime_scale))
+	_hud.text = "맵 %s · (%d,%d) · D%s %s · 긴장 %s · 시뮬×%.0f" % [
 		ApiClient.sim_map_id,
 		ApiClient.sim_tile.x,
 		ApiClient.sim_tile.y,
+		world.get("day", "?"),
+		time_str,
 		world.get("tension", "?"),
+		scale,
 	]
+	if bool(payload.get("ecology_beat", false)):
+		await ApiClient.fetch_world_agents(ApiClient.sim_map_id)
 
 
 func _on_api_error(message: String) -> void:
@@ -158,6 +237,10 @@ func _on_inventory_pressed() -> void:
 
 func _on_catalog_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/item_catalog.tscn")
+
+
+func _on_kingdom_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/kingdom.tscn")
 
 
 func _on_back_pressed() -> void:
