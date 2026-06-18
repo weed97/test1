@@ -61,12 +61,12 @@ python3 -m cpow_engine.demo --areas
 
 **목표**: "이 오브젝트가 창의적인가?" 판단 로직을 엔진 안에서 다듬기.
 
-- [ ] 복잡도·상호작용 밀도·엔트로피 가중치 튜닝
-- [ ] 봇 시뮬레이션 테스트 ("봇이 들어오면 어디가 취약한가?")
-- [ ] `fantasy_simulator` / `sungjwa_hunter_sim` 어댑터
-- [ ] JSON 스키마 검증 (`config/cpow_schema.json`)
+- [x] 복잡도·상호작용 밀도·엔트로피 가중치 튜닝 — `config/cpow_scoring.json`
+- [x] 봇 시뮬레이션 테스트 — `bot_sim/`, `python3 -m cpow_engine.bot_sim`
+- [x] `fantasy_simulator` / `sungjwa_hunter_sim` 어댑터 — `adapters/`
+- [x] JSON 스키마 검증 — `config/cpow_schema.json`, `schema/`
 
-**이 단계가 완성되기 전에는 L1 작업을 시작하지 않는다.**
+상세: [CPOW_PHASE2.md](CPOW_PHASE2.md)
 
 ### Phase 3: 브릿지 (은행 붙이기)
 

@@ -104,8 +104,13 @@ class TestValidator(unittest.TestCase):
         genesis = load_genesis()
         validator = ValidatorNode("v1", genesis, CreationRegistry())
         score = CPoWScore(
-            energy=100, economic_value=200, creativity_score=0.5,
-            entropy_bonus=0, repetition_penalty=1, bot_risk=0.9,
+            energy=100,
+            economic_value=200,
+            creativity_score=0.5,
+            entropy_bonus=0,
+            complexity_score=0,
+            repetition_penalty=1,
+            bot_risk=0.9,
         )
         tx = Transaction(TxType.MINT_ENERGY, "bot", {"energy": 100})
         result = validator.validate_mint_tx(

@@ -114,8 +114,10 @@
 - [ ] `sungjwa_hunter_sim` 어댑터
 
 ### Phase 2 — CPoW 가치화 정교화
-- [ ] 봇 취약점 시뮬레이션·가중치 튜닝
-- [ ] JSON 스키마 검증 (`config/cpow_schema.json`)
+- [x] 가중치 튜닝 (`config/cpow_scoring.json`) — [CPOW_PHASE2.md](CPOW_PHASE2.md)
+- [x] 봇 시뮬레이션 (`bot_sim/`)
+- [x] 레거시 어댑터 (`adapters/`)
+- [x] JSON 스키마 검증 (`schema/`, `cpow_schema.json`)
 
 ### Phase 3 — 브릿지 (엔진 완성 후)
 - [x] L1 레퍼런스 (`cpow_engine/chain/`, `bridge.py`)

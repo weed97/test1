@@ -34,6 +34,9 @@ python3 -m cpow_engine.demo --chain --seed 42 --ticks 5
 # Tests
 python3 -m unittest discover -s cpow_engine/tests -v
 
+# Phase 2: bot vulnerability simulation
+python3 -m cpow_engine.bot_sim
+
 # Compile check
 python3 -m compileall -q cpow_engine
 ```
