@@ -132,21 +132,6 @@ class DiplomacyLedger:
             return DiplomaticStance.ALLIANCE
         return DiplomaticStance.NEUTRAL
 
-    def links_for(self, area_id: str) -> list[dict]:
-        out: list[dict] = []
-        for (src, dst), link in self._links.items():
-            if src == area_id or dst == area_id:
-                entry = link.to_dict()
-                entry["resolved_with"] = dst if src == area_id else src
-                entry["resolved_stance"] = self.resolved_stance(area_id, entry["resolved_with"]).value
-                out.append(entry)
-        return out
-
-    def to_dict(self) -> dict[str, list[dict]]:
-        return {
-            "links": [link.to_dict() for link in self._links.values()],
-        }
-
 
 def can_cross_area_combat(stance: DiplomaticStance) -> bool:
     return stance == DiplomaticStance.HOSTILE
@@ -166,8 +151,3 @@ def observer_can_intervene_cross_area(
     if role != ContributorRole.OBSERVER:
         return True
     return False
-
-
-def competition_allowed(stance: DiplomaticStance) -> bool:
-    """중립은 규모·지배 경쟁만 — 직접 개입은 별도 규칙."""
-    return stance == DiplomaticStance.NEUTRAL

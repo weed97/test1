@@ -312,7 +312,6 @@ class AreaRegistry:
         }
 
     def siege_between(self, attacker_area_id: str, defender_area_id: str) -> dict:
-        self.get_or_raise(attacker_area_id)
         defender = self.get_or_raise(defender_area_id)
         attacker = self.get_or_raise(attacker_area_id)
         contest = self.siege.get(attacker_area_id, defender_area_id)

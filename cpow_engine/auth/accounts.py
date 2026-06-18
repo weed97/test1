@@ -24,14 +24,10 @@ class AccountRecord:
     created_at: float = field(default_factory=lambda: __import__("time").time())
 
     def verify(self, password: str) -> bool:
+        import hmac
+
         trial = _hash_password(password, self.salt)
-        return hmac_compare(trial, self.password_hash)
-
-
-def hmac_compare(a: bytes, b: bytes) -> bool:
-    import hmac
-
-    return hmac.compare_digest(a, b)
+        return hmac.compare_digest(trial, self.password_hash)
 
 
 @dataclass

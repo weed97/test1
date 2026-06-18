@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 
-from typing import Callable, TYPE_CHECKING
+from typing import Callable
 
 from cpow_engine.areas.governance_eligibility import (
     LongFlowPolicy,
@@ -23,9 +23,6 @@ from cpow_engine.areas.governance_eligibility import (
     validate_long_flow_proposal,
 )
 from cpow_engine.areas.member_identity import IdentityPolicy, MemberIdentityRegistry
-
-if TYPE_CHECKING:
-    pass
 from cpow_engine.areas.powers import UserPowers
 
 
@@ -123,20 +120,6 @@ def destruction_exceeds_creation(powers: UserPowers) -> bool:
     creation_total = powers.creation_gauge + powers.creation_data_score
     destruction_total = powers.destruction_gauge + powers.destruction_penalty
     return destruction_total > creation_total
-
-
-def monopoly_violation(
-    sponsors: set[str],
-    user_id: str,
-    *,
-    max_share: float,
-) -> bool:
-    """동일 발의자가 활성 발의에서 과도한 비중을 갖는지."""
-    if not sponsors:
-        return False
-    if user_id not in sponsors:
-        return False
-    return (1.0 / len(sponsors)) > max_share + 1e-9 and len(sponsors) < int(1.0 / max_share)
 
 
 def lead_author_monopoly(

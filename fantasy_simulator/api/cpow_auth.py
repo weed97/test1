@@ -10,9 +10,20 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from cpow_engine.auth import AccountRegistry, issue_session_token
+from cpow_engine.auth import AccountRegistry, AccountResult, issue_session_token
 
 _accounts = AccountRegistry()
+
+
+def _auth_token_response(result: AccountResult) -> dict[str, Any]:
+    token = issue_session_token(result.user_id)
+    return {
+        "ok": True,
+        "reason": result.reason,
+        "user_id": result.user_id,
+        "token": token,
+        "token_type": "Bearer",
+    }
 
 
 def handle_auth_register(payload: dict[str, Any]) -> dict[str, Any]:
@@ -21,14 +32,7 @@ def handle_auth_register(payload: dict[str, Any]) -> dict[str, Any]:
     result = _accounts.register(user_id, password)
     if not result.ok:
         return {"ok": False, "reason": result.reason}
-    token = issue_session_token(result.user_id)
-    return {
-        "ok": True,
-        "reason": result.reason,
-        "user_id": result.user_id,
-        "token": token,
-        "token_type": "Bearer",
-    }
+    return _auth_token_response(result)
 
 
 def handle_auth_login(payload: dict[str, Any]) -> dict[str, Any]:
@@ -37,14 +41,7 @@ def handle_auth_login(payload: dict[str, Any]) -> dict[str, Any]:
     result = _accounts.authenticate(user_id, password)
     if not result.ok:
         return {"ok": False, "reason": result.reason}
-    token = issue_session_token(result.user_id)
-    return {
-        "ok": True,
-        "reason": result.reason,
-        "user_id": result.user_id,
-        "token": token,
-        "token_type": "Bearer",
-    }
+    return _auth_token_response(result)
 
 
 def handle_auth_me(auth_user_id: str) -> dict[str, Any]:

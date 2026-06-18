@@ -19,8 +19,7 @@ from cpow_engine.areas.member_identity import IdentityPolicy
 from cpow_engine.areas.powers import UserPowers
 from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas import SimulationMode
-from cpow_engine.collab.policy import CollabPolicy
-from cpow_engine.physics import create_heat_object
+from cpow_engine.tests.area_helpers import ensure_member_collab, seed_living_area
 
 
 def _test_long_flow_policy() -> LongFlowPolicy:
@@ -114,35 +113,6 @@ def _register_identities(reg: AreaRegistry, *user_ids: str) -> None:
         reg.register_member_identity(uid, f"person_secret_{uid}")
 
 
-def _seed_living_area(area: CreatedArea) -> None:
-    """인간 공동창작 활동 — 모든 구성원이 창조·합의에 참여."""
-    instant = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
-    area.world.policy = instant
-    humans = [uid for uid in area.members if uid not in area.npcs]
-    if len(humans) < 2:
-        return
-    needed = area.consensus.policy.approvals_needed(len(area.members))
-    for i, creator in enumerate(humans):
-        obj = create_heat_object(creator, f"collab_work_{i}", 40.0)
-        result = area.submit_creation(creator, obj, creation_type="heat")
-        if result.consensus_pending and result.proposal_id:
-            for j in range(needed):
-                voter = humans[(i + j + 1) % len(humans)]
-                proposal = area.consensus.get_proposal(result.proposal_id)
-                if proposal is None or proposal.status.value != "pending":
-                    break
-                area.vote_on_creation(voter, result.proposal_id, approve=True)
-        area.world.advance_pulse(force=True)
-
-
-def _ensure_vote_collab(area: CreatedArea) -> None:
-    from cpow_engine.tests.area_helpers import ensure_member_collab
-
-    for uid in area.members:
-        if uid not in area.npcs:
-            ensure_member_collab(area, uid, min_signals=2)
-
-
 def _registry_with_members(n: int) -> tuple[AreaRegistry, CreatedArea]:
     reg = AreaRegistry(governance_policy=_test_policy())
     area = reg.found("founder", "테스트 월드", mode=SimulationMode.CREATION_ADVENTURE)
@@ -159,8 +129,10 @@ def _registry_with_members(n: int) -> tuple[AreaRegistry, CreatedArea]:
         if uid not in area.npcs:
             powers = area.power_ledger.get_or_create(uid)
             powers.creation_gauge = max(powers.creation_gauge, 120.0)
-    _seed_living_area(area)
-    _ensure_vote_collab(area)
+    seed_living_area(area)
+    for uid in area.members:
+        if uid not in area.npcs:
+            ensure_member_collab(area, uid, min_signals=2)
     humans = [uid for uid in area.members if uid not in area.npcs]
     _register_identities(reg, *humans)
     return reg, area

@@ -473,13 +473,10 @@ def handle_area_siege_repulse(payload: dict[str, Any]) -> dict[str, Any]:
 def handle_identity_register(
     payload: dict[str, Any],
     *,
-    auth_user_id: str | None = None,
+    auth_user_id: str,
 ) -> dict[str, Any]:
-    user_id = auth_user_id or str(payload.get("user_id", ""))
-    if auth_user_id and payload.get("user_id") and str(payload["user_id"]) != auth_user_id:
-        return {"ok": False, "reason": "actor_identity_mismatch"}
     return _registry.register_member_identity(
-        user_id,
+        auth_user_id,
         str(payload.get("person_key", "")),
     )
 

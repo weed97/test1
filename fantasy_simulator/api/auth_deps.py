@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -13,10 +12,6 @@ if str(_REPO_ROOT) not in sys.path:
 from fastapi import Header, HTTPException
 
 from cpow_engine.auth import SessionTokenError, verify_session_token
-
-
-def auth_required() -> bool:
-    return os.environ.get("CPOW_AUTH_REQUIRED", "0").lower() in ("1", "true", "yes")
 
 
 def _parse_bearer(authorization: str | None) -> str | None:
@@ -33,15 +28,6 @@ def _parse_bearer(authorization: str | None) -> str | None:
 
 def optional_user(authorization: str | None = Header(None)) -> str | None:
     return _parse_bearer(authorization)
-
-
-def require_user(authorization: str | None = Header(None)) -> str:
-    user_id = _parse_bearer(authorization)
-    if user_id:
-        return user_id
-    if auth_required():
-        raise HTTPException(status_code=401, detail="auth_required")
-    return ""
 
 
 def require_authenticated_user(authorization: str | None = Header(None)) -> str:

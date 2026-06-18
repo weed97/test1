@@ -806,10 +806,7 @@ def xr_session_new() -> dict[str, str]:
 @app.post("/v1/xr/creation")
 def xr_creation(body: XRCreationRequest) -> dict[str, Any]:
     try:
-        payload = body.model_dump()
-        if body.intent and not payload.get("intent"):
-            payload["intent"] = body.intent
-        return handle_xr_creation(payload)
+        return handle_xr_creation(body.model_dump())
     except (KeyError, ValueError, TypeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

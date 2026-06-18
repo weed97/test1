@@ -7,7 +7,6 @@ Production-hardening layer for CPoW areas, governance, and API access.
 - **Module:** `cpow_engine/auth/` — HMAC session tokens (stdlib, no PyJWT).
 - **API:** `POST /v1/auth/register`, `POST /v1/auth/login`, `GET /v1/auth/me`
 - **Env:** `CPOW_JWT_SECRET` — signing key (default dev secret; change in production).
-- **Env:** `CPOW_AUTH_REQUIRED=1` — reject unauthenticated mutating calls (optional strict mode).
 
 Bearer tokens bind the session `user_id` to area/governance actor fields. Payload actor IDs that disagree with the session return `403 actor_identity_mismatch`.
 

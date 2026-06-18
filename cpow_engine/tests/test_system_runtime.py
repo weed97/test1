@@ -14,7 +14,12 @@ from cpow_engine.areas.registry import AreaRegistry
 from cpow_engine.areas.system_runtime import SystemRuntime
 from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.physics import create_heat_object
-from cpow_engine.tests.area_helpers import create_with_consensus, confirmed_object, ensure_member_collab
+from cpow_engine.tests.area_helpers import (
+    create_with_consensus,
+    confirmed_object,
+    ensure_member_collab,
+    seed_living_area,
+)
 
 
 def _runtime_governance_policy() -> GovernancePolicy:
@@ -43,26 +48,6 @@ def _runtime_governance_policy() -> GovernancePolicy:
         ),
         identity=IdentityPolicy(require_verified=True, min_person_key_chars=4),
     )
-
-
-def _seed_living_area(area) -> None:
-    instant = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
-    area.world.policy = instant
-    humans = [uid for uid in area.members if uid not in area.npcs]
-    if len(humans) < 2:
-        return
-    needed = area.consensus.policy.approvals_needed(len(area.members))
-    for i, creator in enumerate(humans):
-        obj = create_heat_object(creator, f"work_{i}", 40.0)
-        result = area.submit_creation(creator, obj, creation_type="heat")
-        if result.consensus_pending and result.proposal_id:
-            for j in range(needed):
-                voter = humans[(i + j + 1) % len(humans)]
-                proposal = area.consensus.get_proposal(result.proposal_id)
-                if proposal is None or proposal.status.value != "pending":
-                    break
-                area.vote_on_creation(voter, result.proposal_id, approve=True)
-        area.world.advance_pulse(force=True)
 
 
 def _macro_flow_spec(**extra) -> dict:
@@ -188,7 +173,7 @@ class TestGovernanceEnactmentWiresRuntime(unittest.TestCase):
                 p = area.power_ledger.get_or_create(uid)
                 p.creation_gauge = max(p.creation_gauge, 120.0)
 
-        _seed_living_area(area)
+        seed_living_area(area, label_prefix="work_")
         for uid in area.members:
             if uid not in area.npcs:
                 ensure_member_collab(area, uid, min_signals=2)

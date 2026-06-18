@@ -14,7 +14,6 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from cpow_engine.engine import SimulationEngine
-from cpow_engine.physics import create_heat_object, create_material_object
 from cpow_engine.xr import XRCreationIntent, intent_to_creative_object
 
 

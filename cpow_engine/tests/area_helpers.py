@@ -4,25 +4,9 @@ from __future__ import annotations
 
 from cpow_engine.areas.area import CreatedArea
 from cpow_engine.areas.consensus import ProposalStatus
-from cpow_engine.collab import WorldSubmissionResult
+from cpow_engine.collab.policy import CollabPolicy
 from cpow_engine.models import CreativeObject
-
-
-def approve_pending_creation(
-    area: CreatedArea,
-    result: WorldSubmissionResult,
-    *,
-    voter_id: str | None = None,
-) -> WorldSubmissionResult:
-    """합의 대기 창조를 승인하고 펄스까지 반영."""
-    if not result.consensus_pending:
-        area.world.advance_pulse(force=True)
-        return result
-
-    voter = voter_id or area.founder_id
-    area.vote_on_creation(voter, result.proposal_id, approve=True)
-    area.world.advance_pulse(force=True)
-    return result
+from cpow_engine.physics import create_heat_object
 
 
 def create_with_consensus(
@@ -76,6 +60,26 @@ def ensure_member_collab(area: CreatedArea, user_id: str, *, min_signals: int = 
         return
     while rec.collab_signals() < min_signals:
         rec.consensus_votes_cast += 1
+
+
+def seed_living_area(area: CreatedArea, *, label_prefix: str = "collab_work_") -> None:
+    """인간 공동창작 활동 — 거버넌스 living-area 테스트용."""
+    area.world.policy = CollabPolicy(pulse_interval_sec=0.0, min_creator_cooldown_sec=0.0)
+    humans = [uid for uid in area.members if uid not in area.npcs]
+    if len(humans) < 2:
+        return
+    needed = area.consensus.policy.approvals_needed(len(area.members))
+    for i, creator in enumerate(humans):
+        obj = create_heat_object(creator, f"{label_prefix}{i}", 40.0)
+        result = area.submit_creation(creator, obj, creation_type="heat")
+        if result.consensus_pending and result.proposal_id:
+            for j in range(needed):
+                voter = humans[(i + j + 1) % len(humans)]
+                proposal = area.consensus.get_proposal(result.proposal_id)
+                if proposal is None or proposal.status != ProposalStatus.PENDING:
+                    break
+                area.vote_on_creation(voter, result.proposal_id, approve=True)
+        area.world.advance_pulse(force=True)
 
 
 def declare_hostile_bilateral(
