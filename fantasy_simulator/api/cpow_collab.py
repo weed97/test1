@@ -3,19 +3,11 @@
 
 from __future__ import annotations
 
-import sys
 import uuid
-from pathlib import Path
 from typing import Any
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-
 from cpow_engine.collab import CollaborativeWorld
-from cpow_engine.models import CreativeObject
-from cpow_engine.physics import create_heat_object, create_material_object
-from cpow_engine.xr import XRCreationIntent, intent_to_creative_object
+from cpow_engine.object_factory import build_object_from_payload
 
 
 class CollabWorldStore:
@@ -96,32 +88,19 @@ def handle_collab_join(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _build_object(payload: dict[str, Any], creator_id: str) -> CreativeObject:
-    if "intent" in payload:
-        intent = XRCreationIntent.from_dict(payload["intent"])
-        return intent_to_creative_object(intent)
-    if "object" in payload:
-        return CreativeObject.from_dict(payload["object"])
-    if payload.get("type") == "heat":
-        return create_heat_object(
-            creator_id,
-            str(payload.get("label", "협동 열원")),
-            float(payload.get("heat_intensity", 80.0)),
-        )
-    return create_material_object(
-        creator_id,
-        str(payload.get("label", "협동 재료")),
-        str(payload.get("material", "iron")),
-    )
-
-
 def handle_collab_create(payload: dict[str, Any]) -> dict[str, Any]:
     world_id = str(payload["world_id"])
     creator_id = str(payload.get("creator_id", "anonymous"))
     world = _store.get_or_create(world_id)
 
     creativity = float(payload.get("creativity_score", 1.0))
-    obj = _build_object(payload, creator_id)
+    obj, _ = build_object_from_payload(
+        payload,
+        creator_id,
+        default_type="material",
+        default_heat_label="협동 열원",
+        default_material_label="협동 재료",
+    )
     result = world.submit_creation(creator_id, obj, creativity_score=creativity)
     pulse = world.maybe_advance_pulse()
     return _submission_response(world, world_id, result, pulse=pulse)

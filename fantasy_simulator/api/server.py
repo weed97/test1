@@ -9,6 +9,8 @@ Run:
 
 from __future__ import annotations
 
+import api._bootstrap  # noqa: F401 — monorepo path before cpow_engine imports
+
 from typing import Any, Literal, Optional
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -46,12 +48,9 @@ from utils.spatial import maps_manifest
 from utils.temporal import TemporalMode
 
 from api.cpow_xr import handle_xr_connect, handle_xr_creation, handle_xr_world, _store as _xr_store
-from api.auth_deps import (
-    bind_session_actor,
-    optional_user,
-    require_authenticated_user,
-)
+from api.auth_deps import optional_user, require_authenticated_user
 from api.cpow_auth import handle_auth_login, handle_auth_me, handle_auth_register
+from api.route_helpers import authed_call, authed_call_400, authed_call_404
 from api.cpow_collab import (
     handle_collab_create,
     handle_collab_join,
@@ -955,10 +954,9 @@ def area_found(
     body: AreaFoundRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(
-        body.model_dump(exclude_none=True), auth_user, "founder_id",
+    return authed_call(
+        handle_area_found, body, auth_user, "founder_id", exclude_none=True,
     )
-    return handle_area_found(payload)
 
 
 @app.post("/v1/areas/join")
@@ -966,10 +964,9 @@ def area_join(
     body: AreaJoinRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(
-        body.model_dump(exclude_none=True), auth_user, "creator_id",
+    return authed_call(
+        handle_area_join, body, auth_user, "creator_id", exclude_none=True,
     )
-    return handle_area_join(payload)
 
 
 @app.post("/v1/areas/create")
@@ -977,13 +974,9 @@ def area_create(
     body: AreaCreateRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(
-            body.model_dump(exclude_none=True), auth_user, "creator_id",
-        )
-        return handle_area_create(payload)
-    except (KeyError, ValueError, TypeError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return authed_call_400(
+        handle_area_create, body, auth_user, "creator_id", exclude_none=True,
+    )
 
 
 @app.post("/v1/areas/adventure")
@@ -991,10 +984,9 @@ def area_adventure(
     body: AreaAdventureRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(
-        body.model_dump(exclude_none=True), auth_user, "actor_id",
+    return authed_call(
+        handle_area_adventure, body, auth_user, "actor_id", exclude_none=True,
     )
-    return handle_area_adventure(payload)
 
 
 @app.post("/v1/areas/mutate")
@@ -1002,13 +994,9 @@ def area_mutate(
     body: AreaMutateRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(
-            body.model_dump(exclude_none=True), auth_user, "actor_id",
-        )
-        return handle_area_mutate(payload)
-    except (KeyError, ValueError, TypeError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return authed_call_400(
+        handle_area_mutate, body, auth_user, "actor_id", exclude_none=True,
+    )
 
 
 class AreaVoteRequest(BaseModel):
@@ -1023,8 +1011,7 @@ def area_vote(
     body: AreaVoteRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(body.model_dump(), auth_user, "voter_id")
-    return handle_area_vote(payload)
+    return authed_call(handle_area_vote, body, auth_user, "voter_id")
 
 
 class AreaDefendRequest(BaseModel):
@@ -1054,8 +1041,7 @@ def area_defend(
     body: AreaDefendRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(body.model_dump(), auth_user, "actor_id")
-    return handle_area_defend(payload)
+    return authed_call(handle_area_defend, body, auth_user, "actor_id")
 
 
 @app.post("/v1/areas/extract_core")
@@ -1063,8 +1049,7 @@ def area_extract_core(
     body: AreaExtractCoreRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(body.model_dump(), auth_user, "actor_id")
-    return handle_area_extract_core(payload)
+    return authed_call(handle_area_extract_core, body, auth_user, "actor_id")
 
 
 @app.post("/v1/areas/restore_core")
@@ -1072,10 +1057,9 @@ def area_restore_core(
     body: AreaRestoreCoreRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(
-        body.model_dump(exclude_none=True), auth_user, "actor_id",
+    return authed_call(
+        handle_area_restore_core, body, auth_user, "actor_id", exclude_none=True,
     )
-    return handle_area_restore_core(payload)
 
 
 @app.post("/v1/areas/migrate")
@@ -1083,8 +1067,7 @@ def area_migrate(
     body: AreaMigrateRequest,
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(body.model_dump(), auth_user, "actor_id")
-    return handle_area_migrate(payload)
+    return authed_call(handle_area_migrate, body, auth_user, "actor_id")
 
 
 @app.get("/v1/areas/powers")
@@ -1100,11 +1083,7 @@ def area_imbue(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(body, auth_user, "actor_id")
-        return handle_area_imbue(payload)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return authed_call_404(handle_area_imbue, body, auth_user, "actor_id")
 
 
 @app.post("/v1/areas/spawn_npc")
@@ -1112,11 +1091,7 @@ def area_spawn_npc(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(body, auth_user, "owner_id")
-        return handle_area_spawn_npc(payload)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return authed_call_404(handle_area_spawn_npc, body, auth_user, "owner_id")
 
 
 @app.post("/v1/areas/npc/allocate")
@@ -1124,11 +1099,7 @@ def area_npc_allocate(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(body, auth_user, "owner_id")
-        return handle_area_npc_allocate(payload)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return authed_call_404(handle_area_npc_allocate, body, auth_user, "owner_id")
 
 
 @app.post("/v1/areas/npc/task")
@@ -1136,11 +1107,7 @@ def area_npc_task(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(body, auth_user, "owner_id")
-        return handle_area_npc_task(payload)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return authed_call_404(handle_area_npc_task, body, auth_user, "owner_id")
 
 
 @app.post("/v1/areas/npc/tick")
@@ -1156,11 +1123,7 @@ def area_expand(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(body, auth_user, "actor_id")
-        return handle_area_expand(payload)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return authed_call_404(handle_area_expand, body, auth_user, "actor_id")
 
 
 @app.get("/v1/areas/dominance")
@@ -1176,11 +1139,7 @@ def area_diplomacy_set(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(body, auth_user, "actor_id")
-        return handle_area_diplomacy_set(payload)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return authed_call_404(handle_area_diplomacy_set, body, auth_user, "actor_id")
 
 
 @app.get("/v1/areas/diplomacy")
@@ -1196,11 +1155,7 @@ def area_cross_destroy(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(body, auth_user, "actor_id")
-        return handle_area_cross_destroy(payload)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return authed_call_404(handle_area_cross_destroy, body, auth_user, "actor_id")
 
 
 @app.post("/v1/areas/allied_create")
@@ -1208,11 +1163,7 @@ def area_allied_create(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(body, auth_user, "creator_id")
-        return handle_area_allied_create(payload)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return authed_call_404(handle_area_allied_create, body, auth_user, "creator_id")
 
 
 @app.get("/v1/areas/siege")
@@ -1236,11 +1187,7 @@ def area_siege_repulse(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    try:
-        payload = bind_session_actor(body, auth_user, "actor_id")
-        return handle_area_siege_repulse(payload)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return authed_call_404(handle_area_siege_repulse, body, auth_user, "actor_id")
 
 
 @app.post("/v1/governance/draft")
@@ -1248,8 +1195,7 @@ def governance_draft(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(body, auth_user, "author_id")
-    return handle_governance_draft(payload)
+    return authed_call(handle_governance_draft, body, auth_user, "author_id")
 
 
 @app.post("/v1/governance/compose")
@@ -1257,8 +1203,7 @@ def governance_compose(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(body, auth_user, "user_id")
-    return handle_governance_compose(payload)
+    return authed_call(handle_governance_compose, body, auth_user, "user_id")
 
 
 @app.post("/v1/governance/cosponsor")
@@ -1266,8 +1211,7 @@ def governance_cosponsor(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(body, auth_user, "user_id")
-    return handle_governance_cosponsor(payload)
+    return authed_call(handle_governance_cosponsor, body, auth_user, "user_id")
 
 
 @app.post("/v1/governance/vote")
@@ -1275,8 +1219,7 @@ def governance_vote(
     body: dict[str, Any],
     auth_user: str | None = Depends(optional_user),
 ) -> dict[str, Any]:
-    payload = bind_session_actor(body, auth_user, "user_id")
-    return handle_governance_vote(payload)
+    return authed_call(handle_governance_vote, body, auth_user, "user_id")
 
 
 @app.post("/v1/governance/tick")

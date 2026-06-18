@@ -3,50 +3,14 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 from typing import Any
-
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
 
 from cpow_engine.areas import AreaRegistry, ContributorRole, SimulationMode
 from cpow_engine.areas.siege import area_fortification_strength
-from cpow_engine.models import CreativeObject
-from cpow_engine.physics import create_heat_object, create_material_object
-from cpow_engine.xr import XRCreationIntent, intent_to_creative_object
+from cpow_engine.object_factory import build_object_from_payload
 
 
 _registry = AreaRegistry()
-
-
-def _build_object(payload: dict[str, Any], creator_id: str) -> tuple[CreativeObject, str]:
-    if "intent" in payload:
-        intent = XRCreationIntent.from_dict(payload["intent"])
-        obj = intent_to_creative_object(intent)
-        return obj, str(payload.get("type", "heat"))
-    if "object" in payload:
-        return CreativeObject.from_dict(payload["object"]), str(
-            payload.get("type", "heat")
-        )
-    if payload.get("type") == "material":
-        return (
-            create_material_object(
-                creator_id,
-                str(payload.get("label", "재료")),
-                str(payload.get("material", "iron")),
-            ),
-            "material",
-        )
-    return (
-        create_heat_object(
-            creator_id,
-            str(payload.get("label", "열원")),
-            float(payload.get("heat_intensity", 80.0)),
-        ),
-        "heat",
-    )
 
 
 def handle_area_found(payload: dict[str, Any]) -> dict[str, Any]:
@@ -82,7 +46,7 @@ def handle_area_create(payload: dict[str, Any]) -> dict[str, Any]:
     area = _registry.get_or_raise(str(payload["area_id"]))
     creator_id = str(payload.get("creator_id", "anonymous"))
     creativity = float(payload.get("creativity_score", 1.0))
-    obj, creation_type = _build_object(payload, creator_id)
+    obj, creation_type = build_object_from_payload(payload, creator_id)
     result = area.submit_creation(
         creator_id, obj,
         creation_type=creation_type,
@@ -391,7 +355,7 @@ def handle_area_allied_create(payload: dict[str, Any]) -> dict[str, Any]:
     home_area_id = str(payload["home_area_id"])
     target_area_id = str(payload["target_area_id"])
     creator_id = str(payload.get("creator_id", "anonymous"))
-    obj, creation_type = _build_object(payload, creator_id)
+    obj, creation_type = build_object_from_payload(payload, creator_id)
     result = _registry.allied_creation(
         home_area_id,
         target_area_id,
