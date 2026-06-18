@@ -14,17 +14,39 @@ jobs:
           ref: cpow-world
           fetch-depth: 0
 
-      - name: Push to weed97/cpow-world
+      - name: Validate push token
         env:
           PUSH_TOKEN: ${{ secrets.CPOW_WORLD_PUSH_TOKEN }}
         run: |
           if [ -z "$PUSH_TOKEN" ]; then
-            echo "::error::CPOW_WORLD_PUSH_TOKEN secret is not set."
+            echo "::error::CPOW_WORLD_PUSH_TOKEN secret is not set on weed97/test1."
             echo "See docs/MOBILE_PUSH_CPOW.md"
             exit 1
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          CODE=$(curl -s -o /tmp/repo_check.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${PUSH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/weed97/cpow-world")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Token cannot access weed97/cpow-world (HTTP ${CODE})."
+            echo "Use a **weed97** account classic PAT with repo scope,"
+            echo "or fine-grained PAT with cpow-world Contents read/write."
+            cat /tmp/repo_check.json || true
+            exit 1
+          fi
+          if ! git ls-remote "https://x-access-token:${PUSH_TOKEN}@github.com/weed97/cpow-world.git" HEAD >/dev/null 2>&1; then
+            echo "::error::Token can read API but cannot push to cpow-world."
+            echo "Classic: check full repo scope. Fine-grained: Contents write on cpow-world."
+            exit 1
+          fi
+          echo "Token OK — can access cpow-world."
+
+      - name: Push to weed97/cpow-world
+        env:
+          PUSH_TOKEN: ${{ secrets.CPOW_WORLD_PUSH_TOKEN }}
+        run: |
+          git config user.name "weed97"
+          git config user.email "weed97@users.noreply.github.com"
           git branch -M main
           git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/weed97/cpow-world.git"
           git push -u origin main --force
