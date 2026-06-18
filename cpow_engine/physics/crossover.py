@@ -2,37 +2,21 @@
 
 from __future__ import annotations
 
-from cpow_engine.models import CreativeObject, InteractionResult, PropertyDef
+from cpow_engine.models import CreativeObject, InteractionResult
 from cpow_engine.physics import HeatSource, Material
 from cpow_engine.physics.balance_config import PhysicsBalanceConfig, load_physics_balance_config
-
-
-def _heat_of(obj: CreativeObject) -> float:
-    prop = obj.get_property("heat_intensity")
-    return prop.value if prop else 0.0
-
-
-def _residual_of(obj: CreativeObject) -> float:
-    prop = obj.get_property("residual_heat")
-    return prop.value if prop else 0.0
-
-
-def _set_prop(obj: CreativeObject, name: str, value: float, unit: str = "") -> None:
-    prop = obj.get_property(name)
-    if prop is None:
-        obj.properties.append(PropertyDef(name=name, value=value, unit=unit))
-    else:
-        prop.value = value
-
-
-def _clamp_delta(delta: float, cap: float) -> float:
-    if cap <= 0:
-        return delta
-    return max(-cap, min(cap, delta))
+from cpow_engine.physics.properties import (
+    charge_of,
+    clamp_delta,
+    heat_of,
+    radiation_of,
+    residual_of,
+    set_prop,
+)
 
 
 class CrossoverPhysics:
-    """직접 연결 외 교차 경로 — 허브 공명·2-hop·환경 결합."""
+    """직접 연결 외 교차 경로 — 허브 공명·2-hop·환경·전하·복사 결합."""
 
     def __init__(self, config: PhysicsBalanceConfig | None = None) -> None:
         self.cfg = config or load_physics_balance_config()
@@ -52,6 +36,8 @@ class CrossoverPhysics:
 
         results.extend(self._hub_resonance(obj_list, by_id))
         results.extend(self._two_hop_bleed(obj_list, by_id))
+        results.extend(self._charge_hub_resonance(obj_list, by_id))
+        results.extend(self._radiant_bleed(obj_list, by_id))
         results.extend(self._ambient_coupling(obj_list, energy_pool))
         return results
 
@@ -60,7 +46,6 @@ class CrossoverPhysics:
         obj_list: list[CreativeObject],
         by_id: dict[str, CreativeObject],
     ) -> list[InteractionResult]:
-        """같은 허브에 연결된 오브젝트끼리 약한 열 교차."""
         results: list[InteractionResult] = []
         hub_to_peers: dict[str, list[str]] = {}
 
@@ -81,8 +66,8 @@ class CrossoverPhysics:
                 for dst_id in unique[i + 1 :]:
                     src = by_id[src_id]
                     dst = by_id[dst_id]
-                    src_heat = _heat_of(src) + _residual_of(src) * 0.5
-                    dst_heat = _heat_of(dst) + _residual_of(dst) * 0.5
+                    src_heat = heat_of(src) + residual_of(src) * 0.5
+                    dst_heat = heat_of(dst) + residual_of(dst) * 0.5
                     if src_heat < 1.0 and dst_heat < 1.0:
                         continue
                     gradient = src_heat - dst_heat
@@ -100,12 +85,72 @@ class CrossoverPhysics:
                             effect_type="hub_crossover",
                             magnitude=flow,
                             energy_delta=flow * 0.55,
-                            metadata={
-                                "via_hub": hub_id,
-                                "path": "hub_resonance",
-                            },
+                            metadata={"via_hub": hub_id, "path": "hub_resonance"},
                         )
                     )
+        return results
+
+    def _charge_hub_resonance(
+        self,
+        obj_list: list[CreativeObject],
+        by_id: dict[str, CreativeObject],
+    ) -> list[InteractionResult]:
+        results: list[InteractionResult] = []
+        hub_to_peers: dict[str, list[str]] = {}
+        for obj in obj_list:
+            for conn_id in obj.connections:
+                if conn_id not in by_id:
+                    continue
+                hub_to_peers.setdefault(conn_id, []).append(obj.id)
+
+        for hub_id, peer_ids in hub_to_peers.items():
+            unique = list(dict.fromkeys(peer_ids))
+            if len(unique) < 2:
+                continue
+            for i, a_id in enumerate(unique):
+                for b_id in unique[i + 1 :]:
+                    a, b = by_id[a_id], by_id[b_id]
+                    qa, qb = charge_of(a), charge_of(b)
+                    if abs(qa) < 0.5 and abs(qb) < 0.5:
+                        continue
+                    flow = abs(qa - qb) * self.cfg.charge_hub_bleed * 0.01
+                    results.append(
+                        InteractionResult(
+                            source_id=a.id,
+                            target_id=b.id,
+                            effect_type="charge_crossover",
+                            magnitude=flow,
+                            energy_delta=flow * 0.4,
+                            metadata={"via_hub": hub_id, "path": "charge_hub"},
+                        )
+                    )
+        return results
+
+    def _radiant_bleed(
+        self,
+        obj_list: list[CreativeObject],
+        by_id: dict[str, CreativeObject],
+    ) -> list[InteractionResult]:
+        results: list[InteractionResult] = []
+        for mid in obj_list:
+            rad = radiation_of(mid)
+            if rad < 2.0:
+                continue
+            for n_id in mid.connections:
+                if n_id not in by_id:
+                    continue
+                n = by_id[n_id]
+                bleed = rad * self.cfg.radiation_bleed_factor * 0.015
+                results.append(
+                    InteractionResult(
+                        source_id=mid.id,
+                        target_id=n.id,
+                        effect_type="radiation_crossover",
+                        magnitude=bleed,
+                        energy_delta=bleed * 0.3,
+                        metadata={"via_node": mid.id, "path": "radiant_bleed"},
+                    )
+                )
         return results
 
     def _two_hop_bleed(
@@ -113,7 +158,6 @@ class CrossoverPhysics:
         obj_list: list[CreativeObject],
         by_id: dict[str, CreativeObject],
     ) -> list[InteractionResult]:
-        """A→B→C 경로로 약한 교차 (직접 연결 없어도)."""
         results: list[InteractionResult] = []
         for mid in obj_list:
             for n1_id in mid.connections:
@@ -126,8 +170,8 @@ class CrossoverPhysics:
                     n2 = by_id[n2_id]
                     if n2_id in n1.connections:
                         continue
-                    h1 = _heat_of(n1) + _residual_of(n1) * 0.4
-                    h2 = _heat_of(n2) + _residual_of(n2) * 0.4
+                    h1 = heat_of(n1) + residual_of(n1) * 0.4
+                    h2 = heat_of(n2) + residual_of(n2) * 0.4
                     grad = h1 - h2
                     if abs(grad) < 1.0:
                         continue
@@ -140,10 +184,7 @@ class CrossoverPhysics:
                             effect_type="path_crossover",
                             magnitude=flow,
                             energy_delta=flow * 0.45,
-                            metadata={
-                                "via_node": mid.id,
-                                "path": "two_hop",
-                            },
+                            metadata={"via_node": mid.id, "path": "two_hop"},
                         )
                     )
         return results
@@ -153,7 +194,6 @@ class CrossoverPhysics:
         obj_list: list[CreativeObject],
         energy_pool: float,
     ) -> list[InteractionResult]:
-        """에너지 풀이 전역 장처럼 모든 열원과 미세 결합."""
         if energy_pool <= 0 or not obj_list:
             return []
         results: list[InteractionResult] = []
@@ -161,7 +201,7 @@ class CrossoverPhysics:
         for obj in obj_list:
             if not HeatSource().can_apply(obj):
                 continue
-            heat = _heat_of(obj)
+            heat = heat_of(obj)
             bias = (ambient - heat) * self.cfg.ambient_coupling * 0.01
             if abs(bias) < 0.05:
                 continue
@@ -182,7 +222,6 @@ class CrossoverPhysics:
         objects: dict[str, CreativeObject],
         interactions: list[InteractionResult],
     ) -> int:
-        """상호작용 결과를 오브젝트 속성에 되돌려 — 교차가 누적·소멸."""
         if not interactions:
             return 0
         cap = self.cfg.max_property_delta_per_tick
@@ -192,11 +231,11 @@ class CrossoverPhysics:
             if ix.target_id and ix.target_id in objects:
                 gain = ix.magnitude * self.cfg.feedback_residual_gain
                 tgt = objects[ix.target_id]
-                _set_prop(
+                set_prop(
                     tgt,
                     "residual_heat",
-                    _residual_of(tgt) + _clamp_delta(gain, cap),
-                    "joules",
+                    residual_of(tgt) + clamp_delta(gain, cap),
+                    unit="joules",
                 )
                 mutations += 1
 
@@ -205,6 +244,8 @@ class CrossoverPhysics:
                 "hub_crossover",
                 "path_crossover",
                 "conductive_transfer",
+                "charge_crossover",
+                "radiation_crossover",
             ):
                 src = objects[ix.source_id]
                 heat_prop = src.get_property("heat_intensity")
@@ -212,7 +253,7 @@ class CrossoverPhysics:
                     drain = ix.magnitude * self.cfg.feedback_heat_drain
                     heat_prop.value = max(
                         0.0,
-                        heat_prop.value - _clamp_delta(drain, cap),
+                        heat_prop.value - clamp_delta(drain, cap),
                     )
                     mutations += 1
 

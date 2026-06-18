@@ -26,6 +26,20 @@ class PhysicsBalanceConfig:
     heat_pull_to_ambient: float = 0.08
     residual_decay: float = 0.35
     balance_smoothing: float = 0.4
+    extended_physics_enabled: bool = True
+    field_physics_enabled: bool = True
+    phase_change_enabled: bool = True
+    electrostatic_coupling: float = 1.0
+    fluid_flow_factor: float = 0.35
+    radiation_coupling: float = 0.8
+    structural_load_factor: float = 0.12
+    gravity_strength: float = 9.8
+    wind_strength: float = 0.5
+    ambient_pressure_base: float = 101.3
+    pressure_coupling: float = 0.06
+    charge_hub_bleed: float = 0.14
+    radiation_bleed_factor: float = 0.22
+    freeze_ratio: float = 0.92
 
     @classmethod
     def from_dict(cls, data: dict) -> PhysicsBalanceConfig:
@@ -49,6 +63,22 @@ class PhysicsBalanceConfig:
             heat_pull_to_ambient=float(data.get("heat_pull_to_ambient", 0.08)),
             residual_decay=float(data.get("residual_decay", 0.35)),
             balance_smoothing=float(data.get("balance_smoothing", 0.4)),
+            extended_physics_enabled=bool(
+                data.get("extended_physics_enabled", True)
+            ),
+            field_physics_enabled=bool(data.get("field_physics_enabled", True)),
+            phase_change_enabled=bool(data.get("phase_change_enabled", True)),
+            electrostatic_coupling=float(data.get("electrostatic_coupling", 1.0)),
+            fluid_flow_factor=float(data.get("fluid_flow_factor", 0.35)),
+            radiation_coupling=float(data.get("radiation_coupling", 0.8)),
+            structural_load_factor=float(data.get("structural_load_factor", 0.12)),
+            gravity_strength=float(data.get("gravity_strength", 9.8)),
+            wind_strength=float(data.get("wind_strength", 0.5)),
+            ambient_pressure_base=float(data.get("ambient_pressure_base", 101.3)),
+            pressure_coupling=float(data.get("pressure_coupling", 0.06)),
+            charge_hub_bleed=float(data.get("charge_hub_bleed", 0.14)),
+            radiation_bleed_factor=float(data.get("radiation_bleed_factor", 0.22)),
+            freeze_ratio=float(data.get("freeze_ratio", 0.92)),
         )
 
 

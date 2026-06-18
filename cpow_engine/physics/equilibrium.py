@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 from cpow_engine.models import CreativeObject, InteractionResult, SimulationState
 from cpow_engine.physics.balance_config import PhysicsBalanceConfig, load_physics_balance_config
-from cpow_engine.physics.crossover import _heat_of, _residual_of, _set_prop
+from cpow_engine.physics.properties import heat_of, residual_of, set_prop
 
 
 @dataclass
@@ -125,21 +125,21 @@ class EquilibriumRegulator:
                     heat_prop.value = max(0.0, heat_prop.value + pull)
                     heat_adj += 1
 
-            res = _residual_of(obj)
+            res = residual_of(obj)
             if res > 0.01:
                 decayed = res * (1.0 - self.cfg.residual_decay)
                 decayed += (mean_residual - res) * 0.05
-                _set_prop(obj, "residual_heat", max(0.0, decayed), "joules")
+                set_prop(obj, "residual_heat", max(0.0, decayed), unit="joules")
                 residual_dec += 1
 
         return heat_adj, residual_dec
 
     def _mean_heat(self, objects: dict[str, CreativeObject]) -> float:
-        heats = [_heat_of(o) for o in objects.values() if o.get_property("heat_intensity")]
+        heats = [heat_of(o) for o in objects.values() if o.get_property("heat_intensity")]
         return sum(heats) / len(heats) if heats else 0.0
 
     def _mean_residual(self, objects: dict[str, CreativeObject]) -> float:
-        vals = [_residual_of(o) for o in objects.values()]
+        vals = [residual_of(o) for o in objects.values()]
         return sum(vals) / len(vals) if vals else 0.0
 
     def _compute_balance_index(
@@ -154,7 +154,7 @@ class EquilibriumRegulator:
         pool_err = abs(energy_pool - target) / target
         pool_score = max(0.0, 1.0 - min(1.0, pool_err))
 
-        heats = [_heat_of(o) for o in objects.values() if o.get_property("heat_intensity")]
+        heats = [heat_of(o) for o in objects.values() if o.get_property("heat_intensity")]
         spread_score = 1.0
         if len(heats) >= 2:
             mean = sum(heats) / len(heats)

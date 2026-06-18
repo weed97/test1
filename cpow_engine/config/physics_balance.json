@@ -13,5 +13,19 @@
   "pool_injection_floor": 0.15,
   "heat_pull_to_ambient": 0.08,
   "residual_decay": 0.35,
-  "balance_smoothing": 0.4
+  "balance_smoothing": 0.4,
+  "extended_physics_enabled": true,
+  "field_physics_enabled": true,
+  "phase_change_enabled": true,
+  "electrostatic_coupling": 1.0,
+  "fluid_flow_factor": 0.35,
+  "radiation_coupling": 0.8,
+  "structural_load_factor": 0.12,
+  "gravity_strength": 9.8,
+  "wind_strength": 0.5,
+  "ambient_pressure_base": 101.3,
+  "pressure_coupling": 0.06,
+  "charge_hub_bleed": 0.14,
+  "radiation_bleed_factor": 0.22,
+  "freeze_ratio": 0.92
 }

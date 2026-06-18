@@ -13,6 +13,9 @@ from cpow_engine.models import (
 from cpow_engine.physics import DefinitionPhysicsEngine
 from cpow_engine.physics.crossover import CrossoverPhysics
 from cpow_engine.physics.equilibrium import EquilibriumRegulator, EquilibriumReport
+from cpow_engine.physics.extended_physics import ExtendedPhysicsEngine
+from cpow_engine.physics.fields import FieldPhysics
+from cpow_engine.physics.phase import PhaseChangePhysics
 from cpow_engine.shared_state import SharedStateSync, StatePatch
 
 
@@ -22,7 +25,10 @@ class SimulationEngine:
     def __init__(self, seed_state: SimulationState | None = None) -> None:
         self.state = seed_state or SimulationState()
         self.physics = DefinitionPhysicsEngine()
+        self.extended = ExtendedPhysicsEngine()
+        self.fields = FieldPhysics()
         self.crossover = CrossoverPhysics()
+        self.phase = PhaseChangePhysics()
         self.equilibrium = EquilibriumRegulator()
         self.cpow = CPoWEngine()
         self.sync = SharedStateSync()
@@ -53,16 +59,32 @@ class SimulationEngine:
         return action
 
     def tick(self) -> tuple[WorldDelta, CPoWScore | None]:
-        """한 틱 진행: 물리 상호작용 → 교차 결합 → 피드백 → 균형 조절."""
+        """한 틱 진행: 기본·확장·환경장 → 교차 → 피드백 → 상변화 → 균형."""
         self.state.tick += 1
 
         base_interactions = self.physics.resolve_interactions(self.state.objects)
+        extended_interactions = self.extended.resolve(self.state.objects)
+        field_interactions = self.fields.resolve(
+            self.state.objects,
+            energy_pool=self.state.energy_pool,
+        )
         cross_interactions = self.crossover.resolve(
             self.state.objects,
             energy_pool=self.state.energy_pool,
         )
-        interactions = base_interactions + cross_interactions
+        interactions = (
+            base_interactions
+            + extended_interactions
+            + field_interactions
+            + cross_interactions
+        )
+
+        self.extended.apply_feedback(self.state.objects, interactions)
+        self.fields.apply_feedback(self.state.objects, interactions)
         self.crossover.apply_feedback(self.state.objects, interactions)
+
+        phase_events = self.phase.apply(self.state.objects, interactions)
+        interactions = interactions + phase_events
 
         energy_from_physics = sum(i.energy_delta for i in interactions)
         self.state.energy_pool += energy_from_physics
@@ -77,6 +99,9 @@ class SimulationEngine:
                 "energy_pool": self.state.energy_pool,
                 "balance_index": eq_report.balance_index,
                 "crossover_count": len(cross_interactions),
+                "extended_count": len(extended_interactions),
+                "field_count": len(field_interactions),
+                "phase_count": len(phase_events),
                 "interaction_count": len(interactions),
             },
         )

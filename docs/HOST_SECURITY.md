@@ -2,7 +2,10 @@
 
 점검 기준일: P0 이후 (`fantasy_simulator/api/server.py` + `cpow_engine/auth`)
 
-## 자동 검증
+## 최근 수정 (점검 중 발견)
+
+- **Pydantic `object:{}` / `intent:{}`** — 빈 dict가 truthy 분기로 들어가 400 발생 → `object_factory`에서 falsy 무시 (Godot/Pydantic 호환)
+- **CORS** — `allow_credentials=False` (와일드카드 origin + credentials 조합 제거)
 
 ```bash
 cd fantasy_simulator

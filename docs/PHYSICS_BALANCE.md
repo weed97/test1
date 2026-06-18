@@ -10,15 +10,21 @@
 ┌─────────────────────────────────────────────────────────┐
 │  DefinitionPhysicsEngine  — 직접 연결 (열→재료 등)       │
 ├─────────────────────────────────────────────────────────┤
-│  CrossoverPhysics         — 허브·2-hop·환경장 교차       │
+│  ExtendedPhysicsEngine    — 전기·유체·복사·구조         │
+│  FieldPhysics             — 중력·풍·전역 압력           │
+├─────────────────────────────────────────────────────────┤
+│  CrossoverPhysics         — 허브·2-hop·환경·전하·복사   │
 │    → hub_crossover, path_crossover, ambient_coupling    │
 ├─────────────────────────────────────────────────────────┤
 │  apply_feedback           — residual_heat, heat drain   │
+│  PhaseChangePhysics       — 용융·응고                    │
 ├─────────────────────────────────────────────────────────┤
 │  EquilibriumRegulator     — 풀 과열 방출·저온 보충       │
 │    → balance_index (0~1)                                │
 └─────────────────────────────────────────────────────────┘
 ```
+
+확장 속성·환경장·상변화 상세: [PHYSICS_EXTENDED.md](./PHYSICS_EXTENDED.md)
 
 ## 활발한 교차 (Crossover)
 
