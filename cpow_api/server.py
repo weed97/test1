@@ -8,7 +8,7 @@ import cpow_api._bootstrap  # noqa: F401
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -62,8 +62,12 @@ from cpow_api.world import (
     handle_world_build_validate,
     handle_world_catalog,
     handle_world_cell,
+    handle_world_drops,
+    handle_world_inventory,
     handle_world_mine,
+    handle_world_pickup,
 )
+from cpow_api.stream import world_stream_websocket
 from cpow_api.route_helpers import authed_call, authed_call_400, authed_call_404
 from cpow_api.xr import _store as _xr_store
 from cpow_api.xr import handle_xr_connect, handle_xr_creation, handle_xr_world
@@ -254,7 +258,22 @@ class WorldMineRequest(BaseModel):
     tool_tier: int = 1
     ore_id: Optional[str] = None
     consumable: Optional[str] = None
-    submit_to_area: bool = True
+    deposit_mode: str = "inventory"
+    spawn_world_drop: bool = True
+    submit_to_area: bool = False
+
+
+class WorldDropsRequest(BaseModel):
+    area_id: str
+    x: float = 0.0
+    z: float = 0.0
+    radius_m: float = 128.0
+
+
+class WorldPickupRequest(BaseModel):
+    area_id: str
+    actor_id: str = "anonymous"
+    drop_id: str
 
 
 class WorldBuildValidateRequest(BaseModel):
@@ -619,6 +638,31 @@ def world_mine(
     return authed_call(
         handle_world_mine, body, auth_user, "actor_id", exclude_none=True,
     )
+
+
+@app.get("/v1/world/inventory")
+def world_inventory(area_id: str, actor_id: str = "anonymous") -> dict[str, Any]:
+    return handle_world_inventory(area_id, actor_id)
+
+
+@app.post("/v1/world/drops")
+def world_drops(body: WorldDropsRequest) -> dict[str, Any]:
+    return handle_world_drops(body.model_dump())
+
+
+@app.post("/v1/world/pickup")
+def world_pickup(
+    body: WorldPickupRequest,
+    auth_user: str | None = Depends(optional_user),
+) -> dict[str, Any]:
+    return authed_call(
+        handle_world_pickup, body, auth_user, "actor_id", exclude_none=True,
+    )
+
+
+@app.websocket("/v1/world/stream")
+async def world_stream(ws: WebSocket) -> None:
+    await world_stream_websocket(ws)
 
 
 @app.post("/v1/world/build/validate")

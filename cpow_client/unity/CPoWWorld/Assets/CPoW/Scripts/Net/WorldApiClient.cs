@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Text;
 using System.Threading;
@@ -64,6 +65,44 @@ namespace CPoW.Net
         public Task<string> ValidateBuildAsync(string jsonBody, CancellationToken ct = default)
             => HttpJson.PostAsync(Url("/v1/world/build/validate"), jsonBody, ct);
 
+        public Task<string> ValidateBuildAsync(
+            string areaId,
+            string biomeId,
+            string blueprintId,
+            System.Collections.Generic.IReadOnlyDictionary<string, int> placedModules,
+            System.Collections.Generic.IReadOnlyDictionary<string, int> placedMaterials,
+            int civilizationLevel = 0,
+            CancellationToken ct = default)
+        {
+            var sb = new StringBuilder(512);
+            sb.Append("{\"area_id\":\"").Append(Escape(areaId));
+            sb.Append("\",\"biome_id\":\"").Append(Escape(biomeId));
+            sb.Append("\",\"blueprint_id\":\"").Append(Escape(blueprintId)).Append('"');
+            sb.Append(",\"civilization_level\":").Append(civilizationLevel);
+            sb.Append(",\"placed_modules\":").Append(DictJson(placedModules));
+            sb.Append(",\"placed_materials\":").Append(DictJson(placedMaterials));
+            sb.Append('}');
+            return HttpJson.PostAsync(Url("/v1/world/build/validate"), sb.ToString(), ct);
+        }
+
+        static string DictJson(System.Collections.Generic.IReadOnlyDictionary<string, int> dict)
+        {
+            var sb = new StringBuilder(128);
+            sb.Append('{');
+            var first = true;
+            if (dict != null)
+            {
+                foreach (var kv in dict)
+                {
+                    if (!first) sb.Append(',');
+                    first = false;
+                    sb.Append('"').Append(Escape(kv.Key)).Append("\":").Append(kv.Value);
+                }
+            }
+            sb.Append('}');
+            return sb.ToString();
+        }
+
         public Task<string> BossLootAsync(
             string areaId, string actorId, float amount = 1f,
             CancellationToken ct = default)
@@ -75,6 +114,12 @@ namespace CPoW.Net
             sb.Append('}');
             return HttpJson.PostAsync(Url("/v1/world/boss_loot"), sb.ToString(), ct);
         }
+
+        public Task<string> GetInventoryAsync(string areaId, string actorId, CancellationToken ct = default)
+            => HttpJson.GetAsync(
+                Url("/v1/world/inventory?area_id=" + Uri.EscapeDataString(areaId)
+                    + "&actor_id=" + Uri.EscapeDataString(actorId)),
+                ct);
 
         static string Escape(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }

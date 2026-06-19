@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using CPoW.Net;
 
 namespace CPoW.World
@@ -134,6 +135,47 @@ namespace CPoW.World
             cache.OreIds.AddRange(new[] { "coal", "copper_ore", "iron_ore", "diamond_ore" });
             cache.OreLabels.AddRange(new[] { "석탄", "구리 광석", "철 광석", "다이아" });
             return cache;
+        }
+    }
+
+    /// <summary>GET /v1/world/inventory stacks.</summary>
+    public sealed class InventorySnapshot
+    {
+        public readonly Dictionary<string, float> Stacks = new();
+
+        public static InventorySnapshot FromJson(string json)
+        {
+            var snap = new InventorySnapshot();
+            if (string.IsNullOrEmpty(json)) return snap;
+            var idx = 0;
+            while (idx < json.Length)
+            {
+                var i = json.IndexOf('"', idx);
+                if (i < 0) break;
+                var j = json.IndexOf('"', i + 1);
+                if (j < 0) break;
+                var key = json.Substring(i + 1, j - i - 1);
+                if (key is "actor_id" or "slot_count" or "stacks" or "inventory" or "ok")
+                {
+                    idx = j + 1;
+                    continue;
+                }
+                var colon = json.IndexOf(':', j);
+                if (colon < 0) break;
+                var end = colon + 1;
+                while (end < json.Length && (char.IsDigit(json[end]) || json[end] == '.'))
+                    end++;
+                if (float.TryParse(
+                    json.Substring(colon + 1, end - colon - 1),
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var val) && val > 0)
+                {
+                    snap.Stacks[key] = val;
+                }
+                idx = end;
+            }
+            return snap;
         }
     }
 }

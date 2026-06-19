@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CPoW.Net;
 using CPoW.Runtime;
@@ -65,6 +66,7 @@ namespace CPoW.World
         public CellInspectResult CurrentCell { get; private set; } = new();
         public MineResult LastMine { get; private set; } = new();
         public WorldCatalogCache Catalog { get; private set; } = new();
+        public InventorySnapshot Inventory { get; private set; } = new();
         public string StatusLine { get; private set; } = "셀 조사 대기…";
 
         public event System.Action<MineResult> MineCompleted;
@@ -85,6 +87,25 @@ namespace CPoW.World
                 return;
             _nextRefresh = Time.time + cellRefreshInterval;
             _ = RefreshCellAsync();
+        }
+
+        public void ApplyInventoryJson(string json)
+        {
+            Inventory = InventorySnapshot.FromJson(json);
+        }
+
+        public async Task RefreshInventoryAsync()
+        {
+            if (_session == null || string.IsNullOrEmpty(_session.AreaId)) return;
+            try
+            {
+                var json = await _session.World.GetInventoryAsync(_session.AreaId, _session.UserId);
+                ApplyInventoryJson(json);
+            }
+            catch (System.Exception ex)
+            {
+                StatusLine = "인벤토리 조회 실패: " + ex.Message;
+            }
         }
 
         public async Task RefreshCellAsync()
@@ -144,6 +165,10 @@ namespace CPoW.World
                 LastMine = MineResult.FromJson(json);
                 if (LastMine.Ok)
                 {
+                    if (!string.IsNullOrEmpty(json) && json.Contains("\"inventory\""))
+                        ApplyInventoryJson(json);
+                    else
+                        await RefreshInventoryAsync();
                     if (LastMine.CreationOk && !string.IsNullOrEmpty(LastMine.CreationObjectId))
                         StatusLine = $"채굴+창조: {LastMine.ResourceLabel} x{LastMine.Amount:F2} → 오브젝트 {LastMine.CreationObjectId}";
                     else if (!string.IsNullOrEmpty(LastMine.CreationReason))
