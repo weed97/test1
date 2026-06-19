@@ -63,7 +63,7 @@
 | `InspectCellAsync` | POST `/v1/world/cell` | 셀 + hazard audio |
 | `MineAsync` | POST `/v1/world/mine` | 채굴 (기본 `deposit_mode=inventory`) |
 | `GetInventoryAsync` | GET `/v1/world/inventory` | 액터 스택 조회 |
-| `ValidateBuildAsync` | POST `/v1/world/build/validate` | 모듈 건축 검증 |
+| `ValidateBuildAsync` | POST `/v1/world/build/validate` | 모듈 건축 검증 (typed + raw JSON) |
 
 ### World stream (`WorldStreamClient`)
 
@@ -87,6 +87,7 @@ Boot.unity
         ├─ AreasApiClient + WorldApiClient
         ├─ ChunkStreamer → ChunkPool → BiomeChunkView
         ├─ MiningController + MiningHud (inventory SoA)
+        ├─ BuildController + BuildHud + BuildGhostRenderer
         ├─ WorldStreamClient → WorldDropRenderer
         └─ AreaObjectRenderer (state poll)
 ```
@@ -97,9 +98,9 @@ Boot.unity
 - [x] 인벤토리 SoA + 월드 드롭 (`inventory.py`, `drops.py`, `/v1/world/inventory`)
 - [x] WebSocket AOI delta (`/v1/world/stream`, `WorldStreamClient`)
 - [x] 채굴 결과 → `submit_creation` (옵션: `deposit_mode=both`, `submit_to_area=true`)
+- [x] 모듈 건축 고스트 메시 + `build/validate` UI (`BuildHud`, `BuildGhostRenderer`)
 - [ ] Addressables / GLTFast 로 glb 스트리밍
 - [ ] VRM / Universal RP 아바타
-- [ ] 모듈 건축 고스트 메시 프리뷰
 
 ## Godot 클라이언트
 

@@ -19,6 +19,7 @@ namespace CPoW.Runtime
         ChunkStreamer _streamer;
         AreaObjectRenderer _renderer;
         MiningController _mining;
+        BuildController _build;
         WorldStreamClient _worldStream;
         WorldDropRenderer _dropRenderer;
         float _nextPoll;
@@ -57,7 +58,8 @@ namespace CPoW.Runtime
 
                 var catalogJson = await _session.World.GetCatalogAsync();
                 var catalog = WorldCatalogCache.Parse(catalogJson);
-                Debug.Log($"[CPoW] World catalog ores={catalog.OreIds.Count}");
+                var blueprintCatalog = BlueprintCatalogCache.Parse(catalogJson);
+                Debug.Log($"[CPoW] World catalog ores={catalog.OreIds.Count} blueprints={blueprintCatalog.Blueprints.Count}");
 
                 _streamer.Initialize(_session.World, _session.AreaId, playerProxy);
 
@@ -72,6 +74,20 @@ namespace CPoW.Runtime
                 hud.Bind(_mining);
                 _mining.MineCompleted += _ => _ = RefreshAreaStateAsync();
                 await _mining.RefreshInventoryAsync();
+
+                var ghost = gameObject.GetComponent<BuildGhostRenderer>();
+                if (ghost == null)
+                    ghost = gameObject.AddComponent<BuildGhostRenderer>();
+
+                _build = gameObject.GetComponent<BuildController>();
+                if (_build == null)
+                    _build = gameObject.AddComponent<BuildController>();
+                _build.Initialize(_session, playerProxy, _mining, ghost, blueprintCatalog);
+
+                var buildHud = gameObject.GetComponent<CPoW.UI.BuildHud>();
+                if (buildHud == null)
+                    buildHud = gameObject.AddComponent<CPoW.UI.BuildHud>();
+                buildHud.Bind(_build);
 
                 _dropRenderer = gameObject.GetComponent<WorldDropRenderer>();
                 if (_dropRenderer == null)
